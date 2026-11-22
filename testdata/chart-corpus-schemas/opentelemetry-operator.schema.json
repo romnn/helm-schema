@@ -4,45 +4,38 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
-        },
-        "then": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
+        "allOf": [
+          {
+            "properties": {
+              "admissionWebhooks": {
                 "properties": {
-                  "admissionWebhooks": {
-                    "properties": {
-                      "secretName": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "secretName"
-                    ],
-                    "type": "object"
+                  "secretName": {
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
-                  "admissionWebhooks"
+                  "secretName"
                 ],
                 "type": "object"
-              },
-              "then": true
+              }
+            },
+            "required": [
+              "admissionWebhooks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
             }
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-          },
-          "then": false
-        }
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -61,23 +54,21 @@
     },
     {
       "if": {
-        "else": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-            },
-            "then": true
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
+            }
           },
-          "then": false
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
-        },
-        "then": false
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
+            }
+          }
+        ]
       },
       "then": {
         "allOf": [
@@ -133,7 +124,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3"
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1crds.create:t"
@@ -159,32 +150,34 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1crds.create:t~1then~1namespaceOverride:t~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1crds.create:t+namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
+            }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
         },
         "then": {
           "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1namespaceOverride:t~1then~1any~1else~1fail"
-            }
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+              }
+            ]
           },
           "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
           },
           "then": {
-            "$ref": "#/definitions/when~1crds.create:t~1then~1namespaceOverride:t~1else~1fail"
+            "$ref": "#/definitions/constrains~1crds.create:t+namespaceOverride:t"
           }
         }
       },
@@ -201,31 +194,32 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+            }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1crds.create:t"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             },
-            "if": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              }
             },
-            "then": false
-          }
+            {
+              "$ref": "#/definitions/constrains~1crds.create:t"
+            }
+          ]
         }
       },
       "then": {
@@ -240,68 +234,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "crds": {}
-                  },
-                  "required": [
-                    "crds"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3"
       },
       "then": {
         "additionalProperties": {},
@@ -316,32 +249,34 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1crds.create:t~1then~1fullnameOverride:t~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1crds.create:t+fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
+            }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1admissionWebhooks.autoGenerateCert.enabled:t"
         },
         "then": {
           "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1fullnameOverride:t~1then~1any~1else~1fail"
-            }
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+              }
+            ]
           },
           "if": {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
           },
           "then": {
-            "$ref": "#/definitions/when~1crds.create:t~1then~1fullnameOverride:t~1else~1fail"
+            "$ref": "#/definitions/constrains~1crds.create:t+fullnameOverride:t"
           }
         }
       },
@@ -359,102 +294,41 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4"
-          },
-          {
-            "anyOf": [
-              {
+            "properties": {
+              "manager": {
                 "properties": {
-                  "manager": {
+                  "image": {
                     "properties": {
-                      "featureGatesMap": {
-                        "enum": [
-                          null
-                        ]
+                      "tag": {
+                        "$ref": "#/definitions/t"
                       }
                     },
                     "required": [
-                      "featureGatesMap"
+                      "tag"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "manager"
+                  "image"
                 ],
                 "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "manager": {
-                      "properties": {
-                        "featureGatesMap": {}
-                      },
-                      "required": [
-                        "featureGatesMap"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "manager"
-                  ],
-                  "type": "object"
-                }
               }
-            ]
+            },
+            "required": [
+              "manager"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "#/definitions/constrains~1crds.create:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "else": false,
-          "if": {
             "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
           },
-          "then": {
-            "else": false,
-            "if": {
-              "properties": {
-                "manager": {
-                  "properties": {
-                    "image": {
-                      "properties": {
-                        "tag": {
-                          "$ref": "#/definitions/t"
-                        }
-                      },
-                      "required": [
-                        "tag"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "manager"
-              ],
-              "type": "object"
-            },
-            "then": true
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
+            }
           }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-        },
-        "then": false
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -478,14 +352,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
-          },
-          {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
       },
       "then": {
         "additionalProperties": {},
@@ -505,56 +372,259 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "manager": {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "admissionWebhooks": {
+                        "properties": {
+                          "certManager": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "certManager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "admissionWebhooks"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
                       "properties": {
-                        "image": {}
+                        "admissionWebhooks": {
+                          "properties": {
+                            "certManager": {}
+                          },
+                          "required": [
+                            "certManager"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "image"
+                        "admissionWebhooks"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "manager": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "manager"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "manager"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "manager": {
+                  {
                     "properties": {
-                      "image": {
+                      "manager": {
+                        "properties": {
+                          "image": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "manager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "crds": {}
+                      },
+                      "required": [
+                        "crds"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "crds": {
                         "enum": [
                           null
                         ]
                       }
                     },
                     "required": [
-                      "image"
+                      "crds"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "manager"
-                ],
-                "type": "object"
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@4"
               }
             ]
+          },
+          {
+            "not": {
+              "properties": {
+                "admissionWebhooks": {}
+              },
+              "required": [
+                "admissionWebhooks"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "manager": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "manager"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "manager": {}
+                      },
+                      "required": [
+                        "manager"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "manager": {
+                        "properties": {
+                          "featureGatesMap": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "featureGatesMap"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "manager"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "manager": {
+                          "properties": {
+                            "featureGatesMap": {}
+                          },
+                          "required": [
+                            "featureGatesMap"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "manager"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.create:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "admissionWebhooks": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "admissionWebhooks"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -562,23 +632,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-              }
-            ]
-          }
-        ]
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@4"
       },
       "then": {
         "additionalProperties": {},
@@ -589,67 +643,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "admissionWebhooks": {
-                    "properties": {
-                      "certManager": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "certManager"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "admissionWebhooks"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "admissionWebhooks": {
-                      "properties": {
-                        "certManager": {}
-                      },
-                      "required": [
-                        "certManager"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "admissionWebhooks"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -695,82 +688,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "manager": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "manager"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "manager": {}
-                  },
-                  "required": [
-                    "manager"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "admissionWebhooks": {}
-              },
-              "required": [
-                "admissionWebhooks"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "admissionWebhooks": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "admissionWebhooks"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
@@ -787,40 +704,10 @@
     },
     "constrains/admissionWebhooks.certManager.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
+        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
       }
     },
     "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1crds.create:t"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1crds.create:t"
-        }
-      ]
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t"
@@ -830,22 +717,57 @@
         }
       ]
     },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@3": {
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.create:t"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
+        },
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds@4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t+crds"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1admissionWebhooks.create:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2": {
       "not": {
         "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t"
       }
     },
-    "constrains/admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@4": {
-      "not": {
-        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t+admissionWebhooks.create:t@2"
-      }
-    },
     "constrains/admissionWebhooks.certManager.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1admissionWebhooks.certManager.enabled:t@3"
-      }
-    },
-    "constrains/admissionWebhooks.certManager.enabled:t@3": {
       "properties": {
         "admissionWebhooks": {
           "$ref": "#/definitions/constrains~1certManager.enabled:t"
@@ -866,6 +788,23 @@
         "admissionWebhooks"
       ],
       "type": "object"
+    },
+    "constrains/autoGenerateCert+certManager.enabled:t+create:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1create:t"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1certManager.enabled:t"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1autoGenerateCert.enabled:t"
+          }
+        }
+      ]
     },
     "constrains/autoGenerateCert.enabled:t": {
       "properties": {
@@ -900,6 +839,26 @@
       ],
       "type": "object"
     },
+    "constrains/crds.create:t+fullnameOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.create:t"
+        }
+      ]
+    },
+    "constrains/crds.create:t+namespaceOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.create:t"
+        }
+      ]
+    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -923,6 +882,9 @@
       "type": "object"
     },
     "constrains/fullnameOverride:t": {
+      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+    },
+    "constrains/fullnameOverride:t@2": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -930,6 +892,28 @@
       },
       "required": [
         "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride:t": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaceOverride:t": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
       ],
       "type": "object"
     },
@@ -957,80 +941,6 @@
           "const": true
         }
       ]
-    },
-    "when/autoGenerateCert.enabled:t/then/fail/else/certManager+create:t": {
-      "else": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1create:t"
-          },
-          "then": true
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1certManager.enabled:t"
-        },
-        "then": false
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1autoGenerateCert.enabled:t"
-      },
-      "then": false
-    },
-    "when/crds.create:t/then/fullnameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1crds.create:t"
-      },
-      "then": {
-        "$ref": "#/definitions/when~1fullnameOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/crds.create:t/then/namespaceOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1crds.create:t"
-      },
-      "then": {
-        "$ref": "#/definitions/when~1namespaceOverride:t~1then~1any~1else~1fail"
-      }
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-      },
-      "then": true
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/definitions/t"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/namespaceOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "namespaceOverride": {
-            "$ref": "#/definitions/t"
-          }
-        },
-        "required": [
-          "namespaceOverride"
-        ],
-        "type": "object"
-      },
-      "then": true
     }
   },
   "properties": {
@@ -1042,154 +952,149 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/definitions/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "properties": {
-                      "certFile": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "certFile"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1autoGenerateCert+certManager.enabled:t+create:t"
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "certFile": {}
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "keyFile": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "keyFile"
+                        ],
+                        "type": "object"
                       },
-                      "required": [
-                        "certFile"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "keyFile": {
-                        "enum": [
-                          null
-                        ]
+                      {
+                        "not": {
+                          "properties": {
+                            "keyFile": {}
+                          },
+                          "required": [
+                            "keyFile"
+                          ],
+                          "type": "object"
+                        }
                       }
-                    },
-                    "required": [
-                      "keyFile"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "keyFile": {}
-                      },
-                      "required": [
-                        "keyFile"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1create:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoGenerateCert": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "autoGenerateCert"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "autoGenerateCert": {}
-                      },
-                      "required": [
-                        "autoGenerateCert"
-                      ],
-                      "type": "object"
-                    }
+                    ]
                   }
                 ]
               },
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1certManager.enabled:t"
-                }
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/when~1autoGenerateCert.enabled:t~1then~1fail~1else~1certManager+create:t"
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "caFile": {}
-                      },
-                      "required": [
-                        "caFile"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1autoGenerateCert+certManager.enabled:t+create:t"
                   },
                   {
-                    "properties": {
-                      "caFile": {
-                        "enum": [
-                          null
-                        ]
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "caFile": {}
+                          },
+                          "required": [
+                            "caFile"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "caFile": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "caFile"
+                        ],
+                        "type": "object"
                       }
-                    },
-                    "required": [
-                      "caFile"
-                    ],
-                    "type": "object"
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1create:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoGenerateCert": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "autoGenerateCert"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "autoGenerateCert": {}
+                          },
+                          "required": [
+                            "autoGenerateCert"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1certManager.enabled:t"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1autoGenerateCert+certManager.enabled:t+create:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "certFile": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "certFile"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "certFile": {}
+                          },
+                          "required": [
+                            "certFile"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
                   }
                 ]
               }

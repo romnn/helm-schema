@@ -35,29 +35,8 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "ingress": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ingress"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
+        "allOf": [
+          {
             "properties": {
               "ingress": {
                 "properties": {
@@ -76,8 +55,26 @@
             ],
             "type": "object"
           },
-          "then": true
-        }
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},

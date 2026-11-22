@@ -9,29 +9,6 @@
           }
         ]
       ],
-      "kind": "WidenedDependency",
-      "path": [],
-      "resource": null,
-      "source_expr": ""
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "WidenedRegion",
-      "path": [],
-      "resource": null,
-      "source_expr": ""
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
       "kind": "Serialized",
       "path": [],
       "resource": null,
@@ -65,20 +42,6 @@
         ]
       ],
       "kind": "WidenedDependency",
-      "path": [],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "ingress.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "WidenedRegion",
       "path": [],
       "resource": null,
       "source_expr": "fullnameOverride"
@@ -212,6 +175,48 @@
       "path": [],
       "resource": null,
       "source_expr": "ingress.enabled"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.hosts"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "WidenedDependency",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.hosts"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "ingress.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "WidenedRegion",
+      "path": [],
+      "resource": null,
+      "source_expr": "ingress.hosts"
     },
     {
       "condition": [
@@ -459,6 +464,14 @@
           {
             "path": "ingress.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "type": "not"
           }
         ]
       ],

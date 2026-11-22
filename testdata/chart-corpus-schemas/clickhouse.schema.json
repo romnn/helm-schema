@@ -6,6 +6,57 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "keeper": {
+                          "properties": {
+                            "autoscaling": {}
+                          },
+                          "required": [
+                            "autoscaling"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "keeper"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "keeper": {
+                        "properties": {
+                          "autoscaling": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "autoscaling"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "keeper"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
+              }
+            ]
+          },
+          {
             "not": {
               "properties": {
                 "keeper": {}
@@ -15,6 +66,73 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "keeper": {
+                        "properties": {
+                          "autoscaling": {
+                            "properties": {
+                              "vpa": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "vpa"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoscaling"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "keeper"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "keeper": {
+                          "properties": {
+                            "autoscaling": {
+                              "properties": {
+                                "vpa": {}
+                              },
+                              "required": [
+                                "vpa"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "autoscaling"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "keeper"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           {
             "properties": {
@@ -35,167 +153,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "keeper": {
-                    "properties": {
-                      "autoscaling": {
-                        "properties": {
-                          "vpa": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vpa"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoscaling"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "keeper"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "keeper": {
-                      "properties": {
-                        "autoscaling": {
-                          "properties": {
-                            "vpa": {}
-                          },
-                          "required": [
-                            "vpa"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "keeper"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1keeper.enabled:t"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@2"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-            },
-            "then": false
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1global.apiVersions:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1keeper.enabled:t"
-          },
-          "then": {
-            "else": {
-              "else": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "$ref": "#/definitions/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions@2"
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1global+global=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1apiVersions~1then~1fail~1else~1any@2"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null@2"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1global+global=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1apiVersions~1then~1fail~1else~1any@2"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-                  },
-                  "then": false
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1global+global=null"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions@2"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "$ref": "#/definitions/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null@2"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1global+global=null"
-              },
-              "then": false
-            }
-          }
-        }
+        "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
       },
       "then": {
         "allOf": [
@@ -239,65 +197,6 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "keeper": {
-                      "properties": {
-                        "autoscaling": {}
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "keeper"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "keeper": {
-                    "properties": {
-                      "autoscaling": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "autoscaling"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "keeper"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            }
-          },
-          {
             "not": {
               "$ref": "#/definitions/constrains~1global+global=null"
             }
@@ -319,17 +218,23 @@
   ],
   "definitions": {
     "constrains/apiVersions": {
-      "properties": {
-        "apiVersions": {
-          "type": "array"
-        }
-      },
-      "required": [
-        "apiVersions"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1apiVersions@2"
+      }
     },
     "constrains/apiVersions+apiVersions=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1apiVersions"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+          }
+        }
+      ]
+    },
+    "constrains/apiVersions+apiVersions=null@2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1apiVersions=null"
@@ -359,6 +264,51 @@
         "apiVersions"
       ],
       "type": "object"
+    },
+    "constrains/apiVersions@2": {
+      "properties": {
+        "apiVersions": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "apiVersions"
+      ],
+      "type": "object"
+    },
+    "constrains/global+global.apiVersions+global.apiVersions=null": {
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "global": {
+                "$ref": "#/definitions/constrains~1apiVersions@2"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
+          }
+        }
+      ]
+    },
+    "constrains/global+global.apiVersions+global.apiVersions=null+global=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1global+global=null"
+          }
+        }
+      ]
     },
     "constrains/global+global=null": {
       "anyOf": [
@@ -422,25 +372,6 @@
         }
       ]
     },
-    "constrains/global.apiVersions:t": {
-      "properties": {
-        "global": {
-          "properties": {
-            "apiVersions": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "apiVersions"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
     "constrains/keeper.enabled:t": {
       "properties": {
         "keeper": {
@@ -485,80 +416,34 @@
         }
       ]
     },
-    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions": {
+    "when/global.apiVersions:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more/else/any": {
       "else": {
-        "$ref": "#/definitions/when~1apiVersions~1then~1fail~1else~1any"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1keeper.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+            }
+          }
+        ]
       },
-      "if": {
-        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-      },
-      "then": false
-    },
-    "when/apiVersions+apiVersions=null/then/fail/else/apiVersions@2": {
-      "else": {
-        "$ref": "#/definitions/when~1apiVersions~1then~1fail~1else~1any@2"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-      },
-      "then": false
-    },
-    "when/apiVersions/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1apiVersions"
-      },
-      "then": false
-    },
-    "when/apiVersions/then/fail/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1apiVersions"
-      },
-      "then": false
-    },
-    "when/global+global=null/then/fail/else/global+global.apiVersions+global.apiVersions=null": {
-      "else": {
-        "$ref": "#/definitions/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1global+global=null"
-      },
-      "then": false
-    },
-    "when/global+global=null/then/fail/else/global+global.apiVersions+global.apiVersions=null@2": {
-      "else": {
-        "$ref": "#/definitions/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions@2"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1global+global=null"
-      },
-      "then": false
-    },
-    "when/global.apiVersions+global.apiVersions=null/then/fail/else/global.apiVersions": {
-      "else": {
-        "$ref": "#/definitions/when~1global.apiVersions~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
-      },
-      "then": false
-    },
-    "when/global.apiVersions+global.apiVersions=null/then/fail/else/global.apiVersions@2": {
-      "else": {
-        "$ref": "#/definitions/when~1global.apiVersions~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
-      },
-      "then": false
-    },
-    "when/global.apiVersions/then/fail/else/any": {
-      "else": true,
       "if": {
         "properties": {
           "global": {
-            "$ref": "#/definitions/constrains~1apiVersions"
+            "properties": {
+              "apiVersions": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "apiVersions"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -566,99 +451,81 @@
         ],
         "type": "object"
       },
-      "then": false
-    },
-    "when/global.apiVersions:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more/else/any": {
-      "else": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1keeper.enabled:t"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-          },
-          "then": false
-        }
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1global.apiVersions:t"
-      },
       "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1keeper.enabled:t"
-        },
-        "then": {
-          "else": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1keeper.enabled:t"
+          },
+          {
             "else": {
               "else": {
                 "else": {
                   "else": {
-                    "$ref": "#/definitions/when~1global.apiVersions+global.apiVersions=null~1then~1fail~1else~1global.apiVersions"
+                    "else": {
+                      "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1global+global=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1apiVersions"
+                    }
                   },
                   "if": {
-                    "$ref": "#/definitions/constrains~1global+global=null"
+                    "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
                   },
                   "then": {
-                    "$ref": "#/definitions/when~1apiVersions~1then~1fail~1else~1any"
+                    "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
                   }
                 },
                 "if": {
-                  "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
+                  "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
                 },
                 "then": {
-                  "$ref": "#/definitions/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null"
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1apiVersions"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1global+global=null"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+                      }
+                    }
+                  ]
                 }
               },
               "if": {
-                "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
+                "$ref": "#/definitions/constrains~1global+global=null"
               },
               "then": {
-                "else": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1global+global=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1apiVersions~1then~1fail~1else~1any"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-                },
-                "then": false
+                "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
               }
             },
             "if": {
-              "$ref": "#/definitions/constrains~1global+global=null"
+              "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
             },
             "then": {
-              "$ref": "#/definitions/when~1apiVersions+apiVersions=null~1then~1fail~1else~1apiVersions"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
+                  }
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1global+global=null"
+                  }
+                }
+              ]
             }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
-          },
-          "then": {
-            "else": {
-              "else": {
-                "$ref": "#/definitions/when~1global+global=null~1then~1fail~1else~1global+global.apiVersions+global.apiVersions=null"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            },
-            "then": false
           }
-        }
+        ]
       }
     }
   },

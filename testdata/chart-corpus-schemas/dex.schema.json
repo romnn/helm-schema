@@ -4,155 +4,14 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations+serviceMonitor.annotations=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations:helm-marker-free"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.namespace:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1commonLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations:t"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1fullnameOverride:t"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations+serviceMonitor.annotations=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations:helm-marker-free"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.namespace:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1commonLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.annotations:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-          },
-          "then": true
-        }
       },
       "then": {
         "additionalProperties": {},
@@ -166,17 +25,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
           },
-          "then": true
-        }
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -191,6 +47,83 @@
     {
       "if": {
         "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
           {
             "not": {
               "properties": {
@@ -221,17 +154,6 @@
     }
   ],
   "definitions": {
-    "constrains/commonLabels:t": {
-      "properties": {
-        "commonLabels": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
     "constrains/fullnameOverride": {
       "properties": {
         "fullnameOverride": {
@@ -253,6 +175,34 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.annotations"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.annotations"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.annotations+serviceMonitor.annotations=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.annotations:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+        }
+      ]
     },
     "constrains/nameOverride": {
       "not": {
@@ -427,6 +377,9 @@
       }
     },
     "constrains/serviceMonitor.enabled:t": {
+      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+    },
+    "constrains/serviceMonitor.enabled:t@2": {
       "properties": {
         "serviceMonitor": {
           "properties": {
@@ -436,25 +389,6 @@
           },
           "required": [
             "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceMonitor.namespace:t": {
-      "properties": {
-        "serviceMonitor": {
-          "properties": {
-            "namespace": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "namespace"
           ],
           "type": "object"
         }

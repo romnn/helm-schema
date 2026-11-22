@@ -45,36 +45,37 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "networkPolicy": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {}
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "networkPolicy"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "networkPolicy": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/helm-condition-18"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/helm-condition-18"
       },
       "then": false
     }

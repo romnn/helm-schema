@@ -4,12 +4,67 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1ingress+ingress=null"
+            "properties": {
+              "podDisruptionBudget": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress+ingress=null"
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "ingress": {}
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "ingress": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
           {
             "properties": {
@@ -61,71 +116,8 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "podDisruptionBudget": {}
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
     }
   ],
-  "definitions": {
-    "constrains/ingress+ingress=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    }
-  },
   "properties": {
     "global": {},
     "ingress": {

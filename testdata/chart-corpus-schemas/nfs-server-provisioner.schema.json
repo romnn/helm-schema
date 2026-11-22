@@ -4,74 +4,12 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "storageClass": {}
-              },
-              "required": [
-                "storageClass"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {}
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
           },
           {
             "$ref": "#/definitions/constrains~1storageClass.create:t@2"
@@ -79,15 +17,7 @@
           {
             "properties": {
               "storageClass": {
-                "properties": {
-                  "name": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1name@10"
               }
             },
             "required": [
@@ -114,224 +44,49 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
+            "properties": {
+              "priorityClass": {
+                "$ref": "#/definitions/constrains~1name@10"
               }
-            ]
+            },
+            "required": [
+              "priorityClass"
+            ],
+            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
           }
         ]
       },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": true
-      },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": "string"
+          "priorityClass": {
+            "additionalProperties": {},
+            "description": "For creating the PriorityClass automatically:",
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/values~1object@2"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "Set a PriorityClass name to override the default name"
+              }
+            }
           }
         }
       }
@@ -340,10 +95,143 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t"
           },
           {
-            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+            "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
+          },
+          {
+            "properties": {
+              "priorityClass": {
+                "$ref": "#/definitions/constrains~1name@9"
+              }
+            },
+            "required": [
+              "priorityClass"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "priorityClass": {
+            "additionalProperties": {},
+            "description": "For creating the PriorityClass automatically:",
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/values~1array"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "Set a PriorityClass name to override the default name"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t~1else~1any"
+          },
+          {
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "priorityClass": {
+            "additionalProperties": {},
+            "description": "For creating the PriorityClass automatically:",
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1string;name-must-be-unique"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                    },
+                    "pattern": "[\\r\\n]",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1string@2"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1null;name-must-be-unique"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "Set a PriorityClass name to override the default name"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
           },
           {
             "$ref": "#/definitions/constrains~1storageClass.create:t@2"
@@ -367,12 +255,93 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1image+image=null"
+            "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1image+image=null"
+            "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "persistence": {
+            "additionalProperties": {},
+            "properties": {
+              "existingClaim": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "provisionerName": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "image": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "image": {}
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
             "properties": {
@@ -405,48 +374,683 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storageClass": {
-            "additionalProperties": {},
-            "description": "For creating the StorageClass automatically:",
-            "properties": {
-              "provisionerName": {
-                "type": "string"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service=null"
               }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "rbac": {}
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
             }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "priorityClass": {}
+              },
+              "required": [
+                "priorityClass"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.existingClaim"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              }
+            ]
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1service.type"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1service.type+service.type=null"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1persistence.storageClass"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1service.type+service.type=null"
+                      },
+                      "then": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1persistence.storageClass"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
+                    }
+                  }
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                          }
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.existingClaim@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1persistence.existingClaim@3"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.provisionerName"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "priorityClass": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "priorityClass"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.provisionerName"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name@9"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name@9"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name@9"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.name:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "storageClass": {}
+              },
+              "required": [
+                "storageClass"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service=null"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1storageClass=null"
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
           },
           {
             "properties": {
               "storageClass": {
-                "properties": {
-                  "name": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1name@9"
               }
             },
             "required": [
@@ -476,308 +1080,16 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more"
-                    }
-                  ]
-                },
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.provisionerName"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name@2"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "additionalProperties": {},
@@ -810,17 +1122,130 @@
         "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1storageClass.create:t"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1storageClass.provisionerName:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t@2"
+            }
+          ]
+        }
+      ]
+    },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -842,81 +1267,934 @@
       ],
       "type": "object"
     },
-    "constrains/image+image=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "image": {
-                "enum": [
-                  null
-                ]
-              }
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@7"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1priorityClass+priorityClass.name"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@8"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@6"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1priorityClass.name@3"
+        }
+      ]
+    },
+    "constrains/name": {
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1name~1not~1object@2"
             },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "image": {}
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x3a@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
+                  }
+                ]
               },
-              "required": [
-                "image"
-              ],
+              "propertyNames": {
+                "$ref": "#/definitions/constrains~1name~1anyOf~1string;pattern-x20-x2d"
+              },
               "type": "object"
             }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name/allOf/array+not/array": {
+      "allOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1array"
+          }
+        }
+      ]
+    },
+    "constrains/name/allOf/array+not/array@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/name/allOf/array+not/array@3": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1array"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array@4"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/name/allOf/array+not/array@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/name/allOf/not/object+object": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array@4"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1name~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/name/allOf/not/object+object@2": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1object@3"
+              }
+            ]
+          },
+          "propertyNames": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/name/allOf/not/object+object@3": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1name~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@3"
+          }
+        }
+      ]
+    },
+    "constrains/name/allOf/not/object+object@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1name~1object@3"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+              }
+            ]
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/name/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/name/array": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1array@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1object@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
           }
         ]
+      },
+      "type": "array"
+    },
+    "constrains/name/array@2": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1name~1array"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1object@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/name/array@3": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/name/not/object": {
+      "not": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1name~1object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1array@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+            }
+          ]
+        },
+        "propertyNames": {
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+        },
+        "type": "object"
       }
     },
-    "constrains/nameOverride": {
+    "constrains/name/not/object@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@2"
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1string;pattern-x3a@2"
+            }
+          ]
+        },
+        "propertyNames": {
+          "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+        },
+        "type": "object"
       }
+    },
+    "constrains/name/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/name/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1name~1array"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1object@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/name/object@2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1array@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1object@3"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/name/object@3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/name/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "type": "string"
+    },
+    "constrains/name/string;pattern-x20-x2d@2": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/name/string;pattern-x20-x2d@3": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/name/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/name/string;pattern-x3a-x2d": {
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/name/string;pattern-x3a@2": {
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "type": "string"
+    },
+    "constrains/name@10": {
+      "properties": {
+        "name": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@2": {
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  false,
+                  {
+                    "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x3a@2"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1not~1object@2"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@3": {
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name~1object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1array@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1name~1array"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1object@2"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1name~1array@2"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1name~1array"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1object@2"
+                            }
+                          ]
+                        },
+                        "propertyNames": {
+                          "$ref": "#/definitions/constrains~1name~1anyOf~1string;pattern-x20-x2d"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1name~1object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x3a"
+                  }
+                ]
+              },
+              "propertyNames": {
+                "$ref": "#/definitions/constrains~1name~1anyOf~1string;pattern-x20-x2d"
+              },
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1not~1object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@4": {
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name~1object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1array@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1array"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1object@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1name~1array@2"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1name~1object"
+                        }
+                      },
+                      {
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1array"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x3a-x2d"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1object@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1name~1allOf~1array+not~1array"
+                            }
+                          ]
+                        },
+                        "propertyNames": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+                            }
+                          ]
+                        },
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "propertyNames": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name~1string;pattern-x20-x2d"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1name~1not~1object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@5": {
+      "properties": {
+        "name": {
+          "maxItems": 1,
+          "maxProperties": 1
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@6": {
+      "properties": {
+        "name": {
+          "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@7": {
+      "properties": {
+        "name": {
+          "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@8": {
+      "properties": {
+        "name": {
+          "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/name@9": {
+      "properties": {
+        "name": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
     },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
+          "$ref": "#/definitions/constrains~1nameOverride"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t+storageClass.create:t+storageClass.provisionerName+1more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.provisionerName@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        }
-      ]
+    "constrains/nameOverride+nameOverride:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+      }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -927,14 +2205,350 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride@2": {
+    "constrains/persistence.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+      }
+    },
+    "constrains/persistence.enabled:t+persistence.existingClaim+persistence.existingClaim:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.existingClaim"
+        }
+      ]
+    },
+    "constrains/persistence.enabled:t@2": {
       "properties": {
-        "nameOverride": {
-          "type": "string"
+        "persistence": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
       },
       "required": [
-        "nameOverride"
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.existingClaim": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.existingClaim@2"
+      }
+    },
+    "constrains/persistence.existingClaim:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.existingClaim:t@2"
+      }
+    },
+    "constrains/persistence.existingClaim:t@2": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "existingClaim": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "existingClaim"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.existingClaim@2": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "existingClaim": {
+              "pattern": "\\{\\{",
+              "type": "string"
+            }
+          },
+          "required": [
+            "existingClaim"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.existingClaim@3": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "existingClaim": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "existingClaim"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+      }
+    },
+    "constrains/persistence.storageClass+persistence.storageClass=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+        }
+      ]
+    },
+    "constrains/persistence.storageClass:t": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass=null": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1storageClass=null"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass@2": {
+      "not": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "storageClass": {}
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/persistence.storageClass@3": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass+priorityClass.name": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1priorityClass.name"
+          },
+          {
+            "$ref": "#/definitions/constrains~1priorityClass.name@6"
+          }
+        ]
+      }
+    },
+    "constrains/priorityClass.create:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1priorityClass.create:t@2"
+      }
+    },
+    "constrains/priorityClass.create:t@2": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name": {
+      "not": {
+        "properties": {
+          "priorityClass": {
+            "properties": {
+              "name": {}
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "priorityClass"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/priorityClass.name:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1priorityClass.name:t@2"
+      }
+    },
+    "constrains/priorityClass.name:t@2": {
+      "properties": {
+        "priorityClass": {
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@2": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@3"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@3": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@6"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@4": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@7"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@5": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@8"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@6": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@5"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@7": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@4"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@8": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name"
+        }
+      },
+      "required": [
+        "priorityClass"
+      ],
+      "type": "object"
+    },
+    "constrains/priorityClass.name@9": {
+      "properties": {
+        "priorityClass": {
+          "$ref": "#/definitions/constrains~1name@2"
+        }
+      },
+      "required": [
+        "priorityClass"
       ],
       "type": "object"
     },
@@ -949,202 +2563,216 @@
       ],
       "type": "object"
     },
-    "constrains/storageClass+storageClass.create:t+storageClass.name": {
-      "anyOf": [
+    "constrains/service+service.type+service.type=null": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1storageClass.create:t"
+          "$ref": "#/definitions/constrains~1service.type"
         },
         {
-          "$ref": "#/definitions/constrains~1storageClass.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name"
+          "not": {
+            "$ref": "#/definitions/constrains~1service.type+service.type=null"
+          }
         }
       ]
     },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/anyOf/string;pattern-x20-x2d": {
-      "anyOf": [
+    "constrains/service+service.type+service.type=null@2": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d@2"
+          "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
         },
         {
-          "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
+          "not": {
+            "$ref": "#/definitions/constrains~1service.type+service.type=null"
+          }
         }
       ]
     },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/not/object": {
-      "not": {
-        "additionalProperties": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-            },
-            {
-              "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a@2"
+    "constrains/service+service=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "service": {
+              "enum": [
+                null
+              ]
             }
-          ]
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
         },
-        "propertyNames": {
-          "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
+        {
+          "not": {
+            "properties": {
+              "service": {}
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/service.type": {
+      "not": {
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
         },
+        "required": [
+          "service"
+        ],
         "type": "object"
       }
     },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/null,boolean,number": {
-      "type": [
-        "null",
-        "boolean",
-        "number"
-      ]
-    },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
-      "type": "string"
-    },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-      "type": "string"
-    },
-    "constrains/storageClass+storageClass.create:t+storageClass.name/string;pattern-x3a@2": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
-      "type": "string"
-    },
-    "constrains/storageClass+storageClass.create:t+storageClass.name@2": {
+    "constrains/service.type+service.type=null": {
       "anyOf": [
         {
           "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name"
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
               }
-            ]
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
           }
         },
         {
-          "$ref": "#/definitions/constrains~1storageClass.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@3"
-        },
-        {
           "properties": {
-            "storageClass": {
+            "service": {
               "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          false,
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a@2"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-                          }
-                        ]
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1not~1object"
-                    }
+                "type": {
+                  "enum": [
+                    null
                   ]
                 }
               },
               "required": [
-                "name"
+                "type"
               ],
               "type": "object"
             }
           },
           "required": [
-            "storageClass"
+            "service"
           ],
           "type": "object"
-        },
+        }
+      ]
+    },
+    "constrains/service.type+service.type=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1service.type+service.type=null"
+      }
+    },
+    "constrains/storageClass+storageClass.create:t+storageClass.name": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1storageClass.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1storageClass.name@6"
-        },
-        {
-          "properties": {
-            "storageClass": {
+          "anyOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1storageClass.name@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1storageClass.name"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@7"
+            },
+            {
               "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1not~1object"
-                    },
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1anyOf~1string;pattern-x20-x2d"
-                      },
-                      "type": "object"
-                    }
-                  ]
+                "storageClass": {
+                  "$ref": "#/definitions/constrains~1name@2"
                 }
               },
               "required": [
-                "name"
+                "storageClass"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@3"
+            },
+            {
+              "properties": {
+                "storageClass": {
+                  "$ref": "#/definitions/constrains~1name"
+                }
+              },
+              "required": [
+                "storageClass"
               ],
               "type": "object"
             }
-          },
-          "required": [
-            "storageClass"
-          ],
-          "type": "object"
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1storageClass.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1storageClass.name"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1storageClass.create:t@2"
         }
       ]
     },
@@ -1183,525 +2811,10 @@
         "type": "object"
       }
     },
-    "constrains/storageClass.name/allOf/array+not/array": {
-      "allOf": [
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-          }
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/array+not/array@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              false,
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/array+not/array@3": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array@4"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/array+not/array@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/not/object+object": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array@4"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-          }
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/not/object+object@2": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-              }
-            ]
-          },
-          "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-          }
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/not/object+object@3": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-          }
-        }
-      ]
-    },
-    "constrains/storageClass.name/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              false,
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-              }
-            ]
-          },
-          "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/storageClass.name/array": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/storageClass.name/array@2": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/storageClass.name/array@3": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/storageClass.name/not/object": {
-      "not": {
-        "additionalProperties": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1storageClass.name~1object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1storageClass.name~1array"
-            },
-            {
-              "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-            },
-            {
-              "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-            }
-          ]
-        },
-        "propertyNames": {
-          "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-        },
-        "type": "object"
-      }
-    },
-    "constrains/storageClass.name/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/storageClass.name/object@2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1array@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1object@3"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/storageClass.name/object@3": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/storageClass.name/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/storageClass.name/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
     "constrains/storageClass.name@2": {
       "properties": {
         "storageClass": {
-          "properties": {
-            "name": {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.name~1object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.name~1array"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1storageClass.name~1array"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-                                }
-                              ]
-                            },
-                            "propertyNames": {
-                              "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1anyOf~1string;pattern-x20-x2d"
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1storageClass.name~1object"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x3a"
-                      }
-                    ]
-                  },
-                  "propertyNames": {
-                    "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1anyOf~1string;pattern-x20-x2d"
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1storageClass.name~1not~1object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1name@6"
         }
       },
       "required": [
@@ -1712,120 +2825,7 @@
     "constrains/storageClass.name@3": {
       "properties": {
         "storageClass": {
-          "properties": {
-            "name": {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.name~1object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.name~1array"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x20-x2d"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1storageClass.name~1array"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1storageClass.name~1object"
-                            }
-                          },
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1not~1object+object@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1string;pattern-x3a-x2d"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1object@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass.name~1allOf~1array+not~1array"
-                                }
-                              ]
-                            },
-                            "propertyNames": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-                                }
-                              ]
-                            },
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "propertyNames": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1string;pattern-x20-x2d"
-                      }
-                    ]
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1storageClass.name~1not~1object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1name@7"
         }
       },
       "required": [
@@ -1836,16 +2836,7 @@
     "constrains/storageClass.name@4": {
       "properties": {
         "storageClass": {
-          "properties": {
-            "name": {
-              "maxItems": 1,
-              "maxProperties": 1
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1name@8"
         }
       },
       "required": [
@@ -1856,16 +2847,7 @@
     "constrains/storageClass.name@5": {
       "properties": {
         "storageClass": {
-          "properties": {
-            "name": {
-              "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1name@3"
         }
       },
       "required": [
@@ -1876,16 +2858,7 @@
     "constrains/storageClass.name@6": {
       "properties": {
         "storageClass": {
-          "properties": {
-            "name": {
-              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1name@5"
         }
       },
       "required": [
@@ -1896,16 +2869,7 @@
     "constrains/storageClass.name@7": {
       "properties": {
         "storageClass": {
-          "properties": {
-            "name": {
-              "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1name@4"
         }
       },
       "required": [
@@ -1920,15 +2884,10 @@
     },
     "constrains/storageClass.provisionerName:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
+        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@2"
       }
     },
     "constrains/storageClass.provisionerName:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1storageClass.provisionerName:t@3"
-      }
-    },
-    "constrains/storageClass.provisionerName:t@3": {
       "properties": {
         "storageClass": {
           "$ref": "#/definitions/constrains~1provisionerName:t"
@@ -1951,6 +2910,19 @@
             "provisionerName"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "storageClass"
+      ],
+      "type": "object"
+    },
+    "constrains/storageClass=null": {
+      "properties": {
+        "storageClass": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
@@ -1986,7 +2958,7 @@
     "values/anyOf/null,boolean,number+string": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
+          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
         },
         {
           "not": {
@@ -1999,60 +2971,7 @@
     "values/anyOf/null;name-must-be-unique+object+string+string;name-must-be-unique+4more": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-              }
-            }
-          ],
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-          "type": "string"
+          "$ref": "#/definitions/values~1string;name-must-be-unique"
         },
         {
           "not": {
@@ -2062,67 +2981,21 @@
           "type": "string"
         },
         {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^(null|Null|NULL)[ \\t]+#"
-              }
-            },
-            {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-              }
-            }
-          ],
-          "type": "string"
+          "$ref": "#/definitions/values~1string@2"
         },
         {
           "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
           "type": "string"
         },
         {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "maxItems": 0,
-                "type": "array"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "$ref": "#/definitions/values~1string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "maxProperties": 0,
-                "type": "object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/values~1string"
-          },
-          "type": "object"
+          "$ref": "#/definitions/values~1object"
         },
         {
           "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
         },
         {
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-          "type": "null"
+          "$ref": "#/definitions/values~1null;name-must-be-unique"
         },
         {
           "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
@@ -2131,64 +3004,107 @@
       ],
       "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
     },
-    "values/not/array": {
-      "description": "Set a StorageClass name\nIgnored if storageClass.create is false",
-      "not": {
-        "items": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "$ref": "#/definitions/values~1anyOf~1null,boolean,number+string"
-              },
-              "propertyNames": {
-                "not": {
-                  "pattern": "[^A-Za-z0-9_./+-]"
-                },
-                "type": "string"
-              },
-              "type": "object"
+    "values/array": {
+      "items": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "$ref": "#/definitions/values~1anyOf~1null,boolean,number+string"
             },
-            {
-              "$ref": "#/definitions/constrains~1storageClass+storageClass.create:t+storageClass.name~1null,boolean,number"
-            },
-            {
-              "items": {
-                "$ref": "#/definitions/values~1anyOf~1null,boolean,number+string"
-              },
-              "type": "array"
-            },
-            {
+            "propertyNames": {
               "not": {
                 "pattern": "[^A-Za-z0-9_./+-]"
               },
               "type": "string"
-            }
-          ]
-        },
-        "type": "array"
+            },
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+          },
+          {
+            "items": {
+              "$ref": "#/definitions/values~1anyOf~1null,boolean,number+string"
+            },
+            "type": "array"
+          },
+          {
+            "not": {
+              "pattern": "[^A-Za-z0-9_./+-]"
+            },
+            "type": "string"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "values/not/array": {
+      "description": "Set a StorageClass name\nIgnored if storageClass.create is false",
+      "not": {
+        "$ref": "#/definitions/values~1array"
       }
     },
     "values/not/object": {
       "description": "Set a StorageClass name\nIgnored if storageClass.create is false",
       "not": {
-        "additionalProperties": {
-          "not": {
-            "pattern": "[^A-Za-z0-9_.$/+: \t-]"
-          },
-          "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
-          "type": "string"
-        },
-        "maxProperties": 1,
-        "minProperties": 1,
-        "propertyNames": {
-          "minLength": 1,
-          "not": {
-            "pattern": "[^A-Za-z0-9_.$/+-]"
-          },
-          "type": "string"
-        },
-        "type": "object"
+        "$ref": "#/definitions/values~1object@2"
       }
+    },
+    "values/null;name-must-be-unique": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
+    },
+    "values/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/definitions/values~1string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/values~1string"
+      },
+      "type": "object"
+    },
+    "values/object@2": {
+      "additionalProperties": {
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+        },
+        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+        "type": "string"
+      },
+      "maxProperties": 1,
+      "minProperties": 1,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "[^A-Za-z0-9_.$/+-]"
+        },
+        "type": "string"
+      },
+      "type": "object"
     },
     "values/string": {
       "allOf": [
@@ -2209,6 +3125,89 @@
         }
       ],
       "type": "string"
+    },
+    "values/string;name-must-be-unique": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
+    },
+    "values/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "when/persistence.enabled:t/then/persistence.existingClaim:t/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+      }
     }
   },
   "properties": {
@@ -2233,9 +3232,33 @@
     "imagePullSecrets": {},
     "nameOverride": {},
     "nodeSelector": {},
-    "persistence": {},
+    "persistence": {
+      "additionalProperties": {},
+      "properties": {
+        "accessMode": {},
+        "enabled": {},
+        "existingClaim": {},
+        "size": {},
+        "storageClass": {}
+      },
+      "type": "object"
+    },
+    "podSecurityContext": {},
     "priorityClass": {
-      "description": "For creating the PriorityClass automatically:"
+      "additionalProperties": {},
+      "description": "For creating the PriorityClass automatically:",
+      "properties": {
+        "create": {
+          "description": "Enable creation of a PriorityClass resource for this nfs-server-provisioner instance"
+        },
+        "name": {
+          "description": "Set a PriorityClass name to override the default name"
+        },
+        "value": {
+          "description": "PriorityClass value. The higher the value, the higher the scheduling priority"
+        }
+      },
+      "type": "object"
     },
     "rbac": {
       "additionalProperties": {},
@@ -2253,7 +3276,28 @@
       "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
     "securityContext": {},
-    "service": {},
+    "service": {
+      "additionalProperties": {},
+      "properties": {
+        "clusterIP": {},
+        "externalIPs": {},
+        "mountdNodePort": {},
+        "mountdPort": {},
+        "nfsNodePort": {},
+        "nfsPort": {},
+        "nlockmgrNodePort": {},
+        "nlockmgrPort": {},
+        "rpcbindNodePort": {},
+        "rpcbindPort": {},
+        "rquotadNodePort": {},
+        "rquotadPort": {},
+        "statdNodePort": {},
+        "statdPort": {
+          "description": "nfsNodePort:\nnlockmgrNodePort:\nmountdNodePort:\nrquotadNodePort:\nrpcbindNodePort:\nstatdNodePort:\nclusterIP:"
+        },
+        "type": {}
+      }
+    },
     "storageClass": {
       "additionalProperties": {},
       "allOf": [
@@ -2284,15 +3328,7 @@
                 "$ref": "#/definitions/constrains~1create:t"
               },
               {
-                "properties": {
-                  "name": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1name@9"
               },
               {
                 "$ref": "#/definitions/constrains~1provisionerName:t"
@@ -2318,15 +3354,7 @@
                 "$ref": "#/definitions/constrains~1provisionerName:t"
               },
               {
-                "properties": {
-                  "name": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1name@10"
               }
             ]
           },

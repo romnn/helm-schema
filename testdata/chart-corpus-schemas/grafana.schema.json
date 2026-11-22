@@ -4,183 +4,131 @@
   "allOf": [
     {
       "if": {
-        "not": {
-          "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
-            "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-                }
+                "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-              },
-              {
-                "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1persistence.type=sts"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": {
-              "$ref": "#/definitions/constrains~1useStatefulSet:t@7"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@7"
-              }
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "image": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "tag": {}
+                        "persistence": {}
                       },
                       "required": [
-                        "tag"
+                        "persistence"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "image": {
+                  {
                     "properties": {
-                      "tag": {
+                      "persistence": {
                         "enum": [
                           null
                         ]
                       }
                     },
                     "required": [
-                      "tag"
+                      "persistence"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t+useStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "tag": {}
+                          },
+                          "required": [
+                            "tag"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "image": {
+                        "properties": {
+                          "tag": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "tag"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
@@ -213,210 +161,14 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
-                }
-              }
-            }
-          },
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1createConfigmap:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              "then": {
-                "else": {
-                  "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-                },
-                "then": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "else": {
-                          "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                        },
-                        "if": {
-                          "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                        },
-                        "then": true
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              "then": {
-                "else": {
-                  "$ref": "#/definitions/constrains~1useStatefulSet:t@4"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-                },
-                "then": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "else": {
-                          "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                        },
-                        "if": {
-                          "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                        },
-                        "then": true
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/constrains~1useStatefulSet:t@4"
-                  }
-                }
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            "then": false
-          },
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1createConfigmap:t"
-            },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1nameOverride:t"
-                },
-                "then": {
-                  "else": {
-                    "$ref": "#/definitions/constrains~1useStatefulSet:t@5"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-                  },
-                  "then": {
-                    "else": {
-                      "else": {
-                        "else": {
-                          "else": {
-                            "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                          },
-                          "if": {
-                            "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                          },
-                          "then": true
-                        },
-                        "if": {
-                          "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-                        },
-                        "then": true
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/constrains~1useStatefulSet:t@5"
-                    }
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              "then": false
-            }
-          }
-        ]
+        "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "type": "string"
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+            "type": "object"
           }
         }
       }
@@ -434,7 +186,15 @@
             "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
           },
           {
-            "$ref": "#/definitions/constrains~1createConfigmap:t"
+            "properties": {
+              "createConfigmap": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "createConfigmap"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -464,41 +224,35 @@
     },
     {
       "if": {
-        "else": {
-          "$ref": "#/definitions/constrains~1useStatefulSet:t@6"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-        },
-        "then": {
-          "else": {
-            "else": {
-              "else": {
-                "else": {
-                  "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-              },
-              "then": true
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-            },
-            "then": true
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1useStatefulSet:t@6"
+          {
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
       },
       "then": {
         "additionalProperties": {},
@@ -519,85 +273,20 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-            }
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {}
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/constrains~1useStatefulSet:t"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-          },
-          "then": {
-            "else": {
-              "else": {
-                "else": {
-                  "else": {
-                    "$ref": "#/definitions/when~1persistence.type=sts~1then~1any~1else~1fail"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistence.type=statefulset"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
-              },
-              "then": true
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
-            },
-            "then": {
-              "$ref": "#/definitions/constrains~1useStatefulSet:t"
-            }
-          }
-        }
       },
       "then": {
         "additionalProperties": {},
@@ -610,42 +299,9 @@
     }
   ],
   "definitions": {
-    "constrains/createConfigmap:t": {
-      "properties": {
-        "createConfigmap": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "createConfigmap"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride:t": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride:t": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
     "constrains/persistence.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
+        "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
       }
     },
     "constrains/persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more": {
@@ -663,7 +319,7 @@
           "$ref": "#/definitions/constrains~1persistence.type=statefulset"
         },
         {
-          "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
+          "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
         },
         {
           "$ref": "#/definitions/constrains~1persistence.type=sts"
@@ -673,34 +329,29 @@
     "constrains/persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        },
+        {
           "not": {
             "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
           }
         },
         {
-          "$ref": "#/definitions/constrains~1persistence.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
+          "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
         }
       ]
     },
     "constrains/persistence.enabled:t+useStatefulSet:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
+          "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
+          "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
         }
       ]
     },
     "constrains/persistence.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1persistence.enabled:t@3"
-      }
-    },
-    "constrains/persistence.enabled:t@3": {
       "properties": {
         "persistence": {
           "properties": {
@@ -802,27 +453,14 @@
       "type": "object"
     },
     "constrains/useStatefulSet:t": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
+      "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
     },
     "constrains/useStatefulSet:t@2": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
+      "not": {
+        "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
+      }
     },
     "constrains/useStatefulSet:t@3": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
-    },
-    "constrains/useStatefulSet:t@4": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
-    },
-    "constrains/useStatefulSet:t@5": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
-    },
-    "constrains/useStatefulSet:t@6": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
-    },
-    "constrains/useStatefulSet:t@7": {
-      "$ref": "#/definitions/when~1useStatefulSet:t~1then~1any~1else~1fail"
-    },
-    "constrains/useStatefulSet:t@8": {
       "properties": {
         "useStatefulSet": {
           "$ref": "#/definitions/t"
@@ -870,19 +508,42 @@
         "password": {}
       }
     },
-    "when/persistence.type=sts/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1persistence.type=sts"
+    "when/persistence.enabled:t/then/persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1useStatefulSet:t"
       },
-      "then": true
-    },
-    "when/useStatefulSet:t/then/any/else/fail": {
-      "else": false,
       "if": {
-        "$ref": "#/definitions/constrains~1useStatefulSet:t@8"
+        "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
       },
-      "then": true
+      "then": {
+        "else": {
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/constrains~1persistence.type=sts"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1persistence.type=statefulset"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1persistence.type=StatefulSet"
+            },
+            "then": true
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1useStatefulSet:t"
+        }
+      }
     }
   },
   "properties": {

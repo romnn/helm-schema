@@ -4,13 +4,14 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1udp:t~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1udp:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -24,13 +25,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1udp:t~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1udp:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -60,7 +62,7 @@
                 "$ref": "#/definitions/constrains~1nameOverride@2"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride:t"
@@ -82,7 +84,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride:t"
@@ -98,7 +100,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -117,7 +119,7 @@
                 "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -139,7 +141,7 @@
                 "$ref": "#/definitions/constrains~1nameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride:t"
@@ -157,7 +159,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               }
             ]
           },
@@ -173,7 +175,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
+                "$ref": "#/definitions/constrains~1udp:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride:t"
@@ -189,13 +191,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1udp:t~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1udp:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -293,6 +296,9 @@
       "type": "object"
     },
     "constrains/udp:t": {
+      "$ref": "#/definitions/constrains~1udp:t@2"
+    },
+    "constrains/udp:t@2": {
       "properties": {
         "udp": {
           "$ref": "#/definitions/t"
@@ -327,13 +333,6 @@
           "const": true
         }
       ]
-    },
-    "when/udp:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1udp:t"
-      },
-      "then": true
     }
   },
   "properties": {

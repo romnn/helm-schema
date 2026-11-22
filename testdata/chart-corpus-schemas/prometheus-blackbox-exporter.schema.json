@@ -4,49 +4,45 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "serviceMonitor": {
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "minProperties": 1,
-                      "type": "object"
+        "properties": {
+          "serviceMonitor": {
+            "properties": {
+              "enabled": {
+                "anyOf": [
+                  {
+                    "minProperties": 1,
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "const": 0
                     },
-                    {
-                      "not": {
-                        "const": 0
-                      },
-                      "type": "number"
-                    },
-                    {
-                      "minLength": 1,
-                      "type": "string"
-                    },
-                    {
-                      "minItems": 1,
-                      "type": "array"
-                    },
-                    {
-                      "const": true
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceMonitor"
-          ],
-          "type": "object"
+                    "type": "number"
+                  },
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  {
+                    "const": true
+                  }
+                ]
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
         },
-        "then": true
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},

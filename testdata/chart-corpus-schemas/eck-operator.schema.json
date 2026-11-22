@@ -4,84 +4,80 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.policies+config.policies.passwords+config.policies.passwords?+1more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.policies+config.policies?"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
       },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "webhook": {}
-              },
-              "required": [
-                "webhook"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "webhook": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "webhook"
-            ],
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
             "type": "object"
           }
-        ]
-      },
-      "then": false
+        }
+      }
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1config.policies?@3"
+            "$ref": "#/definitions/constrains~1extraObjects@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1extraObjects:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraObjects": {
+            "description": "extraObjects allows injecting additional Kubernetes resources into the chart.\nThese resources will be created/deleted alongside the chart release.\nThe value can be a list or a map of strings, each string is a YAML manifest.\nHelm templating is supported within each manifest.\nExample (list):\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value\nExample (map):\nextraObjects:\nmyConfigMap: |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value",
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1installCRDs+installCRDs=null"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1installCRDs:t"
+            },
+            "then": true
+          },
+          {
+            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "eck-operator-crds": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config.policies?@2"
           },
           {
             "$ref": "#/definitions/constrains~1config"
@@ -106,164 +102,30 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.manifestGen:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1webhook.enabled:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.manifestGen:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhook.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.manifestGen:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces"
-              },
-              {
-                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.manifestGen:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
             "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1extraObjects@2"
             }
           },
           {
-            "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1extraObjects@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1extraObjects:t"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1global.manifestGen:t@2"
-          },
-          "then": false
-        }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values.",
-            "type": "string"
+          "extraObjects": {
+            "description": "extraObjects allows injecting additional Kubernetes resources into the chart.\nThese resources will be created/deleted alongside the chart release.\nThe value can be a list or a map of strings, each string is a YAML manifest.\nHelm templating is supported within each manifest.\nExample (list):\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value\nExample (map):\nextraObjects:\nmyConfigMap: |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
           }
         }
       }
@@ -272,323 +134,28 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1config.metrics+config.metrics=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "secureMode": {}
-                          },
-                          "required": [
-                            "secureMode"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "metrics": {
-                        "$ref": "#/definitions/constrains~1secureMode=null"
-                      }
-                    },
-                    "required": [
-                      "metrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "fullnameOverride is the full name for the deployment. Leave empty to let Helm generate a name using chart values.",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config+config=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.metrics+config.metrics=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "softMultiTenancy": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "softMultiTenancy"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "softMultiTenancy": {}
-              },
-              "required": [
-                "softMultiTenancy"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "policies": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "policies"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "policies": {}
-                      },
-                      "required": [
-                        "policies"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.policies?@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1config+config=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride"
-          },
-          {
-            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1installCRDs+installCRDs=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1eck-operator-crds!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1config.policies?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config.policies"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1config.policies.passwords?"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1config.policies"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1config.policies?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config.policies.passwords"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1config"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
             "properties": {
               "image": {
+                "properties": {
+                  "digest": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "digest"
+                ],
                 "type": "object"
               }
-            }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords"
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "image": {
-              "properties": {
-                "digest": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "digest"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "image"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1config"
-          },
-          "then": {
-            "else": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1config.policies?@3"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1config.policies"
-            },
-            "then": {
-              "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1config.policies?@3"
-                },
-                "then": {
-                  "else": true,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1config.policies.passwords?"
-                  },
-                  "then": false
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1config.policies.passwords"
-              },
-              "then": true
-            }
-          }
-        }
       },
       "then": {
         "if": {
@@ -632,15 +199,922 @@
     },
     {
       "if": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "managedNamespaces": {
+            "description": "managedNamespaces is the set of namespaces that the operator manages. Leave empty to manage all namespaces.\nMutually exclusive with managedNamespaceSelector.",
+            "type": [
+              "array",
+              "integer",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords"
+          },
+          {
+            "properties": {
+              "tracing": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            },
+            "required": [
+              "tracing"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tracing": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "description": "config is a map of APM Server configuration variables that should be set in the environment.",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "fullnameOverride is the full name for the deployment. Leave empty to let Helm generate a name using chart values.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config.metrics+config.metrics=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "metrics": {
+                              "properties": {
+                                "secureMode": {}
+                              },
+                              "required": [
+                                "secureMode"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "metrics"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "metrics": {
+                            "$ref": "#/definitions/constrains~1secureMode=null"
+                          }
+                        },
+                        "required": [
+                          "metrics"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceMonitor": {}
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1global.manifestGen:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "refs": {}
+              },
+              "required": [
+                "refs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "telemetry": {}
+              },
+              "required": [
+                "telemetry"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "telemetry": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "telemetry"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "managedNamespaces": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "managedNamespaces"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "managedNamespaces": {}
+                        },
+                        "required": [
+                          "managedNamespaces"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "managedNamespaces": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "managedNamespaces"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "webhook": {}
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "policies": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "policies"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "policies": {}
+                          },
+                          "required": [
+                            "policies"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.policies?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "softMultiTenancy": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "softMultiTenancy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "refs": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "refs"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+config.metrics.secureMode+config.policies+config.policies.passwords+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceMonitor": {
+                          "properties": {
+                            "caMountDirectory": {}
+                          },
+                          "required": [
+                            "caMountDirectory"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "caMountDirectory": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "caMountDirectory"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "podMonitor": {}
+              },
+              "required": [
+                "podMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "tracing": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tracing"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {}
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics+config.metrics=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config.policies"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.policies.passwords?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.policies?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "policies": {
+                              "properties": {
+                                "passwords": {}
+                              },
+                              "required": [
+                                "passwords"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "policies"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "policies": {
+                            "properties": {
+                              "passwords": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "passwords"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "policies"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "softMultiTenancy": {}
+              },
+              "required": [
+                "softMultiTenancy"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "webhook": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more~1else~1webhook"
+            },
+            "if": {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "enableLeaderElection": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "enableLeaderElection"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more~1else~1webhook"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config.policies+config.policies?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "tracing": {}
+              },
+              "required": [
+                "tracing"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1config+config.metrics.secureMode+config.policies+config.policies.passwords+3more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "config values for the operator.",
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "properties": {
+                  "secureMode": {
+                    "additionalProperties": {},
+                    "description": "secureMode contains the options for enabling and configuring RBAC and TLS/HTTPs for the metrics endpoint.",
+                    "properties": {
+                      "tls": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs+installCRDs=null"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "eck-operator-crds": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "eck-operator-crds"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "additionalProperties": {},
+            "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
+            "properties": {
+              "caMountDirectory": {
+                "description": "caMountDirectory is the directory at which the CA certificate is mounted within the Prometheus pod.\n* You should only need to adjust this if you are *not* using the Prometheus operator.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1config.policies"
           },
           {
-            "$ref": "#/definitions/constrains~1config.policies.passwords?"
+            "$ref": "#/definitions/constrains~1config.policies.passwords?@2"
           },
           {
-            "$ref": "#/definitions/constrains~1config.policies?@3"
+            "$ref": "#/definitions/constrains~1config.policies?@2"
           },
           {
             "$ref": "#/definitions/constrains~1config"
@@ -670,229 +1144,58 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "telemetry": {}
-              },
-              "required": [
-                "telemetry"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "telemetry": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "telemetry"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
           "else": {
-            "else": {
-              "else": {
-                "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
-              },
-              "then": true
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1fail"
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
-              },
-              "then": true
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
-          }
-        },
-        "if": {
-          "properties": {
-            "config": {
-              "properties": {
-                "validateStorageClass": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "validateStorageClass"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "config"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1kubeAPIServerIP:t~1then~1managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t~1else~1any"
-          }
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
-        },
-        "then": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1installCRDs+installCRDs=null"
-            },
-            "then": true
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1installCRDs:t"
-          },
-          "then": true
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "eck-operator-crds": {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1webhook.enabled:t"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1nameOverride"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.manifestGen:t"
-          },
-          {
             "$ref": "#/definitions/constrains~1nameOverride:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "tracing": {
-              "$ref": "#/definitions/constrains~1enabled:t"
-            }
           },
-          "required": [
-            "tracing"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
           "if": {
-            "$ref": "#/definitions/constrains~1config"
+            "$ref": "#/definitions/constrains~1fullnameOverride:t"
           },
           "then": {
             "else": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1config.policies?@3"
-              },
-              "then": false
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             "if": {
-              "$ref": "#/definitions/constrains~1config.policies"
+              "$ref": "#/definitions/constrains~1global.manifestGen:t"
             },
             "then": {
-              "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1config.policies?@3"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
                 },
-                "then": {
-                  "else": true,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1config.policies.passwords?"
-                  },
-                  "then": false
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride:t@2"
                 }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1config.policies.passwords"
-              },
-              "then": true
+              ]
             }
           }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "tracing": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "description": "config is a map of APM Server configuration variables that should be set in the environment.",
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
+          "nameOverride": {
+            "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
           }
         }
       }
@@ -901,203 +1204,45 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1config.policies+config.policies.passwords+config.policies.passwords?+1more"
+            "$ref": "#/definitions/when~1config.metrics.secureMode.tls.insecureSkipVerify:t~1then~1config.metrics.secureMode.tls+config.metrics.secureMode.tls.insecureSkipVerify?+3more~1else~1any"
           },
           {
-            "$ref": "#/definitions/constrains~1config.policies+config.policies?"
+            "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t"
           },
           {
-            "$ref": "#/definitions/constrains~1config"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.policies"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.policies.passwords?"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.policies?@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "policies": {
-                          "properties": {
-                            "passwords": {}
-                          },
-                          "required": [
-                            "passwords"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "policies"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "policies": {
-                        "properties": {
-                          "passwords": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "passwords"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "policies"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "tracing": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "tracing"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "tracing": {}
-              },
-              "required": [
-                "tracing"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "refs": {}
-              },
-              "required": [
-                "refs"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "refs": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "refs"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1installCRDs:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride"
-          },
-          {
-            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
+            "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
           }
         ]
       },
       "then": {
-        "$ref": "#/definitions/when~1eck-operator-crds!=null~1then~1fail"
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "config values for the operator.",
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "properties": {
+                  "secureMode": {
+                    "additionalProperties": {},
+                    "description": "secureMode contains the options for enabling and configuring RBAC and TLS/HTTPs for the metrics endpoint.",
+                    "properties": {
+                      "tls": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "caMountDirectory": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   ],
@@ -1113,31 +1258,96 @@
       ],
       "type": "object"
     },
-    "constrains/config+config=null": {
+    "constrains/config+config.metrics.secureMode+config.policies+config.policies.passwords+3more": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "config": {}
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
             },
-            "required": [
-              "config"
-            ],
-            "type": "object"
+            {
+              "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?+1more"
+        }
+      ]
+    },
+    "constrains/config+config.policies+config.policies.passwords": {
+      "allOf": [
+        {
+          "else": {
+            "$ref": "#/definitions/constrains~1config.policies?"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1config.policies"
+          },
+          "then": {
+            "else": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1config.policies?@2"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1config.policies.passwords?"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1config.policies.passwords"
+            },
+            "then": true
           }
         },
         {
-          "properties": {
-            "config": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "config"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1config"
+        }
+      ]
+    },
+    "constrains/config+config.policies+config.policies.passwords+config.policies.passwords?": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1config.policies.passwords?"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1config.policies"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1config.policies?"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config.policies.passwords"
+        }
+      ]
+    },
+    "constrains/config+config.policies+config.policies.passwords+config.policies.passwords?+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1config.policies+config.policies?"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config"
+        }
+      ]
+    },
+    "constrains/config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/when~1config.metrics.secureMode.tls.insecureSkipVerify:t~1then~1config.metrics.secureMode.tls+config.metrics.secureMode.tls.insecureSkipVerify?+3more~1else~1any"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
         }
       ]
     },
@@ -1165,7 +1375,17 @@
         {
           "properties": {
             "config": {
-              "$ref": "#/definitions/constrains~1metrics=null"
+              "properties": {
+                "metrics": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
             }
           },
           "required": [
@@ -1174,6 +1394,190 @@
           "type": "object"
         }
       ]
+    },
+    "constrains/config.metrics.secureMode.enabled:t": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "$ref": "#/definitions/constrains~1enabled:t"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.metrics.secureMode.tls+config.metrics.secureMode.tls=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "config": {
+              "properties": {
+                "metrics": {
+                  "properties": {
+                    "secureMode": {
+                      "properties": {
+                        "tls": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "secureMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "config"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "config": {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "secureMode": {
+                        "properties": {
+                          "tls": {}
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "secureMode"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/config.metrics.secureMode.tls.caMountDirectory:t": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "properties": {
+                    "tls": {
+                      "properties": {
+                        "caMountDirectory": {
+                          "$ref": "#/definitions/t"
+                        }
+                      },
+                      "required": [
+                        "caMountDirectory"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.metrics.secureMode.tls.insecureSkipVerify?": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "properties": {
+                    "tls": {
+                      "required": [
+                        "insecureSkipVerify"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
     },
     "constrains/config.policies": {
       "properties": {
@@ -1194,30 +1598,10 @@
       ],
       "type": "object"
     },
-    "constrains/config.policies+config.policies.passwords+config.policies.passwords?+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1config.policies?@2"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1config.policies.passwords?"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1config.policies"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1config.policies.passwords"
-        }
-      ]
-    },
     "constrains/config.policies+config.policies?": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1config.policies?@2"
+          "$ref": "#/definitions/constrains~1config.policies?"
         },
         {
           "$ref": "#/definitions/constrains~1config.policies"
@@ -1252,6 +1636,11 @@
       "type": "object"
     },
     "constrains/config.policies.passwords?": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.policies.passwords?@2"
+      }
+    },
+    "constrains/config.policies.passwords?@2": {
       "properties": {
         "config": {
           "properties": {
@@ -1275,15 +1664,10 @@
     },
     "constrains/config.policies?": {
       "not": {
-        "$ref": "#/definitions/constrains~1config.policies?@3"
+        "$ref": "#/definitions/constrains~1config.policies?@2"
       }
     },
     "constrains/config.policies?@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1config.policies?@3"
-      }
-    },
-    "constrains/config.policies?@3": {
       "properties": {
         "config": {
           "required": [
@@ -1324,7 +1708,7 @@
     "constrains/eck-operator-crds.nameOverride:t": {
       "properties": {
         "eck-operator-crds": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -1343,6 +1727,53 @@
       ],
       "type": "object"
     },
+    "constrains/extraObjects": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1extraObjects@2"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1extraObjects@3"
+          }
+        }
+      ]
+    },
+    "constrains/extraObjects:t": {
+      "properties": {
+        "extraObjects": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "extraObjects"
+      ],
+      "type": "object"
+    },
+    "constrains/extraObjects@2": {
+      "properties": {
+        "extraObjects": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "extraObjects"
+      ],
+      "type": "object"
+    },
+    "constrains/extraObjects@3": {
+      "properties": {
+        "extraObjects": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "extraObjects"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride:t": {
       "properties": {
         "fullnameOverride": {
@@ -1355,11 +1786,6 @@
       "type": "object"
     },
     "constrains/global.manifestGen:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1global.manifestGen:t@2"
-      }
-    },
-    "constrains/global.manifestGen:t@2": {
       "properties": {
         "global": {
           "properties": {
@@ -1375,6 +1801,17 @@
       },
       "required": [
         "global"
+      ],
+      "type": "object"
+    },
+    "constrains/insecureSkipVerify:t": {
+      "properties": {
+        "insecureSkipVerify": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "insecureSkipVerify"
       ],
       "type": "object"
     },
@@ -1439,55 +1876,6 @@
       ],
       "type": "object"
     },
-    "constrains/managedNamespaces": {
-      "not": {
-        "properties": {
-          "managedNamespaces": {
-            "type": "array"
-          }
-        },
-        "required": [
-          "managedNamespaces"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/managedNamespaces+managedNamespaces=null": {
-      "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@3"
-    },
-    "constrains/managedNamespaces+managedNamespaces=null@2": {
-      "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@3"
-    },
-    "constrains/managedNamespaces+managedNamespaces=null@3": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "managedNamespaces": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "managedNamespaces"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "managedNamespaces": {}
-              },
-              "required": [
-                "managedNamespaces"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
-    },
     "constrains/managedNamespaces:t": {
       "properties": {
         "managedNamespaces": {
@@ -1496,19 +1884,6 @@
       },
       "required": [
         "managedNamespaces"
-      ],
-      "type": "object"
-    },
-    "constrains/metrics=null": {
-      "properties": {
-        "metrics": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "metrics"
       ],
       "type": "object"
     },
@@ -1524,6 +1899,9 @@
       "type": "object"
     },
     "constrains/nameOverride:t": {
+      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+    },
+    "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -1547,7 +1925,32 @@
       ],
       "type": "object"
     },
+    "constrains/serviceMonitor.enabled:t": {
+      "properties": {
+        "serviceMonitor": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceMonitor.insecureSkipVerify:t": {
+      "properties": {
+        "serviceMonitor": {
+          "$ref": "#/definitions/constrains~1insecureSkipVerify:t"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
     "constrains/softMultiTenancy.enabled:t": {
+      "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+    },
+    "constrains/softMultiTenancy.enabled:t@2": {
       "properties": {
         "softMultiTenancy": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1559,6 +1962,9 @@
       "type": "object"
     },
     "constrains/webhook.enabled:t": {
+      "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+    },
+    "constrains/webhook.enabled:t@2": {
       "properties": {
         "webhook": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1594,93 +2000,334 @@
         }
       ]
     },
-    "when/eck-operator-crds!=null/then/fail": {
-      "if": {
-        "properties": {
-          "eck-operator-crds": {
-            "not": {
-              "enum": [
-                null
+    "when/config.metrics.secureMode.tls.insecureSkipVerify:t/then/config.metrics.secureMode.tls+config.metrics.secureMode.tls.insecureSkipVerify?+3more/else/any": {
+      "else": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+          },
+          {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                  }
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                  }
+                }
               ]
             }
           }
+        ]
+      },
+      "if": {
+        "properties": {
+          "config": {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "secureMode": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/definitions/constrains~1insecureSkipVerify:t"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secureMode"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
         },
         "required": [
-          "eck-operator-crds"
+          "config"
         ],
         "type": "object"
       },
-      "then": false
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+          },
+          {
+            "else": {
+              "else": {
+                "not": {
+                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+            },
+            "then": true
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t"
+            }
+          }
+        ]
+      }
     },
-    "when/kubeAPIServerIP:t/then/managedNamespaceSelector:t+managedNamespaces:t+softMultiTenancy.enabled:t/else/any": {
+    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more/else/webhook": {
       "else": {
         "else": {
-          "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1fail"
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1webhook.enabled:t"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              "then": true
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1extraObjects:t"
+          },
+          "then": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects+webhook"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects+webhook"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1extraObjects"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              "then": true
+            }
+          }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
         },
         "then": {
-          "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
+          "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
         }
       },
       "if": {
-        "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+        "properties": {
+          "config": {
+            "properties": {
+              "validateStorageClass": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "validateStorageClass"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
+        }
+      }
+    },
+    "when/extraObjects:t/then/extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more/else/any": {
+      "else": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+        },
+        "then": {
+          "else": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
+                }
+              }
+            ]
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
+          }
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1extraObjects:t"
       },
       "then": {
         "else": {
           "else": {
-            "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1fail"
+            "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1managedNamespaces:t"
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
           },
-          "then": false
+          "then": {
+            "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1extraObjects+softMultiTenancy.enabled:t"
+          }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
         },
         "then": {
-          "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1managedNamespaces:t"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1extraObjects"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1extraObjects+softMultiTenancy.enabled:t"
+          }
         }
       }
     },
-    "when/managedNamespaces:t/then/any/else/softMultiTenancy.enabled:t": {
+    "when/managedNamespaces:t/then/any/else/extraObjects+softMultiTenancy.enabled:t": {
       "else": {
-        "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1fail"
+        "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects"
       },
       "if": {
         "$ref": "#/definitions/constrains~1managedNamespaces:t"
       },
       "then": true
     },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
+    "when/managedNamespaces:t/then/any/else/softMultiTenancy.enabled:t": {
+      "else": {
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+      },
       "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t"
+        "$ref": "#/definitions/constrains~1managedNamespaces:t"
       },
       "then": true
     },
-    "when/softMultiTenancy.enabled:t/then/any/else/fail": {
-      "else": false,
+    "when/softMultiTenancy.enabled:t/then/any/else/extraObjects": {
+      "else": {
+        "$ref": "#/definitions/constrains~1extraObjects"
+      },
       "if": {
-        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+      },
+      "then": true
+    },
+    "when/softMultiTenancy.enabled:t/then/any/else/extraObjects+webhook": {
+      "else": {
+        "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1extraObjects"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
       },
       "then": true
     },
     "when/softMultiTenancy.enabled:t/then/any/else/webhook": {
       "else": {
-        "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1fail"
+        "$ref": "#/definitions/constrains~1webhook.enabled:t"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
       },
       "then": true
     },
-    "when/webhook.enabled:t/then/any/else/fail": {
-      "else": false,
+    "when/webhook.enabled:t/then/any/else/extraObjects": {
+      "else": {
+        "$ref": "#/definitions/constrains~1extraObjects"
+      },
       "if": {
-        "$ref": "#/definitions/constrains~1webhook.enabled:t"
+        "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
       },
       "then": true
     }
@@ -1699,7 +2346,17 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1metrics=null"
+                "properties": {
+                  "metrics": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
               },
               {
                 "not": {
@@ -1802,6 +2459,17 @@
               "properties": {
                 "enabled": {
                   "description": "secureMode.enabled specifies whether to enable RBAC and TLS/HTTPs for the metrics endpoint.\n* This option makes most sense when using a ServiceMonitor to scrape the metrics and is therefore mutually exclusive with the podMonitor.enabled option.\n* This option also requires using cluster scoped resources (ClusterRole, ClusterRoleBinding) to\ngrant access to the /metrics endpoint. (createClusterScopedResources: true is required)"
+                },
+                "tls": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "caMountDirectory": {},
+                    "caSecret": {},
+                    "certificateSecret": {
+                      "description": "certificateSecret is the name of the tls secret containing the custom TLS certificate and key for the secure metrics endpoint.\n* This is an optional setting and is only required if you are using a custom TLS certificate. A self-signed certificate will be generated by default.\n* TLS secret key must be named tls.crt.\n* TLS key's secret key must be named tls.key.\n* It is assumed to be in the same namespace as the ServiceMonitor.\nexample: kubectl create secret tls eck-metrics-tls-certificate -n elastic-system \\\n--cert=/path/to/tls.crt --key=/path/to/tls.key"
+                    },
+                    "insecureSkipVerify": {}
+                  }
                 }
               },
               "type": "object"
@@ -1872,6 +2540,9 @@
       "additionalProperties": {},
       "description": "Globals meant for internal use only",
       "properties": {
+        "createOperatorNamespace": {
+          "description": "createOperatorNamespace defines whether the operator namespace manifest should be generated when in manifestGen mode.\nUsually we do want that to happen (e.g. all-in-one.yaml) but, sometimes we don't (e.g. E2E tests)."
+        },
         "manifestGen": {
           "description": "manifestGen specifies whether the chart is running under manifest generator.\nThis is used for tasks specific to generating the all-in-one.yaml file."
         }
@@ -1930,13 +2601,48 @@
       "description": "podAnnotations define the annotations that should be added to the operator pod."
     },
     "podDisruptionBudget": {
-      "description": "podDisruptionBudget configures the minimum or the maxium available pods for voluntary disruptions,\nset to either an integer (e.g. 1) or a percentage value (e.g. 25%)."
+      "additionalProperties": {},
+      "description": "podDisruptionBudget configures the minimum or the maxium available pods for voluntary disruptions,\nset to either an integer (e.g. 1) or a percentage value (e.g. 25%).",
+      "properties": {
+        "enabled": {},
+        "maxUnavailable": {},
+        "minAvailable": {
+          "description": "maxUnavailable: 3"
+        }
+      },
+      "type": "object"
     },
     "podLabels": {
       "description": "podLabels define additional labels that should be added to the operator pod."
     },
     "podMonitor": {
-      "description": "Prometheus PodMonitor configuration\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#podmonitor"
+      "additionalProperties": {},
+      "description": "Prometheus PodMonitor configuration\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#podmonitor",
+      "properties": {
+        "annotations": {
+          "description": "annotations adds additional annotations to the podMonitor"
+        },
+        "enabled": {
+          "description": "enabled determines whether a podMonitor should deployed to scrape the eck metrics.\nThis requires the prometheus operator and the config.metrics.port not to be 0"
+        },
+        "interval": {
+          "description": "interval specifies the interval at which metrics should be scraped"
+        },
+        "labels": {
+          "description": "labels adds additional labels to the podMonitor"
+        },
+        "namespace": {},
+        "podMetricsEndpointConfig": {
+          "description": "podMetricsEndpointConfig allows to add an extended configuration to the podMonitor\nhonorTimestamps: true"
+        },
+        "podTargetLabels": {
+          "description": "podTargetLabels transfers labels on the Kubernetes Pod onto the target."
+        },
+        "scrapeTimeout": {
+          "description": "scrapeTimeout specifies the timeout after which the scrape is ended"
+        }
+      },
+      "type": "object"
     },
     "podSecurityContext": {
       "description": "podSecurityContext defines the pod security context for the operator pod."
@@ -1965,16 +2671,39 @@
     "serviceAccount": {
       "additionalProperties": {},
       "properties": {
+        "annotations": {
+          "description": "annotations to add to the service account"
+        },
+        "automountServiceAccountToken": {
+          "description": "Specifies whether a service account should automount API credentials."
+        },
         "create": {
           "description": "create specifies whether a service account should be created for the operator."
         },
         "name": {
           "description": "name of the service account to use. If not set and create is true, a name is generated using the fullname template."
         }
-      }
+      },
+      "type": "object"
     },
     "serviceMonitor": {
-      "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor"
+      "additionalProperties": {},
+      "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
+      "properties": {
+        "caMountDirectory": {
+          "description": "caMountDirectory is the directory at which the CA certificate is mounted within the Prometheus pod.\n* You should only need to adjust this if you are *not* using the Prometheus operator."
+        },
+        "caSecret": {
+          "description": "namespace determines in which namespace the serviceMonitor will be deployed.\nIf not set the serviceMonitor will be created in the namespace where the Helm release is installed into\nnamespace: monitoring\ncaSecret is the name of the secret containing the custom CA certificate used to generate the custom TLS certificate for the secure metrics endpoint.\n* This *must* be the name of the secret containing the CA certificate used to sign the custom TLS certificate for the metrics endpoint.\n* This secret *must* be in the same namespace as the Prometheus instance that will scrape the metrics.\n* If using the Prometheus operator this secret must be within the `spec.secrets` field of the `Prometheus` custom resource such that it is mounted into the Prometheus pod at `caMountDirectory`, which defaults to /etc/prometheus/secrets/{secret-name}.\n* This is an optional setting and is only required if you are using a custom TLS certificate.\n* Key must be named ca.crt.\nexample: kubectl create secret generic eck-metrics-tls-ca -n monitoring \\\n--from-file=ca.crt=/path/to/ca.pem"
+        },
+        "enabled": {
+          "description": "This option requires the following settings within Prometheus to function:\n1. RBAC settings for the Prometheus instance to access the metrics endpoint.\n- nonResourceURLs:\n- /metrics\nverbs:\n- get\n2. If using the Prometheus Operator and your Prometheus instance is not in the same namespace as the operator you will need\nthe Prometheus Operator configured with the following Helm values:\nprometheus:\nprometheusSpec:\nserviceMonitorNamespaceSelector: {}\nserviceMonitorSelectorNilUsesHelmValues: false\nallows to disable the serviceMonitor, enabled by default for backwards compatibility"
+        },
+        "insecureSkipVerify": {
+          "description": "insecureSkipVerify specifies whether to skip verification of the TLS certificate for the secure metrics endpoint.\n* If this setting is set to false, then the following settings are required:\n- certificateSecret\n- caSecret"
+        },
+        "namespace": {}
+      }
     },
     "softMultiTenancy": {
       "additionalProperties": {},

@@ -4,7 +4,46 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
           {
             "not": {
               "properties": {
@@ -28,26 +67,252 @@
               "rbac"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
           {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                  }
                 ]
               }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
+            ]
           },
           {
             "not": {
@@ -59,522 +324,7 @@
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "else": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1configTarget@2"
-            },
-            "then": false
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1configTarget+configTarget=null"
-          },
-          "then": false
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1configTarget+configTarget=null"
-        },
-        "then": false
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configTarget+configTarget=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    }
-                  ]
-                },
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1nameOverride@2"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1nameOverride:t"
-                              }
-                            ]
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "properties": {
               "podPriorityClassName": {
@@ -587,6 +337,53 @@
               "podPriorityClassName"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "configTarget": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "configTarget"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "configTarget": {}
+                        },
+                        "required": [
+                          "configTarget"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "configTarget": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "configTarget"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           {
             "not": {
@@ -602,127 +399,9 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
-    "constrains/configTarget": {
-      "not": {
-        "$ref": "#/definitions/constrains~1configTarget@2"
-      }
-    },
-    "constrains/configTarget+configTarget=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "configTarget": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "configTarget"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "configTarget": {}
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/configTarget+configTarget=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1configTarget+configTarget=null"
-      }
-    },
-    "constrains/configTarget+configTarget=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1configTarget+configTarget=null"
-      }
-    },
-    "constrains/configTarget@2": {
-      "properties": {
-        "configTarget": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "configTarget"
-      ],
-      "type": "object"
-    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -736,87 +415,15 @@
     },
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -828,11 +435,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -854,7 +456,7 @@
           "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
@@ -865,15 +467,10 @@
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -897,15 +494,10 @@
     },
     "constrains/rbac.createAggregateClusterRoles:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@3"
+        "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@2"
       }
     },
     "constrains/rbac.createAggregateClusterRoles:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1rbac.createAggregateClusterRoles:t@3"
-      }
-    },
-    "constrains/rbac.createAggregateClusterRoles:t@3": {
       "properties": {
         "rbac": {
           "properties": {
@@ -925,33 +517,173 @@
       "type": "object"
     },
     "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+          "anyOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
+                        },
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1anyOf~1string;pattern-x20-x2d"
+                          },
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              false,
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x20-x2d"
+                              }
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
         }
       ]
     },
@@ -1006,143 +738,10 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2": {
-      "anyOf": [
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
-                    },
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1anyOf~1string;pattern-x20-x2d"
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          false,
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x20-x2d"
-                          }
-                        ]
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
-        }
-      ]
-    },
     "constrains/serviceAccount.create:t": {
       "not": {
         "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
       }
-    },
-    "constrains/serviceAccount.create:t+serviceAccount.name:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-        }
-      ]
     },
     "constrains/serviceAccount.create:t@2": {
       "properties": {

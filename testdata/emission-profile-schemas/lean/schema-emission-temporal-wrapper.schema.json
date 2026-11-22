@@ -156,6 +156,68 @@
     }
   ],
   "definitions": {
+    "constrains/alertmanager.enabled+alertmanager.enabled=null": {
+      "properties": {
+        "alertmanager": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.enabled:t": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.serviceAccount.create:t": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.serviceAccount.name": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
+    "constrains/alertmanager.serviceAccount.name@2": {
+      "properties": {
+        "alertmanager": {
+          "$ref": "#/definitions/constrains~1serviceAccount.name"
+        }
+      },
+      "required": [
+        "alertmanager"
+      ],
+      "type": "object"
+    },
     "constrains/backup.enabled:t": {
       "properties": {
         "backup": {
@@ -166,6 +228,1036 @@
         "backup"
       ],
       "type": "object"
+    },
+    "constrains/clusterName": {
+      "not": {
+        "properties": {
+          "clusterName": {}
+        },
+        "required": [
+          "clusterName"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true": {
+      "anyOf": [
+        {
+          "properties": {
+            "clusterName": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array"
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName"
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "clusterName": {
+                      "maxItems": 1,
+                      "maxProperties": 1
+                    }
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clusterName"
+                }
+              ]
+            },
+            {
+              "properties": {
+                "clusterName": {
+                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object"
+                }
+              },
+              "required": [
+                "clusterName"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object@2"
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1clusterName"
+                },
+                {
+                  "properties": {
+                    "clusterName": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1rbac.serviceAccountName:t@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "rbac": {
+                          "properties": {
+                            "serviceAccountName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccountName"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "rbac": {
+                              "properties": {
+                                "serviceAccountName": {
+                                  "maxItems": 1,
+                                  "maxProperties": 1
+                                }
+                              },
+                              "required": [
+                                "serviceAccountName"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "rbac"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1rbac.serviceAccountName"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "rbac": {
+                              "properties": {
+                                "serviceAccountName": {
+                                  "enum": [
+                                    null
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "serviceAccountName"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "rbac"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1rbac.serviceAccountName"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object@2"
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "enum": [
+                            false
+                          ]
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "type": "null"
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array"
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1rbac.serviceAccountName"
+                },
+                {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "serviceAccountName": {
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "serviceAccountName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1rbac.serviceAccountName:t@2"
+            },
+            {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "serviceAccountName": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more~1string;pattern-x09-x"
+                    }
+                  },
+                  "required": [
+                    "serviceAccountName"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1rbac.serviceAccountName:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object@2"
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "properties": {
+                                    "fullnameOverride": {
+                                      "maxItems": 1,
+                                      "maxProperties": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "fullnameOverride"
+                                  ],
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                                }
+                              ]
+                            },
+                            {
+                              "properties": {
+                                "fullnameOverride": {
+                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object"
+                                }
+                              },
+                              "required": [
+                                "fullnameOverride"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "type": "null"
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "properties": {
+                                    "fullnameOverride": {
+                                      "enum": [
+                                        null
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "fullnameOverride"
+                                  ],
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "fullnameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array"
+                            }
+                          },
+                          "required": [
+                            "fullnameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride=false+nameOverride=null+nameOverride=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=false+nodeGroup=null+nodeGroup=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=false+nodeGroup=null+nodeGroup=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1rbac.serviceAccountName:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "properties": {
+                        "fullnameOverride": {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more~1string;pattern-x09-x"
+                        }
+                      },
+                      "required": [
+                        "fullnameOverride"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride=false+nameOverride=null+nameOverride=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nodeGroup@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nodeGroup@2"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more/string;pattern-x09-x": {
+      "pattern": "^(?:(?:(?:(?:[\\x09\\x20-\\x21\\x23-\\x3b\\x3d-\\x5b\\x5d-\\x7e]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*(?:(?:[\\x09\\x20\\x22\\x27\\x30\\x4c\\x4e\\x50\\x5c\\x5f\\x61-\\x62\\x65-\\x66\\x6e\\x72\\x74\\x76]|(?:(?:[\\x78]|(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x44\\x64][\\x30-\\x37])|(?:(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x30-\\x39\\x41-\\x43\\x45-\\x46\\x61-\\x63\\x65-\\x66]|(?:[\\x55][\\x30][\\x30][\\x31][\\x30]|[\\x55][\\x30][\\x30][\\x30][\\x31-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66][\\x30-\\x39\\x41-\\x46\\x61-\\x66])|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])))*(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/anyOf/array": {
+      "anyOf": [
+        {
+          "additionalItems": false,
+          "items": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x"
+            }
+          ],
+          "minItems": 4,
+          "type": "array"
+        },
+        {
+          "additionalItems": false,
+          "items": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x"
+            }
+          ],
+          "minItems": 2,
+          "type": "array"
+        },
+        {
+          "additionalItems": false,
+          "items": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x"
+            }
+          ],
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "additionalItems": false,
+          "items": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+string;pattern-x09-x"
+            }
+          ],
+          "minItems": 3,
+          "type": "array"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@5"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/anyOf/array+null,boolean,number+object+string;pattern-x09-x": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+null,boolean,number+object+string;pattern-x09-x@2"
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+          },
+          "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+null,boolean,number+object+string;pattern-x09-x@2"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/anyOf/array+null,boolean,number+object+string;pattern-x09-x@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/anyOf/array+string;pattern-x09-x": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@2"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/anyOf/array+string;pattern-x09-x@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1array@2"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/anyOf/string;pattern-x09-x": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@2"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/array": {
+      "additionalItems": false,
+      "items": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1string;pattern-x09-x"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1string;pattern-x09-x"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1string;pattern-x09-x"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+            }
+          ]
+        }
+      ],
+      "minItems": 4,
+      "type": "array"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/array@2": {
+      "additionalItems": false,
+      "items": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1string;pattern-x09-x"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1string;pattern-x09-x"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+            }
+          ]
+        }
+      ],
+      "minItems": 3,
+      "type": "array"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/array@3": {
+      "additionalItems": false,
+      "items": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1string;pattern-x09-x"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+            }
+          ]
+        }
+      ],
+      "minItems": 2,
+      "type": "array"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/array@4": {
+      "additionalItems": false,
+      "items": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+            }
+          ]
+        }
+      ],
+      "minItems": 1,
+      "type": "array"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/array@5": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+      },
+      "type": "object"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/object@2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "additionalProperties": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+null,boolean,number+object+string;pattern-x09-x"
+            },
+            "propertyNames": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+            },
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+          },
+          {
+            "items": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array+null,boolean,number+object+string;pattern-x09-x"
+            },
+            "type": "array"
+          },
+          {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x"
+      },
+      "type": "object"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/string;pattern-x09-x": {
+      "pattern": "^(?:(?:(?:(?:[\\x09\\x20-\\x21\\x23-\\x3b\\x3d-\\x5b\\x5d-\\x7e]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*(?:(?:[\\x09\\x20\\x22\\x27\\x30\\x4c\\x4e\\x50\\x5c\\x5f\\x61-\\x62\\x65-\\x66\\x6e\\x72\\x74\\x76]|(?:(?:[\\x78]|(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x44\\x64][\\x30-\\x37])|(?:(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x30-\\x39\\x41-\\x43\\x45-\\x46\\x61-\\x63\\x65-\\x66]|(?:[\\x55][\\x30][\\x30][\\x31][\\x30]|[\\x55][\\x30][\\x30][\\x30][\\x31-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66][\\x30-\\x39\\x41-\\x46\\x61-\\x66])|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])))*(?:(?:|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*)|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/string;pattern-x09-x@2": {
+      "pattern": "^(?:(?:(?:(?:[\\x09\\x20-\\x21\\x23-\\x3b\\x3d-\\x5b\\x5d-\\x7e]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*(?:(?:[\\x09\\x20\\x22\\x27\\x30\\x4c\\x4e\\x50\\x5c\\x5f\\x61-\\x62\\x65-\\x66\\x6e\\x72\\x74\\x76]|(?:(?:[\\x78]|(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x44\\x64][\\x30-\\x37])|(?:(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x30-\\x39\\x41-\\x43\\x45-\\x46\\x61-\\x63\\x65-\\x66]|(?:[\\x55][\\x30][\\x30][\\x31][\\x30]|[\\x55][\\x30][\\x30][\\x30][\\x31-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66][\\x30-\\x39\\x41-\\x46\\x61-\\x66])|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])))*(?:|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*))$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true/string;pattern-x09-x@3": {
+      "pattern": "^(?:(?:(?:(?:[\\x09\\x20-\\x21\\x23-\\x3b\\x3d-\\x5b\\x5d-\\x7e]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*(?:(?:[\\x09\\x20\\x22\\x27\\x30\\x4c\\x4e\\x50\\x5c\\x5f\\x61-\\x62\\x65-\\x66\\x6e\\x72\\x74\\x76]|(?:(?:[\\x78]|(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x44\\x64][\\x30-\\x37])|(?:(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x30-\\x39\\x41-\\x43\\x45-\\x46\\x61-\\x63\\x65-\\x66]|(?:[\\x55][\\x30][\\x30][\\x31][\\x30]|[\\x55][\\x30][\\x30][\\x30][\\x31-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66][\\x30-\\x39\\x41-\\x46\\x61-\\x66])|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])))*)$",
+      "type": "string"
     },
     "constrains/create:t": {
       "properties": {
@@ -217,6 +1309,107 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride": {
+      "not": {
+        "properties": {
+          "fullnameOverride": {}
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+        }
+      ]
+    },
     "constrains/healthNameOverride:t": {
       "properties": {
         "healthNameOverride": {
@@ -236,6 +1429,353 @@
       },
       "required": [
         "imagePullSecrets"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "properties": {
+          "nameOverride": {}
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nameOverride+nameOverride=false+nameOverride=null+nameOverride=true": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "properties": {
+                "nameOverride": {
+                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object"
+                }
+              },
+              "required": [
+                "nameOverride"
+              ],
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                },
+                {
+                  "properties": {
+                    "nameOverride": {
+                      "maxItems": 1,
+                      "maxProperties": 1
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object@2"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                },
+                {
+                  "properties": {
+                    "nameOverride": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t@2": {
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup": {
+      "not": {
+        "properties": {
+          "nodeGroup": {}
+        },
+        "required": [
+          "nodeGroup"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/nodeGroup+nodeGroup=false+nodeGroup=null+nodeGroup=true": {
+      "anyOf": [
+        {
+          "properties": {
+            "nodeGroup": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1string;pattern-x09-x@3"
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nodeGroup": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nodeGroup": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "nodeGroup": {
+                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object"
+                }
+              },
+              "required": [
+                "nodeGroup"
+              ],
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "nodeGroup": {
+                      "maxItems": 1,
+                      "maxProperties": 1
+                    }
+                  },
+                  "required": [
+                    "nodeGroup"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup"
+                },
+                {
+                  "properties": {
+                    "nodeGroup": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "nodeGroup"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup"
+        },
+        {
+          "properties": {
+            "nodeGroup": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1object@2"
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nodeGroup": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nodeGroup": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "nodeGroup": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1anyOf~1array"
+            }
+          },
+          "required": [
+            "nodeGroup"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/nodeGroup@2": {
+      "properties": {
+        "nodeGroup": {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more~1string;pattern-x09-x"
+        }
+      },
+      "required": [
+        "nodeGroup"
       ],
       "type": "object"
     },
@@ -408,6 +1948,87 @@
             {
               "anyOf": [
                 {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "additionalProperties": {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
+                                        }
+                                      ]
+                                    },
+                                    "propertyNames": {
+                                      "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
+                                    },
+                                    "type": "object"
+                                  },
+                                  {
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
+                                        }
+                                      ]
+                                    },
+                                    "type": "array"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
+                                  }
+                                ]
+                              },
+                              "propertyNames": {
+                                "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
+                },
+                {
                   "allOf": [
                     {
                       "anyOf": [
@@ -454,7 +2075,7 @@
                                   "additionalProperties": {
                                     "anyOf": [
                                       {
-                                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+                                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
                                       },
                                       {
                                         "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
@@ -486,87 +2107,6 @@
                       "type": "object"
                     }
                   ]
-                },
-                {
-                  "properties": {
-                    "prometheus-node-exporter": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "name": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
-                                        }
-                                      ]
-                                    },
-                                    "propertyNames": {
-                                      "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
-                                    },
-                                    "type": "object"
-                                  },
-                                  {
-                                    "items": {
-                                      "anyOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d@2"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
-                                        }
-                                      ]
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
-                                  }
-                                ]
-                              },
-                              "propertyNames": {
-                                "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus-node-exporter"
-                  ],
-                  "type": "object"
                 },
                 {
                   "properties": {
@@ -694,7 +2234,7 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array@2"
@@ -713,7 +2253,7 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d@2"
@@ -722,18 +2262,11 @@
       },
       "type": "array"
     },
-    "constrains/prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more/null,boolean,number": {
-      "type": [
-        "null",
-        "boolean",
-        "number"
-      ]
-    },
     "constrains/prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more/object": {
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array@2"
@@ -755,7 +2288,7 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
@@ -870,15 +2403,7 @@
     "constrains/prometheus-node-exporter.rbac.create:t": {
       "properties": {
         "prometheus-node-exporter": {
-          "properties": {
-            "rbac": {
-              "$ref": "#/definitions/constrains~1create:t"
-            }
-          },
-          "required": [
-            "rbac"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1rbac.create:t"
         }
       },
       "required": [
@@ -980,6 +2505,60 @@
       ],
       "type": "object"
     },
+    "constrains/rbac.create:t": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/rbac.serviceAccountName": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "serviceAccountName": {}
+            },
+            "required": [
+              "serviceAccountName"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/rbac.serviceAccountName:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1rbac.serviceAccountName:t@2"
+      }
+    },
+    "constrains/rbac.serviceAccountName:t@2": {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "serviceAccountName": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "serviceAccountName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
     "constrains/serviceAccount.create:t": {
       "properties": {
         "serviceAccount": {
@@ -1071,7 +2650,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
         },
         {
           "items": {
@@ -1212,10 +2791,13 @@
       },
       "type": "object"
     },
+    "values/temporal.cassandra.affinity": {
+      "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
+    },
     "values/temporal.cassandra/anyOf/null,boolean,number+string": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
         },
         {
           "not": {
@@ -1224,6 +2806,11 @@
           "type": "string"
         }
       ]
+    },
+    "values/temporal.cassandra/not/:t": {
+      "not": {
+        "$ref": "#/definitions/t"
+      }
     },
     "values/temporal.cassandra/not/array": {
       "not": {
@@ -1242,7 +2829,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1null,boolean,number"
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
             },
             {
               "items": {
@@ -1457,6 +3044,18 @@
         }
       },
       "type": "object"
+    },
+    "values/temporal.prometheus.alertmanager.configmapReload.extraEnv": {
+      "description": "Optionally specify extra environment variables to add to alertmanager container\n- name: FOO\nvalue: BAR"
+    },
+    "values/temporal.prometheus.alertmanager.configmapReload.extraVolumeMounts": {
+      "description": "Optionally specify extra list of additional volumeMounts\n- name: extras\nmountPath: /usr/share/extras\nreadOnly: true"
+    },
+    "values/temporal.prometheus.alertmanager.podAntiAffinityTopologyKey": {
+      "description": "If anti-affinity is enabled sets the topologyKey to use for anti-affinity.\nThis can be changed to, for example, failure-domain.beta.kubernetes.io/zone"
+    },
+    "values/temporal.prometheus.alertmanager.securityContext": {
+      "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\""
     },
     "values/temporal.prometheus.kube-state-metrics.releaseLabel": {
       "description": "set to true to add the release label so scraping of the servicemonitor with kube-prometheus-stack works out of the box"
@@ -1853,9 +3452,7 @@
                             "$ref": "#/definitions/values~1temporal.cassandra~1not~1array"
                           },
                           {
-                            "not": {
-                              "$ref": "#/definitions/t"
-                            }
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
                           }
                         ]
                       }
@@ -1916,9 +3513,7 @@
                             "$ref": "#/definitions/values~1temporal.cassandra~1not~1object"
                           },
                           {
-                            "not": {
-                              "$ref": "#/definitions/t"
-                            }
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
                           }
                         ]
                       }
@@ -1995,9 +3590,7 @@
                             "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-null-null-null"
                           },
                           {
-                            "not": {
-                              "$ref": "#/definitions/t"
-                            }
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
                           }
                         ]
                       }
@@ -2008,20 +3601,218 @@
             }
           ],
           "properties": {
+            "affinity": {
+              "$ref": "#/definitions/values~1temporal.cassandra.affinity"
+            },
+            "argsOverrides": {
+              "description": "Cassandra docker args overrides"
+            },
             "backup": {
               "additionalProperties": {},
-              "description": "Backup cronjob configuration\nRef: https://github.com/maorfr/cain"
+              "description": "Backup cronjob configuration\nRef: https://github.com/maorfr/cain",
+              "properties": {
+                "annotations": {},
+                "destination": {
+                  "description": "Destination to store the backup artifacts\nSupported cloud storage services: AWS S3, Minio S3, Azure Blob Storage, Google Cloud Storage\nAdditional support can added. Visit this repository for details\nRef: https://github.com/maorfr/skbn"
+                },
+                "enabled": {},
+                "env": {
+                  "description": "Add additional environment variables"
+                },
+                "extraArgs": {
+                  "description": "Additional arguments for cain\nRef: https://github.com/maorfr/cain#usage"
+                },
+                "google": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "serviceAccountSecret": {}
+                  }
+                },
+                "image": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "repository": {},
+                    "tag": {}
+                  }
+                },
+                "resources": {},
+                "schedule": {
+                  "description": "Schedule to run jobs. Must be in cron time format\nRef: https://crontab.guru/"
+                }
+              }
+            },
+            "commandOverrides": {
+              "description": "Cassandra docker command overrides"
+            },
+            "config": {
+              "additionalProperties": {},
+              "description": "Change cassandra configuration parameters below:\nref: http://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/configCassandra_yaml.html\nRecommended max heap size is 1/2 of system memory\nRecommended heap new size is 1/4 of max heap size\nref: http://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsTuneJVM.html",
+              "properties": {
+                "cluster_domain": {},
+                "cluster_name": {},
+                "cluster_size": {},
+                "dc_name": {
+                  "description": "If you want Cassandra to use this datacenter and rack name,\nyou need to set endpoint_snitch to GossipingPropertyFileSnitch.\nOtherwise, these values are ignored and datacenter1 and rack1\nare used."
+                },
+                "endpoint_snitch": {},
+                "heap_new_size": {},
+                "max_heap_size": {},
+                "ports": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "agent": {},
+                    "cql": {},
+                    "thrift": {
+                      "description": "If a JVM Agent is in place\nagent: 61621"
+                    }
+                  }
+                },
+                "rack_name": {},
+                "seed_size": {},
+                "seeds": {},
+                "start_rpc": {}
+              }
+            },
+            "configOverrides": {
+              "description": "Cassandra config files overrides"
             },
             "enabled": {},
+            "env": {
+              "description": "Custom env variables.\nref: https://hub.docker.com/_/cassandra/"
+            },
+            "exporter": {
+              "additionalProperties": {},
+              "description": "Cassandra exported configuration\nref: https://github.com/criteo/cassandra_exporter",
+              "properties": {
+                "enabled": {},
+                "image": {
+                  "additionalProperties": {},
+                  "description": "prometheus: default",
+                  "properties": {
+                    "repo": {},
+                    "tag": {}
+                  }
+                },
+                "jvmOpts": {},
+                "port": {},
+                "resources": {
+                  "description": "limits:\ncpu: 1\nmemory: 1Gi\nrequests:\ncpu: 1\nmemory: 1Gi"
+                },
+                "servicemonitor": {
+                  "description": "If exporter is enabled this will create a ServiceMonitor by default as well"
+                }
+              }
+            },
             "fullnameOverride": {},
             "global": {},
+            "hostNetwork": {
+              "description": "Use host network for Cassandra pods\nYou must pass seed list into config.seeds property if set to true"
+            },
+            "image": {
+              "additionalProperties": {},
+              "description": "Cassandra image version\nref: https://hub.docker.com/r/library/cassandra/",
+              "properties": {
+                "pullPolicy": {
+                  "description": "Specify ImagePullSecrets for Pods\nref: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod\npullSecrets: myregistrykey"
+                },
+                "pullSecrets": {},
+                "repo": {},
+                "tag": {}
+              }
+            },
+            "livenessProbe": {
+              "additionalProperties": {},
+              "description": "Liveness and Readiness probe values.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/",
+              "properties": {
+                "failureThreshold": {},
+                "initialDelaySeconds": {},
+                "periodSeconds": {},
+                "successThreshold": {},
+                "timeoutSeconds": {}
+              }
+            },
+            "metrics": {
+              "additionalProperties": {},
+              "properties": {
+                "serviceMonitor": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "additionalLabels": {}
+                  }
+                }
+              }
+            },
             "nameOverride": {},
+            "persistence": {
+              "additionalProperties": {},
+              "description": "Persist data to a persistent volume",
+              "properties": {
+                "accessMode": {
+                  "description": "cassandra data Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nstorageClass: \"-\""
+                },
+                "enabled": {},
+                "size": {},
+                "storageClass": {}
+              }
+            },
+            "podAnnotations": {
+              "description": "Additional pod annotations\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
+            },
+            "podDisruptionBudget": {
+              "description": "Pod distruption budget\nmaxUnavailable: 1\nminAvailable: 2"
+            },
+            "podLabels": {
+              "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
+            },
+            "podManagementPolicy": {},
+            "podSettings": {
+              "additionalProperties": {},
+              "description": "Additional pod-level settings",
+              "properties": {
+                "terminationGracePeriodSeconds": {
+                  "description": "Change this to give pods more time to properly leave the cluster when not using persistent storage."
+                }
+              }
+            },
             "rbac": {
               "additionalProperties": {},
               "properties": {
                 "create": {
                   "description": "Specifies whether RBAC resources should be created"
                 }
+              }
+            },
+            "readinessProbe": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {},
+                "failureThreshold": {},
+                "initialDelaySeconds": {},
+                "periodSeconds": {},
+                "successThreshold": {},
+                "timeoutSeconds": {}
+              }
+            },
+            "resources": {
+              "description": "Configure resource requests and limits\nref: http://kubernetes.io/docs/user-guide/compute-resources/\nMinimum memory for development is 4GB and 2 CPU cores\nMinimum memory for production is 8GB and 4 CPU cores\nref: http://docs.datastax.com/en/archived/cassandra/2.0/cassandra/architecture/architecturePlanningHardware_c.html\nrequests:\nmemory: 4Gi\ncpu: 2\nlimits:\nmemory: 4Gi\ncpu: 2"
+            },
+            "schedulerName": {},
+            "securityContext": {
+              "additionalProperties": {},
+              "description": "Pod Security Context",
+              "properties": {
+                "enabled": {},
+                "fsGroup": {},
+                "runAsUser": {}
+              }
+            },
+            "selector": {},
+            "service": {
+              "additionalProperties": {},
+              "description": "Specify a service type\nref: http://kubernetes.io/docs/user-guide/services/",
+              "properties": {
+                "annotations": {},
+                "type": {}
               }
             },
             "serviceAccount": {
@@ -2035,6 +3826,12 @@
             },
             "tolerations": {
               "description": "Node tolerations for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+            },
+            "updateStrategy": {
+              "additionalProperties": {},
+              "properties": {
+                "type": {}
+              }
             }
           }
         },
@@ -2045,6 +3842,76 @@
         "elasticsearch": {
           "additionalProperties": {},
           "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1rbac.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+fullnameOverride+19more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1rbac.create:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "rbac": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "serviceAccountAnnotations": {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/helm-marker-free"
+                            }
+                          },
+                          {
+                            "additionalProperties": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                            "type": [
+                              "object",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
             {
               "if": {
                 "anyOf": [
@@ -2295,32 +4162,220 @@
             }
           ],
           "properties": {
+            "antiAffinity": {
+              "description": "Hard means that by default pods will only be scheduled if there are enough nodes for them\nand that they will never end up on the same node. Setting this to soft will do this \"best effort\""
+            },
+            "antiAffinityTopologyKey": {
+              "description": "By default this will make sure two pods don't end up on the same node\nChanging this to a region would allow you to spread pods across regions"
+            },
+            "clusterDeprecationIndexing": {},
             "clusterHealthCheckParams": {
               "description": "https://www.elastic.co/guide/en/elasticsearch/reference/7.17/cluster-health.html#request-params wait_for_status"
             },
             "clusterName": {},
+            "enableServiceLinks": {
+              "description": "The environment variables injected by service links are not used, but can lead to slow Elasticsearch boot times when\nthere are many services in the current namespace.\nIf you experience slow pod startups you probably want to set this to `false`."
+            },
             "enabled": {},
+            "envFrom": {
+              "description": "Allows you to load environment variables from kubernetes secret or config map\n- secretRef:\nname: env-secret\n- configMapRef:\nname: config-map"
+            },
+            "esConfig": {
+              "additionalProperties": {},
+              "description": "Allows you to add any config files in /usr/share/elasticsearch/config/\nsuch as elasticsearch.yml and log4j2.properties\nelasticsearch.yml: |\nkey:\nnestedkey: value\nlog4j2.properties: |\nkey = value"
+            },
+            "esJavaOpts": {
+              "description": "example: \"-Xmx1g -Xms1g\""
+            },
+            "esJvmOptions": {
+              "additionalProperties": {},
+              "description": "processors.options: |\n-XX:ActiveProcessorCount=3"
+            },
+            "esMajorVersion": {},
+            "extraContainers": {},
+            "extraEnvs": {
+              "description": "Extra environment variables to append to this nodeGroup\nThis will be appended to the current 'env:' key. You can use any of the kubernetes env\nsyntax here\n- name: MY_ENVIRONMENT_VAR\nvalue: the_value_goes_here"
+            },
+            "extraInitContainers": {},
+            "extraVolumeMounts": {},
+            "extraVolumes": {},
+            "fsGroup": {
+              "description": "Deprecated\nplease use the above podSecurityContext.fsGroup instead"
+            },
             "fullnameOverride": {},
             "global": {},
             "healthNameOverride": {},
+            "hostAliases": {
+              "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
+            },
             "httpPort": {},
             "image": {},
             "imagePullPolicy": {},
             "imagePullSecrets": {},
             "imageTag": {},
+            "ingress": {
+              "additionalProperties": {},
+              "description": "Enabling this will publicly expose your Elasticsearch instance.\nOnly enable this if you have security enabled on your cluster",
+              "properties": {
+                "annotations": {},
+                "className": {
+                  "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+                },
+                "enabled": {},
+                "hosts": {},
+                "path": {},
+                "pathtype": {},
+                "tls": {
+                  "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+                }
+              }
+            },
+            "initResources": {},
+            "keystore": {},
             "labels": {
               "additionalProperties": {},
               "description": "additionals labels"
             },
+            "lifecycle": {},
+            "masterService": {
+              "description": "The service that non master groups will try to connect to when joining the cluster\nThis should be set to clusterName + \"-\" + nodeGroup for your master group"
+            },
+            "maxUnavailable": {
+              "description": "This is the max unavailable setting for the pod disruption budget\nThe default value of 1 will make sure that kubernetes won't allow more than 1\nof your pods to be unavailable during maintenance"
+            },
+            "minimumMasterNodes": {},
             "nameOverride": {},
+            "networkHost": {},
+            "networkPolicy": {
+              "additionalProperties": {},
+              "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
+              "properties": {
+                "http": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "additionalRules": {},
+                    "enabled": {
+                      "description": "if explicitNamespacesSelector is not set or set to {}, only client Pods being in the networkPolicy's namespace\nand matching all criteria can reach the DB.\nBut sometimes, we want the Pods to be accessible to clients from other namespaces, in this case, we can use this\nparameter to select these namespaces\nexplicitNamespacesSelector:\nAccept from namespaces with all those different rules (only from whitelisted Pods)\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}\nAdditional NetworkPolicy Ingress \"from\" rules to set. Note that all rules are OR-ed.\nadditionalRules:\n- podSelector:\nmatchLabels:\nrole: frontend\n- podSelector:\nmatchExpressions:\n- key: role\noperator: In\nvalues:\n- frontend"
+                    },
+                    "explicitNamespacesSelector": {}
+                  }
+                },
+                "transport": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "additionalRules": {},
+                    "enabled": {
+                      "description": "Note that all Elasticsearch Pods can talk to themselves using transport port even if enabled.\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}\nadditionalRules:\n- podSelector:\nmatchLabels:\nrole: frontend\n- podSelector:\nmatchExpressions:\n- key: role\noperator: In\nvalues:\n- frontend"
+                    },
+                    "explicitNamespacesSelector": {}
+                  }
+                }
+              }
+            },
+            "nodeAffinity": {
+              "description": "This is the node affinity settings as defined in\nhttps://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature"
+            },
             "nodeGroup": {},
+            "nodeSelector": {},
+            "persistence": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {},
+                "enabled": {},
+                "labels": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "description": "Add default labels for the volumeClaimTemplate of the StatefulSet"
+                    }
+                  }
+                }
+              }
+            },
+            "podAnnotations": {
+              "additionalProperties": {}
+            },
+            "podManagementPolicy": {
+              "description": "The default is to deploy all pods serially. By setting this to parallel all pods are started at\nthe same time when bootstrapping the cluster"
+            },
             "podSecurityContext": {},
+            "podSecurityPolicy": {
+              "additionalProperties": {},
+              "properties": {
+                "create": {},
+                "name": {},
+                "spec": {}
+              }
+            },
+            "priorityClassName": {
+              "description": "This is the PriorityClass settings as defined in\nhttps://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass"
+            },
+            "protocol": {},
+            "rbac": {
+              "additionalProperties": {},
+              "properties": {
+                "automountToken": {},
+                "create": {},
+                "serviceAccountAnnotations": {},
+                "serviceAccountName": {}
+              }
+            },
+            "readinessProbe": {},
+            "replicas": {},
+            "resources": {},
+            "roles": {
+              "additionalProperties": {},
+              "description": "Elasticsearch roles that will be applied to this nodeGroup\nThese will be set as environment variables. E.g. node.master=true",
+              "properties": {
+                "master": {}
+              }
+            },
+            "schedulerName": {
+              "description": "Use an alternate scheduler.\nref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/"
+            },
+            "secretMounts": {
+              "description": "A list of secrets and their paths to mount inside the pod\nThis is useful for mounting certificates for security and for mounting\nthe X-Pack license\n- name: elastic-certificates\nsecretName: elastic-certificates\npath: /usr/share/elasticsearch/config/certs\ndefaultMode: 0755"
+            },
+            "securityContext": {},
+            "service": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {},
+                "enabled": {},
+                "externalTrafficPolicy": {},
+                "httpPortName": {},
+                "labels": {},
+                "labelsHeadless": {},
+                "loadBalancerIP": {},
+                "loadBalancerSourceRanges": {},
+                "nodePort": {},
+                "publishNotReadyAddresses": {
+                  "description": "Consider that all endpoints are considered \"ready\" even if the Pods themselves are not\nhttps://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceSpec"
+                },
+                "transportPortName": {},
+                "type": {}
+              }
+            },
+            "sysctlInitContainer": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {}
+              }
+            },
+            "sysctlVmMaxMapCount": {},
+            "terminationGracePeriod": {
+              "description": "How long to wait for elasticsearch to stop gracefully"
+            },
             "tests": {
               "additionalProperties": {},
               "properties": {
                 "enabled": {}
               }
-            }
+            },
+            "tolerations": {},
+            "transportPort": {},
+            "updateStrategy": {},
+            "volumeClaimTemplate": {}
           }
         },
         "fullnameOverride": {},
@@ -2473,10 +4528,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
@@ -2485,16 +4537,16 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
                         "$ref": "#/definitions/constrains~1enabled+enabled=null"
                       },
                       {
                         "type": "object"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
@@ -2504,10 +4556,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
@@ -2516,10 +4565,10 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
@@ -2532,7 +4581,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
@@ -2541,19 +4593,13 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
                         "$ref": "#/definitions/constrains~1enabled+enabled=null"
                       },
                       {
                         "type": "object"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
@@ -2563,7 +4609,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
@@ -2572,13 +4621,7 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
@@ -2597,18 +4640,21 @@
                     "additionalProperties": {},
                     "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
                     "properties": {
-                      "namespaceOverride": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1array"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/t"
-                            }
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1object"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                              }
+                            ],
+                            "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
                           }
-                        ],
-                        "description": "- name: <secretName>\nmountPath: <mountPatch>\nOverride the deployment namespace"
+                        }
                       }
                     }
                   }
@@ -2621,10 +4667,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
@@ -2633,60 +4676,7 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
@@ -2705,7 +4695,7 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
@@ -2714,7 +4704,830 @@
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
                       },
                       {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheus-node-exporter": {
+                    "additionalProperties": {},
+                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1array"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                              }
+                            ],
+                            "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanager": {
+                    "additionalProperties": {},
+                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1array"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                              }
+                            ],
+                            "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1group-3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1group-1"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-0"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheus-node-exporter": {
+                    "additionalProperties": {},
+                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
+                    "properties": {
+                      "namespaceOverride": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1array"
+                          },
+                          {
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                          }
+                        ],
+                        "description": "- name: <secretName>\nmountPath: <mountPatch>\nOverride the deployment namespace"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1group-3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1group-1"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-0"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheus-node-exporter": {
+                    "additionalProperties": {},
+                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
+                    "properties": {
+                      "namespaceOverride": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1object"
+                          },
+                          {
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                          }
+                        ],
+                        "description": "- name: <secretName>\nmountPath: <mountPatch>\nOverride the deployment namespace"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanager": {
+                    "additionalProperties": {},
+                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1object"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                              }
+                            ],
+                            "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "prometheus-node-exporter": {
+                    "additionalProperties": {},
+                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;name-must-be-unique"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-r-n"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string@2"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1object"
+                              },
+                              {
+                                "pattern": "^[ \\t]*(#.*)?$",
+                                "type": "string"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1null;name-must-be-unique"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-null-null-null"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                              }
+                            ],
+                            "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled+alertmanager.enabled=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "alertmanager": {
+                    "additionalProperties": {},
+                    "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;name-must-be-unique"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-r-n"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string@2"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1object"
+                              },
+                              {
+                                "pattern": "^[ \\t]*(#.*)?$",
+                                "type": "string"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1null;name-must-be-unique"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-null-null-null"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
+                              }
+                            ],
+                            "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
@@ -2809,593 +5622,10 @@
                             "type": "string"
                           },
                           {
-                            "not": {
-                              "$ref": "#/definitions/t"
-                            }
+                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1:t"
                           }
                         ],
                         "description": "- name: <secretName>\nmountPath: <mountPatch>\nOverride the deployment namespace"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheus-node-exporter": {
-                    "additionalProperties": {},
-                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
-                    "properties": {
-                      "serviceAccount": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "name": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1string;name-must-be-unique"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-r-n"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1string@2"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-a-za-z0-9-t"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1object"
-                              },
-                              {
-                                "pattern": "^[ \\t]*(#.*)?$",
-                                "type": "string"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1null;name-must-be-unique"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1string;pattern-null-null-null"
-                              },
-                              {
-                                "not": {
-                                  "$ref": "#/definitions/t"
-                                }
-                              }
-                            ],
-                            "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.namespaceOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheus-node-exporter": {
-                    "additionalProperties": {},
-                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
-                    "properties": {
-                      "namespaceOverride": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/values~1temporal.cassandra~1not~1object"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/t"
-                            }
-                          }
-                        ],
-                        "description": "- name: <secretName>\nmountPath: <mountPatch>\nOverride the deployment namespace"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheus-node-exporter": {
-                    "additionalProperties": {},
-                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
-                    "properties": {
-                      "serviceAccount": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "name": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1object"
-                              },
-                              {
-                                "not": {
-                                  "$ref": "#/definitions/t"
-                                }
-                              }
-                            ],
-                            "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.global.imagePullSecrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1prometheus-node-exporter.rbac.create:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "additionalProperties": {},
-                "properties": {
-                  "prometheus-node-exporter": {
-                    "additionalProperties": {},
-                    "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
-                    "properties": {
-                      "serviceAccount": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "name": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/values~1temporal.cassandra~1not~1array"
-                              },
-                              {
-                                "not": {
-                                  "$ref": "#/definitions/t"
-                                }
-                              }
-                            ],
-                            "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-                          }
-                        }
                       }
                     }
                   }
@@ -3408,6 +5638,13 @@
               "additionalProperties": {},
               "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
               "properties": {
+                "additionalPeers": {},
+                "affinity": {},
+                "automountServiceAccountToken": {},
+                "baseURL": {
+                  "description": "Full external URL where alertmanager is reachable, used for backlinks."
+                },
+                "command": {},
                 "config": {
                   "additionalProperties": {}
                 },
@@ -3418,16 +5655,93 @@
                   "additionalProperties": {},
                   "description": "Monitors ConfigMap changes and POSTs to a URL\nRef: https://github.com/prometheus-operator/prometheus-operator/tree/main/cmd/prometheus-config-reloader",
                   "properties": {
+                    "containerPort": {},
                     "enabled": {
                       "description": "If false, the configmap-reload container will not be deployed"
+                    },
+                    "extraArgs": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "config-file": {},
+                        "reload-url": {},
+                        "watched-dir": {}
+                      }
+                    },
+                    "extraEnv": {
+                      "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.configmapReload.extraEnv"
+                    },
+                    "extraVolumeMounts": {
+                      "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.configmapReload.extraVolumeMounts"
+                    },
+                    "image": {
+                      "additionalProperties": {},
+                      "description": "configmap-reload container image",
+                      "properties": {
+                        "pullPolicy": {},
+                        "repository": {},
+                        "tag": {}
+                      }
+                    },
+                    "name": {
+                      "description": "configmap-reload container name"
+                    },
+                    "resources": {
+                      "description": "configmap-reload resource requests and limits\nRef: http://kubernetes.io/docs/user-guide/compute-resources/"
+                    },
+                    "securityContext": {
+                      "description": "capabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nrunAsUser: 65534\nrunAsNonRoot: true\nrunAsGroup: 65534"
                     }
                   }
                 },
+                "dnsConfig": {},
                 "enabled": {
                   "description": "If false, alertmanager will not be installed"
                 },
+                "extraArgs": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "config.file": {}
+                  }
+                },
+                "extraContainers": {
+                  "description": "Additional containers to add to the stateful set. This will allow to setup sidecarContainers like a proxy to integrate\nalertmanager with an external tool like teams that has not direct integration."
+                },
+                "extraEnv": {
+                  "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.configmapReload.extraEnv"
+                },
+                "extraInitContainers": {
+                  "description": "Additional InitContainers to initialize the pod"
+                },
+                "extraSecretMounts": {
+                  "description": "Additional Alertmanager Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: alertmanager-secret-files\nreadOnly: true"
+                },
+                "extraVolumeMounts": {
+                  "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.configmapReload.extraVolumeMounts"
+                },
+                "extraVolumes": {
+                  "description": "Optionally specify extra list of additional volumes\n- name: extras\nemptyDir: {}"
+                },
                 "fullnameOverride": {},
                 "global": {},
+                "hostAliases": {
+                  "description": "nameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
+                },
+                "image": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "pullPolicy": {},
+                    "repository": {},
+                    "tag": {
+                      "description": "Overrides the image tag whose default is the chart appVersion."
+                    }
+                  }
+                },
+                "imagePullSecrets": {},
+                "ingressPerReplica": {
+                  "additionalProperties": {},
+                  "description": "Configuration for creating an Ingress that will map to each Alertmanager replica service\nalertmanager.servicePerReplica must be enabled"
+                },
+                "livenessProbe": {},
                 "minReadySeconds": {
                   "description": "Minimum number of seconds for which a newly created pod should be ready without any of its container crashing for it to\nbe considered available. Defaults to 0 (pod will be considered available as soon as it is ready).\nThis is an alpha field from kubernetes 1.22 until 1.24 which requires enabling the StatefulSetMinReadySeconds\nfeature gate.\nRef: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#minimum-ready-seconds"
                 },
@@ -3435,15 +5749,124 @@
                 "namespaceOverride": {
                   "description": "namespaceOverride overrides the namespace which the resources will be deployed in"
                 },
+                "nodeSelector": {},
+                "persistence": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "accessModes": {
+                      "description": "Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.\nstorageClass: \"-\""
+                    },
+                    "enabled": {},
+                    "size": {},
+                    "storageClass": {}
+                  }
+                },
+                "podAnnotations": {},
+                "podAntiAffinity": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "soft"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "hard"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Pod anti-affinity can prevent the scheduler from placing Alertmanager replicas on the same node.\nThe default value \"soft\" means that the scheduler should *prefer* to not schedule two replica pods onto the same node but no guarantee is provided.\nThe value \"hard\" means that the scheduler is *required* to not schedule two replica pods onto the same node.\nThe value \"\" will disable pod anti-affinity so that no anti-affinity rules will be configured."
+                },
+                "podAntiAffinityTopologyKey": {
+                  "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.podAntiAffinityTopologyKey"
+                },
+                "podDisruptionBudget": {
+                  "description": "Ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/\nmaxUnavailable: 1\nminAvailable: 1"
+                },
                 "podLabels": {},
+                "podSecurityContext": {},
+                "priorityClassName": {
+                  "description": "Sets priorityClassName in alertmanager pod"
+                },
+                "readinessProbe": {},
                 "replicaCount": {},
+                "resources": {
+                  "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
+                },
                 "revisionHistoryLimit": {
                   "description": "Number of old history to retain to allow rollback\nDefault Kubernetes value is set to 10"
+                },
+                "schedulerName": {
+                  "description": "Sets schedulerName in alertmanager pod"
+                },
+                "securityContext": {
+                  "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.securityContext"
                 },
                 "service": {
                   "additionalProperties": {},
                   "properties": {
-                    "clusterPort": {}
+                    "annotations": {},
+                    "clusterPort": {},
+                    "extraPorts": {
+                      "description": "Optionally specify extra list of additional ports exposed on both services"
+                    },
+                    "ipDualStack": {
+                      "additionalProperties": {},
+                      "description": "ip dual stack",
+                      "properties": {
+                        "enabled": {},
+                        "ipFamilies": {},
+                        "ipFamilyPolicy": {}
+                      }
+                    },
+                    "labels": {},
+                    "loadBalancerIP": {
+                      "description": "Assign ext IP when Service type is LoadBalancer"
+                    },
+                    "loadBalancerSourceRanges": {
+                      "description": "Only allow access to loadBalancerIP from these IPs\nif you want to force a specific nodePort. Must be use with service.type=NodePort\nnodePort:"
+                    },
+                    "nodePort": {},
+                    "port": {},
+                    "type": {}
+                  }
+                },
+                "serviceAccount": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "annotations": {
+                      "description": "Annotations to add to the service account"
+                    },
+                    "create": {
+                      "description": "Specifies whether a service account should be created"
+                    },
+                    "name": {
+                      "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                    }
+                  }
+                },
+                "servicePerReplica": {
+                  "additionalProperties": {},
+                  "description": "Configuration for creating a separate Service for each statefulset Alertmanager replica",
+                  "properties": {
+                    "annotations": {},
+                    "clusterIP": {},
+                    "enabled": {},
+                    "externalTrafficPolicy": {
+                      "description": "Denotes if this Service desires to route external traffic to node-local or cluster-wide endpoints"
+                    },
+                    "loadBalancerSourceRanges": {
+                      "description": "Loadbalancer source IP ranges\nOnly used if servicePerReplica.type is \"LoadBalancer\""
+                    },
+                    "type": {
+                      "description": "Service type"
+                    }
                   }
                 },
                 "statefulSet": {
@@ -3455,6 +5878,10 @@
                 "templates": {
                   "additionalProperties": {},
                   "description": "alertmanager.tmpl: |-"
+                },
+                "tolerations": {},
+                "topologySpreadConstraints": {
+                  "description": "Topology spread constraints rely on node labels to identify the topology domain(s) that each Node is in.\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\n- maxSkew: 1\ntopologyKey: failure-domain.beta.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: alertmanager"
                 }
               }
             },
@@ -3817,7 +6244,7 @@
               "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
               "properties": {
                 "affinity": {
-                  "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
+                  "$ref": "#/definitions/values~1temporal.cassandra.affinity"
                 },
                 "automountServiceAccountToken": {
                   "description": "Whether to automatically mount a service account token into the pod"
@@ -3849,7 +6276,7 @@
                 },
                 "global": {},
                 "hostAliases": {
-                  "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"\n- ip: \"10.1.2.3\"\nhostnames:\n- \"foo.remote\"\n- \"bar.remote\""
+                  "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.securityContext"
                 },
                 "image": {
                   "additionalProperties": {},
@@ -3907,7 +6334,7 @@
                   "description": "Pod anti-affinity can prevent the scheduler from placing pushgateway replicas on the same node.\nThe value \"soft\" means that the scheduler should *prefer* to not schedule two replica pods onto the same node but no guarantee is provided.\nThe value \"hard\" means that the scheduler is *required* to not schedule two replica pods onto the same node.\nThe default value \"\" will disable pod anti-affinity so that no anti-affinity rules will be configured (unless set in `affinity`)."
                 },
                 "podAntiAffinityTopologyKey": {
-                  "description": "If anti-affinity is enabled sets the topologyKey to use for anti-affinity.\nThis can be changed to, for example, failure-domain.beta.kubernetes.io/zone"
+                  "$ref": "#/definitions/values~1temporal.prometheus.alertmanager.podAntiAffinityTopologyKey"
                 },
                 "podLabels": {
                   "description": "Optional pod labels"
@@ -4757,19 +7184,8 @@
             "service": {
               "additionalProperties": {},
               "properties": {
-                "annotations": {
-                  "$ref": "#/definitions/values~1temporal.additionalAnnotations"
-                },
-                "port": {
-                  "description": "The below clusterIP setting can be set to \"None\" to make the temporal-web service headless.\nNote that this requires the web.service.type to be the default ClusterIP value.\nclusterIP:",
-                  "type": "integer"
-                },
-                "type": {
-                  "description": "set type to NodePort if access to web needs access from outside the cluster\nfor more info see https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-                  "type": "string"
-                }
-              },
-              "type": "object"
+                "annotations": {}
+              }
             },
             "tolerations": {
               "items": {},

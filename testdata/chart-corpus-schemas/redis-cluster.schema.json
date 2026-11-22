@@ -4,26 +4,21 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1cluster+cluster=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "$ref": "#/definitions/when~1cluster.update.addNodes:t~1then~1nameOverride:t~1else~1fail"
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+nameOverride:t"
         },
         "if": {
           "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1cluster.update.addNodes:t~1then~1nameOverride:t~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+            }
+          ]
         }
       },
       "then": {
@@ -38,362 +33,21 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "$ref": "#/definitions/when~1cluster.update.addNodes:t~1then~1namespaceOverride:t~1else~1fail"
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+namespaceOverride:t"
         },
         "if": {
           "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1cluster.update.addNodes:t~1then~1namespaceOverride:t~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+            }
+          ]
         }
       },
       "then": {
@@ -409,19 +63,20 @@
     {
       "if": {
         "else": {
-          "$ref": "#/definitions/when~1cluster.update.addNodes:t~1then~1fullnameOverride:t~1else~1fail"
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+fullnameOverride:t"
         },
         "if": {
           "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1cluster.update.addNodes:t~1then~1fullnameOverride:t~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+            }
+          ]
         }
       },
       "then": {
@@ -436,53 +91,394 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1cluster+cluster=null"
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "cluster": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "update": {}
+                        "cluster": {}
                       },
                       "required": [
-                        "update"
+                        "cluster"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "cluster"
-                  ],
-                  "type": "object"
-                }
+                  {
+                    "$ref": "#/definitions/constrains~1cluster=null"
+                  }
+                ]
               },
               {
-                "properties": {
-                  "cluster": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "cluster": {
+                          "properties": {
+                            "update": {}
+                          },
+                          "required": [
+                            "update"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "cluster"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
                     "properties": {
-                      "update": {
-                        "enum": [
-                          null
-                        ]
+                      "cluster": {
+                        "properties": {
+                          "update": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "update"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "update"
+                      "cluster"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "cluster"
-                ],
-                "type": "object"
+                ]
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "cluster": {}
+              },
+              "required": [
+                "cluster"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster=null"
           }
         ]
       },
@@ -542,34 +538,6 @@
     }
   ],
   "definitions": {
-    "constrains/cluster+cluster=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "cluster": {}
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "cluster": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "cluster"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/cluster.externalAccess.enabled:t": {
       "not": {
         "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
@@ -632,6 +600,49 @@
       ],
       "type": "object"
     },
+    "constrains/cluster.update.addNodes:t+fullnameOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+        }
+      ]
+    },
+    "constrains/cluster.update.addNodes:t+nameOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+        }
+      ]
+    },
+    "constrains/cluster.update.addNodes:t+namespaceOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+        }
+      ]
+    },
+    "constrains/cluster=null": {
+      "properties": {
+        "cluster": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
     "constrains/externalAccess.enabled:t": {
       "properties": {
         "externalAccess": {
@@ -682,6 +693,22 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+        }
+      ]
     },
     "constrains/nameOverride": {
       "not": {
@@ -782,45 +809,6 @@
           "const": true
         }
       ]
-    },
-    "when/cluster.update.addNodes:t/then/fullnameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        "then": true
-      }
-    },
-    "when/cluster.update.addNodes:t/then/nameOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        "then": true
-      }
-    },
-    "when/cluster.update.addNodes:t/then/namespaceOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        },
-        "then": true
-      }
     }
   },
   "properties": {
@@ -842,6 +830,60 @@
                 }
               },
               {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1update.addNodes:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1externalAccess.enabled:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "externalAccess": {
+                              "properties": {
+                                "service": {}
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "externalAccess"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "externalAccess": {
+                            "properties": {
+                              "service": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "service"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "externalAccess"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "properties": {
                   "update": {
                     "enum": [
@@ -853,101 +895,41 @@
                   "update"
                 ],
                 "type": "object"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1update.addNodes:t"
               },
               {
-                "$ref": "#/definitions/constrains~1externalAccess.enabled:t"
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "externalAccess": {
+                    "anyOf": [
+                      {
+                        "not": {
                           "properties": {
-                            "service": {}
+                            "externalAccess": {}
                           },
                           "required": [
-                            "service"
+                            "externalAccess"
                           ],
                           "type": "object"
                         }
                       },
-                      "required": [
-                        "externalAccess"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "externalAccess": {
+                      {
                         "properties": {
-                          "service": {
+                          "externalAccess": {
                             "enum": [
                               null
                             ]
                           }
                         },
                         "required": [
-                          "service"
+                          "externalAccess"
                         ],
                         "type": "object"
                       }
-                    },
-                    "required": [
-                      "externalAccess"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "externalAccess": {}
-                      },
-                      "required": [
-                        "externalAccess"
-                      ],
-                      "type": "object"
-                    }
+                    ]
                   },
                   {
-                    "properties": {
-                      "externalAccess": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "externalAccess"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1update.addNodes:t"
                   }
                 ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1update.addNodes:t"
               }
             ]
           },

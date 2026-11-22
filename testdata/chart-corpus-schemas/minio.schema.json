@@ -4,45 +4,7 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1mode=distributed"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1mode=distributed"
+        "$ref": "#/definitions/constrains~1mode=distributed@2"
       },
       "then": {
         "allOf": [
@@ -92,60 +54,20 @@
             "$ref": "#/definitions/constrains~1mode=distributed"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {}
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
+            "$ref": "#/definitions/constrains~1ignoreChartChecksums:t@2"
+          },
+          {
+            "properties": {
+              "buckets": {
+                "$ref": "#/definitions/t"
               }
-            ]
+            },
+            "required": [
+              "buckets"
+            ],
+            "type": "object"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "buckets": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "buckets"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1mode=distributed~1then~1any~1else~1fail"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
-          },
-          "then": false
-        }
       },
       "then": {
         "additionalProperties": {},
@@ -164,13 +86,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1mode=distributed~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mode=distributed"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -184,53 +107,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1existingSecret:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mode=distributed"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "etcd": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "etcd"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "etcd": {}
-                  },
-                  "required": [
-                    "etcd"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/when~1mode=distributed~1then~1any~1else~1fail"
+        "$ref": "#/definitions/constrains~1mode=distributed"
       },
       "then": {
         "additionalProperties": {},
@@ -243,13 +120,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1mode=distributed~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1mode=distributed"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -263,331 +141,414 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/when~1mode=distributed~1then~1any~1else~1fail"
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1tls.enabled"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mode=distributed@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1tls.enabled"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mode=distributed@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1tls.enabled"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mode=distributed@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1tls.enabled"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mode=distributed@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1mode=distributed@2"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mode+mode=null"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mode=distributed@2"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1mode+mode=null"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mode=distributed@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mode=distributed@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1tls.enabled"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mode=distributed@2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           },
           {
-            "anyOf": [
+            "allOf": [
               {
                 "not": {
                   "properties": {
-                    "tls": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
+                    "mode": {
+                      "type": "string"
                     }
                   },
                   "required": [
-                    "tls"
+                    "mode"
                   ],
                   "type": "object"
                 }
               },
               {
-                "properties": {
-                  "tls": {
+                "$ref": "#/definitions/constrains~1mode+mode=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mode+mode=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mode=distributed@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {}
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
                     "properties": {
-                      "enabled": {
+                      "tls": {
                         "enum": [
                           null
                         ]
                       }
                     },
                     "required": [
-                      "enabled"
+                      "tls"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                ]
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mode=distributed"
           },
           {
-            "anyOf": [
+            "allOf": [
               {
-                "properties": {
-                  "statefulSetUpdate": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "statefulSetUpdate"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
               },
               {
-                "not": {
-                  "properties": {
-                    "statefulSetUpdate": {}
-                  },
-                  "required": [
-                    "statefulSetUpdate"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mode=distributed"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "tls": {}
-                  },
-                  "required": [
-                    "tls"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/definitions/constrains~1existingSecret:t"
               },
               {
-                "properties": {
-                  "tls": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tls.enabled"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mode=distributed"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1tls.enabled"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mode=distributed"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1tls.enabled"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mode=distributed"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tls.enabled"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mode=distributed"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1mode=distributed"
+                "$ref": "#/definitions/constrains~1mode=distributed@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "etcd": {
+                        "enum": [
+                          null
+                        ]
                       }
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1mode+mode=null"
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1mode+mode=null"
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tls.enabled"
+                    },
+                    "required": [
+                      "etcd"
+                    ],
+                    "type": "object"
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                      "properties": {
+                        "etcd": {}
+                      },
+                      "required": [
+                        "etcd"
+                      ],
+                      "type": "object"
                     }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mode+mode=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mode=distributed"
                   }
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "allOf": [
               {
-                "allOf": [
+                "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1tls.enabled"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mode+mode=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mode=distributed"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1tls.enabled"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mode+mode=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
                       }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mode=distributed"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1mode+mode=null@2"
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1tls.enabled"
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1mode=distributed@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mode=distributed@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "statefulSetUpdate": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "statefulSetUpdate"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "statefulSetUpdate": {}
+                      },
+                      "required": [
+                        "statefulSetUpdate"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mode=distributed@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {}
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
                     }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1mode=distributed"
+                    "properties": {
+                      "persistence": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mode=distributed"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
                   }
                 ]
               }
@@ -599,47 +560,15 @@
     },
     {
       "if": {
-        "else": {
-          "else": {
-            "else": true,
-            "if": {
-              "properties": {
-                "mode": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "mode"
-              ],
-              "type": "object"
-            },
-            "then": false
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1mode+mode=null@3"
-          },
-          "then": false
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1mode+mode=null@3"
-        },
-        "then": false
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "not": {
-              "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
-            }
+            "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
           },
           {
             "$ref": "#/definitions/constrains~1existingSecret:t"
           },
           {
-            "$ref": "#/definitions/constrains~1mode=distributed"
+            "$ref": "#/definitions/constrains~1mode=distributed@2"
           }
         ]
       },
@@ -681,15 +610,10 @@
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -701,51 +625,22 @@
       "type": "object"
     },
     "constrains/ignoreChartChecksums:t": {
-      "properties": {
-        "ignoreChartChecksums": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "ignoreChartChecksums"
-      ],
-      "type": "object"
+      "$ref": "#/definitions/constrains~1ignoreChartChecksums:t@2"
+    },
+    "constrains/ignoreChartChecksums:t@2": {
+      "not": {
+        "properties": {
+          "ignoreChartChecksums": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "ignoreChartChecksums"
+        ],
+        "type": "object"
+      }
     },
     "constrains/mode+mode=null": {
-      "$ref": "#/definitions/constrains~1mode+mode=null@4"
-    },
-    "constrains/mode+mode=null@2": {
-      "$ref": "#/definitions/constrains~1mode+mode=null@4"
-    },
-    "constrains/mode+mode=null@3": {
-      "anyOf": [
-        {
-          "properties": {
-            "mode": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "mode"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "mode": {}
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/mode+mode=null@4": {
       "anyOf": [
         {
           "properties": {
@@ -784,7 +679,40 @@
         }
       ]
     },
+    "constrains/mode+mode=null@2": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "mode": {}
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
     "constrains/mode=distributed": {
+      "$ref": "#/definitions/constrains~1mode=distributed@2"
+    },
+    "constrains/mode=distributed@2": {
       "properties": {
         "mode": {
           "enum": [
@@ -888,13 +816,6 @@
           "type": "boolean"
         }
       }
-    },
-    "when/mode=distributed/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1mode=distributed"
-      },
-      "then": true
     }
   },
   "properties": {

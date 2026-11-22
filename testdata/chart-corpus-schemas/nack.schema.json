@@ -6,741 +6,16 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1jetstream.nats.nkey+jetstream.nats.nkey=null"
+          },
+          {
             "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.nats.credentials:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "jetstream": {
-                      "properties": {
-                        "nats": {
-                          "properties": {
-                            "credentials": {
-                              "properties": {
-                                "secret": {}
-                              },
-                              "required": [
-                                "secret"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "credentials"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "nats"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jetstream"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "nats": {
-                        "properties": {
-                          "credentials": {
-                            "properties": {
-                              "secret": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "secret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "credentials"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "nats"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1rbacRules@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1jetstream.controlLoop:t"
-                          }
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream.additionalArgs=null"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.additionalArgs+jetstream.additionalArgs=null+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1namespaced"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbacRules@4"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1rbacRules@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.additionalArgs+jetstream.additionalArgs=null+1more"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1jetstream+jetstream.additionalArgs+jetstream.additionalArgs=null"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1namespaced"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1rbacRules@4"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+2more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1rbacRules@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream.image@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@2"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream+jetstream=null@5"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream+jetstream=null@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream.image@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream.image@5"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1jetstream.image@4"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@2"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1jetstream+jetstream=null@3"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1jetstream.image@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1jetstream.image@5"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream.image@4"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules@4"
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream.controlLoop:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream@3"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream.additionalArgs+jetstream.additionalArgs=null"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more@3"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream.image@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream.image@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.pullPolicy+jetstream=null"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream=null@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream+jetstream=null@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1jetstream.image@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules@4"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1jetstream@3"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "namespaced": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "namespaced"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "namespaced": {}
-              },
-              "required": [
-                "namespaced"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1rbacRules@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jetstream": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.tls.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jetstream": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {},
-                "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
-                "properties": {
-                  "settings": {
-                    "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "description": "NATS URL",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1global+global=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1serviceAccountName:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccountName": {
-            "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+2more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jetstream": {
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1global+global=null"
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1rbacRules@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1global+global=null"
-                    }
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1global+global=null"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "else": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1global+global=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            },
-            "then": false
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1jetstream.nats.nkey+jetstream.nats.nkey=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.nats.nkey+jetstream.nats.nkey=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1rbacRules@2"
           },
           {
             "$ref": "#/definitions/constrains~1jetstream.nats.nkey:t"
           },
           {
-            "$ref": "#/definitions/constrains~1jetstream@3"
+            "$ref": "#/definitions/constrains~1jetstream"
           }
         ]
       },
@@ -794,122 +69,230 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1rbacRules"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1namespaceOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "jetstream": {
-                      "properties": {
-                        "nats": {
-                          "properties": {
-                            "nkey": {
-                              "properties": {
-                                "secret": {}
-                              },
-                              "required": [
-                                "secret"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "nkey"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "nats"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jetstream"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "$ref": "#/definitions/constrains~1rbacRules"
+          },
+          {
+            "$ref": "#/definitions/constrains~1jetstream"
+          },
+          {
+            "$ref": "#/definitions/constrains~1jetstream.tls.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
                 "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "nats": {
-                        "properties": {
-                          "nkey": {
-                            "properties": {
-                              "secret": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "secret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "nkey"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "nats"
-                    ],
+                  "settings": {
+                    "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
                     "type": "object"
                   }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1rbacRules"
+          },
+          {
+            "$ref": "#/definitions/constrains~1jetstream"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "properties": {
+                  "nats": {
+                    "description": "NATS URL",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1serviceAccountName:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccountName": {
+            "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1jetstream.image@4"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
               }
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1jetstream.nats.nkey:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.nats.nkey+jetstream.nats.nkey=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.nats.nkey+jetstream.nats.nkey=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@4"
+              }
+            ]
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": true
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null@3"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1global+global=null"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t"
       },
       "then": {
         "additionalProperties": {},
@@ -919,6 +302,701 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "rbacRules": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbacRules"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.tls.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "jetstream": {
+                          "properties": {
+                            "tls": {
+                              "properties": {
+                                "settings": {}
+                              },
+                              "required": [
+                                "settings"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jetstream"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@4"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.controlLoop:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.controlLoop:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.nats.credentials:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "jetstream": {
+                          "properties": {
+                            "nats": {
+                              "properties": {
+                                "credentials": {
+                                  "properties": {
+                                    "secret": {}
+                                  },
+                                  "required": [
+                                    "secret"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "credentials"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "nats"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jetstream"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "nats": {
+                            "properties": {
+                              "credentials": {
+                                "properties": {
+                                  "secret": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "secret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "credentials"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "nats"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1rbacRules"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaced"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1rbacRules@2"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1useLegacyNames:t"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1namespaced"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1rbacRules@2"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1useLegacyNames:t"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "namespaced": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "namespaced"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1jetstream.nats.nkey+jetstream.nats.nkey=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "jetstream": {
+                          "properties": {
+                            "nats": {
+                              "properties": {
+                                "nkey": {
+                                  "properties": {
+                                    "secret": {}
+                                  },
+                                  "required": [
+                                    "secret"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "nkey"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "nats"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jetstream"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "nats": {
+                            "properties": {
+                              "nkey": {
+                                "properties": {
+                                  "secret": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "secret"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "nkey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "nats"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.nats.nkey:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "rbacRules": {}
+              },
+              "required": [
+                "rbacRules"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "namespaced": {}
+              },
+              "required": [
+                "namespaced"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "jetstream": {
+                          "properties": {
+                            "tls": {}
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jetstream"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "jetstream": {
+                          "properties": {
+                            "nats": {}
+                          },
+                          "required": [
+                            "nats"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jetstream"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "nats": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "nats"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "additionalProperties": {},
@@ -931,15 +1009,63 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1rbacRules@2"
+            "$ref": "#/definitions/constrains~1rbacRules"
           },
           {
             "$ref": "#/definitions/constrains~1jetstream.nats.credentials:t"
           },
           {
-            "$ref": "#/definitions/constrains~1jetstream@3"
+            "$ref": "#/definitions/constrains~1jetstream"
           }
         ]
       },
@@ -999,422 +1125,6 @@
           "type": "string"
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "rbacRules": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbacRules"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "rbacRules": {}
-              },
-              "required": [
-                "rbacRules"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1namespaced"
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1rbacRules@4"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1useLegacyNames:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1useLegacyNames:t"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaced"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1rbacRules@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccountName+serviceAccountName:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1namespaced"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1rbacRules@4"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1jetstream.image"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbacRules@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1rbacRules@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jetstream": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "jetstream": {
-                      "properties": {
-                        "tls": {}
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jetstream"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "jetstream": {
-                      "properties": {
-                        "nats": {}
-                      },
-                      "required": [
-                        "nats"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jetstream"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "nats": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "nats"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.tls.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "jetstream": {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "settings": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "settings"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jetstream"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "jetstream": {
-                      "properties": {
-                        "tls": {
-                          "properties": {
-                            "settings": {}
-                          },
-                          "required": [
-                            "settings"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jetstream"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
@@ -1446,299 +1156,163 @@
         }
       ]
     },
-    "constrains/jetstream": {
+    "constrains/global+global=null@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1jetstream@3"
+        "$ref": "#/definitions/constrains~1global+global=null"
       }
     },
-    "constrains/jetstream+jetstream.additionalArgs+jetstream.additionalArgs=null": {
-      "anyOf": [
+    "constrains/global+global=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global+global=null"
+      }
+    },
+    "constrains/group-0": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
+          "$ref": "#/definitions/constrains~1group-10"
         },
         {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs=null"
+          "$ref": "#/definitions/constrains~1group-2"
         }
       ]
     },
-    "constrains/jetstream+jetstream.additionalArgs+jetstream.additionalArgs=null+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.controlLoop:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
-        },
+    "constrains/group-1": {
+      "allOf": [
         {
           "$ref": "#/definitions/constrains~1jetstream"
         },
         {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs=null"
-        }
-      ]
-    },
-    "constrains/jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@4"
+          "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.pullPolicy+jetstream=null@2"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more@2": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1jetstream.image@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.pullPolicy+jetstream=null@2"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1rbacRules"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream.image@4"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1group-2"
         }
       ]
     },
-    "constrains/jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+1more@3": {
-      "anyOf": [
+    "constrains/group-10": {
+      "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
-          }
+          "$ref": "#/definitions/constrains~1jetstream"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream.pullPolicy+jetstream=null"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/jetstream+jetstream.image+jetstream.image=null+jetstream.pullPolicy+2more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1rbacRules@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@4"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream=null@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream.image@5"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1rbacRules@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream+jetstream=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream.image@5"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/jetstream+jetstream.image+jetstream.pullPolicy+jetstream=null": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-            },
-            {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1jetstream@3"
-                  }
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream=null@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream=null@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream.image@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream@3"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+          "$ref": "#/definitions/constrains~1rbacRules"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-          }
+          "$ref": "#/definitions/constrains~1jetstream.controlLoop:t"
         }
       ]
     },
-    "constrains/jetstream+jetstream.image+jetstream.pullPolicy+jetstream=null@2": {
-      "anyOf": [
+    "constrains/group-2": {
+      "allOf": [
         {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1jetstream"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream+jetstream=null@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream.image@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1jetstream@3"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1group-8"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1jetstream.pullPolicy"
-          }
+          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
         }
       ]
     },
-    "constrains/jetstream+jetstream.image+jetstream=null": {
-      "anyOf": [
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
+        },
         {
           "$ref": "#/definitions/constrains~1jetstream.image"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream@3"
         }
       ]
     },
-    "constrains/jetstream+jetstream.image+jetstream=null@2": {
-      "anyOf": [
+    "constrains/group-5": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1jetstream=null"
+          "$ref": "#/definitions/constrains~1group-6"
         },
         {
-          "$ref": "#/definitions/constrains~1jetstream@2"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1jetstream.image@5"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream@3"
+          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
         }
       ]
     },
-    "constrains/jetstream+jetstream.image+jetstream=null@3": {
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
+        }
+      ]
+    },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-10"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.image@3"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-10"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
+        }
+      ]
+    },
+    "constrains/jetstream": {
+      "properties": {
+        "jetstream": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "jetstream"
+      ],
+      "type": "object"
+    },
+    "constrains/jetstream+jetstream.image+jetstream=null": {
       "not": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
           },
           {
-            "$ref": "#/definitions/constrains~1jetstream+jetstream=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.image@5"
-          }
-        ]
-      }
-    },
-    "constrains/jetstream+jetstream.image+jetstream=null@4": {
-      "not": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1jetstream+jetstream=null@5"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream+jetstream=null@4"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.image@5"
+            "$ref": "#/definitions/constrains~1jetstream.image@4"
           }
         ]
       }
@@ -1746,10 +1320,28 @@
     "constrains/jetstream+jetstream=null": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1jetstream=null"
+          "properties": {
+            "jetstream": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "jetstream"
+          ],
+          "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1jetstream@2"
+          "not": {
+            "properties": {
+              "jetstream": {}
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
         }
       ]
     },
@@ -1758,60 +1350,59 @@
         "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
       }
     },
-    "constrains/jetstream+jetstream=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
-      }
-    },
-    "constrains/jetstream+jetstream=null@4": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
-      }
-    },
-    "constrains/jetstream+jetstream=null@5": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
-      }
-    },
     "constrains/jetstream.additionalArgs": {
       "not": {
-        "properties": {
-          "jetstream": {
+        "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
+      }
+    },
+    "constrains/jetstream.additionalArgs+jetstream.additionalArgs=null": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "additionalArgs": {}
+              "jetstream": {
+                "properties": {
+                  "additionalArgs": {}
+                },
+                "required": [
+                  "additionalArgs"
+                ],
+                "type": "object"
+              }
             },
             "required": [
-              "additionalArgs"
+              "jetstream"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "jetstream"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/jetstream.additionalArgs=null": {
-      "properties": {
-        "jetstream": {
+        {
           "properties": {
-            "additionalArgs": {
-              "enum": [
-                null
-              ]
+            "jetstream": {
+              "properties": {
+                "additionalArgs": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "additionalArgs"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "additionalArgs"
+            "jetstream"
           ],
           "type": "object"
         }
-      },
-      "required": [
-        "jetstream"
-      ],
-      "type": "object"
+      ]
+    },
+    "constrains/jetstream.additionalArgs+jetstream.additionalArgs=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
+      }
     },
     "constrains/jetstream.additionalArgs@2": {
       "properties": {
@@ -1833,6 +1424,11 @@
       "type": "object"
     },
     "constrains/jetstream.controlLoop:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1jetstream.controlLoop:t@2"
+      }
+    },
+    "constrains/jetstream.controlLoop:t@2": {
       "properties": {
         "jetstream": {
           "properties": {
@@ -1853,16 +1449,13 @@
     },
     "constrains/jetstream.image": {
       "not": {
-        "$ref": "#/definitions/constrains~1jetstream.image@5"
+        "$ref": "#/definitions/constrains~1jetstream.image@4"
       }
     },
     "constrains/jetstream.image+jetstream.image=null": {
-      "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+      "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
     },
     "constrains/jetstream.image+jetstream.image=null@2": {
-      "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
-    },
-    "constrains/jetstream.image+jetstream.image=null@3": {
       "anyOf": [
         {
           "not": {
@@ -1906,22 +1499,17 @@
         }
       ]
     },
-    "constrains/jetstream.image+jetstream.image=null@4": {
+    "constrains/jetstream.image+jetstream.image=null@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null"
+        "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
       }
     },
     "constrains/jetstream.image@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1jetstream.image@4"
+        "$ref": "#/definitions/constrains~1jetstream.image@3"
       }
     },
     "constrains/jetstream.image@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jetstream.image@4"
-      }
-    },
-    "constrains/jetstream.image@4": {
       "properties": {
         "jetstream": {
           "properties": {
@@ -1940,7 +1528,7 @@
       ],
       "type": "object"
     },
-    "constrains/jetstream.image@5": {
+    "constrains/jetstream.image@4": {
       "properties": {
         "jetstream": {
           "properties": {
@@ -2076,6 +1664,11 @@
       "type": "object"
     },
     "constrains/jetstream.pullPolicy": {
+      "not": {
+        "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
+      }
+    },
+    "constrains/jetstream.pullPolicy@2": {
       "properties": {
         "jetstream": {
           "properties": {
@@ -2121,56 +1714,18 @@
       ],
       "type": "object"
     },
-    "constrains/jetstream=null": {
-      "properties": {
-        "jetstream": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "jetstream"
-      ],
-      "type": "object"
-    },
-    "constrains/jetstream@2": {
-      "not": {
-        "properties": {
-          "jetstream": {}
-        },
-        "required": [
-          "jetstream"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/jetstream@3": {
-      "properties": {
-        "jetstream": {
-          "type": "object"
-        }
-      },
-      "required": [
-        "jetstream"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
         },
         {
           "not": {
@@ -2180,20 +1735,8 @@
       ]
     },
     "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
-          }
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
       }
     },
     "constrains/nameOverride:t": {
@@ -2207,17 +1750,6 @@
       ],
       "type": "object"
     },
-    "constrains/namespaceOverride": {
-      "properties": {
-        "namespaceOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
     "constrains/namespaceOverride+namespaceOverride:t": {
       "anyOf": [
         {
@@ -2226,19 +1758,15 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1namespaceOverride"
-        }
-      ]
-    },
-    "constrains/namespaceOverride+namespaceOverride:t@2": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1namespaceOverride"
+          "properties": {
+            "namespaceOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "namespaceOverride"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -2265,12 +1793,6 @@
       "type": "object"
     },
     "constrains/rbacRules": {
-      "$ref": "#/definitions/constrains~1rbacRules@3"
-    },
-    "constrains/rbacRules@2": {
-      "$ref": "#/definitions/constrains~1rbacRules@3"
-    },
-    "constrains/rbacRules@3": {
       "not": {
         "properties": {
           "rbacRules": {
@@ -2284,7 +1806,7 @@
         "type": "object"
       }
     },
-    "constrains/rbacRules@4": {
+    "constrains/rbacRules@2": {
       "properties": {
         "rbacRules": {
           "type": "string"
@@ -2295,33 +1817,18 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccountName": {
-      "properties": {
-        "serviceAccountName": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "serviceAccountName"
-      ],
-      "type": "object"
-    },
     "constrains/serviceAccountName+serviceAccountName:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccountName"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccountName:t"
-          }
-        }
-      ]
-    },
-    "constrains/serviceAccountName+serviceAccountName:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccountName"
+          "properties": {
+            "serviceAccountName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "serviceAccountName"
+          ],
+          "type": "object"
         },
         {
           "not": {

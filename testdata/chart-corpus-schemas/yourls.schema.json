@@ -3,31 +3,6 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.yourls-database"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.yourls-database=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "mariadb": {
@@ -41,88 +16,129 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.yourls-database"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.yourls-database=null"
+                  }
+                ]
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.yourls-database:t"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.yourls-database:t"
+              }
+            ]
           }
         ]
       },
       "then": {
-        "$ref": "#/definitions/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+        "if": {
+          "allOf": [
+            {
+              "properties": {
+                "mariadb": {
+                  "$ref": "#/definitions/constrains~1nameOverride!=null"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled!=null"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret!=null"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword!=null"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null+mariadb.passwordUpdateJob.enabled:t+5more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1tags.yourls-database+tags.yourls-database=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1tags.yourls-database:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1mariadb+mariadb.enabled+mariadb.enabled=null~1then~1any~1else~1fail"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1mariadb.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -175,69 +191,27 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null+mariadb.passwordUpdateJob.enabled:t+5more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1tags.yourls-database+tags.yourls-database=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1tags.yourls-database:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1mariadb+mariadb.enabled+mariadb.enabled=null~1then~1any~1else~1fail"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1mariadb.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -365,69 +339,27 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null+mariadb.passwordUpdateJob.enabled:t+5more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1tags.yourls-database+tags.yourls-database=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1tags.yourls-database:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1mariadb+mariadb.enabled+mariadb.enabled=null~1then~1any~1else~1fail"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1mariadb.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -448,21 +380,8 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "ingress": {
-              "$ref": "#/definitions/constrains~1enabled:t"
-            }
-          },
-          "required": [
-            "ingress"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
+        "allOf": [
+          {
             "properties": {
               "ingress": {
                 "properties": {
@@ -481,8 +400,18 @@
             ],
             "type": "object"
           },
-          "then": true
-        }
+          {
+            "properties": {
+              "ingress": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -641,6 +570,57 @@
       ],
       "type": "object"
     },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-1"
+        },
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+        }
+      ]
+    },
     "constrains/mariadb+mariadb.enabled+mariadb.enabled=null": {
       "anyOf": [
         {
@@ -698,6 +678,44 @@
             ],
             "type": "object"
           }
+        }
+      ]
+    },
+    "constrains/mariadb+mariadb.enabled+mariadb.enabled=null+mariadb.passwordUpdateJob.enabled:t+5more": {
+      "allOf": [
+        {
+          "else": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.yourls-database"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.yourls-database=null"
+                  }
+                ]
+              }
+            ]
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1tags.yourls-database:t"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
         }
       ]
     },
@@ -832,59 +850,35 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
+              "$ref": "#/definitions/constrains~1group-2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
+              "$ref": "#/definitions/constrains~1group-2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            },
-            {
               "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
             }
           ]
         },
@@ -959,28 +953,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              "$ref": "#/definitions/constrains~1group-2"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
             }
           ]
         }
@@ -1069,21 +1051,34 @@
       ],
       "type": "object"
     },
+    "constrains/mariadb.passwordUpdateJob.enabled:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        }
+      ]
+    },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-      }
+      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
-      "properties": {
-        "mariadb": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
-        }
-      },
-      "required": [
-        "mariadb"
-      ],
-      "type": "object"
+      "not": {
+        "properties": {
+          "mariadb": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          }
+        },
+        "required": [
+          "mariadb"
+        ],
+        "type": "object"
+      }
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
       "properties": {
@@ -1432,96 +1427,6 @@
         "global": {}
       },
       "type": "object"
-    },
-    "when/mariadb+mariadb.enabled+mariadb.enabled=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1mariadb+mariadb.enabled+mariadb.enabled=null"
-      },
-      "then": true
-    },
-    "when/mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "mariadb": {
-                "$ref": "#/definitions/constrains~1nameOverride!=null"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled!=null"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret!=null"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "$ref": "#/definitions/constrains~1fullnameOverride!=null"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword!=null"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-      },
-      "then": true
-    },
-    "when/tags.yourls-database+tags.yourls-database=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1tags.yourls-database"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.yourls-database=null"
-          }
-        ]
-      },
-      "then": true
     }
   },
   "properties": {
@@ -1634,31 +1539,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                        "$ref": "#/definitions/constrains~1group-0"
                       },
                       {
                         "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@2"
                       }
                     ]
                   },
@@ -1686,28 +1573,22 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                        "$ref": "#/definitions/constrains~1group-1"
                       },
                       {
                         "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
                       }
                     ]
                   },
@@ -1739,28 +1620,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+                        "$ref": "#/definitions/constrains~1group-0"
                       },
                       {
                         "$ref": "#/definitions/constrains~1nameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride:t"
                       }
                     ]
                   },

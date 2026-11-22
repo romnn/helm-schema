@@ -6,6 +6,201 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
               "vpa": {
                 "enum": [
@@ -19,6 +214,19 @@
             "type": "object"
           },
           {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
             "not": {
               "properties": {
                 "vpa": {}
@@ -28,167 +236,39 @@
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1vpa.enabled:t~1then~1any~1else~1fail"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "kubeTargetVersionOverride": {
-            "description": "kubeTargetVersionOverride -- Allow overriding the `.Capabilities.KubeVersion.GitVersion` check. Useful for `helm template` commands.",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1vpa.enabled:t"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -198,19 +278,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1vpa.enabled:t~1then~1any~1else~1fail"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-          },
-          "then": true
-        }
+          {
+            "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1any~1else~1vpa"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -224,19 +299,20 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1vpa.enabled:t~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1kubeTargetVersionOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1vpa.enabled:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "description": "nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)",
+          "kubeTargetVersionOverride": {
+            "description": "kubeTargetVersionOverride -- Allow overriding the `.Capabilities.KubeVersion.GitVersion` check. Useful for `helm template` commands.",
             "type": "string"
           }
         }
@@ -244,32 +320,20 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1vpa.enabled:t"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -293,34 +357,24 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "not": {
-              "properties": {
-                "serviceMonitor": {}
-              },
-              "required": [
-                "serviceMonitor"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1any~1else~1vpa"
           },
           {
-            "properties": {
-              "serviceMonitor": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1nameOverride:t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -435,6 +489,9 @@
       "type": "object"
     },
     "constrains/vpa.enabled:t": {
+      "$ref": "#/definitions/constrains~1vpa.enabled:t@2"
+    },
+    "constrains/vpa.enabled:t@2": {
       "properties": {
         "vpa": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -470,10 +527,12 @@
         }
       ]
     },
-    "when/vpa.enabled:t/then/any/else/fail": {
-      "else": false,
-      "if": {
+    "when/serviceMonitor.enabled:t/then/any/else/vpa": {
+      "else": {
         "$ref": "#/definitions/constrains~1vpa.enabled:t"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
       },
       "then": true
     }
@@ -678,7 +737,14 @@
     "securityContext": {
       "description": "securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)\nrunAsNonRoot: true\nrunAsUser: 65534\nrunAsGroup: 65534\nseccompProfile:\ntype: RuntimeDefault"
     },
-    "service": {},
+    "service": {
+      "additionalProperties": {},
+      "properties": {
+        "portName": {
+          "description": "service.portName -- Name for service port."
+        }
+      }
+    },
     "serviceMonitor": {
       "additionalProperties": {},
       "description": "Are you using Prometheus Operator?",
@@ -689,8 +755,17 @@
         "enabled": {
           "description": "serviceMonitor.enabled -- If true, creates a Prometheus Operator ServiceMonitor."
         },
+        "interval": {
+          "description": "serviceMonitor.interval -- Interval that Prometheus scrapes Cluster Autoscaler metrics."
+        },
         "namespace": {
           "description": "serviceMonitor.namespace -- Namespace which Prometheus is running in."
+        },
+        "path": {
+          "description": "serviceMonitor.path -- The path to scrape for metrics; autoscaler exposes `/metrics` (this is standard)"
+        },
+        "relabelings": {
+          "description": "[RelabelConfig](https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#monitoring.coreos.com/v1.RelabelConfig)\nserviceMonitor.relabelings -- RelabelConfigs to apply to metrics before scraping."
         },
         "selector": {
           "additionalProperties": {},

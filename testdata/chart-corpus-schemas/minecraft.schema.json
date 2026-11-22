@@ -4,71 +4,16 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge+minecraftServer.autoCurseForge=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "properties": {
-              "rconServiceLabels": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "rconServiceLabels"
-            ],
-            "type": "object"
-          },
-          "then": true
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "rconServiceLabels": {
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "else": false,
-          "if": {
             "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
           },
-          "then": true
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-        },
-        "then": false
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+            }
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -100,67 +45,1580 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
+            "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "mcbackup": {
+              "properties": {
+                "rcloneConfig": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "rcloneConfig"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mcbackup"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "mcbackup": {
+              "additionalProperties": {},
+              "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP",
+              "properties": {
+                "rcloneConfig": {
+                  "description": "see https://rclone.org/ for details\nthis value is evaluated as a template\n[remote]\ntype = google cloud storage\nclient_id =\nclient_secret =\ntoken = {\"AccessToken\":\"super\",\"RefreshToken\":\"secret\",\"Expiry\":\"date\",\"Extra\":null}\nproject_number = 12345678\nobject_acl = private\nbucket_acl = private",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "rconServiceLabels": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "rconServiceLabels"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rconServiceLabels": {
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+            },
+            "then": {
+              "else": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1mcbackup.backupMethod=rclone~1else~1any"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t@2"
+                  }
+                ]
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t"
+              }
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mcbackup:t@4"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+            },
+            "then": {
+              "else": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic~1else~1any"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t@2"
+                  }
+                ]
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minecraftServer": {
+            "additionalProperties": {},
+            "properties": {
+              "externalIPs": {
+                "description": "loadBalancerSourceRanges: []\nSet the externalTrafficPolicy in the Service to either Cluster or Local\nexternalTrafficPolicy: Cluster",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          },
+          "then": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1mcbackup.backupMethod=rclone~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+              },
+              "then": true
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mcbackup:t@4"
+        },
+        "then": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          },
+          "then": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+              },
+              "then": true
+            }
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "extraDeploy": {
+                "description": "Array of extra objects to deploy with the release\nextraDeploy:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ template \"minecraft.fullname\" . }}-extra-cm\ndata:\nkey: |-\n{\n\"key\": \"value\"\n}",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "minecraftServer": {
+                "additionalProperties": {},
+                "properties": {
+                  "extraPorts": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1serviceLabels:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/constrains~1serviceLabels:t"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1serviceLabels:t"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceLabels:t@2"
+                    }
+                  ]
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1serviceLabels:t"
+              }
+            }
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mcbackup:t@4"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/constrains~1serviceLabels:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/constrains~1serviceLabels:t"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1serviceLabels:t"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceLabels:t@2"
+                    }
+                  ]
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1serviceLabels:t"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceLabels": {
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
               {
                 "not": {
-                  "properties": {
-                    "minecraftServer": {
-                      "properties": {
-                        "autoCurseForge": {
-                          "properties": {
-                            "apiKey": {}
-                          },
-                          "required": [
-                            "apiKey"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "autoCurseForge"
-                      ],
-                      "type": "object"
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+5more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+9more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon+5more"
                     }
-                  },
-                  "required": [
-                    "minecraftServer"
-                  ],
-                  "type": "object"
+                  ]
                 }
               },
               {
-                "properties": {
-                  "minecraftServer": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+                      },
+                      {
+                        "$ref": "#/definitions/t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@3"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@3"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@3"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride?@2"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "not": {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "mcbackup": {}
+              },
+              "required": [
+                "mcbackup"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1mcbackup.resticRepository@3"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1mcbackup:t@4"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup:t@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.resticRepository@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@3"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+5more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+9more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon+5more"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1minecraftServer"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+3more"
+              },
+              {
+                "anyOf": [
+                  {
                     "properties": {
-                      "autoCurseForge": {
+                      "mcbackup": {
                         "properties": {
-                          "apiKey": {
+                          "resticRepository": {
                             "enum": [
                               null
                             ]
                           }
                         },
                         "required": [
-                          "apiKey"
+                          "resticRepository"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "autoCurseForge"
+                      "mcbackup"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "mcbackup": {
+                          "properties": {
+                            "resticRepository": {}
+                          },
+                          "required": [
+                            "resticRepository"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "mcbackup"
+                      ],
+                      "type": "object"
+                    }
                   }
-                },
-                "required": [
-                  "minecraftServer"
-                ],
-                "type": "object"
+                ]
               }
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge+minecraftServer.autoCurseForge=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge+minecraftServer.autoCurseForge=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1minecraftServer"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1minecraftServer=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "minecraftServer": {
+                          "properties": {
+                            "rcon": {}
+                          },
+                          "required": [
+                            "rcon"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "minecraftServer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "minecraftServer": {
+                        "properties": {
+                          "rcon": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "rcon"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minecraftServer"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1minecraftServer"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1minecraftServer=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "minecraftServer": {
+                          "properties": {
+                            "autoCurseForge": {
+                              "properties": {
+                                "apiKey": {}
+                              },
+                              "required": [
+                                "apiKey"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "autoCurseForge"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "minecraftServer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "minecraftServer": {
+                        "properties": {
+                          "autoCurseForge": {
+                            "properties": {
+                              "apiKey": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoCurseForge"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minecraftServer"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge+minecraftServer.autoCurseForge=null"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mcbackup": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "mcbackup"
+            ],
+            "type": "object"
+          },
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1mcbackup.rcloneConfigExistingSecret:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.enabled:t+3more~1else~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+                },
+                "then": {
+                  "else": {
+                    "else": {
+                      "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                    },
+                    "then": {
+                      "else": {
+                        "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1mcbackup.backupMethod"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more~1else~1mcbackup.backupMethod@2"
+                      }
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1any"
+                  }
+                }
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup:t@4"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/when~1mcbackup.rcloneConfigExistingSecret:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.enabled:t+3more~1else~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+                },
+                "then": {
+                  "else": {
+                    "else": {
+                      "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                    },
+                    "then": {
+                      "else": {
+                        "else": {
+                          "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1mcbackup.backupMethod"
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more~1else~1mcbackup.backupMethod@2"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more~1else~1mcbackup.backupMethod@2"
+                      }
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1any"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-27"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-26"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-24"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-26"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-24"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-23"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride?@3"
+              },
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-27"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-23"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-24"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-21"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-20"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-21"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-17"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-21"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-20"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-21"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-17"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-20"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+              },
+              {
+                "$ref": "#/definitions/t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1minecraftServer=null"
           }
         ]
       },
@@ -170,69 +1628,84 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "minecraftServer": {
-                      "properties": {
-                        "rcon": {}
-                      },
-                      "required": [
-                        "rcon"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "minecraftServer"
-                  ],
-                  "type": "object"
+            "else": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride?"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride:t@2"
                 }
-              },
-              {
-                "properties": {
-                  "minecraftServer": {
-                    "properties": {
-                      "rcon": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "rcon"
-                    ],
-                    "type": "object"
+              ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride?"
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1fullnameOverride?@2"
                   }
                 },
-                "required": [
-                  "minecraftServer"
-                ],
-                "type": "object"
-              }
-            ]
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                }
+              ]
+            }
           },
           {
-            "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer=null"
+            "$ref": "#/definitions/t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+          },
+          {
+            "$ref": "#/definitions/t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
           },
-          "then": true
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-        },
-        "then": false
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+            }
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -255,1065 +1728,25 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/t"
-        },
-        "then": {
-          "else": {
-            "else": {
-              "$ref": "#/definitions/when~1nameOverride:t~1then~1nameOverride?~1else~1fail"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "$ref": "#/definitions/when~1nameOverride:t~1then~1nameOverride?~1else~1fail"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1nameOverride:t~1then~1nameOverride?~1else~1fail"
-              }
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1nameOverride:t~1then~1fullnameOverride?+nameOverride?~1else~1fail"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "$ref": "#/definitions/when~1nameOverride:t~1then~1fullnameOverride?+nameOverride?~1else~1fail"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1nameOverride:t~1then~1fullnameOverride?+nameOverride?~1else~1fail"
-              }
-            }
-          }
-        }
+        "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+3more"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1fullnameOverride?~1then~1any~1else~1fail"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "$ref": "#/definitions/when~1fullnameOverride?~1then~1any~1else~1fail"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1fullnameOverride?~1then~1any~1else~1fail"
+          "mcbackup": {
+            "additionalProperties": {},
+            "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP",
+            "properties": {
+              "resticRepository": {
+                "type": "string"
               }
             }
           }
         }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride?"
-              },
-              {
-                "$ref": "#/definitions/t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
-    "constrains/autoCurseForge": {
-      "properties": {
-        "autoCurseForge": {}
-      },
-      "required": [
-        "autoCurseForge"
-      ],
-      "type": "object"
-    },
     "constrains/autoCurseForge=null": {
       "properties": {
         "autoCurseForge": {
@@ -1324,6 +1757,17 @@
       },
       "required": [
         "autoCurseForge"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
       ],
       "type": "object"
     },
@@ -1340,21 +1784,688 @@
     },
     "constrains/fullnameOverride": {
       "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+3more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+5more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+3more"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+3more"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more/not/:t": {
+      "not": {
+        "$ref": "#/definitions/t"
+      }
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+minecraftServer.rcon+5more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more@2"
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t@2"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-1"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride?@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-18"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride?@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-1"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride?@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride?"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride?@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more/anyOf/:t+object": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
     },
     "constrains/fullnameOverride:t": {
       "not": {
         "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
+    },
+    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride?+nameOverride+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@2"
+        }
+      ]
     },
     "constrains/fullnameOverride:t@2": {
       "properties": {
@@ -1378,31 +2489,1230 @@
       ],
       "type": "object"
     },
-    "constrains/minecraftServer+minecraftServer=null": {
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/group-0": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        }
+      ]
+    },
+    "constrains/group-10": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-12"
+        }
+      ]
+    },
+    "constrains/group-11": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-19"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        }
+      ]
+    },
+    "constrains/group-12": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key@2"
+        }
+      ]
+    },
+    "constrains/group-13": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-22"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-14"
+        }
+      ]
+    },
+    "constrains/group-14": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?"
+        }
+      ]
+    },
+    "constrains/group-15": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/group-16": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-22"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@3"
+        }
+      ]
+    },
+    "constrains/group-17": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-28"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/group-18": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-19"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/group-19": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.password@2"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-19"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+        }
+      ]
+    },
+    "constrains/group-20": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.password:t"
+        }
+      ]
+    },
+    "constrains/group-21": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-22"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/group-22": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/group-23": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-26"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+        }
+      ]
+    },
+    "constrains/group-24": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-28"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-25"
+        }
+      ]
+    },
+    "constrains/group-25": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?"
+        }
+      ]
+    },
+    "constrains/group-26": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null@2"
+        }
+      ]
+    },
+    "constrains/group-27": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-28"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride?@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        }
+      ]
+    },
+    "constrains/group-28": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride?"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-19"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-22"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-25"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-28"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-14"
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod"
+        },
+        {
           "not": {
-            "properties": {
-              "minecraftServer": {}
+            "$ref": "#/definitions/constrains~1mcbackup.backupMethod+mcbackup.backupMethod=null"
+          }
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+4more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.enabled:t+mcbackup.rcloneConfigExistingSecret:t+minecraftServer.rcon"
+                    }
+                  ]
+                }
+              ]
             },
-            "required": [
-              "minecraftServer"
-            ],
-            "type": "object"
+            {
+              "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@2"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more"
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+6more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+4more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup:t@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.enabled:t+mcbackup.rcloneConfigExistingSecret:t+minecraftServer.rcon"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+7more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mcbackup:t@3"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@2"
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1mcbackup.enabled:t+mcbackup.rcloneConfigExistingSecret:t+minecraftServer.rcon"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mcbackup:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more@2"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.resticRepository@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.resticRepository@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+9more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+7more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+7more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+6more"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1mcbackup.resticRepository@2"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1mcbackup.resticRepository@4"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+4more"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mcbackup.resticRepository"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mcbackup.resticRepository@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+6more"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t+mcbackup.rcloneConfigExistingSecret:t+minecraftServer.rcon"
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null+mcbackup.enabled:t+2more"
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod@3"
+        }
+      ]
+    },
+    "constrains/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null@2"
+      }
+    },
+    "constrains/mcbackup+mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
           }
         },
         {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod@3"
+      }
+    },
+    "constrains/mcbackup.backupMethod+mcbackup.backupMethod=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=null"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=null": {
+      "properties": {
+        "mcbackup": {
           "properties": {
-            "minecraftServer": {
+            "backupMethod": {
               "enum": [
                 null
               ]
             }
           },
           "required": [
-            "minecraftServer"
+            "backupMethod"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.backupMethod=rclone": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+      }
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone@2"
+          }
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-0"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.resticRepository"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic+mcbackup.enabled:t+6more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-0"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.resticRepository"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t@2"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@2"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@2"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@2"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone+mcbackup.enabled:t+mcbackup.rcloneConfig+4more@4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mcbackup:t@2"
+        }
+      ]
+    },
+    "constrains/mcbackup.backupMethod=rclone@2": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "backupMethod": {
+              "enum": [
+                "rclone"
+              ]
+            }
+          },
+          "required": [
+            "backupMethod"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.backupMethod=restic": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=restic@2"
+      }
+    },
+    "constrains/mcbackup.backupMethod=restic@2": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "backupMethod": {
+              "enum": [
+                "restic"
+              ]
+            }
+          },
+          "required": [
+            "backupMethod"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.backupMethod@2": {
+      "not": {
+        "properties": {
+          "mcbackup": {
+            "properties": {
+              "backupMethod": {}
+            },
+            "required": [
+              "backupMethod"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mcbackup"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mcbackup.backupMethod@3": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "backupMethod": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "backupMethod"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.enabled:t@2"
+      }
+    },
+    "constrains/mcbackup.enabled:t+mcbackup.rcloneConfigExistingSecret:t+minecraftServer.rcon": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1mcbackup.enabled:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/mcbackup.enabled:t@2": {
+      "properties": {
+        "mcbackup": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.rcloneConfig": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig@3"
+      }
+    },
+    "constrains/mcbackup.rcloneConfig:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfig:t@2"
+      }
+    },
+    "constrains/mcbackup.rcloneConfig:t@2": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "rcloneConfig": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "rcloneConfig"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.rcloneConfig@2": {
+      "not": {
+        "properties": {
+          "mcbackup": {
+            "properties": {
+              "rcloneConfig": {
+                "pattern": "\\{\\{",
+                "type": "string"
+              }
+            },
+            "required": [
+              "rcloneConfig"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mcbackup"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mcbackup.rcloneConfig@3": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "rcloneConfig": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "rcloneConfig"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.rcloneConfigExistingSecret:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+      }
+    },
+    "constrains/mcbackup.rcloneConfigExistingSecret:t@2": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "rcloneConfigExistingSecret": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "rcloneConfigExistingSecret"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.resticRepository": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.resticRepository@3"
+      }
+    },
+    "constrains/mcbackup.resticRepository@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup.resticRepository@4"
+      }
+    },
+    "constrains/mcbackup.resticRepository@3": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "resticRepository": {
+              "pattern": "^rclone",
+              "type": "string"
+            }
+          },
+          "required": [
+            "resticRepository"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup.resticRepository@4": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "resticRepository": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "resticRepository"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup:t@4"
+      }
+    },
+    "constrains/mcbackup:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mcbackup:t@3"
+      }
+    },
+    "constrains/mcbackup:t@3": {
+      "properties": {
+        "mcbackup": {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+minecraftServer.rcon.existingSecret:t+4more~1anyOf~1:t+object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/mcbackup:t@4": {
+      "properties": {
+        "mcbackup": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer": {
+      "not": {
+        "properties": {
+          "minecraftServer": {}
+        },
+        "required": [
+          "minecraftServer"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+          }
+        }
+      ]
+    },
+    "constrains/minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+          }
+        }
+      ]
+    },
+    "constrains/minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType@2"
         }
       ]
     },
@@ -1412,7 +3722,13 @@
           "not": {
             "properties": {
               "minecraftServer": {
-                "$ref": "#/definitions/constrains~1autoCurseForge"
+                "properties": {
+                  "autoCurseForge": {}
+                },
+                "required": [
+                  "autoCurseForge"
+                ],
+                "type": "object"
               }
             },
             "required": [
@@ -1467,39 +3783,9 @@
       "type": "object"
     },
     "constrains/minecraftServer.autoCurseForge.apiKey.key": {
-      "properties": {
-        "minecraftServer": {
-          "properties": {
-            "autoCurseForge": {
-              "properties": {
-                "apiKey": {
-                  "properties": {
-                    "key": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "key"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "apiKey"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "autoCurseForge"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "minecraftServer"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1minecraftServer.autoCurseForge.apiKey.key@2"
+      }
     },
     "constrains/minecraftServer.autoCurseForge.apiKey.key:t": {
       "not": {
@@ -1541,20 +3827,99 @@
       ],
       "type": "object"
     },
+    "constrains/minecraftServer.autoCurseForge.apiKey.key@2": {
+      "properties": {
+        "minecraftServer": {
+          "properties": {
+            "autoCurseForge": {
+              "properties": {
+                "apiKey": {
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "apiKey"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "autoCurseForge"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer.externalIPs:t": {
+      "$ref": "#/definitions/constrains~1minecraftServer.externalIPs:t@2"
+    },
+    "constrains/minecraftServer.externalIPs:t@2": {
+      "properties": {
+        "minecraftServer": {
+          "properties": {
+            "externalIPs": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "externalIPs"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer.rcon+minecraftServer.rcon.serviceType+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+          }
+        }
+      ]
+    },
+    "constrains/minecraftServer.rcon+minecraftServer.rcon.serviceType+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@2"
+        }
+      ]
+    },
     "constrains/minecraftServer.rcon.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+      }
+    },
+    "constrains/minecraftServer.rcon.enabled:t@2": {
       "properties": {
         "minecraftServer": {
           "properties": {
             "rcon": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1enabled:t"
             }
           },
           "required": [
@@ -1656,20 +4021,171 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
+    "constrains/minecraftServer.rcon.serviceType": {
+      "not": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@3"
+      }
+    },
+    "constrains/minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@2"
+        }
+      ]
+    },
+    "constrains/minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+      }
+    },
+    "constrains/minecraftServer.rcon.serviceType=null": {
+      "properties": {
+        "minecraftServer": {
+          "properties": {
+            "rcon": {
+              "$ref": "#/definitions/constrains~1serviceType=null"
+            }
+          },
+          "required": [
+            "rcon"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer.rcon.serviceType@2": {
       "not": {
         "properties": {
-          "nameOverride": {
-            "type": "string"
+          "minecraftServer": {
+            "properties": {
+              "rcon": {
+                "properties": {
+                  "serviceType": {}
+                },
+                "required": [
+                  "serviceType"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rcon"
+            ],
+            "type": "object"
           }
         },
         "required": [
-          "nameOverride"
+          "minecraftServer"
         ],
         "type": "object"
       }
     },
+    "constrains/minecraftServer.rcon.serviceType@3": {
+      "properties": {
+        "minecraftServer": {
+          "properties": {
+            "rcon": {
+              "$ref": "#/definitions/constrains~1serviceType"
+            }
+          },
+          "required": [
+            "rcon"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer.serviceType": {
+      "not": {
+        "$ref": "#/definitions/constrains~1minecraftServer.serviceType@3"
+      }
+    },
+    "constrains/minecraftServer.serviceType+minecraftServer.serviceType=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType@2"
+        }
+      ]
+    },
+    "constrains/minecraftServer.serviceType=null": {
+      "properties": {
+        "minecraftServer": {
+          "$ref": "#/definitions/constrains~1serviceType=null"
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer.serviceType@2": {
+      "not": {
+        "properties": {
+          "minecraftServer": {
+            "properties": {
+              "serviceType": {}
+            },
+            "required": [
+              "serviceType"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "minecraftServer"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/minecraftServer.serviceType@3": {
+      "properties": {
+        "minecraftServer": {
+          "$ref": "#/definitions/constrains~1serviceType"
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/minecraftServer=null": {
+      "properties": {
+        "minecraftServer": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "minecraftServer"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@2"
+      }
+    },
     "constrains/nameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      }
+    },
+    "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -1681,8 +4197,65 @@
       "type": "object"
     },
     "constrains/nameOverride?": {
+      "$ref": "#/definitions/constrains~1nameOverride?@3"
+    },
+    "constrains/nameOverride?@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride?@3"
+      }
+    },
+    "constrains/nameOverride?@3": {
       "required": [
         "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceLabels:t": {
+      "$ref": "#/definitions/constrains~1serviceLabels:t@2"
+    },
+    "constrains/serviceLabels:t@2": {
+      "properties": {
+        "serviceLabels": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "serviceLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceType": {
+      "properties": {
+        "serviceType": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "serviceType"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceType=null": {
+      "properties": {
+        "serviceType": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "serviceType"
       ],
       "type": "object"
     },
@@ -1711,43 +4284,249 @@
         }
       ]
     },
-    "when/fullnameOverride?/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride?@2"
-      },
-      "then": true
+    "values/minecraftServer.externalIPs": {
+      "description": "loadBalancerSourceRanges: []\nSet the externalTrafficPolicy in the Service to either Cluster or Local\nexternalTrafficPolicy: Cluster"
     },
-    "when/nameOverride:t/then/fullnameOverride?+nameOverride?/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t"
-      },
-      "then": {
+    "when/mcbackup.backupMethod+mcbackup.backupMethod=null/then/minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more/else/mcbackup.backupMethod": {
+      "else": {
         "else": {
-          "$ref": "#/definitions/when~1nameOverride?~1then~1any~1else~1fail"
+          "else": {
+            "else": {
+              "else": {
+                "else": {
+                  "else": true,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1mcbackup.backupMethod@3"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1minecraftServer.rcon.serviceType~1then~1minecraftServer~1else~1any"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1mcbackup.backupMethod~1then~1minecraftServer.rcon.serviceType~1else~1any"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1minecraftServer.serviceType+minecraftServer.serviceType=null~1then~1mcbackup.backupMethod~1else~1minecraftServer.serviceType"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.backupMethod+mcbackup.backupMethod=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null~1then~1minecraftServer+minecraftServer.serviceType~1else~1minecraftServer.rcon"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more~1else~1mcbackup.backupMethod"
+          }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride?@2"
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
         },
-        "then": false
-      }
-    },
-    "when/nameOverride:t/then/nameOverride?/else/fail": {
-      "else": false,
+        "then": {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1minecraftServer.serviceType+minecraftServer.serviceType=null~1then~1mcbackup.backupMethod~1else~1minecraftServer.serviceType"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mcbackup.backupMethod+mcbackup.backupMethod=null"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@2"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null"
+          }
+        }
+      },
       "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t"
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod+mcbackup.backupMethod=null"
       },
       "then": {
-        "$ref": "#/definitions/when~1nameOverride?~1then~1any~1else~1fail"
+        "$ref": "#/definitions/when~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null~1then~1minecraftServer+minecraftServer.serviceType~1else~1minecraftServer.rcon@2"
       }
     },
-    "when/nameOverride?/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride?"
+    "when/mcbackup.backupMethod+mcbackup.backupMethod=null/then/minecraftServer.rcon+minecraftServer.rcon.serviceType+1more/else/mcbackup.backupMethod": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1mcbackup.backupMethod~1then~1minecraftServer.rcon.serviceType~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod"
+        }
       },
-      "then": true
+      "if": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod+mcbackup.backupMethod=null"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more"
+      }
+    },
+    "when/mcbackup.backupMethod+mcbackup.backupMethod=null/then/minecraftServer.rcon+minecraftServer.rcon.serviceType+1more/else/mcbackup.backupMethod@2": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more~1else~1mcbackup.backupMethod"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod+mcbackup.backupMethod=null"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+            }
+          }
+        ]
+      }
+    },
+    "when/mcbackup.backupMethod/then/minecraftServer.rcon.serviceType/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod@3"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType"
+      }
+    },
+    "when/mcbackup.rcloneConfigExistingSecret:t/then/minecraftServer+minecraftServer.rcon+minecraftServer.rcon.enabled:t+3more/else/mcbackup+mcbackup.backupMethod+mcbackup.backupMethod=null": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1mcbackup.backupMethod+mcbackup.backupMethod=null~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1mcbackup.backupMethod"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mcbackup.rcloneConfigExistingSecret:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1minecraftServer.rcon.enabled:t~1then~1minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more~1else~1any"
+      }
+    },
+    "when/minecraftServer.rcon.enabled:t/then/mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone+mcbackup.backupMethod=restic"
+      }
+    },
+    "when/minecraftServer.rcon.enabled:t/then/mcbackup.backupMethod=rclone/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod=rclone"
+      }
+    },
+    "when/minecraftServer.rcon.enabled:t/then/minecraftServer+minecraftServer.rcon+minecraftServer.rcon.serviceType+2more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null~1then~1minecraftServer+minecraftServer.serviceType~1else~1minecraftServer.rcon@2"
+      }
+    },
+    "when/minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null/then/minecraftServer+minecraftServer.serviceType/else/minecraftServer.rcon": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1minecraftServer.rcon.serviceType~1then~1minecraftServer~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null@2"
+      }
+    },
+    "when/minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null/then/minecraftServer+minecraftServer.serviceType/else/minecraftServer.rcon@2": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null~1then~1minecraftServer+minecraftServer.serviceType~1else~1minecraftServer.rcon"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1minecraftServer.rcon+minecraftServer.rcon.serviceType+1more"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType+minecraftServer.rcon.serviceType=null"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1minecraftServer+minecraftServer.serviceType+minecraftServer.serviceType=null"
+      }
+    },
+    "when/minecraftServer.rcon.serviceType/then/minecraftServer/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.rcon.serviceType@3"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1minecraftServer.serviceType"
+      }
+    },
+    "when/minecraftServer.serviceType+minecraftServer.serviceType=null/then/mcbackup.backupMethod/else/minecraftServer.serviceType": {
+      "else": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1mcbackup.backupMethod@3"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1minecraftServer.serviceType"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1minecraftServer.serviceType+minecraftServer.serviceType=null"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1mcbackup.backupMethod"
+      }
     }
   },
   "properties": {
@@ -1782,7 +4561,20 @@
       "description": "Most of these map to environment variables. See Minecraft for details:\nhttps://hub.docker.com/r/itzg/minecraft-server/"
     },
     "mcbackup": {
-      "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP"
+      "additionalProperties": {},
+      "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP",
+      "properties": {
+        "backupMethod": {
+          "description": "backup methods, see https://github.com/itzg/docker-mc-backup e.g. tar, rclone, restic, rsync"
+        },
+        "enabled": {},
+        "rcloneConfig": {
+          "description": "see https://rclone.org/ for details\nthis value is evaluated as a template\n[remote]\ntype = google cloud storage\nclient_id =\nclient_secret =\ntoken = {\"AccessToken\":\"super\",\"RefreshToken\":\"secret\",\"Expiry\":\"date\",\"Extra\":null}\nproject_number = 12345678\nobject_acl = private\nbucket_acl = private"
+        },
+        "rcloneConfigExistingSecret": {},
+        "resticRepository": {}
+      },
+      "type": "object"
     },
     "minecraftServer": {
       "additionalProperties": {},
@@ -1804,6 +4596,20 @@
                 "type": "object"
               },
               {
+                "$ref": "#/definitions/constrains~1autoCurseForge=null"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "autoCurseForge": {}
+                  },
+                  "required": [
+                    "autoCurseForge"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "not": {
                   "properties": {
                     "rcon": {}
@@ -1812,21 +4618,6 @@
                     "rcon"
                   ],
                   "type": "object"
-                }
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1autoCurseForge=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1autoCurseForge"
                 }
               }
             ]
@@ -1884,17 +4675,50 @@
           },
           "type": "object"
         },
+        "clusterIP": {},
+        "externalIPs": {
+          "$ref": "#/definitions/values~1minecraftServer.externalIPs"
+        },
+        "externalTrafficPolicy": {},
+        "extraPorts": {},
+        "extraServiceSpec": {
+          "description": "Additional service specs to be defined"
+        },
+        "ipFamilies": {},
+        "ipFamilyPolicy": {},
+        "loadBalancerClass": {},
+        "loadBalancerIP": {},
+        "loadBalancerSourceRanges": {},
+        "nodePort": {
+          "description": "Set the port used if the serviceType is NodePort"
+        },
         "rcon": {
           "additionalProperties": {},
           "properties": {
+            "clusterIP": {},
             "enabled": {
               "description": "If you enable this, make SURE to change your password below."
             },
             "existingSecret": {},
-            "password": {}
+            "externalTrafficPolicy": {},
+            "loadBalancerClass": {},
+            "loadBalancerIP": {
+              "$ref": "#/definitions/values~1minecraftServer.externalIPs"
+            },
+            "loadBalancerSourceRanges": {},
+            "nodePort": {
+              "description": "Set the external port if the rcon serviceType is NodePort"
+            },
+            "password": {},
+            "port": {},
+            "serviceType": {}
           },
           "type": "object"
-        }
+        },
+        "servicePort": {
+          "description": "Set the external port of the service, usefull when using the LoadBalancer service type"
+        },
+        "serviceType": {}
       },
       "type": "object"
     },
@@ -1918,7 +4742,9 @@
     "revisionHistoryLimit": {},
     "securityContext": {},
     "serviceAnnotations": {},
-    "serviceLabels": {},
+    "serviceLabels": {
+      "additionalProperties": {}
+    },
     "sidecarContainers": {
       "description": "Array of additional sidecards to include in the deployment (supports templating)\nsidecarContainers:\n- name: do-something\nimage: busybox\ncommand: ['do', 'something']\nvolumeMounts:\n- name: nfs\nmountPath: /mnt/volume\nreadOnly: true\n- |\nname: {{ template \"minecraft.fullname\" . }}-sidecar\nimage: busybox\ncommand: ['do', 'something', 'with', 'rcon']\nenv:\n- name: RCON_PASSWORD\nvalueFrom:\nsecretKeyRef:\nname: '{{ .Values.minecraftServer.rcon.existingSecret | default (printf \"%s-rcon\" (include \"minecraft.fullname\" .)) }}'\nkey: \"{{ .Values.minecraftServer.rcon.secretKey | default \"rcon-password\" }}\""
     },

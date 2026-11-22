@@ -32,36 +32,37 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "podPriorityClassName": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "podPriorityClassName": {}
+                  },
+                  "required": [
+                    "podPriorityClassName"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "podPriorityClassName"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "podPriorityClassName": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "podPriorityClassName"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "podPriorityClassName": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podPriorityClassName"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/helm-condition-10"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/helm-condition-10"
       },
       "then": false
     }

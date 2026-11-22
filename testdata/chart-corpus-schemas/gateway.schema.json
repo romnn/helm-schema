@@ -16,28 +16,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1global:t"
       },
       "then": {
@@ -56,73 +34,229 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+          },
+          {
             "not": {
-              "anyOf": [
-                {
-                  "allOf": [
+              "properties": {
+                "service": {
+                  "properties": {
+                    "annotations": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "annotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1service"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1service+service=null"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1labels+labels=null"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1service.type=None"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "type": [
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
                     {
-                      "not": {
-                        "properties": {
-                          "global": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1global:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1global+global=null@2"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "global": {
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
                             "type": "object"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                        },
+                        {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "properties": {
+                                  "_internal_defaults_do_not_set": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "_internal_defaults_do_not_set"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "not": {
+                                  "properties": {
+                                    "_internal_defaults_do_not_set": {}
+                                  },
+                                  "required": [
+                                    "_internal_defaults_do_not_set"
+                                  ],
+                                  "type": "object"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1defaults:t@2"
+              }
+            ]
+          },
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+service+service.type+service.type=null+1more"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1defaults:t@2"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1compatibilityVersion:t"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1defaults:t"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "else": {
+                  "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+service+service.type+service.type=null+1more"
+                },
+                "if": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "platform": {
+                          "$ref": "#/definitions/t"
+                        }
+                      },
+                      "required": [
+                        "platform"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+service+service.type+service.type=null+1more"
+                  },
+                  "if": {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "profile": {
+                            "$ref": "#/definitions/t"
                           }
                         },
                         "required": [
-                          "global"
+                          "profile"
                         ],
                         "type": "object"
                       }
                     },
-                    {
-                      "$ref": "#/definitions/constrains~1global+global=null@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global:t"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "properties": {
-                              "_internal_defaults_do_not_set": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "_internal_defaults_do_not_set"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "not": {
-                              "properties": {
-                                "_internal_defaults_do_not_set": {}
-                              },
-                              "required": [
-                                "_internal_defaults_do_not_set"
-                              ],
-                              "type": "object"
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+service+service.type+service.type=null+1more"
+                  }
                 }
-              ]
-            }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1defaults:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1compatibilityVersion:t"
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1defaults:t"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@2"
+              }
+            ]
           }
         ]
       },
@@ -130,17 +264,52 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1defaults:t"
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+labels+labels=null+service+service=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1annotations+annotations=null"
+            }
+          ]
         },
-        "then": true
+        "if": {
+          "$ref": "#/definitions/constrains~1service.type=None"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+labels+labels=null+service+service=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1annotations+annotations=null"
+            }
+          ]
+        }
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "annotations": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
-        "else": false,
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+labels+labels=null+service+service=null@2"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1service.type=None"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+labels+labels=null+service+service=null"
+          }
+        },
         "if": {
           "properties": {
             "serviceAccount": {
@@ -162,61 +331,65 @@
         },
         "then": {
           "else": {
-            "else": {
-              "else": {
-                "else": false,
+            "allOf": [
+              {
+                "else": {
+                  "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                },
                 "if": {
-                  "properties": {
-                    "serviceAccount": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
+                  "$ref": "#/definitions/constrains~1service+service=null"
                 },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
-            },
-            "then": false
-          },
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "labels": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "labels"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "labels": {}
-                  },
-                  "required": [
-                    "labels"
-                  ],
-                  "type": "object"
+                "then": {
+                  "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+serviceAccount+serviceAccount=null"
                 }
+              },
+              {
+                "$ref": "#/definitions/constrains~1labels+labels=null"
               }
             ]
           },
-          "then": false
+          "if": {
+            "$ref": "#/definitions/constrains~1service.type=None"
+          },
+          "then": {
+            "allOf": [
+              {
+                "else": {
+                  "else": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+                      },
+                      {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1service"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1serviceAccount"
+                        }
+                      }
+                    ]
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+service"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1service+service=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+serviceAccount+serviceAccount=null"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1labels+labels=null"
+              }
+            ]
+          }
         }
       },
       "then": {
@@ -246,21 +419,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1global+global=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1global+global=null@2"
       },
       "then": {
@@ -271,26 +429,213 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1service+service=null"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
     }
   ],
   "definitions": {
     "constrains/_internal_defaults_do_not_set": {
-      "not": {
-        "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
-      }
+      "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+    },
+    "constrains/_internal_defaults_do_not_set+labels+labels=null+service+service=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set+service"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1service+service=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1labels+labels=null"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set+labels+labels=null+service+service=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1service+service=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1labels+labels=null"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set+service": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1service"
+          }
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set+service+service.type+service.type=null+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+        },
+        {
+          "not": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1service"
+        },
+        {
+          "$ref": "#/definitions/constrains~1service.type+service.type=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1service+service=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1service.type+service.type=null"
+        }
+      ]
+    },
+    "constrains/_internal_defaults_do_not_set+serviceAccount+serviceAccount=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+          }
+        }
+      ]
     },
     "constrains/_internal_defaults_do_not_set@2": {
+      "not": {
+        "properties": {
+          "_internal_defaults_do_not_set": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "_internal_defaults_do_not_set"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/annotations+annotations=null": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "annotations": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "annotations": {}
+              },
+              "required": [
+                "annotations"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/compatibilityVersion:t": {
       "properties": {
-        "_internal_defaults_do_not_set": {
-          "type": "object"
+        "compatibilityVersion": {
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
-        "_internal_defaults_do_not_set"
+        "compatibilityVersion"
       ],
       "type": "object"
     },
     "constrains/defaults:t": {
+      "$ref": "#/definitions/constrains~1defaults:t@2"
+    },
+    "constrains/defaults:t@2": {
       "properties": {
         "defaults": {
           "$ref": "#/definitions/t"
@@ -342,6 +687,153 @@
       },
       "required": [
         "global"
+      ],
+      "type": "object"
+    },
+    "constrains/labels+labels=null": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "labels": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "labels"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "labels": {}
+              },
+              "required": [
+                "labels"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/service": {
+      "properties": {
+        "service": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service+service=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "service": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "service": {}
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/service.type+service.type=null": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {}
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/service.type=None": {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "enum": [
+                "None"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount": {
+      "properties": {
+        "serviceAccount": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
       ],
       "type": "object"
     },
@@ -403,6 +895,7 @@
     "_internal_defaults_do_not_set": {
       "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`."
     },
+    "annotations": {},
     "compatibilityVersion": {},
     "defaults": {},
     "global": {
@@ -412,11 +905,20 @@
       "additionalProperties": {}
     },
     "name": {},
+    "networkGateway": {},
     "platform": {},
     "profile": {},
+    "service": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "type": {}
+      }
+    },
     "serviceAccount": {
       "additionalProperties": {},
       "properties": {
+        "annotations": {},
         "create": {},
         "name": {}
       }

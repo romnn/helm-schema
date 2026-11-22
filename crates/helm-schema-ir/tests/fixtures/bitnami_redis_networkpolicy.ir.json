@@ -213,6 +213,41 @@
       "condition": [
         [
           {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "name"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "provenance": [
+        {
+          "span": {
+            "end": 96,
+            "start": 36
+          },
+          "template_path": "charts/common/templates/_names.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "fullnameOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "networkPolicy.enabled",
             "type": "truthy"
           },

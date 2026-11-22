@@ -4,6 +4,170 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/constrains~1webhooks.enabled:t"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+            },
+            "then": true
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "rbacManager": {
+                "additionalProperties": {},
+                "properties": {
+                  "args": {
+                    "description": "Add custom arguments to the RBAC Manager pod.",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "extraEnvVarsRBACManager": {
+                "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`.",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "metrics": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+            },
+            "then": true
+          },
+          {
+            "properties": {
+              "imagePullSecrets": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "imagePullSecrets"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "imagePullSecrets": {
+            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1webhooks.enabled:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraObjects": {
+          "description": "To add arbitrary Kubernetes Objects during a Helm Install",
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -21,6 +185,41 @@
           {
             "not": {
               "properties": {
+                "secrets": {}
+              },
+              "required": [
+                "secrets"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "secrets": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "secrets"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "webhooks": {}
+              },
+              "required": [
+                "webhooks"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
                 "serviceAccount": {}
               },
               "required": [
@@ -28,6 +227,187 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "rbacManager": {}
+              },
+              "required": [
+                "rbacManager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "metrics": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "metrics"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "metrics": {}
+                      },
+                      "required": [
+                        "metrics"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhooks.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "webhooks": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "rbacManager": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbacManager"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbacManager.deploy:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhooks.enabled:t@2"
+              }
+            ]
           }
         ]
       },
@@ -37,89 +417,63 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "properties": {
-                "nameOverride": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "nameOverride"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/definitions/constrains~1webhooks.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
+            "properties": {
+              "service": {
+                "properties": {
+                  "customAnnotations": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "customAnnotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
           }
         ]
       },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-          },
-          "then": true
-        }
-      },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "imagePullSecrets": {
-              "$ref": "#/definitions/t"
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "customAnnotations": {
+                "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
             }
-          },
-          "required": [
-            "imagePullSecrets"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-          },
-          "then": true
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "imagePullSecrets": {
-            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount.",
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
           }
         }
       }
     }
   ],
   "definitions": {
+    "constrains/nameOverride": {
+      "not": {
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/nameOverride:t": {
       "properties": {
         "nameOverride": {
@@ -128,6 +482,25 @@
       },
       "required": [
         "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/rbacManager.deploy:t": {
+      "properties": {
+        "rbacManager": {
+          "properties": {
+            "deploy": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "deploy"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rbacManager"
       ],
       "type": "object"
     },
@@ -147,6 +520,28 @@
       },
       "required": [
         "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/webhooks.enabled:t": {
+      "$ref": "#/definitions/constrains~1webhooks.enabled:t@2"
+    },
+    "constrains/webhooks.enabled:t@2": {
+      "properties": {
+        "webhooks": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhooks"
       ],
       "type": "object"
     },
@@ -203,6 +598,7 @@
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
     },
     "extraEnvVarsRBACManager": {
+      "additionalProperties": {},
       "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
     },
     "extraObjects": {
@@ -220,14 +616,37 @@
     "hostNetwork": {
       "description": "Enable `hostNetwork` for the Crossplane deployment. Caution: enabling `hostNetwork` grants the Crossplane Pod access to the host network namespace. Consider setting `dnsPolicy` to `ClusterFirstWithHostNet`."
     },
-    "image": {},
+    "image": {
+      "additionalProperties": {},
+      "properties": {
+        "ignoreTag": {
+          "description": "Do not use the {{ .image.tag }} value to compute the image uri."
+        },
+        "pullPolicy": {
+          "description": "The image pull policy used for Crossplane and RBAC Manager pods."
+        },
+        "repository": {
+          "description": "Repository for the Crossplane pod image."
+        },
+        "tag": {
+          "description": "The Crossplane image tag. Defaults to the value of `appVersion` in `Chart.yaml`."
+        }
+      }
+    },
     "imagePullSecrets": {
       "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
     },
     "leaderElection": {
       "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod."
     },
-    "metrics": {},
+    "metrics": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "Enable Prometheus path, port and scrape annotations and expose port 8080 for both the Crossplane and RBAC Manager pods."
+        }
+      }
+    },
     "nameOverride": {},
     "nodeSelector": {
       "description": "Add `nodeSelectors` to the Crossplane pod deployment."
@@ -243,7 +662,42 @@
       "description": "The PriorityClass name to apply to the Crossplane and RBAC Manager pods."
     },
     "provider": {},
-    "rbacManager": {},
+    "rbacManager": {
+      "additionalProperties": {},
+      "properties": {
+        "affinity": {
+          "description": "Add `affinities` to the RBAC Manager pod deployment."
+        },
+        "args": {
+          "description": "Add custom arguments to the RBAC Manager pod."
+        },
+        "deploy": {
+          "description": "Deploy the RBAC Manager pod and its required roles."
+        },
+        "leaderElection": {
+          "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
+        },
+        "nodeSelector": {
+          "description": "Add `nodeSelectors` to the RBAC Manager pod deployment."
+        },
+        "replicas": {
+          "description": "The number of RBAC Manager pod `replicas` to deploy."
+        },
+        "revisionHistoryLimit": {
+          "description": "The number of RBAC Manager ReplicaSets to retain."
+        },
+        "skipAggregatedClusterRoles": {
+          "description": "Don't install aggregated Crossplane ClusterRoles."
+        },
+        "tolerations": {
+          "description": "Add `tolerations` to the RBAC Manager pod deployment."
+        },
+        "topologySpreadConstraints": {
+          "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
+        }
+      },
+      "type": "object"
+    },
     "readiness": {},
     "registryCaBundleConfig": {},
     "replicas": {
@@ -257,10 +711,26 @@
     "runtimeClassName": {
       "description": "The runtimeClassName name to apply to the Crossplane and RBAC Manager pods."
     },
-    "secrets": {},
+    "secrets": {
+      "additionalProperties": {},
+      "properties": {
+        "customAnnotations": {
+          "description": "Add custom annotations to Crossplane Secret resources."
+        }
+      },
+      "type": "object"
+    },
     "securityContextCrossplane": {},
     "securityContextRBACManager": {},
-    "service": {},
+    "service": {
+      "additionalProperties": {},
+      "properties": {
+        "customAnnotations": {
+          "additionalProperties": {},
+          "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
+        }
+      }
+    },
     "serviceAccount": {
       "additionalProperties": {},
       "properties": {
@@ -282,7 +752,18 @@
     "topologySpreadConstraints": {
       "description": "Add `topologySpreadConstraints` to the Crossplane pod deployment."
     },
-    "webhooks": {}
+    "webhooks": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "Enable webhooks for Crossplane and installed Provider packages."
+        },
+        "port": {
+          "description": "The port the webhook server listens on."
+        }
+      },
+      "type": "object"
+    }
   },
   "type": "object"
 }

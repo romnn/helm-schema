@@ -4,7 +4,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+        "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -17,7 +17,7 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
       },
       "then": {
         "allOf": [
@@ -87,7 +87,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
           }
         ]
       },
@@ -137,48 +137,10 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {}
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
           }
         ]
       },
@@ -371,7 +333,7 @@
             "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
           }
         ]
       },
@@ -436,6 +398,89 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "deployment": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {}
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
             "properties": {
               "autoscaler": {
                 "enum": [
@@ -458,194 +503,6 @@
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {}
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "monitor": {}
-                      },
-                      "required": [
-                        "monitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "monitor": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "monitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "deployment": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "deployment"
-            ],
-            "type": "object"
           },
           {
             "not": {
@@ -657,926 +514,790 @@
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
+          },
           {
-            "not": {
-              "allOf": [
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {
+                          "properties": {
+                            "monitor": {}
+                          },
+                          "required": [
+                            "monitor"
+                          ],
+                          "type": "object"
+                        }
                       },
-                      {
-                        "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount.create:t+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "monitor": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "monitor"
+                        ],
+                        "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
                   }
-                },
-                {
-                  "anyOf": [
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "autoscaler": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "autoscaler"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "autoscaler": {
+                        "properties": {
+                          "image": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoscaler"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
                     {
-                      "allOf": [
+                      "not": {
+                        "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
+                      }
+                    },
+                    {
+                      "anyOf": [
                         {
-                          "anyOf": [
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        },
+                        {
+                          "allOf": [
                             {
-                              "allOf": [
+                              "anyOf": [
                                 {
-                                  "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-                                }
-                              ]
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-                                  }
-                                },
-                                {
-                                  "anyOf": [
+                                  "allOf": [
                                     {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
-                                        }
-                                      ]
+                                      "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more"
                                     },
                                     {
-                                      "allOf": [
+                                      "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+                                    },
+                                    {
+                                      "anyOf": [
                                         {
-                                          "anyOf": [
+                                          "allOf": [
                                             {
-                                              "allOf": [
-                                                {
-                                                  "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                                                }
-                                              ]
+                                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
                                             },
                                             {
-                                              "allOf": [
-                                                {
-                                                  "$ref": "#/definitions/constrains~1isClusterService:t@2"
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more@2"
-                                                }
-                                              ]
+                                              "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more"
                                             }
                                           ]
                                         },
                                         {
-                                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
+                                          "allOf": [
+                                            {
+                                              "anyOf": [
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1deployment.enabled:t"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1isClusterService:t"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+                                            }
+                                          ]
                                         }
                                       ]
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1deployment.enabled:t"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-7"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1group-6"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
                             }
                           ]
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1isClusterService:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-7"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1group-6"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-5"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1isClusterService:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                            }
+                          ]
                         }
                       ]
                     }
                   ]
                 }
-              ]
-            }
-          },
-          {
-            "anyOf": [
+              },
               {
-                "allOf": [
+                "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more@2"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+                    "allOf": [
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+                            }
+                          ]
                         }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1isClusterService:t"
+                        "$ref": "#/definitions/constrains~1isClusterService:t@2"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
                       }
                     ]
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+                      }
+                    ]
+                  },
                   {
                     "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount.create:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount.create:t+serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more@2"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more"
-                                  }
-                                ]
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-                                  },
-                                  {
-                                    "anyOf": [
-                                      {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-                                          },
-                                          {
-                                            "anyOf": [
-                                              {
-                                                "allOf": [
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1deployment.enabled:t"
-                                                  },
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1isClusterService:t@3"
-                                                  }
-                                                ]
-                                              },
-                                              {
-                                                "allOf": [
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1isClusterService:t"
-                                                  },
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more"
-                                                  }
-                                                ]
-                                              }
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more"
-                                          }
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
                   }
                 ]
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              }
+            ]
+          },
           {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+                "$ref": "#/definitions/constrains~1group-4"
               },
               {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
               }
             ]
           },
@@ -1589,202 +1310,19 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
                 "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
+              },
               {
                 "$ref": "#/definitions/constrains~1isClusterService:t"
               },
               {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
               }
             ]
           },
@@ -1797,10 +1335,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -1810,59 +1345,107 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                "$ref": "#/definitions/constrains~1group-8"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                "$ref": "#/definitions/constrains~1group-2"
               },
               {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
               }
             ]
           },
@@ -1875,22 +1458,329 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t"
+                "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+                "$ref": "#/definitions/constrains~1isClusterService:t"
               },
               {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
               }
             ]
           }
@@ -1900,597 +1790,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -2511,48 +1811,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+            "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
           },
           {
             "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -2576,325 +1835,38 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1isClusterService:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1rbac.create:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "autoscaler": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "autoscaler"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "autoscaler": {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "autoscaler"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1isClusterService:t~1then~1k8sAppLabelOverride:t~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1isClusterService:t+k8sAppLabelOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+            }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+          "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
         },
         "then": {
           "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t"
               },
-              "then": {
-                "$ref": "#/definitions/when~1rbac.create:t~1then~1any~1else~1fail"
+              {
+                "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1isClusterService:t@2"
               }
-            }
+            ]
           },
           "if": {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
           },
           "then": {
-            "$ref": "#/definitions/when~1isClusterService:t~1then~1k8sAppLabelOverride:t~1else~1fail"
+            "$ref": "#/definitions/constrains~1isClusterService:t+k8sAppLabelOverride:t"
           }
         }
       },
@@ -2910,32 +1882,34 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1fullnameOverride:t~1then~1any~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+            }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+          "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
         },
         "then": {
           "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1rbac.create:t~1then~1any~1else~1fail"
-            }
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t"
+              }
+            ]
           },
           "if": {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
           },
           "then": {
-            "$ref": "#/definitions/when~1fullnameOverride:t~1then~1any~1else~1fail"
+            "$ref": "#/definitions/constrains~1fullnameOverride:t"
           }
         }
       },
@@ -2951,32 +1925,34 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+            }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
+          "$ref": "#/definitions/constrains~1autoscaler.enabled:t"
         },
         "then": {
           "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1rbac.create:t~1then~1any~1else~1fail"
-            }
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              }
+            ]
           },
           "if": {
-            "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
           },
           "then": {
-            "$ref": "#/definitions/when~1nameOverride:t~1then~1any~1else~1fail"
+            "$ref": "#/definitions/constrains~1nameOverride:t"
           }
         }
       },
@@ -2992,11 +1968,6 @@
   ],
   "definitions": {
     "constrains/autoscaler.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1autoscaler.enabled:t@2"
-      }
-    },
-    "constrains/autoscaler.enabled:t@2": {
       "properties": {
         "autoscaler": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -3018,386 +1989,9 @@
       ],
       "type": "object"
     },
-    "constrains/deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1isClusterService:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more@2": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1deployment+fullnameOverride+fullnameOverride:t+isClusterService:t+5more"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1isClusterService:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-            }
-          ]
-        }
-      ]
-    },
     "constrains/deployment.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
+        "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
       }
     },
     "constrains/deployment.enabled:t+fullnameOverride+fullnameOverride:t": {
@@ -3413,7 +2007,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                 },
                 {
                   "allOf": [
@@ -3436,27 +2030,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
+              "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t"
-                    }
-                  ]
-                },
                 {
                   "allOf": [
                     {
@@ -3466,48 +2043,18 @@
                       "$ref": "#/definitions/constrains~1nameOverride:t@3"
                     }
                   ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/deployment.enabled:t+fullnameOverride+fullnameOverride:t+nameOverride+1more@2": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                    }
-                  ]
                 },
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t@2"
+                      "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t"
                     }
                   ]
                 }
               ]
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              }
             }
           ]
         },
@@ -3517,76 +2064,181 @@
               "$ref": "#/definitions/constrains~1nameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t@2"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/deployment.enabled:t+fullnameOverride+fullnameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              }
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
-                    }
-                  ]
-                }
-              ]
+              "$ref": "#/definitions/constrains~1deployment.enabled:t+fullnameOverride+fullnameOverride:t"
             }
           ]
         }
       ]
     },
     "constrains/deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+          "anyOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  }
+                ]
+              }
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1not~1object"
+                        },
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x3a@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x3a"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1anyOf~1string;pattern-x20-x2d"
+                          },
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              false,
+                              {
+                                "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x3a@2"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x20-x2d"
+                              }
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1not~1object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1deployment.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
         }
       ]
     },
@@ -3641,161 +2293,7 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1not~1object"
-                    },
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x3a@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x3a"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1anyOf~1string;pattern-x20-x2d"
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          false,
-                          {
-                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x3a@2"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1string;pattern-x20-x2d"
-                          }
-                        ]
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1deployment.enabled:t+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more~1not~1object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
-        }
-      ]
-    },
-    "constrains/deployment.enabled:t+serviceAccount.create:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-        }
-      ]
-    },
-    "constrains/deployment.enabled:t+serviceAccount.create:t+serviceAccount.name:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1deployment.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-        }
-      ]
-    },
     "constrains/deployment.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1deployment.enabled:t@3"
-      }
-    },
-    "constrains/deployment.enabled:t@3": {
       "properties": {
         "deployment": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -3822,33 +2320,8 @@
         "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
     "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        }
-      ]
+      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
@@ -3877,17 +2350,133 @@
       ],
       "type": "object"
     },
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-3"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride@2"
+        }
+      ]
+    },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1isClusterService:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        }
+      ]
+    },
     "constrains/isClusterService:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1isClusterService:t@3"
+        "$ref": "#/definitions/constrains~1isClusterService:t@2"
       }
+    },
+    "constrains/isClusterService:t+k8sAppLabelOverride:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1isClusterService:t@2"
+        }
+      ]
     },
     "constrains/isClusterService:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1isClusterService:t@3"
-      }
-    },
-    "constrains/isClusterService:t@3": {
       "properties": {
         "isClusterService": {
           "$ref": "#/definitions/t"
@@ -3905,15 +2494,10 @@
     },
     "constrains/k8sAppLabelOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
+        "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@2"
       }
     },
     "constrains/k8sAppLabelOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-      }
-    },
-    "constrains/k8sAppLabelOverride:t@3": {
       "properties": {
         "k8sAppLabelOverride": {
           "$ref": "#/definitions/t"
@@ -3947,15 +2531,13 @@
             "$ref": "#/definitions/constrains~1nameOverride@2"
           },
           {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
           }
         ]
       }
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
+      "$ref": "#/definitions/constrains~1nameOverride:t@3"
     },
     "constrains/nameOverride:t@2": {
       "not": {
@@ -3986,15 +2568,10 @@
     },
     "constrains/prometheus.monitor.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
+        "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@2"
       }
     },
     "constrains/prometheus.monitor.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1prometheus.monitor.enabled:t@3"
-      }
-    },
-    "constrains/prometheus.monitor.enabled:t@3": {
       "properties": {
         "prometheus": {
           "properties": {
@@ -4014,9 +2591,7 @@
       "type": "object"
     },
     "constrains/rbac.create:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1rbac.create:t@2"
-      }
+      "$ref": "#/definitions/constrains~1rbac.create:t@2"
     },
     "constrains/rbac.create:t@2": {
       "properties": {
@@ -4883,40 +3458,6 @@
         }
       ],
       "type": "string"
-    },
-    "when/fullnameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/isClusterService:t/then/k8sAppLabelOverride:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1isClusterService:t@3"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1k8sAppLabelOverride:t@3"
-        },
-        "then": true
-      }
-    },
-    "when/nameOverride:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      },
-      "then": true
-    },
-    "when/rbac.create:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1rbac.create:t@2"
-      },
-      "then": true
     }
   },
   "properties": {

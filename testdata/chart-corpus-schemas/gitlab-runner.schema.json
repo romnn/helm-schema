@@ -4,7 +4,110 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1metrics+metrics=null"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1metrics.enabled!=0+metrics.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1metrics.serviceMonitor.enabled!=0+metrics.serviceMonitor.enabled=true"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "metrics": {
+                        "$ref": "#/definitions/constrains~1serviceMonitor=null"
+                      }
+                    },
+                    "required": [
+                      "metrics"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "metrics": {
+                          "$ref": "#/definitions/constrains~1serviceMonitor"
+                        }
+                      },
+                      "required": [
+                        "metrics"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1metrics=null"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "metrics": {}
+                      },
+                      "required": [
+                        "metrics"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1metrics=null"
+          },
+          {
+            "not": {
+              "properties": {
+                "metrics": {}
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          }
+        ]
       },
       "then": false
     },
@@ -28,85 +131,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1metrics.enabled!=0+metrics.enabled=true"
-          },
-          {
-            "$ref": "#/definitions/constrains~1metrics.serviceMonitor.enabled!=0+metrics.serviceMonitor.enabled=true"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "$ref": "#/definitions/constrains~1serviceMonitor=null"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "metrics": {
-                      "$ref": "#/definitions/constrains~1serviceMonitor"
-                    }
-                  },
-                  "required": [
-                    "metrics"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1metrics+metrics=null"
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
@@ -143,34 +167,6 @@
       ],
       "type": "object"
     },
-    "constrains/metrics+metrics=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "metrics": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "metrics"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "metrics": {}
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
     "constrains/metrics.enabled!=0+metrics.enabled=true": {
       "properties": {
         "metrics": {
@@ -194,6 +190,19 @@
             "serviceMonitor"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics=null": {
+      "properties": {
+        "metrics": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [

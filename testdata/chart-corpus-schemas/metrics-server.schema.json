@@ -3,66 +3,325 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {}
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
+      "additionalProperties": {},
+      "properties": {
+        "args": {
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
     },
     {
       "if": {
-        "anyOf": [
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
-            "properties": {
-              "podDisruptionBudget": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1tls.type=helm"
           },
           {
             "not": {
-              "properties": {
-                "podDisruptionBudget": {}
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1tls.type=cert-manager@2"
             }
+          },
+          {
+            "$ref": "#/definitions/constrains~1apiService.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1apiService.caBundle:t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "apiService": {
+            "additionalProperties": {},
+            "properties": {
+              "caBundle": {
+                "description": "The PEM encoded CA bundle for TLS verification",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "defaultArgs": {
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1addonResizer.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "nanny": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1tls.type=cert-manager@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "certManager": {
+                "additionalProperties": {},
+                "properties": {
+                  "existingIssuer": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tls.certManager.existingIssuer.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tls.type=cert-manager@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalAnnotations": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/helm-marker-free"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/helm-marker-free"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1tls.type=helm@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "helm": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1addonResizer.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "nanny": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "extraMemory": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "nanny": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "nanny": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "extraCpu": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "addonResizer": {
+                "additionalProperties": {},
+                "properties": {
+                  "nanny": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "memory": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1apiService.create:t+tls.type=cert-manager"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "certManager": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -83,289 +342,14 @@
           {
             "not": {
               "properties": {
-                "serviceAccount": {}
+                "rbac": {}
               },
               "required": [
-                "serviceAccount"
+                "rbac"
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
           },
-          {
-            "not": {
-              "properties": {
-                "service": {}
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "metrics": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "defaultArgs": {
-          "type": [
-            "array",
-            "integer",
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "properties": {
               "image": {
@@ -382,38 +366,281 @@
           {
             "not": {
               "properties": {
-                "image": {}
+                "apiService": {}
               },
               "required": [
-                "image"
+                "apiService"
               ],
               "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
+          {
+            "properties": {
+              "rbac": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.certManager.existingIssuer.enabled:t"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "additionalAnnotations": {
+                      "additionalProperties": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "additionalAnnotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1additionalAnnotations"
+                    },
+                    {
+                      "properties": {
+                        "additionalAnnotations": {
+                          "type": "null"
+                        }
+                      },
+                      "required": [
+                        "additionalAnnotations"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1additionalAnnotations"
+                    },
+                    {
+                      "properties": {
+                        "additionalAnnotations": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "additionalAnnotations"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "additionalAnnotations": {
+                    "$ref": "#/definitions/helm-marker-free"
+                  }
+                },
+                "required": [
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.type=cert-manager@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tls.type=helm"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiService.caBundle"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.type=cert-manager"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.existingSecret.name"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.type=existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiService.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiService.caBundle:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.existingSecret.lookup:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tls.existingSecret.name"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1apiService.caBundle:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.type=existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiService.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.existingSecret.lookup:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tls.type=helm"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.type=cert-manager"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1apiService.caBundle"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiService.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiService.caBundle:t"
+              }
+            ]
+          },
           {
             "not": {
               "properties": {
@@ -421,6 +648,202 @@
               },
               "required": [
                 "hostNetwork"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1metrics.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1metrics.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1metrics.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1metrics.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1nameOverride@2"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1nameOverride"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
               ],
               "type": "object"
             }
@@ -437,103 +860,33 @@
               "hostNetwork"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "metrics": {}
-                  },
-                  "required": [
-                    "metrics"
-                  ],
-                  "type": "object"
-                }
+            "properties": {
+              "addonResizer": {
+                "enum": [
+                  null
+                ]
               }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbac.create:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "addonResizer": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "addonResizer"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "addonResizer": {}
-                  },
-                  "required": [
-                    "addonResizer"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1rbac.create:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "addonResizer": {
+            },
+            "required": [
+              "addonResizer"
+            ],
             "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
           {
             "not": {
               "properties": {
@@ -544,6 +897,30 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "not": {
+              "properties": {
+                "addonResizer": {}
+              },
+              "required": [
+                "addonResizer"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
           },
           {
             "properties": {
@@ -557,6 +934,269 @@
               "serviceMonitor"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1apiService.create:t+tls.type=existingSecret+tls.type=metrics-server"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "existingSecret": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "existingSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "existingSecret": {}
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1apiService.create:t+tls.existingSecret.lookup:t+tls.type=existingSecret"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "existingSecret": {
+                              "properties": {
+                                "name": {}
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "existingSecret": {
+                            "properties": {
+                              "name": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "existingSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1apiService.create:t+tls.type=cert-manager"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "certManager": {}
+                          },
+                          "required": [
+                            "certManager"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "certManager": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "certManager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "metrics": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "apiService": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "apiService"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "tls": {}
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "metrics": {}
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tls": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -564,343 +1204,186 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "allOf": [
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1nameOverride@2"
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1nameOverride:t"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+metrics+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+metrics+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+metrics+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+metrics+nameOverride+nameOverride:t+serviceMonitor.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride+nameOverride:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1nameOverride@2"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1nameOverride"
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "$ref": "#/definitions/constrains~1apiService.create:t+tls.existingSecret.lookup:t+tls.type=existingSecret"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "existingSecret": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "description": "Name of the existing Secret to use for TLS",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1apiService.create:t+tls.type=existingSecret+tls.type=metrics-server"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "existingSecret": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
+    "constrains/additionalAnnotations": {
+      "not": {
+        "properties": {
+          "additionalAnnotations": {}
+        },
+        "required": [
+          "additionalAnnotations"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/addonResizer.enabled:t": {
+      "properties": {
+        "addonResizer": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "addonResizer"
+      ],
+      "type": "object"
+    },
+    "constrains/apiService.caBundle": {
+      "properties": {
+        "apiService": {
+          "properties": {
+            "caBundle": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "caBundle"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "apiService"
+      ],
+      "type": "object"
+    },
+    "constrains/apiService.caBundle:t": {
+      "properties": {
+        "apiService": {
+          "properties": {
+            "caBundle": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "caBundle"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "apiService"
+      ],
+      "type": "object"
+    },
+    "constrains/apiService.create:t": {
+      "properties": {
+        "apiService": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "apiService"
+      ],
+      "type": "object"
+    },
+    "constrains/apiService.create:t+tls.existingSecret.lookup:t+tls.type=existingSecret": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tls.type=existingSecret"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.existingSecret.lookup:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1apiService.create:t"
+        }
+      ]
+    },
+    "constrains/apiService.create:t+tls.type=cert-manager": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1apiService.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.type=cert-manager@2"
+        }
+      ]
+    },
+    "constrains/apiService.create:t+tls.type=existingSecret+tls.type=metrics-server": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1tls.type=existingSecret"
+            },
+            {
+              "$ref": "#/definitions/constrains~1apiService.create:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "metrics-server"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1tls.type=existingSecret"
+            }
+          ]
+        }
+      ]
+    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -925,99 +1408,15 @@
     },
     "constrains/fullnameOverride": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+metrics+nameOverride+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1metrics.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1metrics.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+metrics+nameOverride:t+1more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1metrics.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        }
-      ]
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
-    },
-    "constrains/fullnameOverride:t+metrics+nameOverride+nameOverride:t+serviceMonitor.enabled:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1metrics.enabled:t"
-        }
-      ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -1029,11 +1428,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -1046,15 +1440,10 @@
     },
     "constrains/metrics.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
+        "$ref": "#/definitions/constrains~1metrics.enabled:t@2"
       }
     },
     "constrains/metrics.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1metrics.enabled:t@3"
-      }
-    },
-    "constrains/metrics.enabled:t@3": {
       "properties": {
         "metrics": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1084,15 +1473,10 @@
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -1114,45 +1498,174 @@
       ],
       "type": "object"
     },
-    "constrains/rbac.create:t": {
-      "properties": {
-        "rbac": {
-          "$ref": "#/definitions/constrains~1create:t"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
     "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  }
+                ]
+              }
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
+                        },
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1anyOf~1string;pattern-x20-x2d"
+                          },
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              false,
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x20-x2d"
+                              }
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
         }
       ]
     },
@@ -1207,143 +1720,10 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
-                    },
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1anyOf~1string;pattern-x20-x2d"
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          false,
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x20-x2d"
-                          }
-                        ]
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
-        }
-      ]
-    },
     "constrains/serviceAccount.create:t": {
       "not": {
         "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
       }
-    },
-    "constrains/serviceAccount.create:t+serviceAccount.name:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-        }
-      ]
     },
     "constrains/serviceAccount.create:t@2": {
       "properties": {
@@ -2131,15 +2511,10 @@
     },
     "constrains/serviceMonitor.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
       }
     },
     "constrains/serviceMonitor.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-      }
-    },
-    "constrains/serviceMonitor.enabled:t@3": {
       "properties": {
         "serviceMonitor": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -2149,6 +2524,240 @@
         "serviceMonitor"
       ],
       "type": "object"
+    },
+    "constrains/tls.certManager.existingIssuer.enabled:t": {
+      "not": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "certManager": {
+                "properties": {
+                  "existingIssuer": {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                },
+                "required": [
+                  "existingIssuer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "certManager"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tls.existingSecret.lookup:t": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "existingSecret": {
+              "properties": {
+                "lookup": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "lookup"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "existingSecret"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.existingSecret.name": {
+      "not": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "existingSecret": {
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "existingSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tls.type=cert-manager": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.type=cert-manager@2"
+      }
+    },
+    "constrains/tls.type=cert-manager@2": {
+      "properties": {
+        "tls": {
+          "$ref": "#/definitions/constrains~1type=cert-manager"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.type=existingSecret": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "enum": [
+                "existingSecret"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.type=helm": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.type=helm@2"
+      }
+    },
+    "constrains/tls.type=helm@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "enum": [
+                "helm"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/type": {
+      "not": {
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/type+type=null": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "type": {}
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "type": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/type=cert-manager": {
+      "properties": {
+        "type": {
+          "enum": [
+            "cert-manager"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-marker-free"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-marker-free"
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "pattern": "<no value>"
+          },
+          "type": "string"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -2210,14 +2819,176 @@
     }
   },
   "properties": {
+    "additionalAnnotations": {},
     "addonResizer": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "image": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "nanny": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "nanny"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "nanny": {}
+                          },
+                          "required": [
+                            "nanny"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
-        "enabled": {}
-      }
+        "enabled": {},
+        "image": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "repository": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "tag": {}
+              }
+            }
+          ]
+        },
+        "nanny": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "threshold": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "extraMemory": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "memory": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "cpu": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "pollPeriod": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "minClusterSize": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "extraCpu": {}
+              }
+            }
+          ]
+        },
+        "resources": {},
+        "securityContext": {}
+      },
+      "type": "object"
     },
     "affinity": {},
-    "apiService": {},
+    "apiService": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "description": "Annotations to add to the API service"
+        },
+        "caBundle": {
+          "description": "The PEM encoded CA bundle for TLS verification"
+        },
+        "create": {
+          "description": "Specifies if the v1beta1.metrics.k8s.io API service should be created.\nYou typically want this enabled! If you disable API service creation you have to\nmanage it outside of this chart for e.g horizontal pod autoscaling to\nwork with this release."
+        },
+        "insecureSkipTLSVerify": {
+          "description": "Specifies whether to skip TLS verification"
+        }
+      },
+      "type": "object"
+    },
     "args": {},
     "commonLabels": {},
     "containerPort": {},
@@ -2258,7 +3029,8 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {}
-      }
+      },
+      "type": "object"
     },
     "nameOverride": {},
     "nodeSelector": {},
@@ -2619,7 +3391,214 @@
       },
       "type": "object"
     },
-    "tls": {},
+    "tls": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1type+type=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1type+type=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1type"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1type+type=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1type"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "certManager": {
+                            "properties": {
+                              "existingIssuer": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "existingIssuer"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "certManager"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "certManager": {
+                              "properties": {
+                                "existingIssuer": {}
+                              },
+                              "required": [
+                                "existingIssuer"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "certManager"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1type=cert-manager"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "helm"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "helm": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "helm"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "helm": {}
+                          },
+                          "required": [
+                            "helm"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "properties": {
+        "certManager": {
+          "additionalProperties": {},
+          "properties": {
+            "addInjectorAnnotations": {
+              "description": "Automatically add the cert-manager.io/inject-ca-from annotation to the APIService resource.\nSee https://cert-manager.io/docs/concepts/ca-injector"
+            },
+            "duration": {
+              "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+            },
+            "existingIssuer": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Use an existing cert-manager issuer"
+                },
+                "kind": {
+                  "description": "Kind of the existing cert-manager issuer"
+                },
+                "name": {
+                  "description": "Name of the existing cert-manager issuer"
+                }
+              }
+            },
+            "renewBefore": {
+              "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+            }
+          }
+        },
+        "clusterDomain": {
+          "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
+        },
+        "existingSecret": {
+          "additionalProperties": {},
+          "properties": {
+            "lookup": {
+              "description": "Use helm lookup function to provision `apiService.caBundle`"
+            },
+            "name": {
+              "description": "Name of the existing Secret to use for TLS"
+            }
+          }
+        },
+        "helm": {
+          "additionalProperties": {},
+          "properties": {
+            "certDurationDays": {
+              "description": "Cert validity duration in days"
+            },
+            "lookup": {
+              "description": "Use helm lookup function to reuse Secret created in previous helm install"
+            }
+          }
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "cert-manager"
+              ]
+            },
+            {
+              "enum": [
+                "helm"
+              ]
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created"
+        }
+      },
+      "type": "object"
+    },
     "tmpVolume": {},
     "tolerations": {},
     "topologySpreadConstraints": {},

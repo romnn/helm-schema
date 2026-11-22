@@ -4,37 +4,8 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "aggregator": {
-              "properties": {
-                "ingress": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "aggregator"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
+        "allOf": [
+          {
             "properties": {
               "aggregator": {
                 "properties": {
@@ -61,8 +32,34 @@
             ],
             "type": "object"
           },
-          "then": true
-        }
+          {
+            "properties": {
+              "aggregator": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "aggregator"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -93,83 +90,90 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1aggregator+aggregator=null"
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
-                "properties": {
-                  "aggregator": {
-                    "$ref": "#/definitions/constrains~1ingress=null"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1aggregator=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1aggregator"
                   }
-                },
-                "required": [
-                  "aggregator"
-                ],
-                "type": "object"
+                ]
               },
               {
-                "not": {
-                  "properties": {
-                    "aggregator": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "aggregator": {
+                        "$ref": "#/definitions/constrains~1ingress=null"
+                      }
+                    },
+                    "required": [
+                      "aggregator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
                       "properties": {
-                        "ingress": {}
+                        "aggregator": {
+                          "properties": {
+                            "ingress": {}
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "ingress"
+                        "aggregator"
                       ],
                       "type": "object"
                     }
-                  },
-                  "required": [
-                    "aggregator"
-                  ],
-                  "type": "object"
-                }
+                  }
+                ]
               }
             ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1aggregator=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1aggregator"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1aggregator+aggregator=null"
       },
       "then": false
     }
   ],
   "definitions": {
-    "constrains/aggregator+aggregator=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "aggregator": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "aggregator"
-          ],
-          "type": "object"
+    "constrains/aggregator": {
+      "not": {
+        "properties": {
+          "aggregator": {}
         },
-        {
-          "not": {
-            "properties": {
-              "aggregator": {}
-            },
-            "required": [
-              "aggregator"
-            ],
-            "type": "object"
-          }
+        "required": [
+          "aggregator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/aggregator=null": {
+      "properties": {
+        "aggregator": {
+          "enum": [
+            null
+          ]
         }
-      ]
+      },
+      "required": [
+        "aggregator"
+      ],
+      "type": "object"
     },
     "constrains/ingress=null": {
       "properties": {

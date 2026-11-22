@@ -6,108 +6,20 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/definitions/t"
               }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-          },
-          {
-            "else": {
-              "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any"
             },
-            "if": {
-              "$ref": "#/definitions/constrains~1liveness.enabled:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1liveness.probe:t"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1serviceMonitor.enabled:t+webConfiguration+webConfiguration.existingSecret+5more~1else~1any"
-              }
-            }
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1any~1else~1serviceMonitor.enabled:t"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1readiness.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          "then": true
-        }
       },
       "then": {
         "additionalProperties": {},
@@ -115,43 +27,6 @@
           "fullnameOverride": {
             "description": "Provide a name to substitute for the full names of resources",
             "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-          },
-          {
-            "else": {
-              "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any@2"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1liveness.enabled:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any@2"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1liveness.probe:t"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1serviceMonitor.enabled:t+webConfiguration+webConfiguration.existingSecret+5more~1else~1any@2"
-              }
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webConfiguration": {
-            "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nIf serviceMonitor.enabled is set, a secret with these credentials will be created\nand configured in serviceMonitor. serviceMonitor.basicAuth overrides this secret.\nbasicAuthUsers:\nusername: password\nAlternatively, reference an existing Secret that already holds the web\nconfiguration (e.g. managed by Sealed Secrets, Vault, ...) so that no\ncredentials are kept in plaintext here. The Secret must contain a key named\nweb-config.yaml, the file name Pushgateway expects. When existingSecret is\nset the chart-managed web-config Secret is not rendered, and the liveness and\nreadiness probes switch to a tcpSocket check, because the chart cannot read\nthe credentials to authenticate HTTP probes.\nexistingSecret:\nname: pushgateway-web-config",
-            "type": "object"
           }
         }
       }
@@ -183,35 +58,453 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1liveness.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1liveness.probe:t"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1liveness.enabled:t"
+              }
+            ]
           },
-          "then": {
-            "else": false,
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1liveness.enabled:t+liveness.probe+liveness.probe:t+liveness.probe=null+1more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "liveness": {
+                          "$ref": "#/definitions/constrains~1probe.httpGet@2"
+                        }
+                      },
+                      "required": [
+                        "liveness"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "liveness": {
+                        "$ref": "#/definitions/constrains~1probe.httpGet=null"
+                      }
+                    },
+                    "required": [
+                      "liveness"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+              },
+              {
+                "$ref": "#/definitions/when~1liveness.enabled:t~1then~1liveness.probe:t+readiness+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "liveness": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "liveness"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "liveness": {}
+                      },
+                      "required": [
+                        "liveness"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1readiness.enabled:t+readiness.probe+readiness.probe:t+readiness.probe=null+1more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readiness": {
+                          "$ref": "#/definitions/constrains~1probe.httpGet@2"
+                        }
+                      },
+                      "required": [
+                        "readiness"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readiness": {
+                        "$ref": "#/definitions/constrains~1probe.httpGet=null"
+                      }
+                    },
+                    "required": [
+                      "readiness"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "persistentVolume": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "persistentVolume"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistentVolume": {}
+                      },
+                      "required": [
+                        "persistentVolume"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1readiness.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readiness": {}
+                      },
+                      "required": [
+                        "readiness"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readiness": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "readiness"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              }
+            ]
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null+runAsStatefulSet:t"
+            },
             "if": {
-              "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
             },
             "then": {
               "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
-                },
-                "then": false
+                "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null+runAsStatefulSet:t"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
+                "properties": {
+                  "persistentVolume": {
+                    "properties": {
+                      "storageClass": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "storageClass"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistentVolume"
+                ],
+                "type": "object"
               },
-              "then": false
+              "then": {
+                "allOf": [
+                  {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1persistentVolume.storageClass@2"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1podAntiAffinity"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null@3"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1persistentVolume.storageClass"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null@3"
+                      },
+                      "then": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1persistentVolume.storageClass"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+                  }
+                ]
+              }
             }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              }
+            ]
           }
-        }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1liveness.enabled:t+liveness.probe+liveness.probe:t+liveness.probe=null+1more"
       },
       "then": {
         "additionalProperties": {},
@@ -226,67 +519,63 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1persistentVolume.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1persistentVolume.enabled:t"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1readiness.enabled:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1extraVolumes:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1liveness.enabled:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1readiness.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1extraVolumes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1liveness.enabled:t"
               }
             ]
           },
           {
             "else": {
-              "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration:t~1else~1fail"
+              "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration:t"
             },
             "if": {
               "$ref": "#/definitions/constrains~1extraVolumes:t@2"
@@ -294,26 +583,27 @@
             "then": {
               "else": {
                 "else": {
-                  "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration:t~1else~1fail"
+                  "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration:t"
                 },
                 "if": {
                   "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
                 },
                 "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1readiness.enabled:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration:t~1else~1fail"
-                  }
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1readiness.enabled:t"
+                    }
+                  ]
                 }
               },
               "if": {
                 "$ref": "#/definitions/constrains~1liveness.enabled:t"
               },
               "then": {
-                "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration:t~1else~1fail"
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration:t"
               }
             }
           }
@@ -334,242 +624,21 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1liveness.enabled:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1liveness.probe:t"
-              },
-              "then": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                },
-                "then": {
-                  "else": {
-                    "else": true,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
-                    },
-                    "then": false
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
-                  },
-                  "then": false
-                }
-              }
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "liveness": {
-                      "$ref": "#/definitions/constrains~1probe.httpGet@2"
-                    }
-                  },
-                  "required": [
-                    "liveness"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "liveness": {
-                    "$ref": "#/definitions/constrains~1probe.httpGet=null"
-                  }
-                },
-                "required": [
-                  "liveness"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "persistentVolume": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "persistentVolume"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "persistentVolume": {}
-                  },
-                  "required": [
-                    "persistentVolume"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1readiness.enabled:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1readiness.probe:t"
-              },
-              "then": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                },
-                "then": {
-                  "else": {
-                    "else": true,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
-                    },
-                    "then": false
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
-                  },
-                  "then": false
-                }
-              }
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "readiness": {
-                      "$ref": "#/definitions/constrains~1probe.httpGet@2"
-                    }
-                  },
-                  "required": [
-                    "readiness"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "readiness": {
-                    "$ref": "#/definitions/constrains~1probe.httpGet=null"
-                  }
-                },
-                "required": [
-                  "readiness"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "readiness": {}
-                  },
-                  "required": [
-                    "readiness"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "readiness": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "readiness"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+webConfiguration+7more~1else~1fail"
+          "$ref": "#/definitions/constrains~1readiness.enabled:t+readiness.probe:t+runAsStatefulSet:t+webConfiguration+7more"
         },
         "if": {
           "$ref": "#/definitions/constrains~1liveness.enabled:t"
         },
         "then": {
           "else": {
-            "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+webConfiguration+7more~1else~1fail"
+            "$ref": "#/definitions/constrains~1readiness.enabled:t+readiness.probe:t+runAsStatefulSet:t+webConfiguration+7more"
           },
           "if": {
             "$ref": "#/definitions/constrains~1liveness.probe:t"
           },
           "then": {
-            "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration+webConfiguration.basicAuthUsers:t+6more~1else~1fail"
+            "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration+webConfiguration.basicAuthUsers:t+6more"
           }
         }
       },
@@ -592,67 +661,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1global+global=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global+global=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
           },
           {
@@ -676,115 +684,22 @@
     },
     {
       "if": {
-        "else": {
-          "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1podAntiAffinity+podAntiAffinity=null~1else~1fail"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1podAntiAffinity+podAntiAffinity=null~1else~1fail"
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1any~1else~1serviceMonitor.enabled:t"
           },
-          "if": {
+          {
             "properties": {
-              "persistentVolume": {
-                "properties": {
-                  "storageClass": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
+              "nameOverride": {
+                "$ref": "#/definitions/t"
               }
             },
             "required": [
-              "persistentVolume"
+              "nameOverride"
             ],
             "type": "object"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": true,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1persistentVolume.storageClass"
-                      },
-                      "then": {
-                        "$ref": "#/definitions/when~1podAntiAffinity~1then~1fail~1else~1any"
-                      }
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1persistentVolume.storageClass~1then~1fail~1else~1any"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity@2"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
-                },
-                "then": {
-                  "else": {
-                    "$ref": "#/definitions/when~1persistentVolume.storageClass~1then~1fail~1else~1any"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
-                  },
-                  "then": false
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1persistentVolume.storageClass+persistentVolume.storageClass=null"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity"
-              }
-            }
           }
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          "then": true
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -798,23 +713,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1liveness.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -827,35 +726,7 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1readiness.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1readiness.probe:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-            },
-            "then": {
-              "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
-              },
-              "then": false
-            }
-          }
-        }
+        "$ref": "#/definitions/constrains~1readiness.enabled:t+readiness.probe+readiness.probe:t+readiness.probe=null+1more"
       },
       "then": {
         "additionalProperties": {},
@@ -870,91 +741,87 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1persistentVolume.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1persistentVolume.enabled:t"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1extraVolumes:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1readiness.enabled:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1liveness.enabled:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1extraVolumes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1readiness.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1liveness.enabled:t"
               }
             ]
           },
           {
             "else": {
-              "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration+webConfiguration.existingSecret:t+webConfiguration:t+1more~1else~1fail"
+              "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration+webConfiguration.existingSecret:t+3more"
             },
             "if": {
               "$ref": "#/definitions/constrains~1extraVolumes:t@2"
@@ -962,26 +829,27 @@
             "then": {
               "else": {
                 "else": {
-                  "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration+webConfiguration.existingSecret:t+webConfiguration:t+1more~1else~1fail"
+                  "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration+webConfiguration.existingSecret:t+3more"
                 },
                 "if": {
                   "$ref": "#/definitions/constrains~1persistentVolume.enabled:t@2"
                 },
                 "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1readiness.enabled:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration+webConfiguration.existingSecret:t+webConfiguration:t+1more~1else~1fail"
-                  }
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration+webConfiguration.existingSecret:t+3more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1readiness.enabled:t"
+                    }
+                  ]
                 }
               },
               "if": {
                 "$ref": "#/definitions/constrains~1liveness.enabled:t"
               },
               "then": {
-                "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration+webConfiguration.existingSecret:t+webConfiguration:t+1more~1else~1fail"
+                "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration+webConfiguration.existingSecret:t+3more"
               }
             }
           }
@@ -1007,41 +875,24 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+            "$ref": "#/definitions/when~1liveness.enabled:t~1then~1liveness.probe:t+readiness+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webConfiguration": {
+            "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nIf serviceMonitor.enabled is set, a secret with these credentials will be created\nand configured in serviceMonitor. serviceMonitor.basicAuth overrides this secret.\nbasicAuthUsers:\nusername: password\nAlternatively, reference an existing Secret that already holds the web\nconfiguration (e.g. managed by Sealed Secrets, Vault, ...) so that no\ncredentials are kept in plaintext here. The Secret must contain a key named\nweb-config.yaml, the file name Pushgateway expects. When existingSecret is\nset the chart-managed web-config Secret is not rendered, and the liveness and\nreadiness probes switch to a tcpSocket check, because the chart cannot read\nthe credentials to authenticate HTTP probes.\nexistingSecret:\nname: pushgateway-web-config",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1096,70 +947,48 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "liveness": {
-                    "enum": [
-                      null
-                    ]
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "global": {}
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
                   }
                 },
-                "required": [
-                  "liveness"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
+                {
                   "properties": {
-                    "liveness": {}
+                    "global": {
+                      "enum": [
+                        null
+                      ]
+                    }
                   },
                   "required": [
-                    "liveness"
+                    "global"
                   ],
                   "type": "object"
                 }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "serviceMonitor": {}
-              },
-              "required": [
-                "serviceMonitor"
-              ],
-              "type": "object"
+              ]
             }
           },
           {
-            "properties": {
-              "serviceMonitor": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -1190,36 +1019,6 @@
       ],
       "type": "object"
     },
-    "constrains/global+global=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
     "constrains/liveness.enabled:t": {
       "properties": {
         "liveness": {
@@ -1230,6 +1029,29 @@
         "liveness"
       ],
       "type": "object"
+    },
+    "constrains/liveness.enabled:t+liveness.probe+liveness.probe:t+liveness.probe=null+1more": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1liveness.probe+liveness.probe=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1liveness.probe:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1liveness.enabled:t"
+        }
+      ]
     },
     "constrains/liveness.probe+liveness.probe=null": {
       "anyOf": [
@@ -1303,23 +1125,9 @@
       "type": "object"
     },
     "constrains/persistentVolume.storageClass": {
-      "properties": {
-        "persistentVolume": {
-          "properties": {
-            "storageClass": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "storageClass"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "persistentVolume"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1persistentVolume.storageClass@2"
+      }
     },
     "constrains/persistentVolume.storageClass+persistentVolume.storageClass=null": {
       "anyOf": [
@@ -1365,7 +1173,73 @@
         }
       ]
     },
+    "constrains/persistentVolume.storageClass@2": {
+      "properties": {
+        "persistentVolume": {
+          "properties": {
+            "storageClass": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistentVolume"
+      ],
+      "type": "object"
+    },
+    "constrains/podAntiAffinity": {
+      "not": {
+        "properties": {
+          "podAntiAffinity": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "podAntiAffinity"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/podAntiAffinity+podAntiAffinity=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1podAntiAffinity"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null@3"
+          }
+        }
+      ]
+    },
+    "constrains/podAntiAffinity+podAntiAffinity=null+runAsStatefulSet:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        }
+      ]
+    },
+    "constrains/podAntiAffinity+podAntiAffinity=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null@3"
+          }
+        }
+      ]
+    },
+    "constrains/podAntiAffinity+podAntiAffinity=null@3": {
       "anyOf": [
         {
           "not": {
@@ -1466,6 +1340,42 @@
       ],
       "type": "object"
     },
+    "constrains/readiness.enabled:t+readiness.probe+readiness.probe:t+readiness.probe=null+1more": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1readiness.probe+readiness.probe=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1readiness.probe:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1readiness.enabled:t"
+        }
+      ]
+    },
+    "constrains/readiness.enabled:t+readiness.probe:t+runAsStatefulSet:t+webConfiguration+7more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t+webConfiguration+webConfiguration.basicAuthUsers:t+6more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1readiness.probe:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1readiness.enabled:t"
+        }
+      ]
+    },
     "constrains/readiness.probe+readiness.probe=null": {
       "anyOf": [
         {
@@ -1532,13 +1442,71 @@
       ],
       "type": "object"
     },
+    "constrains/runAsStatefulSet:t+webConfiguration+webConfiguration.basicAuthUsers:t+6more": {
+      "allOf": [
+        {
+          "else": {
+            "$ref": "#/definitions/constrains~1webConfiguration.basicAuthUsers:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1webConfiguration:t"
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webConfiguration.basicAuthUsers:t"
+              },
+              {
+                "$ref": "#/definitions/when~1webConfiguration.existingSecret:t~1then~1webConfiguration+webConfiguration.existingSecret+3more~1else~1any"
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        }
+      ]
+    },
+    "constrains/runAsStatefulSet:t+webConfiguration+webConfiguration.existingSecret:t+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webConfiguration:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        }
+      ]
+    },
+    "constrains/runAsStatefulSet:t+webConfiguration:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1webConfiguration:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        }
+      ]
+    },
     "constrains/serviceMonitor.enabled:t": {
-      "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
+      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
     },
     "constrains/serviceMonitor.enabled:t@2": {
-      "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1any~1else~1fail"
-    },
-    "constrains/serviceMonitor.enabled:t@3": {
       "properties": {
         "serviceMonitor": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1640,33 +1608,6 @@
         }
       ]
     },
-    "constrains/webConfiguration.existingSecret.name:t": {
-      "properties": {
-        "webConfiguration": {
-          "properties": {
-            "existingSecret": {
-              "properties": {
-                "name": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "existingSecret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "webConfiguration"
-      ],
-      "type": "object"
-    },
     "constrains/webConfiguration.existingSecret:t": {
       "properties": {
         "webConfiguration": {
@@ -1756,45 +1697,24 @@
         }
       }
     },
-    "when/persistentVolume.storageClass/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1persistentVolume.storageClass"
-      },
-      "then": false
-    },
-    "when/podAntiAffinity+podAntiAffinity=null/then/fail/else/podAntiAffinity": {
+    "when/liveness.enabled:t/then/liveness.probe:t+readiness+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more/else/any": {
       "else": {
-        "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity@2"
+        "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
+        "$ref": "#/definitions/constrains~1liveness.enabled:t"
       },
-      "then": false
-    },
-    "when/podAntiAffinity+podAntiAffinity=null/then/fail/else/podAntiAffinity@2": {
-      "else": {
-        "$ref": "#/definitions/when~1podAntiAffinity~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1podAntiAffinity+podAntiAffinity=null"
-      },
-      "then": false
-    },
-    "when/podAntiAffinity/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "properties": {
-          "podAntiAffinity": {
-            "type": "string"
-          }
+      "then": {
+        "else": {
+          "$ref": "#/definitions/when~1readiness.enabled:t~1then~1readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more~1else~1any"
         },
-        "required": [
-          "podAntiAffinity"
-        ],
-        "type": "object"
-      },
-      "then": false
+        "if": {
+          "$ref": "#/definitions/constrains~1liveness.probe:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1serviceMonitor.enabled:t+webConfiguration+webConfiguration.existingSecret+5more~1else~1any"
+        }
+      }
     },
     "when/readiness.enabled:t/then/readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more/else/any": {
       "else": {
@@ -1815,48 +1735,14 @@
         }
       }
     },
-    "when/readiness.enabled:t/then/readiness.probe:t+runAsStatefulSet:t+serviceMonitor+webConfiguration+6more/else/any@2": {
+    "when/runAsStatefulSet:t/then/any/else/serviceMonitor.enabled:t": {
       "else": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
+        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
       },
-      "if": {
-        "$ref": "#/definitions/constrains~1readiness.enabled:t"
-      },
-      "then": {
-        "else": {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1readiness.probe:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1serviceMonitor.enabled:t+webConfiguration+webConfiguration.existingSecret+5more~1else~1any@2"
-        }
-      }
-    },
-    "when/readiness.enabled:t/then/readiness.probe:t+runAsStatefulSet:t+webConfiguration+7more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1readiness.enabled:t"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1readiness.probe:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1runAsStatefulSet:t~1then~1webConfiguration+webConfiguration.basicAuthUsers:t+6more~1else~1fail"
-        }
-      }
-    },
-    "when/runAsStatefulSet:t/then/podAntiAffinity+podAntiAffinity=null/else/fail": {
-      "else": false,
       "if": {
         "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
       },
-      "then": {
-        "$ref": "#/definitions/when~1podAntiAffinity+podAntiAffinity=null~1then~1fail~1else~1podAntiAffinity"
-      }
+      "then": true
     },
     "when/runAsStatefulSet:t/then/serviceMonitor.enabled:t+webConfiguration+webConfiguration.existingSecret+5more/else/any": {
       "else": {
@@ -1872,358 +1758,130 @@
             "$ref": "#/definitions/constrains~1webConfiguration:t"
           },
           "then": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "else": true,
-                        "if": {
-                          "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                        },
-                        "then": {
-                          "$ref": "#/definitions/when~1webConfiguration.existingSecret.name?~1then~1any~1else~1fail"
-                        }
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret.name:t"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "$ref": "#/definitions/when~1webConfiguration.existingSecret?~1then~1fail~1else~1any"
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                },
-                "then": true
-              }
-            }
+            "$ref": "#/definitions/when~1webConfiguration.existingSecret:t~1then~1webConfiguration+webConfiguration.existingSecret+3more~1else~1any"
           }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
+          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
         },
         "then": true
       }
     },
-    "when/runAsStatefulSet:t/then/serviceMonitor.enabled:t+webConfiguration+webConfiguration.existingSecret+5more/else/any@2": {
-      "else": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@2"
-      },
+    "when/webConfiguration.existingSecret:t/then/webConfiguration+webConfiguration.existingSecret+3more/else/any": {
+      "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
+        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
       },
       "then": {
         "else": {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1webConfiguration:t"
-          },
-          "then": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "else": true,
-                        "if": {
-                          "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                        },
-                        "then": {
-                          "$ref": "#/definitions/when~1webConfiguration.existingSecret.name?~1then~1any~1else~1fail"
-                        }
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret.name:t"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "$ref": "#/definitions/when~1webConfiguration.existingSecret?~1then~1fail~1else~1any"
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                },
-                "then": true
-              }
-            }
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-        },
-        "then": true
-      }
-    },
-    "when/runAsStatefulSet:t/then/webConfiguration+webConfiguration.basicAuthUsers:t+6more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-      },
-      "then": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1webConfiguration.basicAuthUsers:t"
-          },
-          "then": true
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1webConfiguration:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1webConfiguration.basicAuthUsers:t"
-          },
-          "then": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "else": true,
-                        "if": {
-                          "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-                        },
-                        "then": {
-                          "$ref": "#/definitions/when~1webConfiguration.existingSecret.name?~1then~1any~1else~1fail"
-                        }
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                },
-                "then": true
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1webConfiguration.existingSecret.name:t"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "$ref": "#/definitions/when~1webConfiguration.existingSecret?~1then~1fail~1else~1any"
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
-                },
-                "then": true
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/runAsStatefulSet:t/then/webConfiguration+webConfiguration.existingSecret:t+webConfiguration:t+1more/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1webConfiguration:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1webConfiguration.existingSecret:t"
-          },
-          "then": {
+          "else": {
             "else": {
               "else": {
-                "else": false,
+                "else": {
+                  "else": true,
+                  "if": {
+                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+                  },
+                  "then": {
+                    "properties": {
+                      "webConfiguration": {
+                        "properties": {
+                          "existingSecret": {
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "existingSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
                 "if": {
-                  "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+                  "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
                 },
                 "then": true
               },
               "if": {
                 "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
               },
-              "then": false
+              "then": true
             },
             "if": {
-              "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+              "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
             },
-            "then": false
-          }
+            "then": true
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+          },
+          "then": true
+        },
+        "if": {
+          "properties": {
+            "webConfiguration": {
+              "properties": {
+                "existingSecret": {
+                  "properties": {
+                    "name": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "existingSecret"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webConfiguration"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "else": {
+            "else": {
+              "else": {
+                "else": {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+              },
+              "then": true
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1webConfiguration.existingSecret+webConfiguration.existingSecret=null"
+            },
+            "then": true
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1webConfiguration+webConfiguration=null"
+          },
+          "then": true
         }
       }
-    },
-    "when/runAsStatefulSet:t/then/webConfiguration:t/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1runAsStatefulSet:t"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1webConfiguration:t"
-        },
-        "then": true
-      }
-    },
-    "when/serviceMonitor.enabled:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t@3"
-      },
-      "then": true
-    },
-    "when/webConfiguration.existingSecret.name?/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "properties": {
-          "webConfiguration": {
-            "properties": {
-              "existingSecret": {
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "existingSecret"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "webConfiguration"
-        ],
-        "type": "object"
-      },
-      "then": true
-    },
-    "when/webConfiguration.existingSecret?/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1webConfiguration.existingSecret?"
-      },
-      "then": false
     }
   },
   "properties": {

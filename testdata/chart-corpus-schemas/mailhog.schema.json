@@ -4,6 +4,66 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -19,802 +79,6 @@
             "type": "object"
           },
           {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1image.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1service+service=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type+service.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1containerPort+containerPort=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "properties": {
               "image": {
                 "enum": [
@@ -828,174 +92,58 @@
             "type": "object"
           },
           {
-            "not": {
-              "properties": {
-                "image": {}
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1image.tag"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1image.tag:t"
-                                  }
-                                ]
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1image.tag@2"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image.tag+image.tag:t+nameOverride+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image.tag+image.tag:t+nameOverride+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image.tag+image.tag:t+nameOverride+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image.tag+image.tag:t+nameOverride+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
+                "anyOf": [
                   {
                     "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag@2"
+                      "properties": {
+                        "containerPort": {
+                          "properties": {
+                            "http": {}
+                          },
+                          "required": [
+                            "http"
+                          ],
+                          "type": "object"
                         }
-                      ]
+                      },
+                      "required": [
+                        "containerPort"
+                      ],
+                      "type": "object"
                     }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                    "properties": {
+                      "containerPort": {
+                        "properties": {
+                          "http": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "http"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerPort"
+                    ],
+                    "type": "object"
                   }
                 ]
               },
               {
-                "allOf": [
+                "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image.tag+image.tag:t+nameOverride+3more"
+                    "$ref": "#/definitions/constrains~1containerPort"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                    "$ref": "#/definitions/constrains~1containerPort=null"
                   }
                 ]
               }
@@ -1003,372 +151,544 @@
           },
           {
             "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1image.tag:t@2"
-                                },
-                                {
-                                  "not": {
-                                    "$ref": "#/definitions/constrains~1image.tag@2"
-                                  }
-                                }
-                              ]
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1image.tag@2"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t+outgoingSMTP.enabled:t+outgoingSMTP.existingSecret:t"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
+              "properties": {
+                "auth": {}
+              },
+              "required": [
+                "auth"
+              ],
+              "type": "object"
             }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1image.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type+service.type=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1image.tag"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1image.tag:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "port": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "port"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "port": {}
+                          },
+                          "required": [
+                            "port"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
           {
             "not": {
               "properties": {
@@ -1376,6 +696,486 @@
               },
               "required": [
                 "outgoingSMTP"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag@2"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1image.tag:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1image.tag"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1image.tag@2"
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-0"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "containerPort": {
+                          "properties": {
+                            "smtp": {}
+                          },
+                          "required": [
+                            "smtp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "containerPort": {
+                        "properties": {
+                          "smtp": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "smtp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerPort"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1containerPort"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1containerPort=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1containerPort"
+          },
+          {
+            "$ref": "#/definitions/constrains~1containerPort=null"
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
               ],
               "type": "object"
             }
@@ -1392,60 +1192,54 @@
               "outgoingSMTP"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "containerPort": {
-                      "properties": {
-                        "http": {}
-                      },
-                      "required": [
-                        "http"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "containerPort"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "containerPort": {
-                    "properties": {
-                      "http": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "http"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "containerPort"
-                ],
-                "type": "object"
-              }
-            ]
           },
           {
-            "$ref": "#/definitions/constrains~1containerPort+containerPort=null"
+            "properties": {
+              "auth": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1489,177 +1283,20 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "properties": {
-                      "port": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "port"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "port": {}
-                      },
-                      "required": [
-                        "port"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1service+service=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "containerPort": {
-                      "properties": {
-                        "smtp": {}
-                      },
-                      "required": [
-                        "smtp"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "containerPort"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "containerPort": {
-                    "properties": {
-                      "smtp": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "smtp"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "containerPort"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1containerPort+containerPort=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "ingress": {
-              "$ref": "#/definitions/constrains~1enabled:t"
-            }
-          },
-          "required": [
-            "ingress"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          "then": true
-        }
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
+          "fullnameOverride": {
+            "type": "string"
           }
         }
       }
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1image.tag:t@3"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1image.tag:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -1674,36 +1311,111 @@
           }
         }
       }
-    }
-  ],
-  "definitions": {
-    "constrains/containerPort+containerPort=null": {
-      "anyOf": [
-        {
-          "not": {
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnv": {
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "auth": {
+                  "$ref": "#/definitions/constrains~1existingSecret:t@2"
+                }
+              },
+              "required": [
+                "auth"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "containerPort": {}
+              "auth": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
             },
             "required": [
-              "containerPort"
+              "auth"
             ],
             "type": "object"
           }
-        },
-        {
-          "properties": {
-            "containerPort": {
-              "enum": [
-                null
-              ]
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "auth": {
+            "additionalProperties": {},
+            "properties": {
+              "fileContents": {
+                "type": "string"
+              }
             }
-          },
-          "required": [
-            "containerPort"
-          ],
-          "type": "object"
+          }
         }
-      ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "constrains/containerPort": {
+      "not": {
+        "properties": {
+          "containerPort": {}
+        },
+        "required": [
+          "containerPort"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/containerPort=null": {
+      "properties": {
+        "containerPort": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "containerPort"
+      ],
+      "type": "object"
     },
     "constrains/create:t": {
       "properties": {
@@ -1727,321 +1439,33 @@
       ],
       "type": "object"
     },
+    "constrains/existingSecret:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1existingSecret:t@2"
+      }
+    },
+    "constrains/existingSecret:t@2": {
+      "properties": {
+        "existingSecret": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "existingSecret"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+image.tag+image.tag:t+nameOverride+3more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t@3"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t+outgoingSMTP.enabled:t+outgoingSMTP.existingSecret:t"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t"
-            }
-          ]
-        }
-      ]
-    },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t+outgoingSMTP.enabled:t+outgoingSMTP.existingSecret:t": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-        }
-      ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -2063,6 +1487,22 @@
       ],
       "type": "object"
     },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1image.tag:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1image.tag@2"
+        }
+      ]
+    },
     "constrains/image.tag": {
       "not": {
         "$ref": "#/definitions/constrains~1image.tag@2"
@@ -2070,15 +1510,10 @@
     },
     "constrains/image.tag:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1image.tag:t@3"
+        "$ref": "#/definitions/constrains~1image.tag:t@2"
       }
     },
     "constrains/image.tag:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1image.tag:t@3"
-      }
-    },
-    "constrains/image.tag:t@3": {
       "properties": {
         "image": {
           "properties": {
@@ -2116,6 +1551,17 @@
       ],
       "type": "object"
     },
+    "constrains/ingress.enabled:t": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -2127,36 +1573,21 @@
           "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
           "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
-    "constrains/nameOverride+nameOverride:t@3": {
+    "constrains/nameOverride+nameOverride:t@2": {
       "not": {
         "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -2180,15 +1611,10 @@
     },
     "constrains/outgoingSMTP.enabled:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
+        "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@2"
       }
     },
     "constrains/outgoingSMTP.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1outgoingSMTP.enabled:t@3"
-      }
-    },
-    "constrains/outgoingSMTP.enabled:t@3": {
       "properties": {
         "outgoingSMTP": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -2201,60 +1627,19 @@
     },
     "constrains/outgoingSMTP.existingSecret:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
+        "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@2"
       }
     },
     "constrains/outgoingSMTP.existingSecret:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1outgoingSMTP.existingSecret:t@3"
-      }
-    },
-    "constrains/outgoingSMTP.existingSecret:t@3": {
       "properties": {
         "outgoingSMTP": {
-          "properties": {
-            "existingSecret": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "existingSecret"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1existingSecret:t@2"
         }
       },
       "required": [
         "outgoingSMTP"
       ],
       "type": "object"
-    },
-    "constrains/service+service=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "service": {}
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        }
-      ]
     },
     "constrains/service.type": {
       "not": {
@@ -2278,12 +1663,6 @@
       }
     },
     "constrains/service.type+service.type=null": {
-      "$ref": "#/definitions/constrains~1service.type+service.type=null@3"
-    },
-    "constrains/service.type+service.type=null@2": {
-      "$ref": "#/definitions/constrains~1service.type+service.type=null@3"
-    },
-    "constrains/service.type+service.type=null@3": {
       "not": {
         "anyOf": [
           {
@@ -2330,33 +1709,173 @@
       }
     },
     "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name"
+          "anyOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
+                        },
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1anyOf~1string;pattern-x20-x2d"
+                          },
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "allOf": [
+                        {
+                          "additionalProperties": {
+                            "anyOf": [
+                              false,
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
+                              }
+                            ]
+                          },
+                          "propertyNames": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x20-x2d"
+                              }
+                            ]
+                          },
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
         }
       ]
     },
@@ -2411,143 +1930,10 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
-                    },
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1anyOf~1string;pattern-x20-x2d"
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "name": {
-                  "allOf": [
-                    {
-                      "additionalProperties": {
-                        "anyOf": [
-                          false,
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a@2"
-                          }
-                        ]
-                      },
-                      "propertyNames": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x20-x2d"
-                          }
-                        ]
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1not~1object"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
-        }
-      ]
-    },
     "constrains/serviceAccount.create:t": {
       "not": {
         "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
       }
-    },
-    "constrains/serviceAccount.create:t+serviceAccount.name:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-        }
-      ]
     },
     "constrains/serviceAccount.create:t@2": {
       "properties": {
@@ -3334,32 +2720,34 @@
       "type": "object"
     },
     "constrains/type+type=null": {
-      "anyOf": [
-        {
-          "not": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "type": {}
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "type": {}
+              "type": {
+                "enum": [
+                  null
+                ]
+              }
             },
             "required": [
               "type"
             ],
             "type": "object"
           }
-        },
-        {
-          "properties": {
-            "type": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      ]
+        ]
+      }
     },
     "t": {
       "anyOf": [
@@ -3422,7 +2810,86 @@
   },
   "properties": {
     "affinity": {},
-    "auth": {},
+    "auth": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "fileContents": {}
+                          },
+                          "required": [
+                            "fileContents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "fileContents": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "fileContents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "fileContents": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fileContents"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "properties": {
+        "enabled": {},
+        "existingSecret": {},
+        "fileContents": {},
+        "fileName": {}
+      },
+      "type": "object"
+    },
     "automountServiceAccountToken": {},
     "containerPort": {
       "additionalProperties": {},
@@ -3446,28 +2913,21 @@
               {
                 "not": {
                   "properties": {
-                    "smtp": {}
-                  },
-                  "required": [
-                    "smtp"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
                     "http": {}
                   },
                   "required": [
                     "http"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "smtp": {}
+                  },
+                  "required": [
+                    "smtp"
                   ],
                   "type": "object"
                 }
@@ -3518,6 +2978,8 @@
     "image": {
       "additionalProperties": {},
       "properties": {
+        "pullPolicy": {},
+        "repository": {},
         "tag": {}
       },
       "type": "object"
@@ -3530,6 +2992,7 @@
           "description": "ingressClassName: nginx"
         },
         "enabled": {},
+        "hosts": {},
         "ingressClassName": {},
         "labels": {
           "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
@@ -3572,85 +3035,30 @@
       "allOf": [
         {
           "if": {
-            "else": {
-              "else": {
-                "else": true,
-                "if": {
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1type+type=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1type+type=null"
-            },
-            "then": false
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "NodePort"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "properties": {
-                      "nodePort": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "nodePort"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1type+type=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1type+type=null"
                   },
                   {
                     "not": {
                       "properties": {
-                        "nodePort": {}
+                        "type": {
+                          "type": "string"
+                        }
                       },
                       "required": [
-                        "nodePort"
+                        "type"
                       ],
                       "type": "object"
                     }
                   }
                 ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
+              },
               {
                 "properties": {
                   "port": {
@@ -3663,6 +3071,51 @@
                   "port"
                 ],
                 "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "NodePort"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "nodePort": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "nodePort"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "nodePort": {}
+                          },
+                          "required": [
+                            "nodePort"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "not": {
@@ -3691,11 +3144,20 @@
           "description": "Named target ports are not supported by GCE health checks, so when deploying on GKE\nand exposing it via GCE ingress, the health checks fail and the load balancer returns a 502."
         },
         "nodePort": {
-          "additionalProperties": {},
-          "properties": {
-            "http": {},
-            "smtp": {}
-          }
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "http": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "smtp": {}
+              }
+            }
+          ]
         },
         "port": {
           "additionalProperties": {},

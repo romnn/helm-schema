@@ -4,7 +4,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1test.enabled:t"
+        "$ref": "#/definitions/constrains~1test.enabled:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -17,19 +17,59 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1test.enabled:t~1then~1any~1else~1fail"
-        }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1test.enabled:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "description": "Optionally override the fully qualified name",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1test.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "description": "Additional labels applied to every resource in this chart, and on the StatefulSet's pods",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1test.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Optionally override the name",
             "type": "string"
           }
         }
@@ -50,64 +90,6 @@
             }
           },
           {
-            "properties": {
-              "test": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "test"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/when~1test.enabled:t~1then~1any~1else~1fail"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "description": "Additional labels applied to every resource in this chart, and on the StatefulSet's pods",
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1test.enabled:t~1then~1any~1else~1fail"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Optionally override the name",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -118,7 +100,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1test.enabled:t"
+                "$ref": "#/definitions/constrains~1test.enabled:t@2"
               }
             ]
           },
@@ -137,7 +119,7 @@
                 "$ref": "#/definitions/constrains~1nameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1test.enabled:t"
+                "$ref": "#/definitions/constrains~1test.enabled:t@2"
               }
             ]
           },
@@ -155,47 +137,57 @@
                 "$ref": "#/definitions/constrains~1nameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1test.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/definitions/constrains~1test.enabled:t@2"
               }
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1test.enabled:t"
+            "properties": {
+              "test": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "test"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1test.enabled:t@2"
+              }
+            ]
           }
         ]
       },
@@ -250,6 +242,9 @@
       "type": "object"
     },
     "constrains/test.enabled:t": {
+      "$ref": "#/definitions/constrains~1test.enabled:t@2"
+    },
+    "constrains/test.enabled:t@2": {
       "properties": {
         "test": {
           "properties": {
@@ -292,13 +287,6 @@
           "const": true
         }
       ]
-    },
-    "when/test.enabled:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1test.enabled:t"
-      },
-      "then": true
     }
   },
   "properties": {

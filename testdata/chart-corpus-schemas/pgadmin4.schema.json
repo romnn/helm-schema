@@ -4,44 +4,83 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1istioIngress.virtualService.config+istioIngress.virtualService.config=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1commonLabels:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.virtualService.config+istioIngress.virtualService.config=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
               },
               {
                 "not": {
                   "properties": {
-                    "service": {}
+                    "commonLabels": {
+                      "pattern": "\\{\\{",
+                      "type": "string"
+                    }
                   },
                   "required": [
-                    "service"
+                    "commonLabels"
                   ],
                   "type": "object"
                 }
+              },
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels"
               }
             ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels:t+istioIngress+istioIngress.virtualService.config+2more"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "istioIngress": {
+            "additionalProperties": {},
+            "description": "Istio ingress configuration\nUse Istio Gateway and VirtualService instead of Ingress",
+            "properties": {
+              "virtualService": {
+                "additionalProperties": {},
+                "description": "Istio VirtualService configuration\nThe VirtualService defines how traffic is routed after it enters the Gateway",
+                "properties": {
+                  "config": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -65,108 +104,6 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            "then": true
-          }
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "description": "Service configuration",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "commonLabels": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "commonLabels"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "properties": {
-                  "commonLabels": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "commonLabels"
-                ],
-                "type": "object"
-              },
-              "then": true
-            }
-          }
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "description": "Add labels to all the deployed resources",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -181,53 +118,6 @@
             ],
             "type": "object"
           },
-          {
-            "not": {
-              "properties": {
-                "istioIngress": {}
-              },
-              "required": [
-                "istioIngress"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
-            },
-            "then": true
-          }
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "allOf": [
               {
@@ -288,13 +178,235 @@
                 "$ref": "#/definitions/constrains~1nameOverride:t"
               }
             ]
+          },
+          {
+            "not": {
+              "properties": {
+                "istioIngress": {}
+              },
+              "required": [
+                "istioIngress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1commonLabels:t+istioIngress+istioIngress.virtualService.config+2more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "istioIngress": {
+            "additionalProperties": {},
+            "description": "Istio ingress configuration\nUse Istio Gateway and VirtualService instead of Ingress",
+            "properties": {
+              "virtualService": {
+                "additionalProperties": {},
+                "description": "Istio VirtualService configuration\nThe VirtualService defines how traffic is routed after it enters the Gateway",
+                "properties": {
+                  "config": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "http": {
+                        "description": "http is a list of ordered routing rules. First match wins",
+                        "type": [
+                          "array",
+                          "integer",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "description": "Service configuration",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels"
+          },
+          {
+            "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "description": "Add labels to all the deployed resources",
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "definitions": {
+    "constrains/commonLabels": {
+      "properties": {
+        "commonLabels": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels:t": {
+      "properties": {
+        "commonLabels": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels:t+istioIngress+istioIngress.virtualService.config+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1istioIngress.virtualService.config+istioIngress.virtualService.config=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1istioIngress.virtualService.config+istioIngress.virtualService.config=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1istioIngress.virtualService.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1istioIngress.enabled:t"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1commonLabels:t"
+          }
+        }
+      ]
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -338,6 +450,71 @@
         "istioIngress"
       ],
       "type": "object"
+    },
+    "constrains/istioIngress.virtualService.config+istioIngress.virtualService.config=null": {
+      "$ref": "#/definitions/constrains~1istioIngress.virtualService.config+istioIngress.virtualService.config=null@2"
+    },
+    "constrains/istioIngress.virtualService.config+istioIngress.virtualService.config=null@2": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "istioIngress": {
+                  "properties": {
+                    "virtualService": {
+                      "properties": {
+                        "config": {}
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "virtualService"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "istioIngress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "istioIngress": {
+                "properties": {
+                  "virtualService": {
+                    "properties": {
+                      "config": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "virtualService"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "istioIngress"
+            ],
+            "type": "object"
+          }
+        ]
+      }
     },
     "constrains/istioIngress.virtualService.enabled:t": {
       "properties": {

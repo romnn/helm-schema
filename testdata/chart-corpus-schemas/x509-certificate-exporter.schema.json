@@ -25,6 +25,16 @@
       "description": "Same as `extraDeploy` but objects won't go through the templating engine"
     },
     "extraLabels": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        }
+      ],
       "description": "Additional labels added to all chart objects"
     },
     "extraVolumeMounts": {
@@ -57,7 +67,37 @@
     "metricLabelsFilterList": {
       "description": "(list) Restrict metric labels to this list if set. **Warning** : use with caution as reducing cardinality may yield metrics collisions and force the exporter to ignore certificates. This will also degrade the usability of the Grafana dashboard. This list should always include at least `filepath`, `secret_namespace` and `secret_name`. Also `subject_CN` is highly recommended for when a file contains multiple certificates."
     },
-    "migration": {},
+    "migration": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "description": "Annotations added to Helm hook Pods\ntype: object\nadditionalProperties: {type: string}"
+        },
+        "extraLabels": {
+          "description": "Additional labels added to Helm hook Pods\ntype: object\nadditionalProperties: true\nproperties: {}"
+        },
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "digest": {
+              "description": "kubectl image digest. When set, takes precedence over `tag` (immutable reference)\nenum: [Always, IfNotPresent, Never]"
+            },
+            "registry": {
+              "description": "kubectl image registry"
+            },
+            "repository": {
+              "description": "kubectl image repository"
+            },
+            "tag": {
+              "description": "kubectl image tag. When set, takes precedence over the auto-detected cluster version."
+            }
+          }
+        },
+        "podSecurityContext": {
+          "description": "PodSecurityContext for Pods of Helm hooks"
+        }
+      }
+    },
     "nameOverride": {
       "description": "Partially override x509-certificate-exporter.fullname template (will prepend the release name)"
     },

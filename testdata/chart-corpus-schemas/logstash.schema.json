@@ -17,11 +17,58 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride!=0+fullnameOverride=true"
-        },
-        "then": true
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "fullnameOverride": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t"
       },
       "then": {
         "additionalProperties": {},
@@ -34,61 +81,79 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride!=0+fullnameOverride=true"
-          },
-          {
-            "not": {
-              "properties": {
-                "fullnameOverride": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "fullnameOverride"
-              ],
-              "type": "object"
-            }
+        "properties": {
+          "logstashConfig": {
+            "$ref": "#/definitions/t"
           }
-        ]
+        },
+        "required": [
+          "logstashConfig"
+        ],
+        "type": "object"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "logstashConfig": {
+            "description": "Allows you to add any config files in /usr/share/logstash/config/\nsuch as logstash.yml and log4j2.properties\nNote that when overriding logstash.yml, `http.host: 0.0.0.0` should always be included\nto make default probes work.\nlogstash.yml: |\nkey:\nnestedkey: value\nlog4j2.properties: |\nkey = value",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "podAnnotations": {
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
+        }
+      }
     }
   ],
   "definitions": {
-    "constrains/fullnameOverride!=0+fullnameOverride=true": {
+    "constrains/fullnameOverride:t": {
       "properties": {
         "fullnameOverride": {
-          "anyOf": [
-            {
-              "minProperties": 1,
-              "type": "object"
-            },
-            {
-              "not": {
-                "const": 0
-              },
-              "type": "number"
-            },
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "minItems": 1,
-              "type": "array"
-            },
-            {
-              "const": true
-            }
-          ]
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
     }
   },
   "properties": {
@@ -149,11 +214,20 @@
       "description": "This is the node affinity settings as defined in\nhttps://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity"
     },
     "nodeSelector": {},
-    "persistence": {},
+    "persistence": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "enabled": {}
+      },
+      "type": "object"
+    },
     "podAffinity": {
       "description": "This is inter-pod affinity settings as defined in\nhttps://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity"
     },
-    "podAnnotations": {},
+    "podAnnotations": {
+      "additionalProperties": {}
+    },
     "podManagementPolicy": {
       "description": "The default is to deploy all pods serially. By setting this to parallel all pods are started at\nthe same time when bootstrapping the cluster"
     },

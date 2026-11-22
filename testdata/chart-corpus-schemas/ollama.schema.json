@@ -4,17 +4,7 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1knative.enabled:t"
-        },
-        "then": {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
-          },
-          "then": false
-        }
+        "$ref": "#/definitions/constrains~1knative+ollama.gpu.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -39,121 +29,22 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1knative.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
-          },
-          "then": {
-            "else": {
-              "else": {
-                "else": true,
-                "if": {
-                  "properties": {
-                    "ollama": {
-                      "properties": {
-                        "gpu": {
-                          "properties": {
-                            "type": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "gpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
-            },
-            "then": false
-          }
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1knative.enabled:t"
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {}
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1knative.enabled:t"
-          },
-          "then": true
-        }
       },
       "then": {
         "additionalProperties": {},
@@ -164,86 +55,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1knative.enabled:t"
-            },
-            "then": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
-              },
-              "then": false
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ollama": {
-                      "properties": {
-                        "gpu": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "gpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ollama"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "ollama": {
-                    "properties": {
-                      "gpu": {
-                        "properties": {
-                          "enabled": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "gpu"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -361,18 +172,71 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1knative.enabled:t"
+            "not": {
+              "properties": {
+                "knative": {}
+              },
+              "required": [
+                "knative"
+              ],
+              "type": "object"
+            }
           },
           {
-            "anyOf": [
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "ollama": {}
+                      },
+                      "required": [
+                        "ollama"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "ollama": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ollama"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
               {
                 "not": {
                   "properties": {
                     "ollama": {
                       "properties": {
-                        "gpu": {}
+                        "gpu": {
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
                         "gpu"
@@ -387,83 +251,18 @@
                 }
               },
               {
-                "properties": {
-                  "ollama": {
-                    "properties": {
-                      "gpu": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "gpu"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ollama"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
               },
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/definitions/constrains~1ollama.gpu.type+ollama.gpu.type=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
               }
             ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1knative.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "knative": {}
-              },
-              "required": [
-                "knative"
-              ],
-              "type": "object"
-            }
           },
           {
             "properties": {
@@ -477,6 +276,194 @@
               "knative"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "ollama": {
+                          "properties": {
+                            "gpu": {}
+                          },
+                          "required": [
+                            "gpu"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ollama"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "ollama": {
+                        "properties": {
+                          "gpu": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "gpu"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ollama"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1knative.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1knative+ollama.gpu.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "ollama": {
+                          "properties": {
+                            "gpu": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "gpu"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ollama"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "ollama": {
+                        "properties": {
+                          "gpu": {
+                            "properties": {
+                              "enabled": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "gpu"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ollama"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -505,13 +492,8 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1knative.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
+        "allOf": [
+          {
             "properties": {
               "nameOverride": {
                 "$ref": "#/definitions/t"
@@ -522,8 +504,10 @@
             ],
             "type": "object"
           },
-          "then": true
-        }
+          {
+            "$ref": "#/definitions/constrains~1knative.enabled:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -584,44 +568,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1knative.enabled:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
@@ -635,6 +581,18 @@
         "enabled"
       ],
       "type": "object"
+    },
+    "constrains/knative+ollama.gpu.enabled:t": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1ollama.gpu.enabled:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1knative.enabled:t"
+        }
+      ]
     },
     "constrains/knative.enabled:t": {
       "properties": {
@@ -667,15 +625,46 @@
       "type": "object"
     },
     "constrains/ollama.gpu.type+ollama.gpu.type=null": {
-      "anyOf": [
-        {
-          "not": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "ollama": {
+                  "properties": {
+                    "gpu": {
+                      "properties": {
+                        "type": {}
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "gpu"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ollama"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
               "ollama": {
                 "properties": {
                   "gpu": {
                     "properties": {
-                      "type": {}
+                      "type": {
+                        "enum": [
+                          null
+                        ]
+                      }
                     },
                     "required": [
                       "type"
@@ -694,37 +683,8 @@
             ],
             "type": "object"
           }
-        },
-        {
-          "properties": {
-            "ollama": {
-              "properties": {
-                "gpu": {
-                  "properties": {
-                    "type": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "gpu"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ollama"
-          ],
-          "type": "object"
-        }
-      ]
+        ]
+      }
     },
     "constrains/resources:t": {
       "properties": {

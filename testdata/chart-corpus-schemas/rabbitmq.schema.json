@@ -6,7 +6,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
           },
           {
             "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
@@ -30,73 +30,10 @@
             "$ref": "#/definitions/constrains~1resources.limits?@2"
           },
           {
-            "$ref": "#/definitions/constrains~1resources"
+            "$ref": "#/definitions/constrains~1resources@2"
           },
           {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "resources": {
-                    "properties": {
-                      "limits": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "limits"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "resources"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "resources": {
-                      "properties": {
-                        "limits": {}
-                      },
-                      "required": [
-                        "limits"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "resources"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1resources.limits?@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1resources"
-          },
-          {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
           },
           {
             "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
@@ -124,10 +61,665 @@
           {
             "not": {
               "properties": {
+                "ldap": {}
+              },
+              "required": [
+                "ldap"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "auth": {}
+              },
+              "required": [
+                "auth"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type@3"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+                    },
+                    "then": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1resources:t@2"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2"
+              }
+            }
+          },
+          {
+            "properties": {
+              "memoryHighWatermark": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "memoryHighWatermark"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ldap": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ldap"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1resources.limits?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1resources@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "resources": {
+                        "properties": {
+                          "limits": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "limits"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "resources"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "resources": {
+                          "properties": {
+                            "limits": {}
+                          },
+                          "required": [
+                            "limits"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "resources"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1resources:t"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits.memory?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits?"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1resources.limits?"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1resources.limits@2"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resourcesPreset=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resourcesPreset@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resourcesPreset@3"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1resources@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1resources"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1resources.limits?@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1resources.limits"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1resources@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.annotations"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                          }
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1ingress.tls:t"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@3"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-1"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                            }
+                          ]
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                          }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resources@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resources:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-0"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits.memory?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits?@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-1"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resourcesPreset@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resources:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits.memory:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-0"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits?"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources.limits"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1resources"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.tls:t"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1resources.limits?@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1resources.limits"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1resources@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "resources": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resources"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "resources": {}
+                      },
+                      "required": [
+                        "resources"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
                 "ingress": {}
               },
               "required": [
                 "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "auth": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "tls": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "auth": {
+                          "properties": {
+                            "tls": {}
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "auth"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "auth": {}
+                      },
+                      "required": [
+                        "auth"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "memoryHighWatermark": {}
+              },
+              "required": [
+                "memoryHighWatermark"
               ],
               "type": "object"
             }
@@ -151,808 +743,12 @@
     },
     {
       "if": {
-        "else": {
-          "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-        },
-        "then": {
-          "else": {
-            "else": {
-              "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": {
-                      "else": {
-                        "else": true,
-                        "if": {
-                          "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
-                        },
-                        "then": {
-                          "$ref": "#/definitions/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
-                        }
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-                      },
-                      "then": {
-                        "$ref": "#/definitions/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
-                      }
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-                },
-                "then": {
-                  "else": {
-                    "$ref": "#/definitions/when~1resourcesPreset+resourcesPreset=null~1then~1fail~1else~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-                  },
-                  "then": false
-                }
-              }
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources:t@2"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type@2"
-          }
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1auth+auth=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ldap": {}
-              },
-              "required": [
-                "ldap"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ldap": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ldap"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "memoryHighWatermark": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "memoryHighWatermark"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "memoryHighWatermark": {}
-              },
-              "required": [
-                "memoryHighWatermark"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1resources.limits?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resourcesPreset"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1resources.limits@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+            "$ref": "#/definitions/constrains~1ingress.tls:t"
           }
         ]
       },
@@ -971,132 +767,9 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "tls": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "auth": {
-                      "properties": {
-                        "tls": {}
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "auth"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1auth+auth=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "resources": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "resources"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "resources": {}
-                  },
-                  "required": [
-                    "resources"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
-    "constrains/auth+auth=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "auth": {}
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "auth": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "auth"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -1107,6 +780,57 @@
         "enabled"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources.limits@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resourcesPreset"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources.limits@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null@2"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources@2"
+        }
+      ]
     },
     "constrains/ingress.annotations": {
       "properties": {
@@ -1127,12 +851,22 @@
       ],
       "type": "object"
     },
-    "constrains/ingress.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-      }
+    "constrains/ingress.annotations+ingress.enabled:t+ingress.tls:t": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1ingress.annotations"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.tls:t"
+        }
+      ]
     },
-    "constrains/ingress.enabled:t@2": {
+    "constrains/ingress.enabled:t": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1144,11 +878,6 @@
       "type": "object"
     },
     "constrains/ingress.tls:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-      }
-    },
-    "constrains/ingress.tls:t@2": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1tls:t"
@@ -1159,12 +888,44 @@
       ],
       "type": "object"
     },
-    "constrains/memoryHighWatermark.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t@2"
-      }
+    "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+          }
+        }
+      ]
     },
-    "constrains/memoryHighWatermark.enabled:t@2": {
+    "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+          }
+        }
+      ]
+    },
+    "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=null"
+        }
+      ]
+    },
+    "constrains/memoryHighWatermark.enabled:t": {
       "properties": {
         "memoryHighWatermark": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1177,62 +938,71 @@
     },
     "constrains/memoryHighWatermark.type": {
       "not": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
+        "$ref": "#/definitions/constrains~1memoryHighWatermark.type@3"
       }
     },
     "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "memoryHighWatermark": {
-                "properties": {
-                  "type": {}
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "memoryHighWatermark"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
         },
         {
-          "properties": {
-            "memoryHighWatermark": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "memoryHighWatermark"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=null"
         }
       ]
     },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@2": {
+    "constrains/memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative": {
       "not": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
+          },
+          {
+            "not": {
+              "properties": {
+                "memoryHighWatermark": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "absolute"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "memoryHighWatermark"
+              ],
+              "type": "object"
+            }
+          }
+        ]
       }
     },
-    "constrains/memoryHighWatermark.type+memoryHighWatermark.type=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-      }
+    "constrains/memoryHighWatermark.type=null": {
+      "properties": {
+        "memoryHighWatermark": {
+          "properties": {
+            "type": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "memoryHighWatermark"
+      ],
+      "type": "object"
     },
     "constrains/memoryHighWatermark.type=relative": {
       "not": {
@@ -1261,6 +1031,25 @@
       "type": "object"
     },
     "constrains/memoryHighWatermark.type@2": {
+      "not": {
+        "properties": {
+          "memoryHighWatermark": {
+            "properties": {
+              "type": {}
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "memoryHighWatermark"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/memoryHighWatermark.type@3": {
       "properties": {
         "memoryHighWatermark": {
           "properties": {
@@ -1280,15 +1069,42 @@
       "type": "object"
     },
     "constrains/resources": {
-      "properties": {
-        "resources": {
-          "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1resources@2"
+      }
+    },
+    "constrains/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1resources.limits.memory?@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources.limits?@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1resourcesPreset@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources.limits@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1resources@2"
         }
-      },
-      "required": [
-        "resources"
-      ],
-      "type": "object"
+      ]
+    },
+    "constrains/resources+resources.limits+resources.limits.memory?+resourcesPreset+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
+          }
+        }
+      ]
     },
     "constrains/resources.limits": {
       "not": {
@@ -1296,6 +1112,11 @@
       }
     },
     "constrains/resources.limits.memory:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
+      }
+    },
+    "constrains/resources.limits.memory:t@2": {
       "properties": {
         "resources": {
           "properties": {
@@ -1323,6 +1144,11 @@
       "type": "object"
     },
     "constrains/resources.limits.memory?": {
+      "not": {
+        "$ref": "#/definitions/constrains~1resources.limits.memory?@2"
+      }
+    },
+    "constrains/resources.limits.memory?@2": {
       "properties": {
         "resources": {
           "properties": {
@@ -1398,36 +1224,29 @@
       ],
       "type": "object"
     },
+    "constrains/resources@2": {
+      "properties": {
+        "resources": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "type": "object"
+    },
     "constrains/resourcesPreset": {
       "not": {
-        "$ref": "#/definitions/constrains~1resourcesPreset@2"
+        "$ref": "#/definitions/constrains~1resourcesPreset@3"
       }
     },
     "constrains/resourcesPreset+resourcesPreset=null": {
       "anyOf": [
         {
-          "properties": {
-            "resourcesPreset": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "resourcesPreset"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1resourcesPreset=null"
         },
         {
-          "not": {
-            "properties": {
-              "resourcesPreset": {}
-            },
-            "required": [
-              "resourcesPreset"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1resourcesPreset@2"
         }
       ]
     },
@@ -1436,12 +1255,31 @@
         "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
       }
     },
-    "constrains/resourcesPreset+resourcesPreset=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-      }
+    "constrains/resourcesPreset=null": {
+      "properties": {
+        "resourcesPreset": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "resourcesPreset"
+      ],
+      "type": "object"
     },
     "constrains/resourcesPreset@2": {
+      "not": {
+        "properties": {
+          "resourcesPreset": {}
+        },
+        "required": [
+          "resourcesPreset"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/resourcesPreset@3": {
       "properties": {
         "resourcesPreset": {
           "type": "string"
@@ -1487,71 +1325,6 @@
           "const": true
         }
       ]
-    },
-    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type": {
-      "else": {
-        "$ref": "#/definitions/when~1memoryHighWatermark.type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-      },
-      "then": false
-    },
-    "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/fail/else/memoryHighWatermark.type@2": {
-      "else": {
-        "$ref": "#/definitions/when~1memoryHighWatermark.type+memoryHighWatermark.type=null~1then~1fail~1else~1memoryHighWatermark.type"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
-      },
-      "then": false
-    },
-    "when/memoryHighWatermark.type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type@2"
-      },
-      "then": false
-    },
-    "when/resources/then/resources+resources.limits+resources.limits.memory?+resourcesPreset/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1resources"
-      },
-      "then": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1resources.limits@2"
-        },
-        "then": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1resources.limits?@2"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1resources.limits.memory?"
-              },
-              "then": true
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resourcesPreset@2"
-          },
-          "then": false
-        }
-      }
-    },
-    "when/resourcesPreset+resourcesPreset=null/then/fail/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
-      "else": {
-        "$ref": "#/definitions/when~1resources~1then~1resources+resources.limits+resources.limits.memory?+resourcesPreset~1else~1fail"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-      },
-      "then": false
     }
   },
   "properties": {

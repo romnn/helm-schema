@@ -6,106 +6,38 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "properties": {
-                        "healthProbe": {}
-                      },
-                      "required": [
-                        "healthProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "controller": {
-                    "$ref": "#/definitions/constrains~1healthProbe=null"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1group-1"
           },
           {
-            "$ref": "#/definitions/constrains~1controller+controller=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1additionalAnnotations:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1additionalAnnotations:t+service.annotations:t"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1group-0"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "service": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            "$ref": "#/definitions/constrains~1settings.vmMemoryOverheadPercent+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1affinity:t@2"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": true
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "description": "Overrides the chart's name.",
+          "affinity": {
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "Overrides the chart's computed fullname.",
             "type": "string"
           }
         }
@@ -113,252 +45,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "podDisruptionBudget": {}
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1controller+controller=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1settings+settings=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "else": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-            },
-            "then": {
-              "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null"
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1any~1else~1fail"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1settings.clusterCABundle+settings.clusterCABundle=null~1else~1fail"
-            }
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1settings.batchIdleDuration:t"
-        },
-        "then": {
-          "else": {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-              },
-              "then": true
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null"
-              }
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
-          },
-          "then": {
-            "else": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1any~1else~1fail"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-            },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1settings.clusterCABundle+settings.clusterCABundle=null~1else~1fail"
-              }
-            }
-          }
-        }
+        "$ref": "#/definitions/when~1settings.batchIdleDuration:t~1then~1settings.batchIdleDuration+settings.batchIdleDuration=null+6more~1else~1any"
       },
       "then": {
         "additionalProperties": {},
@@ -378,12 +65,65 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1additionalAnnotations:t+service.annotations:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1controller.securityContext+controller.securityContext=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.securityContext+controller.securityContext=null"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "securityContext": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "securityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "securityContext": {}
+                        },
+                        "required": [
+                          "securityContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
             "properties": {
@@ -432,399 +172,443 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.name"
+            "$ref": "#/definitions/constrains~1group-1"
           },
           {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.name@2"
+            "$ref": "#/definitions/constrains~1group-0"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
+            "$ref": "#/definitions/constrains~1settings.vmMemoryOverheadPercent+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1affinity.podAffinity?"
+          },
+          {
+            "$ref": "#/definitions/constrains~1affinity:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "type": "object"
               }
-            ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           },
           {
-            "not": {
-              "allOf": [
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.name"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.name@2"
-                      }
-                    ]
-                  }
-                },
-                {
+            "allOf": [
+              {
+                "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride"
+                      "not": {
+                        "properties": {
+                          "affinity": {}
+                        },
+                        "required": [
+                          "affinity"
+                        ],
+                        "type": "object"
+                      }
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                      "properties": {
+                        "affinity": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
                     }
                   ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2"
                 }
-              ]
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1settings+settings=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "settings": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "featureGates": {}
+                        "affinity": {
+                          "properties": {
+                            "podAffinity": {}
+                          },
+                          "required": [
+                            "podAffinity"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "featureGates"
+                        "affinity"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "settings"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "settings": {
-                    "$ref": "#/definitions/constrains~1featureGates=null"
-                  }
-                },
-                "required": [
-                  "settings"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1controller+controller=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "controller": {
+                  {
                     "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "image"
+                      "affinity"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1controller+controller=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "controller": {
-                      "properties": {
-                        "metrics": {}
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
+                ]
               },
               {
-                "properties": {
-                  "controller": {
-                    "properties": {
-                      "metrics": {
-                        "enum": [
-                          null
-                        ]
-                      }
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1settings.vmMemoryOverheadPercent+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1affinity.podAffinity?"
+              },
+              {
+                "$ref": "#/definitions/constrains~1affinity:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        }
+                      ]
                     },
-                    "required": [
-                      "metrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "controller"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "Overrides the chart's computed fullname.",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "else": {
-              "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null@2"
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
-              },
-              "then": {
-                "else": {
-                  "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1any~1else~1fail@2"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1settings.clusterCABundle+settings.clusterCABundle=null~1else~1fail@2"
-                }
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1settings.batchIdleDuration:t"
-            },
-            "then": {
-              "else": {
-                "else": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-                  },
-                  "then": true
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-                },
-                "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null@2"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
-              },
-              "then": {
-                "else": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1any~1else~1fail@2"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
-                },
-                "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1settings.batchMaxDuration+settings.batchMaxDuration=null~1then~1settings.clusterCABundle+settings.clusterCABundle=null~1else~1fail@2"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1settings+settings=null"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "settings": {
-                    "$ref": "#/definitions/constrains~1clusterName=null"
-                  }
-                },
-                "required": [
-                  "settings"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "settings": {
-                      "properties": {
-                        "clusterName": {}
-                      },
-                      "required": [
-                        "clusterName"
-                      ],
-                      "type": "object"
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1nameOverride"
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                                        },
+                                        {
+                                          "not": {
+                                            "$ref": "#/definitions/constrains~1nameOverride"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "not": {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                              }
+                            ]
+                          }
+                        }
+                      ]
                     }
-                  },
-                  "required": [
-                    "settings"
-                  ],
-                  "type": "object"
+                  ]
                 }
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1additionalAnnotations:t+service.annotations:t"
           },
           {
             "not": {
-              "$ref": "#/definitions/constrains~1additionalAnnotations:t"
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
             }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "podDisruptionBudget": {
+                        "$ref": "#/definitions/constrains~1name@2"
+                      }
+                    },
+                    "required": [
+                      "podDisruptionBudget"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "podDisruptionBudget": {
+                        "$ref": "#/definitions/constrains~1name"
+                      }
+                    },
+                    "required": [
+                      "podDisruptionBudget"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget.name@6"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1podDisruptionBudget.name"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "healthProbe": {}
+                          },
+                          "required": [
+                            "healthProbe"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "$ref": "#/definitions/constrains~1healthProbe=null"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller+controller=null"
+              }
+            ]
+          },
           {
             "not": {
               "properties": {
@@ -835,6 +619,9 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
           },
           {
             "properties": {
@@ -848,10 +635,303 @@
               "serviceMonitor"
             ],
             "type": "object"
+          },
+          {
+            "properties": {
+              "settings": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1additionalAnnotations:t+service.annotations:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1settings+settings=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "settings": {
+                          "properties": {
+                            "featureGates": {}
+                          },
+                          "required": [
+                            "featureGates"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "settings"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "settings": {
+                        "$ref": "#/definitions/constrains~1featureGates=null"
+                      }
+                    },
+                    "required": [
+                      "settings"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1settings.batchIdleDuration:t~1then~1settings.batchIdleDuration+settings.batchIdleDuration=null+6more~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1settings+settings=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "settings": {
+                        "$ref": "#/definitions/constrains~1clusterName=null"
+                      }
+                    },
+                    "required": [
+                      "settings"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "settings": {
+                          "properties": {
+                            "clusterName": {}
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "settings"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1controller+controller=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "metrics": {}
+                          },
+                          "required": [
+                            "metrics"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "metrics": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "metrics"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1controller+controller=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "image": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "settings": {}
+              },
+              "required": [
+                "settings"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller=null"
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {}
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1affinity:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          }
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "Overrides the chart's name.",
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -889,8 +969,56 @@
         },
         {
           "$ref": "#/definitions/constrains~1additionalAnnotations:t"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1additionalAnnotations:t"
+          }
         }
       ]
+    },
+    "constrains/affinity.podAffinity?": {
+      "properties": {
+        "affinity": {
+          "required": [
+            "podAffinity"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "affinity"
+      ],
+      "type": "object"
+    },
+    "constrains/affinity:t": {
+      "properties": {
+        "affinity": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "affinity"
+      ],
+      "type": "object"
+    },
+    "constrains/affinity:t@2": {
+      "properties": {
+        "affinity": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/t"
+            }
+          ]
+        }
+      },
+      "required": [
+        "affinity"
+      ],
+      "type": "object"
     },
     "constrains/batchIdleDuration": {
       "properties": {
@@ -946,6 +1074,37 @@
       ],
       "type": "object"
     },
+    "constrains/batchMaxDuration+batchMaxDuration=null": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1batchMaxDuration"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1batchMaxDuration=null"
+        }
+      ]
+    },
+    "constrains/batchMaxDuration+batchMaxDuration=null+clusterCABundle+clusterCABundle=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1batchMaxDuration"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1batchMaxDuration=null"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterCABundle+clusterCABundle=null"
+        }
+      ]
+    },
     "constrains/batchMaxDuration:t": {
       "properties": {
         "batchMaxDuration": {
@@ -978,6 +1137,18 @@
         "clusterCABundle"
       ],
       "type": "object"
+    },
+    "constrains/clusterCABundle+clusterCABundle=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterCABundle=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterCABundle"
+          }
+        }
+      ]
     },
     "constrains/clusterCABundle:t": {
       "properties": {
@@ -1019,17 +1190,7 @@
     "constrains/controller+controller=null": {
       "anyOf": [
         {
-          "properties": {
-            "controller": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "controller"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1controller=null"
         },
         {
           "not": {
@@ -1044,51 +1205,18 @@
         }
       ]
     },
-    "constrains/controller.securityContext+controller.securityContext=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "controller": {
-                "properties": {
-                  "securityContext": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "securityContext"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "controller": {
-                  "properties": {
-                    "securityContext": {}
-                  },
-                  "required": [
-                    "securityContext"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "controller"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
+    "constrains/controller=null": {
+      "properties": {
+        "controller": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
     },
     "constrains/create:t": {
       "properties": {
@@ -1119,137 +1247,8 @@
         "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                      }
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      }
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more@2": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          }
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      }
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            }
-          ]
-        }
-      ]
-    },
     "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        }
-      ]
+      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
     },
     "constrains/fullnameOverride:t@2": {
       "not": {
@@ -1277,6 +1276,50 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1settings.ignoreDRARequests+settings.ignoreDRARequests:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.interruptionQueue+settings.interruptionQueue:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.isolatedVPC+settings.isolatedVPC:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.reservedENIs+settings.reservedENIs:helm-no-template-actions+2more"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterEndpoint+settings.clusterEndpoint:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterName"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.disableClusterStateObservability+3more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.disableDryRun+settings.disableDryRun:helm-no-template-actions+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.eksControlPlane+settings.eksControlPlane:helm-no-template-actions+2more"
+        }
+      ]
     },
     "constrains/healthProbe=null": {
       "properties": {
@@ -2094,6 +2137,15 @@
       ],
       "type": "object"
     },
+    "constrains/name@9": {
+      "properties": {
+        "name": {}
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
     "constrains/nameOverride": {
       "properties": {
         "nameOverride": {
@@ -2106,24 +2158,19 @@
       "type": "object"
     },
     "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
       }
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
+      "$ref": "#/definitions/constrains~1nameOverride:t@3"
     },
     "constrains/nameOverride:t@2": {
       "not": {
@@ -2141,95 +2188,22 @@
       ],
       "type": "object"
     },
-    "constrains/podDisruptionBudget+podDisruptionBudget.name": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@3"
+    "constrains/podDisruptionBudget": {
+      "not": {
+        "properties": {
+          "podDisruptionBudget": {}
         },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name"
-        }
-      ]
-    },
-    "constrains/podDisruptionBudget+podDisruptionBudget.name@2": {
-      "anyOf": [
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1podDisruptionBudget.name@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1podDisruptionBudget.name"
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "podDisruptionBudget": {
-              "$ref": "#/definitions/constrains~1name@2"
-            }
-          },
-          "required": [
-            "podDisruptionBudget"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "podDisruptionBudget": {
-              "$ref": "#/definitions/constrains~1name"
-            }
-          },
-          "required": [
-            "podDisruptionBudget"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.name@6"
-        }
-      ]
+        "required": [
+          "podDisruptionBudget"
+        ],
+        "type": "object"
+      }
     },
     "constrains/podDisruptionBudget.name": {
       "not": {
         "properties": {
           "podDisruptionBudget": {
-            "properties": {
-              "name": {}
-            },
-            "required": [
-              "name"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1name@9"
           }
         },
         "required": [
@@ -2297,6 +2271,19 @@
       "properties": {
         "podDisruptionBudget": {
           "$ref": "#/definitions/constrains~1name@4"
+        }
+      },
+      "required": [
+        "podDisruptionBudget"
+      ],
+      "type": "object"
+    },
+    "constrains/podDisruptionBudget=null": {
+      "properties": {
+        "podDisruptionBudget": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
@@ -2424,13 +2411,7 @@
       "not": {
         "properties": {
           "serviceAccount": {
-            "properties": {
-              "name": {}
-            },
-            "required": [
-              "name"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1name@9"
           }
         },
         "required": [
@@ -2557,12 +2538,38 @@
         }
       ]
     },
-    "constrains/settings.batchIdleDuration+settings.batchIdleDuration=null": {
+    "constrains/settings.batchIdleDuration": {
+      "not": {
+        "properties": {
+          "settings": {
+            "$ref": "#/definitions/constrains~1batchIdleDuration"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more": {
       "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1settings.batchIdleDuration:t"
+          }
+        },
         {
           "properties": {
             "settings": {
-              "$ref": "#/definitions/constrains~1batchIdleDuration=null"
+              "properties": {
+                "batchIdleDuration": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "batchIdleDuration"
+              ],
+              "type": "object"
             }
           },
           "required": [
@@ -2571,17 +2578,23 @@
           "type": "object"
         },
         {
-          "not": {
-            "properties": {
-              "settings": {
-                "$ref": "#/definitions/constrains~1batchIdleDuration"
-              }
-            },
-            "required": [
-              "settings"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1settings.batchIdleDuration=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.batchIdleDuration"
+        }
+      ]
+    },
+    "constrains/settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more/:helm-no-template-actions": {
+      "$ref": "#/definitions/helm-no-template-actions"
+    },
+    "constrains/settings.batchIdleDuration+settings.batchIdleDuration=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1settings.batchIdleDuration=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.batchIdleDuration"
         }
       ]
     },
@@ -2596,31 +2609,88 @@
       ],
       "type": "object"
     },
-    "constrains/settings.batchMaxDuration+settings.batchMaxDuration=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "settings": {
-                "$ref": "#/definitions/constrains~1batchMaxDuration"
-              }
-            },
-            "required": [
-              "settings"
-            ],
-            "type": "object"
+    "constrains/settings.batchIdleDuration=null": {
+      "properties": {
+        "settings": {
+          "$ref": "#/definitions/constrains~1batchIdleDuration=null"
+        }
+      },
+      "required": [
+        "settings"
+      ],
+      "type": "object"
+    },
+    "constrains/settings.batchMaxDuration": {
+      "not": {
+        "properties": {
+          "settings": {
+            "$ref": "#/definitions/constrains~1batchMaxDuration"
           }
         },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/settings.batchMaxDuration+settings.batchMaxDuration:helm-no-template-actions+2more": {
+      "anyOf": [
         {
           "properties": {
             "settings": {
-              "$ref": "#/definitions/constrains~1batchMaxDuration=null"
+              "properties": {
+                "batchMaxDuration": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "batchMaxDuration"
+              ],
+              "type": "object"
             }
           },
           "required": [
             "settings"
           ],
           "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration=null"
+        }
+      ]
+    },
+    "constrains/settings.batchMaxDuration+settings.batchMaxDuration=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration=null"
+        }
+      ]
+    },
+    "constrains/settings.batchMaxDuration+settings.batchMaxDuration=null+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1settings.batchMaxDuration"
+            },
+            {
+              "$ref": "#/definitions/constrains~1settings.batchMaxDuration=null"
+            }
+          ]
         }
       ]
     },
@@ -2635,11 +2705,73 @@
       ],
       "type": "object"
     },
-    "constrains/settings.clusterCABundle+settings.clusterCABundle=null": {
-      "$ref": "#/definitions/when~1settings.clusterCABundle+settings.clusterCABundle=null~1then~1any~1else~1fail"
+    "constrains/settings.batchMaxDuration=null": {
+      "properties": {
+        "settings": {
+          "$ref": "#/definitions/constrains~1batchMaxDuration=null"
+        }
+      },
+      "required": [
+        "settings"
+      ],
+      "type": "object"
     },
-    "constrains/settings.clusterCABundle+settings.clusterCABundle=null@2": {
-      "$ref": "#/definitions/when~1settings.clusterCABundle+settings.clusterCABundle=null~1then~1any~1else~1fail"
+    "constrains/settings.clusterCABundle": {
+      "not": {
+        "properties": {
+          "settings": {
+            "$ref": "#/definitions/constrains~1clusterCABundle"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/settings.clusterCABundle+settings.clusterCABundle:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterCABundle=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterCABundle"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "clusterCABundle": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "clusterCABundle"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/settings.clusterCABundle+settings.clusterCABundle=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterCABundle=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1settings.clusterCABundle"
+        }
+      ]
     },
     "constrains/settings.clusterCABundle:t": {
       "properties": {
@@ -2651,6 +2783,825 @@
         "settings"
       ],
       "type": "object"
+    },
+    "constrains/settings.clusterCABundle=null": {
+      "properties": {
+        "settings": {
+          "$ref": "#/definitions/constrains~1clusterCABundle=null"
+        }
+      },
+      "required": [
+        "settings"
+      ],
+      "type": "object"
+    },
+    "constrains/settings.clusterEndpoint+settings.clusterEndpoint:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "clusterEndpoint": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "clusterEndpoint"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "clusterEndpoint": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "clusterEndpoint"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "clusterEndpoint": {}
+                },
+                "required": [
+                  "clusterEndpoint"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "clusterEndpoint": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "clusterEndpoint"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/settings.clusterName": {
+      "not": {
+        "properties": {
+          "settings": {
+            "properties": {
+              "clusterName": {
+                "pattern": "\\{\\{",
+                "type": "string"
+              }
+            },
+            "required": [
+              "clusterName"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/settings.disableClusterStateObservability+3more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "disableClusterStateObservability": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "disableClusterStateObservability"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "disableClusterStateObservability": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "disableClusterStateObservability"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "disableClusterStateObservability": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "disableClusterStateObservability"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "disableClusterStateObservability": {}
+                },
+                "required": [
+                  "disableClusterStateObservability"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/settings.disableDryRun+settings.disableDryRun:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "disableDryRun": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "disableDryRun"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "disableDryRun": {}
+                },
+                "required": [
+                  "disableDryRun"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "disableDryRun": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "disableDryRun"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "disableDryRun": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "disableDryRun"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/settings.eksControlPlane+settings.eksControlPlane:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "eksControlPlane": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "eksControlPlane"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "eksControlPlane": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "eksControlPlane"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "eksControlPlane": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "eksControlPlane"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "eksControlPlane": {}
+                },
+                "required": [
+                  "eksControlPlane"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/settings.ignoreDRARequests+settings.ignoreDRARequests:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "ignoreDRARequests": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "ignoreDRARequests"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "ignoreDRARequests": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "ignoreDRARequests"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "ignoreDRARequests": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "ignoreDRARequests"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "ignoreDRARequests": {}
+                },
+                "required": [
+                  "ignoreDRARequests"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/settings.interruptionQueue+settings.interruptionQueue:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "interruptionQueue": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "interruptionQueue"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "interruptionQueue": {}
+                },
+                "required": [
+                  "interruptionQueue"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "interruptionQueue": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "interruptionQueue"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "interruptionQueue": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "interruptionQueue"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/settings.isolatedVPC+settings.isolatedVPC:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "isolatedVPC": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "isolatedVPC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "isolatedVPC": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "isolatedVPC"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "isolatedVPC": {}
+                },
+                "required": [
+                  "isolatedVPC"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "isolatedVPC": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "isolatedVPC"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/settings.reservedENIs+settings.reservedENIs:helm-no-template-actions+2more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "reservedENIs": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "reservedENIs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "reservedENIs": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "reservedENIs"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "reservedENIs": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "reservedENIs"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "reservedENIs": {}
+                },
+                "required": [
+                  "reservedENIs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/settings.vmMemoryOverheadPercent+3more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "vmMemoryOverheadPercent": {}
+                },
+                "required": [
+                  "vmMemoryOverheadPercent"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "vmMemoryOverheadPercent": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "vmMemoryOverheadPercent"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "vmMemoryOverheadPercent": {
+                  "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+                }
+              },
+              "required": [
+                "vmMemoryOverheadPercent"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "settings": {
+              "properties": {
+                "vmMemoryOverheadPercent": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "vmMemoryOverheadPercent"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "settings"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/constrains~1name~1null,boolean,number"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration:helm-no-template-actions+2more~1:helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -2710,119 +3661,83 @@
       ],
       "type": "string"
     },
-    "when/batchMaxDuration+batchMaxDuration=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1batchMaxDuration"
-            }
+    "when/settings.batchIdleDuration:t/then/settings.batchIdleDuration+settings.batchIdleDuration=null+6more/else/any": {
+      "else": {
+        "else": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
           },
-          {
-            "$ref": "#/definitions/constrains~1batchMaxDuration=null"
+          "then": {
+            "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null"
           }
-        ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null+2more"
+          }
+        }
       },
-      "then": true
-    },
-    "when/batchMaxDuration+batchMaxDuration=null/then/clusterCABundle+clusterCABundle=null/else/fail": {
-      "else": false,
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1batchMaxDuration"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1batchMaxDuration=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1settings.batchIdleDuration:t"
       },
       "then": {
-        "$ref": "#/definitions/when~1clusterCABundle+clusterCABundle=null~1then~1any~1else~1fail"
-      }
-    },
-    "when/clusterCABundle+clusterCABundle=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1clusterCABundle=null"
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
           },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1clusterCABundle"
-            }
-          }
-        ]
-      },
-      "then": true
-    },
-    "when/settings.batchMaxDuration+settings.batchMaxDuration=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null"
-      },
-      "then": true
-    },
-    "when/settings.batchMaxDuration+settings.batchMaxDuration=null/then/any/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null"
-      },
-      "then": true
-    },
-    "when/settings.batchMaxDuration+settings.batchMaxDuration=null/then/settings.clusterCABundle+settings.clusterCABundle=null/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null"
-      },
-      "then": {
-        "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null"
-      }
-    },
-    "when/settings.batchMaxDuration+settings.batchMaxDuration=null/then/settings.clusterCABundle+settings.clusterCABundle=null/else/fail@2": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null"
-      },
-      "then": {
-        "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null@2"
-      }
-    },
-    "when/settings.clusterCABundle+settings.clusterCABundle=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "settings": {
-                "$ref": "#/definitions/constrains~1clusterCABundle=null"
-              }
-            },
-            "required": [
-              "settings"
-            ],
-            "type": "object"
+          "if": {
+            "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
           },
-          {
-            "not": {
-              "properties": {
-                "settings": {
-                  "$ref": "#/definitions/constrains~1clusterCABundle"
-                }
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1settings.clusterCABundle+settings.clusterCABundle=null"
               },
-              "required": [
-                "settings"
-              ],
-              "type": "object"
-            }
+              {
+                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
+              }
+            ]
           }
-        ]
-      },
-      "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1settings.batchMaxDuration:t"
+        },
+        "then": {
+          "else": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
+              }
+            ]
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1settings.clusterCABundle:t"
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1settings.batchMaxDuration+settings.batchMaxDuration=null+2more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1settings.batchIdleDuration+settings.batchIdleDuration=null"
+              }
+            ]
+          }
+        }
+      }
     }
   },
   "properties": {
@@ -2836,63 +3751,17 @@
       "description": "Additional labels to add into metadata.\napp: karpenter"
     },
     "affinity": {
-      "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
+      "additionalProperties": {},
+      "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+      "properties": {
+        "podAffinity": {
+          "additionalProperties": {}
+        }
+      }
     },
     "controller": {
       "additionalProperties": {},
       "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1healthProbe=null"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "healthProbe": {}
-                  },
-                  "required": [
-                    "healthProbe"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "metrics": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "metrics": {}
-                  },
-                  "required": [
-                    "metrics"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": false
-        },
         {
           "if": {
             "anyOf": [
@@ -2910,12 +3779,50 @@
                 "type": "object"
               },
               {
+                "$ref": "#/definitions/constrains~1healthProbe=null"
+              },
+              {
+                "properties": {
+                  "metrics": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "healthProbe": {}
+                  },
+                  "required": [
+                    "healthProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "not": {
                   "properties": {
                     "image": {}
                   },
                   "required": [
                     "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "metrics": {}
+                  },
+                  "required": [
+                    "metrics"
                   ],
                   "type": "object"
                 }
@@ -3043,6 +3950,81 @@
     },
     "podDisruptionBudget": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@8"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@4"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1name@5"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1name@9"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1name@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@8"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@4"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1name@9"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1name@3"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "maxUnavailable": {},
         "name": {}
@@ -3398,111 +4380,107 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "else": {
-                  "else": {
-                    "else": true,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1clusterCABundle:t"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1clusterCABundle+clusterCABundle=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1batchMaxDuration:t"
-                  },
-                  "then": {
-                    "else": {
-                      "$ref": "#/definitions/when~1batchMaxDuration+batchMaxDuration=null~1then~1any~1else~1fail"
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1clusterCABundle:t"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1batchMaxDuration+batchMaxDuration=null~1then~1clusterCABundle+clusterCABundle=null~1else~1fail"
-                    }
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1batchIdleDuration:t"
-                },
-                "then": {
-                  "else": {
-                    "else": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1clusterCABundle:t"
-                    },
-                    "then": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
-                      },
-                      "then": {
-                        "$ref": "#/definitions/when~1clusterCABundle+clusterCABundle=null~1then~1any~1else~1fail"
-                      }
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1batchMaxDuration:t"
-                  },
-                  "then": {
-                    "else": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
-                      },
-                      "then": {
-                        "$ref": "#/definitions/when~1batchMaxDuration+batchMaxDuration=null~1then~1any~1else~1fail"
-                      }
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1clusterCABundle:t"
-                    },
-                    "then": {
-                      "else": false,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
-                      },
-                      "then": {
-                        "$ref": "#/definitions/when~1batchMaxDuration+batchMaxDuration=null~1then~1clusterCABundle+clusterCABundle=null~1else~1fail"
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "clusterName": {}
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "clusterName": {}
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        }
                       },
-                      "required": [
-                        "clusterName"
-                      ],
-                      "type": "object"
-                    }
+                      {
+                        "$ref": "#/definitions/constrains~1clusterName=null"
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/definitions/constrains~1clusterName=null"
+                    "else": {
+                      "else": {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1clusterCABundle:t"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1clusterCABundle+clusterCABundle=null"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1batchMaxDuration:t"
+                      },
+                      "then": {
+                        "else": {
+                          "$ref": "#/definitions/constrains~1batchMaxDuration+batchMaxDuration=null"
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1clusterCABundle:t"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1batchMaxDuration+batchMaxDuration=null+clusterCABundle+clusterCABundle=null"
+                        }
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1batchIdleDuration:t"
+                    },
+                    "then": {
+                      "else": {
+                        "else": {
+                          "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1clusterCABundle:t"
+                        },
+                        "then": {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1clusterCABundle+clusterCABundle=null"
+                            }
+                          ]
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1batchMaxDuration:t"
+                      },
+                      "then": {
+                        "else": {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1batchMaxDuration+batchMaxDuration=null"
+                            }
+                          ]
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1clusterCABundle:t"
+                        },
+                        "then": {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1batchIdleDuration+batchIdleDuration=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1batchMaxDuration+batchMaxDuration=null+clusterCABundle+clusterCABundle=null"
+                            }
+                          ]
+                        }
+                      }
+                    }
                   }
                 ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "anyOf": [
+              },
               {
                 "$ref": "#/definitions/constrains~1featureGates=null"
               },

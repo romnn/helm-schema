@@ -3,58 +3,68 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "storageClasses": {
+          "description": "Additional node DaemonSets, using the node config structure\nSee docs/additional-daemonsets.md for more information\nexample:\nnodeSelector:\nnode.kubernetes.io/instance-type: c5.large\nvolumeAttachLimit: 15\nAdd StorageClass resources like:\n- name: ebs-sc\nannotation metadata\nannotations:\nstorageclass.kubernetes.io/is-default-class: \"true\"\nlabel metadata\nlabels:\nmy-label-is: supercool\ndefaults to WaitForFirstConsumer\nvolumeBindingMode: WaitForFirstConsumer\ndefaults to Delete\nreclaimPolicy: Retain\nparameters:\nencrypted: \"true\"",
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "sidecars": {
-              "properties": {
-                "snapshotter": {
-                  "properties": {
-                    "forceEnable": {
-                      "anyOf": [
-                        {
-                          "minProperties": 1,
-                          "type": "object"
+        "properties": {
+          "sidecars": {
+            "properties": {
+              "snapshotter": {
+                "properties": {
+                  "forceEnable": {
+                    "anyOf": [
+                      {
+                        "minProperties": 1,
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "const": 0
                         },
-                        {
-                          "not": {
-                            "const": 0
-                          },
-                          "type": "number"
-                        },
-                        {
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        {
-                          "minItems": 1,
-                          "type": "array"
-                        },
-                        {
-                          "const": true
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "forceEnable"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "snapshotter"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "sidecars"
-          ],
-          "type": "object"
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      {
+                        "minItems": 1,
+                        "type": "array"
+                      },
+                      {
+                        "const": true
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "forceEnable"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "snapshotter"
+            ],
+            "type": "object"
+          }
         },
-        "then": true
+        "required": [
+          "sidecars"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -73,49 +83,76 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1sidecars+sidecars=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "not": {
+              "properties": {
+                "sidecars": {}
+              },
+              "required": [
+                "sidecars"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "sidecars": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "snapshotter": {}
+                        "sidecars": {
+                          "properties": {
+                            "snapshotter": {}
+                          },
+                          "required": [
+                            "snapshotter"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "snapshotter"
+                        "sidecars"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "sidecars"
-                  ],
-                  "type": "object"
-                }
+                  {
+                    "properties": {
+                      "sidecars": {
+                        "$ref": "#/definitions/constrains~1snapshotter=null"
+                      }
+                    },
+                    "required": [
+                      "sidecars"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
               {
-                "properties": {
-                  "sidecars": {
-                    "$ref": "#/definitions/constrains~1snapshotter=null"
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "sidecars": {}
+                      },
+                      "required": [
+                        "sidecars"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1sidecars=null"
                   }
-                },
-                "required": [
-                  "sidecars"
-                ],
-                "type": "object"
+                ]
               }
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1sidecars+sidecars=null"
+            "$ref": "#/definitions/constrains~1sidecars=null"
           }
         ]
       },
@@ -123,33 +160,18 @@
     }
   ],
   "definitions": {
-    "constrains/sidecars+sidecars=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "sidecars": {}
-            },
-            "required": [
-              "sidecars"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "sidecars": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "sidecars"
-          ],
-          "type": "object"
+    "constrains/sidecars=null": {
+      "properties": {
+        "sidecars": {
+          "enum": [
+            null
+          ]
         }
-      ]
+      },
+      "required": [
+        "sidecars"
+      ],
+      "type": "object"
     },
     "constrains/snapshotter=null": {
       "properties": {

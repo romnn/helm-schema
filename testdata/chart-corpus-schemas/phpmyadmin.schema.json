@@ -5,69 +5,27 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1any~1else~1fail"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -123,37 +81,6 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
@@ -200,53 +127,32 @@
     },
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+            }
           },
-          "then": {
-            "else": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                },
-                "then": {
-                  "else": {
-                    "else": {
-                      "else": true,
-                      "if": {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                      },
-                      "then": false
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-                    },
-                    "then": true
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-                  },
-                  "then": true
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-            },
-            "then": false
+          {
+            "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.tls:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
           }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        },
-        "then": false
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -274,10 +180,10 @@
             "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.tls:t@3"
+            "$ref": "#/definitions/constrains~1ingress.tls:t"
           }
         ]
       },
@@ -299,1248 +205,28 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.annotations@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                }
-              ]
-            }
-          },
-          {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@6"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1nameOverride"
-                          }
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                          }
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t+ingress.existingSecretName:t+ingress.secrets:t+ingress.tls:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations+ingress.certManager:t+ingress.enabled:t+3more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t+ingress.existingSecretName:t+ingress.secrets:t"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@3"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@7"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@5"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                    }
-                  ]
-                },
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t+2more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+ingress+10more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+8more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t+1more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@4"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.tls:t"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.tls:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.hostname@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+ingress+10more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+ingress.annotations+7more@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@4"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@5"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@5"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@7"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@5"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@5"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@6"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels@5"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1commonLabels=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@5"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1nameOverride"
-                            }
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                            }
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.tls:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations@4"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.hostname@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@5"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
-      }
-    },
-    {
-      "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1any~1else~1fail"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -1561,20 +247,213 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+              }
+            ]
           }
         ]
       },
       "then": {
-        "$ref": "#/definitions/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
+        "if": {
+          "allOf": [
+            {
+              "properties": {
+                "mariadb": {
+                  "properties": {
+                    "nameOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "properties": {
+                    "passwordUpdateJob": {
+                      "properties": {
+                        "enabled": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "passwordUpdateJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "properties": {
+                    "passwordUpdateJob": {
+                      "properties": {
+                        "previousPasswords": {
+                          "properties": {
+                            "existingSecret": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "previousPasswords"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "passwordUpdateJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "properties": {
+                    "fullnameOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "mariadb": {
+                  "properties": {
+                    "passwordUpdateJob": {
+                      "properties": {
+                        "previousPasswords": {
+                          "properties": {
+                            "rootPassword": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "rootPassword"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "previousPasswords"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "passwordUpdateJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "mariadb"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -1698,70 +577,155 @@
     },
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                },
-                "then": {
-                  "else": {
-                    "else": false,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1tags.phpmyadmin-database+tags.phpmyadmin-database=null~1then~1any~1else~1fail"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1db.bundleTestDB+db.bundleTestDB=null~1then~1any~1else~1fail"
-                  }
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
                 }
               },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
+                      }
+                    }
+                  ]
+                }
               },
-              "then": false
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.hostname"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.tls:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.tls:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
             }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
           }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+            }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -1781,59 +745,35 @@
     },
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+            }
           },
-          "then": {
-            "else": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                },
-                "then": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                  },
-                  "then": {
-                    "else": {
-                      "else": {
-                        "else": true,
-                        "if": {
-                          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                        },
-                        "then": false
-                      },
-                      "if": {
-                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-                      },
-                      "then": true
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-                    },
-                    "then": true
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-            },
-            "then": false
+          {
+            "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.tls:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
           }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        },
-        "then": false
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1847,23 +787,19 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-        },
-        "then": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-            },
-            "then": true
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+            }
           },
-          "then": false
-        }
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1884,21 +820,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more~1then~1fail"
       }
     }
   ],
@@ -1956,778 +877,6 @@
       },
       "required": [
         "certManager"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels": {
-      "not": {
-        "$ref": "#/definitions/constrains~1commonLabels@7"
-      }
-    },
-    "constrains/commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+8more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+ingress+10more": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t+ingress.existingSecretName:t+ingress.secrets:t+ingress.tls:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.certManager:t+ingress.enabled:t+3more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t+ingress.existingSecretName:t+ingress.secrets:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.secrets:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null"
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@7"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@6"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@5"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-no-template-actions+commonLabels=null+7more@3"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "constrains/commonLabels+commonLabels=null": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1commonLabels@5"
-          },
-          {
-            "$ref": "#/definitions/constrains~1commonLabels=null"
-          }
-        ]
-      }
-    },
-    "constrains/commonLabels+commonLabels=null+ingress.annotations+7more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels=null+ingress.annotations+7more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels=null+ingress.annotations+7more@3": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels=null+ingress.annotations+7more@4": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels=null@2": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1commonLabels@5"
-          },
-          {
-            "$ref": "#/definitions/constrains~1commonLabels=null"
-          }
-        ]
-      }
-    },
-    "constrains/commonLabels:helm-no-template-actions": {
-      "properties": {
-        "commonLabels": {
-          "$ref": "#/definitions/helm-no-template-actions"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels=null": {
-      "properties": {
-        "commonLabels": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1commonLabels@7"
-      }
-    },
-    "constrains/commonLabels@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1commonLabels@6"
-      }
-    },
-    "constrains/commonLabels@4": {
-      "not": {
-        "$ref": "#/definitions/constrains~1commonLabels@6"
-      }
-    },
-    "constrains/commonLabels@5": {
-      "not": {
-        "properties": {
-          "commonLabels": {}
-        },
-        "required": [
-          "commonLabels"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/commonLabels@6": {
-      "properties": {
-        "commonLabels": {
-          "pattern": "\\{\\{",
-          "type": "string"
-        }
-      },
-      "required": [
-        "commonLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/commonLabels@7": {
-      "properties": {
-        "commonLabels": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "commonLabels"
       ],
       "type": "object"
     },
@@ -2838,6 +987,44 @@
         }
       ]
     },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more": {
+      "allOf": [
+        {
+          "else": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+              }
+            ]
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        }
+      ]
+    },
     "constrains/db.bundleTestDB:t": {
       "properties": {
         "db": {
@@ -2878,6 +1065,163 @@
         "existingSecretName"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+        }
+      ]
+    },
+    "constrains/ingress+ingress.annotations+5more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.annotations"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.tls:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.annotations"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.tls:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/ingress+ingress.annotations+5more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more"
+      }
+    },
+    "constrains/ingress+ingress.annotations+9more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null"
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     },
     "constrains/ingress+ingress.hostname": {
       "allOf": [
@@ -2938,6 +1282,16 @@
               "$ref": "#/definitions/constrains~1ingress.hostname@13"
             },
             {
+              "$ref": "#/definitions/constrains~1ingress.hostname@6"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname@13"
+            },
+            {
               "$ref": "#/definitions/constrains~1ingress.hostname@9"
             }
           ]
@@ -2965,52 +1319,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@13"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname@6"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-            },
-            {
               "$ref": "#/definitions/constrains~1ingress.hostname"
             },
             {
               "$ref": "#/definitions/constrains~1ingress.hostname@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
             },
             {
               "anyOf": [
@@ -3024,22 +1336,22 @@
                   "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
                 }
               ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-            },
-            {
               "$ref": "#/definitions/constrains~1ingress.hostname"
             },
             {
               "$ref": "#/definitions/constrains~1ingress.hostname@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
             },
             {
               "anyOf": [
@@ -3221,13 +1533,97 @@
                   ]
                 }
               ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
             }
           ]
         },
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1ingress.hostname"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@11"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@10"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@3"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1ingress.hostname@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.hostname@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.hostname@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@12"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname"
+            },
+            {
               "$ref": "#/definitions/constrains~1ingress.hostname@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname"
             },
             {
               "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
@@ -3240,10 +1636,10 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
+                      "$ref": "#/definitions/constrains~1ingress.hostname@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1ingress.hostname"
+                      "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
                     },
                     {
                       "anyOf": [
@@ -3276,58 +1672,6 @@
                       ]
                     }
                   ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@11"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@10"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@3"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.hostname"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@6"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@12"
                 }
               ]
             }
@@ -3708,146 +2052,6 @@
       ]
     },
     "constrains/ingress.annotations": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-      }
-    },
-    "constrains/ingress.annotations+ingress.annotations.'cert-manager.io/cluster-issuer'?+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.annotations=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations=null"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.annotations=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-      }
-    },
-    "constrains/ingress.annotations+ingress.annotations=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-      }
-    },
-    "constrains/ingress.annotations+ingress.annotations=null@4": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-      }
-    },
-    "constrains/ingress.annotations+ingress.annotations=null@5": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-      }
-    },
-    "constrains/ingress.annotations+ingress.certManager:t+ingress.enabled:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ingress.tls:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
-        }
-      ]
-    },
-    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-      }
-    },
-    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@3"
-      }
-    },
-    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?@3": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/definitions/constrains~1annotations.'cert-manager.io~1cluster-issuer'?"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "constrains/ingress.annotations=null": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/definitions/constrains~1annotations=null"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "constrains/ingress.annotations@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.annotations@4"
-      }
-    },
-    "constrains/ingress.annotations@3": {
-      "not": {
-        "properties": {
-          "ingress": {
-            "properties": {
-              "annotations": {}
-            },
-            "required": [
-              "annotations"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/ingress.annotations@4": {
       "properties": {
         "ingress": {
           "properties": {
@@ -3866,75 +2070,100 @@
       ],
       "type": "object"
     },
+    "constrains/ingress.annotations+ingress.annotations.'cert-manager.io/cluster-issuer'?+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/ingress.annotations+ingress.annotations=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "annotations": {}
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "ingress": {
+              "$ref": "#/definitions/constrains~1annotations=null"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1ingress.annotations"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.tls:t"
+        }
+      ]
+    },
+    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
+      }
+    },
+    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?@2": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/constrains~1annotations.'cert-manager.io~1cluster-issuer'?"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
     "constrains/ingress.certManager:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
+        "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
       }
-    },
-    "constrains/ingress.certManager:t+ingress.enabled:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
-    },
-    "constrains/ingress.certManager:t+ingress.enabled:t+ingress.existingSecretName:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-        }
-      ]
     },
     "constrains/ingress.certManager:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.certManager:t@3"
-      }
-    },
-    "constrains/ingress.certManager:t@3": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1certManager:t"
@@ -3946,45 +2175,6 @@
       "type": "object"
     },
     "constrains/ingress.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-      }
-    },
-    "constrains/ingress.enabled:t+ingress.existingSecretName:t+ingress.secrets:t": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t+ingress.existingSecretName:t+ingress.secrets:t+ingress.tls:t": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t@3"
-      }
-    },
-    "constrains/ingress.enabled:t@3": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -3997,15 +2187,10 @@
     },
     "constrains/ingress.existingSecretName:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
+        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
       }
     },
     "constrains/ingress.existingSecretName:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@3"
-      }
-    },
-    "constrains/ingress.existingSecretName:t@3": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1existingSecretName:t"
@@ -4018,7 +2203,7 @@
     },
     "constrains/ingress.hostname": {
       "not": {
-        "$ref": "#/definitions/constrains~1ingress.hostname@5"
+        "$ref": "#/definitions/constrains~1ingress.hostname@13"
       }
     },
     "constrains/ingress.hostname+ingress.hostname=null": {
@@ -4260,7 +2445,7 @@
     },
     "constrains/ingress.hostname@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1ingress.hostname@13"
+        "$ref": "#/definitions/constrains~1ingress.hostname@5"
       }
     },
     "constrains/ingress.hostname@3": {
@@ -4508,15 +2693,10 @@
     },
     "constrains/ingress.secrets:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
+        "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
       }
     },
     "constrains/ingress.secrets:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.secrets:t@3"
-      }
-    },
-    "constrains/ingress.secrets:t@3": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1secrets:t"
@@ -4528,16 +2708,6 @@
       "type": "object"
     },
     "constrains/ingress.tls:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-      }
-    },
-    "constrains/ingress.tls:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.tls:t@3"
-      }
-    },
-    "constrains/ingress.tls:t@3": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1tls:t"
@@ -4572,31 +2742,22 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1group-0"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
             }
           ]
         },
@@ -4650,28 +2811,19 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+              "$ref": "#/definitions/constrains~1group-0"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
             }
           ]
         },
@@ -4699,28 +2851,19 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1group-0"
             },
             {
               "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
             }
           ]
         },
@@ -4788,7 +2931,7 @@
     "constrains/mariadb.nameOverride:t@2": {
       "properties": {
         "mariadb": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       },
       "required": [
@@ -4866,45 +3009,58 @@
       ],
       "type": "object"
     },
+    "constrains/mariadb.passwordUpdateJob.enabled:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        }
+      ]
+    },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-      }
+      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
-      "properties": {
-        "mariadb": {
-          "properties": {
-            "passwordUpdateJob": {
-              "properties": {
-                "previousPasswords": {
-                  "properties": {
-                    "existingSecret": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "existingSecret"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "previousPasswords"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "passwordUpdateJob"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "mariadb"
-      ],
-      "type": "object"
+      "not": {
+        "properties": {
+          "mariadb": {
+            "properties": {
+              "passwordUpdateJob": {
+                "properties": {
+                  "previousPasswords": {
+                    "properties": {
+                      "existingSecret": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "existingSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "previousPasswords"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "passwordUpdateJob"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mariadb"
+        ],
+        "type": "object"
+      }
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
       "properties": {
@@ -4952,12 +3108,21 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride:t": {
+    "constrains/nameOverride+nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            }
+          }
+        ]
       }
     },
-    "constrains/nameOverride:t@2": {
+    "constrains/nameOverride:t": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -5062,36 +3227,6 @@
       ],
       "type": "object"
     },
-    "helm-no-template-actions": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/definitions/helm-no-template-actions"
-          },
-          "propertyNames": {
-            "not": {
-              "pattern": "\\{\\{"
-            }
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "pattern": "\\{\\{"
-          },
-          "type": "string"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress+ingress.hostname~1null,boolean,number"
-        },
-        {
-          "items": {
-            "$ref": "#/definitions/helm-no-template-actions"
-          },
-          "type": "array"
-        }
-      ]
-    },
     "t": {
       "anyOf": [
         {
@@ -5128,193 +3263,18 @@
       },
       "type": "object"
     },
-    "when/db.bundleTestDB+db.bundleTestDB=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+    "when/ingress.annotations+ingress.annotations=null/then/any/else/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+        },
+        "then": true
       },
-      "then": true
-    },
-    "when/mariadb.fullnameOverride!=null+mariadb.nameOverride!=null+3more/then/fail": {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "mariadb": {
-                "properties": {
-                  "nameOverride": {
-                    "not": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "properties": {
-                  "passwordUpdateJob": {
-                    "properties": {
-                      "enabled": {
-                        "not": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "passwordUpdateJob"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "properties": {
-                  "passwordUpdateJob": {
-                    "properties": {
-                      "previousPasswords": {
-                        "properties": {
-                          "existingSecret": {
-                            "not": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "existingSecret"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "previousPasswords"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "passwordUpdateJob"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "properties": {
-                  "fullnameOverride": {
-                    "not": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "mariadb": {
-                "properties": {
-                  "passwordUpdateJob": {
-                    "properties": {
-                      "previousPasswords": {
-                        "properties": {
-                          "rootPassword": {
-                            "not": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "rootPassword"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "previousPasswords"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "passwordUpdateJob"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-      },
-      "then": true
-    },
-    "when/tags.phpmyadmin-database+tags.phpmyadmin-database=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
       },
       "then": true
     }
@@ -5399,109 +3359,99 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "anyOf": [
+                "allOf": [
                   {
                     "not": {
-                      "properties": {
-                        "hostname": {}
-                      },
-                      "required": [
-                        "hostname"
-                      ],
-                      "type": "object"
+                      "$ref": "#/definitions/constrains~1secrets:t"
                     }
                   },
                   {
-                    "properties": {
-                      "hostname": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "hostname"
-                    ],
-                    "type": "object"
+                    "not": {
+                      "$ref": "#/definitions/constrains~1existingSecretName:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1annotations+annotations=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   }
                 ]
               },
               {
-                "else": {
-                  "else": false,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1enabled:t"
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "hostname": {}
+                          },
+                          "required": [
+                            "hostname"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "hostname": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "hostname"
+                        ],
+                        "type": "object"
+                      }
+                    ]
                   },
-                  "then": {
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1certManager:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1secrets:t"
+                    }
+                  },
+                  {
                     "else": {
                       "else": {
-                        "else": false,
-                        "if": {
-                          "$ref": "#/definitions/constrains~1tls:t"
-                        },
-                        "then": {
-                          "else": {
-                            "else": {
-                              "else": true,
-                              "if": {
-                                "$ref": "#/definitions/constrains~1annotations.'cert-manager.io~1cluster-issuer'?"
-                              },
-                              "then": false
-                            },
-                            "if": {
-                              "$ref": "#/definitions/constrains~1annotations+annotations=null"
-                            },
-                            "then": true
-                          },
-                          "if": {
-                            "$ref": "#/definitions/constrains~1annotations+annotations=null"
-                          },
-                          "then": true
+                        "not": {
+                          "$ref": "#/definitions/constrains~1annotations.'cert-manager.io~1cluster-issuer'?"
                         }
                       },
                       "if": {
-                        "$ref": "#/definitions/constrains~1secrets:t"
+                        "$ref": "#/definitions/constrains~1annotations+annotations=null"
                       },
-                      "then": false
+                      "then": true
                     },
                     "if": {
-                      "$ref": "#/definitions/constrains~1existingSecretName:t"
+                      "$ref": "#/definitions/constrains~1annotations+annotations=null"
                     },
-                    "then": false
+                    "then": true
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1existingSecretName:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1certManager:t"
-                },
-                "then": false
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1secrets:t"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1existingSecretName:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1annotations+annotations=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tls:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled:t"
+                ]
               }
             ]
           },

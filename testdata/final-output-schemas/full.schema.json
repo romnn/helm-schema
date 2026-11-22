@@ -7,6 +7,64 @@
         "anyOf": [
           {
             "properties": {
+              "guard": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "guard"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "dynamic": {}
+              },
+              "required": [
+                "dynamic"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1host+host=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1host+host=null@2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "dynamic": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dynamic"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "guard": {}
+              },
+              "required": [
+                "guard"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
               "local": {
                 "enum": [
                   null
@@ -15,6 +73,132 @@
             },
             "required": [
               "local"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1group-3"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1group-2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1group-1"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1requiredText=''"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1requiredText"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1requiredText=null"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "version"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1version"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1version"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "version"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1requiredText"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1requiredText=''"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1requiredText=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "version": {}
+              },
+              "required": [
+                "version"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "version": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "version"
             ],
             "type": "object"
           },
@@ -35,9 +219,7 @@
     },
     {
       "if": {
-        "not": {
-          "$ref": "#/definitions/constrains~1host+host=null"
-        }
+        "$ref": "#/definitions/constrains~1host+host=null@2"
       },
       "then": {
         "additionalProperties": {},
@@ -49,62 +231,12 @@
       }
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1host.nested+host.nested=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1host+host=null"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1host.nested+host.nested=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1host+host=null"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "host": {
-            "additionalProperties": {},
-            "properties": {
-              "nested": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "version": {
           "type": "string"
         }
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1host+host=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1host+host=null"
-            }
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -207,205 +339,73 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "version": {}
-              },
-              "required": [
-                "version"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "version": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "version"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "dynamic": {}
-              },
-              "required": [
-                "dynamic"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "dynamic": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "dynamic"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "guard": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "guard"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "guard": {}
-              },
-              "required": [
-                "guard"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
             "not": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
-                },
+              "anyOf": [
                 {
                   "not": {
-                    "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more"
+                    "properties": {
+                      "host": {
+                        "properties": {
+                          "nested": {}
+                        },
+                        "required": [
+                          "nested"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "host"
+                    ],
+                    "type": "object"
                   }
                 },
                 {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1requiredText+requiredText=''+requiredText=null"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1version@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1version"
+                  "properties": {
+                    "host": {
+                      "properties": {
+                        "nested": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "nested"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "host"
+                  ],
+                  "type": "object"
                 }
               ]
             }
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1requiredText=''"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText+requiredText=''+requiredText=null@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1version@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1version"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText+requiredText=''+requiredText=null@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1version"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1version@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText+requiredText=''+requiredText=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1version@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1version"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText+requiredText=''+requiredText=null@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1version@2"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1requiredText"
-              },
-              {
-                "$ref": "#/definitions/constrains~1requiredText=null"
-              }
-            ]
+            "not": {
+              "$ref": "#/definitions/constrains~1host+host=null"
+            }
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "host": {
+            "additionalProperties": {},
+            "properties": {
+              "nested": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "additionalProperties": {},
@@ -421,6 +421,163 @@
   ],
   "definitions": {
     "constrains/dynamic+dynamic.kind": {
+      "allOf": [
+        {
+          "properties": {
+            "dynamic": {
+              "properties": {
+                "kind": {
+                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1allOf~1not~1object+object@2"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "dynamic"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind@3"
+        }
+      ]
+    },
+    "constrains/dynamic+dynamic.kind/allOf/not/object+object": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1not~1object"
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/dynamic+dynamic.kind/allOf/not/object+object@2": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a@2"
+              }
+            ]
+          },
+          "propertyNames": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1not~1object"
+        }
+      ]
+    },
+    "constrains/dynamic+dynamic.kind/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/dynamic+dynamic.kind/not/object": {
+      "not": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
+            },
+            {
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a@2"
+            }
+          ]
+        },
+        "propertyNames": {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
+        },
+        "type": "object"
+      }
+    },
+    "constrains/dynamic+dynamic.kind/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/dynamic+dynamic.kind/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "type": "string"
+    },
+    "constrains/dynamic+dynamic.kind/string;pattern-x20-x2d@2": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/dynamic+dynamic.kind/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/dynamic+dynamic.kind/string;pattern-x3a@2": {
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "type": "string"
+    },
+    "constrains/dynamic+dynamic.kind@2": {
+      "allOf": [
+        {
+          "properties": {
+            "dynamic": {
+              "properties": {
+                "kind": {
+                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1allOf~1not~1object+object"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "dynamic"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind@3"
+        }
+      ]
+    },
+    "constrains/dynamic+dynamic.kind@3": {
       "anyOf": [
         {
           "not": {
@@ -457,338 +614,47 @@
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=ConfigMap"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@9"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@5"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=Service@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=Service"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local+local.setting"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@8"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@7"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@5"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=Service"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@9"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@5"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1local+local.setting"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.kind=ConfigMap"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@8"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@7"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1local.setting@5"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas"
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas@2"
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "dynamic": {
-                  "properties": {
-                    "kind": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "dynamic"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "dynamic": {
-                  "properties": {
-                    "kind": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@2"
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "dynamic"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind"
-            }
-          ]
-        },
-        {
+    "constrains/dynamic.kind": {
+      "properties": {
+        "dynamic": {
           "properties": {
-            "dynamic": {
-              "properties": {
-                "kind": {
-                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2e"
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
+            "kind": {
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x25"
             }
           },
           "required": [
-            "dynamic"
+            "kind"
           ],
           "type": "object"
-        },
-        {
-          "properties": {
-            "dynamic": {
-              "properties": {
-                "kind": {
-                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x25"
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "dynamic"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas@9"
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas@8"
-        },
-        {
-          "properties": {
-            "dynamic": {
-              "properties": {
-                "kind": {
-                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@5"
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "dynamic"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "dynamic": {
-              "properties": {
-                "kind": {
-                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@6"
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "dynamic"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas@7"
-        },
-        {
-          "properties": {
-            "dynamic": {
-              "properties": {
-                "kind": {
-                  "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x5b"
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "dynamic"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1replicas@6"
         }
-      ]
+      },
+      "required": [
+        "dynamic"
+      ],
+      "type": "object"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/array+not/array": {
+    "constrains/dynamic.kind/allOf/array+not/array": {
       "allOf": [
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@8"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@6"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -796,16 +662,16 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array"
           }
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/array+not/array@2": {
+    "constrains/dynamic.kind/allOf/array+not/array@2": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
           }
         },
         {
@@ -813,10 +679,10 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -824,36 +690,36 @@
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/array+not/array@3": {
+    "constrains/dynamic.kind/allOf/array+not/array@3": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@7"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@5"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@3"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array@4"
               }
             ]
           },
@@ -861,24 +727,24 @@
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/array+not/array@4": {
+    "constrains/dynamic.kind/allOf/array+not/array@4": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
           }
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@3"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -886,129 +752,75 @@
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1not~1object@2"
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@2": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              false,
-              {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a@2"
-              }
-            ]
-          },
-          "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1not~1object@2"
-        }
-      ]
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@3": {
+    "constrains/dynamic.kind/allOf/not/object+object": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@7"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@5"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array@4"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
           }
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@4": {
+    "constrains/dynamic.kind/allOf/not/object+object@2": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array@2"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@8"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@6"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
               }
             ]
           },
           "propertyNames": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -1016,24 +828,24 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
           }
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@5": {
+    "constrains/dynamic.kind/allOf/not/object+object@3": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1object"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1array@2"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
                 "allOf": [
@@ -1041,25 +853,25 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1array"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@3"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@3"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array@3"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
                         }
                       ]
                     },
@@ -1067,13 +879,13 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@2"
+                      "$ref": "#/definitions/constrains~1dynamic.kind~1array@2"
                     }
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
               },
               {
                 "allOf": [
@@ -1081,68 +893,68 @@
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1array"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@3"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array@3"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
                         }
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1anyOf~1string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1anyOf~1string;pattern-x20-x2d"
                     },
                     "type": "object"
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object"
+                      "$ref": "#/definitions/constrains~1dynamic.kind~1object"
                     }
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1not~1object"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1not~1object"
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@6": {
+    "constrains/dynamic.kind/allOf/not/object+object@4": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1object"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@2"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1array@2"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
                 "allOf": [
@@ -1150,22 +962,22 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@4"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1array"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array"
                         }
                       ]
                     },
@@ -1173,48 +985,48 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@2"
+                      "$ref": "#/definitions/constrains~1dynamic.kind~1array@2"
                     }
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
               },
               {
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object"
+                      "$ref": "#/definitions/constrains~1dynamic.kind~1object"
                     }
                   },
                   {
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@4"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1array"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1array+not~1array"
                         }
                       ]
                     },
                     "propertyNames": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+                          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
                         }
                       ]
                     },
@@ -1227,50 +1039,50 @@
           "propertyNames": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
               }
             ]
           },
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1not~1object"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1not~1object"
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@7": {
+    "constrains/dynamic.kind/allOf/not/object+object@5": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x3a"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1anyOf~1string;pattern-x20-x2d"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
           }
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/allOf/not/object+object@8": {
+    "constrains/dynamic.kind/allOf/not/object+object@6": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
           }
         },
         {
@@ -1278,17 +1090,17 @@
             "anyOf": [
               false,
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
               }
             ]
           },
@@ -1296,211 +1108,236 @@
         }
       ]
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/anyOf/string;pattern-x20-x2d": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/array": {
+    "constrains/dynamic.kind/array": {
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
           }
         ]
       },
       "type": "array"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/array@2": {
+    "constrains/dynamic.kind/array@2": {
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
           }
         ]
       },
       "type": "array"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/array@3": {
+    "constrains/dynamic.kind/array@3": {
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2d"
           }
         ]
       },
       "type": "array"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/not/object": {
+    "constrains/dynamic.kind/not/object": {
       "not": {
         "additionalProperties": {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1object"
             },
             {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@2"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1array@2"
             },
             {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
             },
             {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
             }
           ]
         },
         "propertyNames": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
         },
         "type": "object"
       }
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/not/object@2": {
-      "not": {
-        "additionalProperties": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
-            },
-            {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a@2"
-            }
-          ]
-        },
-        "propertyNames": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
-        },
-        "type": "object"
-      }
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/null,boolean,number": {
-      "type": [
-        "null",
-        "boolean",
-        "number"
-      ]
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/object": {
+    "constrains/dynamic.kind/object": {
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@2"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@2"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/object@2": {
+    "constrains/dynamic.kind/object@2": {
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1array@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1object@3"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1object@3"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/object@3": {
+    "constrains/dynamic.kind/object@3": {
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x3a-x2d"
           }
         ]
       },
       "propertyNames": {
-        "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2d"
+        "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1string;pattern-x20-x2d"
       },
       "type": "object"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x20-x25": {
+    "constrains/dynamic.kind/string;pattern-x20-x25": {
       "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
-      "type": "string"
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x20-x2d@2": {
+    "constrains/dynamic.kind/string;pattern-x20-x2d": {
       "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x20-x2d@3": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x20-x2e": {
+    "constrains/dynamic.kind/string;pattern-x20-x2e": {
       "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x20-x5b": {
+    "constrains/dynamic.kind/string;pattern-x20-x5b": {
       "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-      "type": "string"
-    },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x3a-x2d": {
+    "constrains/dynamic.kind/string;pattern-x3a-x2d": {
       "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
-    "constrains/dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more/string;pattern-x3a@2": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
-      "type": "string"
+    "constrains/dynamic.kind@2": {
+      "properties": {
+        "dynamic": {
+          "properties": {
+            "kind": {
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2e"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "dynamic"
+      ],
+      "type": "object"
+    },
+    "constrains/dynamic.kind@3": {
+      "properties": {
+        "dynamic": {
+          "properties": {
+            "kind": {
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x5b"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "dynamic"
+      ],
+      "type": "object"
+    },
+    "constrains/dynamic.kind@4": {
+      "properties": {
+        "dynamic": {
+          "properties": {
+            "kind": {
+              "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@3"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "dynamic"
+      ],
+      "type": "object"
+    },
+    "constrains/dynamic.kind@5": {
+      "properties": {
+        "dynamic": {
+          "properties": {
+            "kind": {
+              "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@4"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "dynamic"
+      ],
+      "type": "object"
     },
     "constrains/enabled!=0+enabled=true": {
       "properties": {
@@ -1563,6 +1400,82 @@
         }
       ]
     },
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1local.setting@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1local.setting@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1local.setting@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1local.setting@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1local.setting@6"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1replicas@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicas@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicas@8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicas@9"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1replicas"
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicas@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicas@5"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic.kind"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic.kind@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic.kind@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic.kind@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1dynamic.kind@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1local+local.kind=ConfigMap+local.kind=Service+local.setting"
+        }
+      ]
+    },
     "constrains/host+host=null": {
       "anyOf": [
         {
@@ -1591,50 +1504,9 @@
         }
       ]
     },
-    "constrains/host.nested+host.nested=null": {
+    "constrains/host+host=null@2": {
       "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "host": {
-                  "properties": {
-                    "nested": {}
-                  },
-                  "required": [
-                    "nested"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "host"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "host": {
-                "properties": {
-                  "nested": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "nested"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "host"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1host+host=null"
       }
     },
     "constrains/kind": {
@@ -1647,26 +1519,28 @@
       "type": "object"
     },
     "constrains/kind+kind=null": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1kind"
-          }
-        },
-        {
-          "properties": {
-            "kind": {
-              "enum": [
-                null
-              ]
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1kind"
             }
           },
-          "required": [
-            "kind"
-          ],
-          "type": "object"
-        }
-      ]
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      }
     },
     "constrains/kind=ConfigMap": {
       "not": {
@@ -1700,9 +1574,6 @@
       "type": "object"
     },
     "constrains/local+local.kind+local.kind=null": {
-      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null@2"
-    },
-    "constrains/local+local.kind+local.kind=null@2": {
       "anyOf": [
         {
           "not": {
@@ -1756,6 +1627,96 @@
             "local"
           ],
           "type": "object"
+        }
+      ]
+    },
+    "constrains/local+local.kind=ConfigMap+local.kind=Service+local.setting": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@9"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1local.kind=Service@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local+local.setting"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=Service"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@8"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=Service"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@9"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local+local.setting"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@8"
+            }
+          ]
         }
       ]
     },
@@ -1827,7 +1788,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@5"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@3"
             }
           },
           "required": [
@@ -1846,7 +1807,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x25"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x25"
             }
           },
           "required": [
@@ -1865,7 +1826,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2e"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2e"
             }
           },
           "required": [
@@ -1884,7 +1845,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x5b"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x5b"
             }
           },
           "required": [
@@ -1903,7 +1864,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@6"
+              "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@4"
             }
           },
           "required": [
@@ -1922,7 +1883,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object"
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1allOf~1not~1object+object"
             }
           },
           "required": [
@@ -1941,7 +1902,7 @@
         "local": {
           "properties": {
             "setting": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@2"
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1allOf~1not~1object+object@2"
             }
           },
           "required": [
@@ -1983,7 +1944,7 @@
         {
           "properties": {
             "replicas": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object"
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1allOf~1not~1object+object@2"
             }
           },
           "required": [
@@ -2023,7 +1984,7 @@
         {
           "properties": {
             "replicas": {
-              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@2"
+              "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1allOf~1not~1object+object"
             }
           },
           "required": [
@@ -2036,10 +1997,10 @@
     "constrains/replicas@3": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1replicas"
+          "$ref": "#/definitions/constrains~1replicas@2"
         },
         {
-          "$ref": "#/definitions/constrains~1replicas@2"
+          "$ref": "#/definitions/constrains~1replicas"
         },
         {
           "$ref": "#/definitions/constrains~1replicas@9"
@@ -2088,7 +2049,7 @@
     "constrains/replicas@5": {
       "properties": {
         "replicas": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x5b"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x5b"
         }
       },
       "required": [
@@ -2099,7 +2060,7 @@
     "constrains/replicas@6": {
       "properties": {
         "replicas": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x25"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x25"
         }
       },
       "required": [
@@ -2110,7 +2071,7 @@
     "constrains/replicas@7": {
       "properties": {
         "replicas": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1string;pattern-x20-x2e"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1string;pattern-x20-x2e"
         }
       },
       "required": [
@@ -2121,7 +2082,7 @@
     "constrains/replicas@8": {
       "properties": {
         "replicas": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@5"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@3"
         }
       },
       "required": [
@@ -2132,7 +2093,7 @@
     "constrains/replicas@9": {
       "properties": {
         "replicas": {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1allOf~1not~1object+object@6"
+          "$ref": "#/definitions/constrains~1dynamic.kind~1allOf~1not~1object+object@4"
         }
       },
       "required": [
@@ -2149,24 +2110,6 @@
           "requiredText"
         ],
         "type": "object"
-      }
-    },
-    "constrains/requiredText+requiredText=''+requiredText=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1requiredText=''"
-        },
-        {
-          "$ref": "#/definitions/constrains~1requiredText"
-        },
-        {
-          "$ref": "#/definitions/constrains~1requiredText=null"
-        }
-      ]
-    },
-    "constrains/requiredText+requiredText=''+requiredText=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1requiredText+requiredText=''+requiredText=null"
       }
     },
     "constrains/requiredText=''": {
@@ -2199,17 +2142,6 @@
       "properties": {
         "version": {
           "pattern": "^v[0-9]+\\.[0-9]+$",
-          "type": "string"
-        }
-      },
-      "required": [
-        "version"
-      ],
-      "type": "object"
-    },
-    "constrains/version@2": {
-      "properties": {
-        "version": {
           "type": "string"
         }
       },
@@ -2261,7 +2193,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
                 "$ref": "#/definitions/values~1local~1string@2"
@@ -2274,13 +2206,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+          "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
         },
         {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind+local+local.kind=ConfigMap+local.kind=Service+local.setting+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1dynamic+dynamic.kind~1null,boolean,number"
               },
               {
                 "$ref": "#/definitions/values~1local~1string@2"
@@ -2412,10 +2344,9 @@
       "allOf": [
         {
           "if": {
-            "else": {
-              "else": {
-                "else": true,
-                "if": {
+            "allOf": [
+              {
+                "not": {
                   "properties": {
                     "kind": {
                       "type": "string"
@@ -2425,18 +2356,15 @@
                     "kind"
                   ],
                   "type": "object"
-                },
-                "then": false
+                }
               },
-              "if": {
+              {
                 "$ref": "#/definitions/constrains~1kind+kind=null"
               },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1kind+kind=null"
-            },
-            "then": false
+              {
+                "$ref": "#/definitions/constrains~1kind+kind=null"
+              }
+            ]
           },
           "then": false
         },
@@ -2850,15 +2778,29 @@
         },
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1replicas@3"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1replicas@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1enabled+enabled=null"
-              },
-              {
-                "type": "object"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1replicas@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -2900,19 +2842,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1replicas@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
-              }
-            ]
-          },
-          "then": false
         },
         {
           "if": {

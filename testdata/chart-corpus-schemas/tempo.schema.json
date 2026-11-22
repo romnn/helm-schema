@@ -19,65 +19,137 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1tempo.pullSecrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config@2"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "tempoQuery": {}
-                  },
-                  "required": [
-                    "tempoQuery"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "tempoQuery": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "tempoQuery"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1tempo+tempo=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1config"
           },
           {
-            "$ref": "#/definitions/constrains~1tempo.pullSecrets:t"
+            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "name": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "tempoQuery": {
-            "type": "object"
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "additionalProperties": {
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+: \t-]"
+                        },
+                        "pattern": "^[A-Za-z0-9_.$/+-]+:[ \t]+[A-Za-z0-9_.$/+-]+$",
+                        "type": "string"
+                      },
+                      "maxProperties": 1,
+                      "minProperties": 1,
+                      "propertyNames": {
+                        "minLength": 1,
+                        "not": {
+                          "pattern": "[^A-Za-z0-9_.$/+-]"
+                        },
+                        "type": "string"
+                      },
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_compact": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -86,94 +158,224 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tempo.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1config"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tempo.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tempo.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1tempo.tag"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1config"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "serviceAccount": {
-            "type": "object"
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      }
+                    ],
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                    },
+                    "pattern": "[\\r\\n]",
+                    "type": "string"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "$ref": "#/definitions/values~1string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/values~1string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_http": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -189,122 +391,73 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "config": {}
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "config": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "persistence": {}
-              },
-              "required": [
-                "persistence"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "persistence": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1config+service+service.protocol+service.protocol:t+service.type=LoadBalancer"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "Overrides the chart's computed fullname",
-            "type": "string"
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "additionalProperties": {},
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "properties": {
+                      "jaeger": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "protocols": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "additionalProperties": {},
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "properties": {
+                      "jaeger": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
+        ]
       }
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -320,33 +473,2058 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1config@2"
+            "$ref": "#/definitions/constrains~1config"
           },
           {
-            "anyOf": [
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "serviceAccount": {
-                    "enum": [
-                      null
-                    ]
+                  "name": {
+                    "type": "array"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "name"
                 ],
                 "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "items": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/definitions/values~1anyOf~1null,boolean,number+string"
+                            },
+                            "propertyNames": {
+                              "not": {
+                                "pattern": "[^A-Za-z0-9_./+-]"
+                              },
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                          },
+                          {
+                            "items": {
+                              "$ref": "#/definitions/values~1anyOf~1null,boolean,number+string"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "not": {
+                              "pattern": "[^A-Za-z0-9_./+-]"
+                            },
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempoQuery": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceMonitor": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "metricsGenerator": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempoQuery": {
+                "type": "object"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
               },
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "$ref": "#/definitions/constrains~1protocols.grpc"
+                  }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "http": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "$ref": "#/definitions/constrains~1protocols.grpc"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "additionalProperties": {},
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "properties": {
+                      "otlp": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "protocols": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "tempo": {
+                "additionalProperties": {},
+                "properties": {
+                  "receivers": {
+                    "additionalProperties": {},
+                    "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                    "properties": {
+                      "otlp": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config"
+          },
+          {
+            "$ref": "#/definitions/constrains~1networkPolicy.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
+            "additionalProperties": {},
+            "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
+            "properties": {
+              "egress": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer+2more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_binary": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceMonitor": {}
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "tempo": {}
+              },
+              "required": [
+                "tempo"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "receivers": {
+                            "properties": {
+                              "otlp": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "otlp"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "receivers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "receivers": {
+                              "properties": {
+                                "otlp": {}
+                              },
+                              "required": [
+                                "otlp"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "receivers"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "networkPolicy": {}
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {}
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tempo": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "tag": {}
+                          },
+                          "required": [
+                            "tag"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "tag": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "tag"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "metricsGenerator": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "metricsGenerator"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "metricsGenerator": {}
+                          },
+                          "required": [
+                            "metricsGenerator"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1config"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "name": {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/values~1not~1object"
+                              },
+                              {
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/values~1string;pattern-x3a"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a"
+                                    }
+                                  ]
+                                },
+                                "propertyNames": {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x2d"
+                                },
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "name": {
+                            "allOf": [
+                              {
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    false,
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/values~1string;pattern-x3a"
+                                    }
+                                  ]
+                                },
+                                "propertyNames": {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+                                    }
+                                  ]
+                                },
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1not~1object"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {}
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1networkPolicy.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "egress": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "egress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "networkPolicy": {
+                          "properties": {
+                            "egress": {}
+                          },
+                          "required": [
+                            "egress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "networkPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tempo.tag"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tempo.tag"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tempo.tag"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tempo.tag"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tempo": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+service+service.protocol+service.protocol:t+service.type=LoadBalancer"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "receivers": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "receivers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "receivers": {}
+                          },
+                          "required": [
+                            "receivers"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tempoQuery": {}
+                      },
+                      "required": [
+                        "tempoQuery"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer+2more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "properties": {
+                          "service": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tempoQuery": {
+                          "properties": {
+                            "service": {}
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempoQuery"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+service+service.protocol+service.protocol:t+service.type=LoadBalancer"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "receivers": {
+                            "properties": {
+                              "jaeger": {
+                                "$ref": "#/definitions/constrains~1protocols=null"
+                              }
+                            },
+                            "required": [
+                              "jaeger"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "receivers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "receivers": {
+                              "properties": {
+                                "jaeger": {
+                                  "properties": {
+                                    "protocols": {}
+                                  },
+                                  "required": [
+                                    "protocols"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "jaeger"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "receivers"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+service+service.protocol+service.protocol:t+service.type=LoadBalancer"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "receivers": {
+                            "properties": {
+                              "jaeger": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "jaeger"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "receivers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "receivers": {
+                              "properties": {
+                                "jaeger": {}
+                              },
+                              "required": [
+                                "jaeger"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "receivers"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tempo": {
+                          "properties": {
+                            "receivers": {
+                              "properties": {
+                                "otlp": {
+                                  "properties": {
+                                    "protocols": {}
+                                  },
+                                  "required": [
+                                    "protocols"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "otlp"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "receivers"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempo"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tempo": {
+                        "properties": {
+                          "receivers": {
+                            "properties": {
+                              "otlp": {
+                                "$ref": "#/definitions/constrains~1protocols=null"
+                              }
+                            },
+                            "required": [
+                              "otlp"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "receivers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempo"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tempoQuery": {
+                          "properties": {
+                            "ingress": {}
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempoQuery"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "properties": {
+                          "ingress": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "config": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1config"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                    },
+                    {
+                      "properties": {
+                        "config": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1tempo.tag@2"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http.endpoint"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc.endpoint:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_binary.endpoint:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_compact.endpoint:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc.endpoint"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http.endpoint:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http.endpoint"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1service.protocol:t"
+                            },
+                            {
+                              "properties": {
+                                "service": {
+                                  "properties": {
+                                    "protocol": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "protocol"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -356,71 +2534,147 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1tempo+tempo=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "tempo": {
-                      "properties": {
-                        "tag": {}
-                      },
-                      "required": [
-                        "tag"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "tempo"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "tempo": {
-                    "properties": {
-                      "tag": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tempo"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "Overrides the chart's computed fullname",
+            "type": "string"
+          }
+        }
+      }
     }
   ],
   "definitions": {
     "constrains/config": {
-      "$ref": "#/definitions/constrains~1config@3"
+      "not": {
+        "$ref": "#/definitions/constrains~1config@3"
+      }
+    },
+    "constrains/config+service+service.protocol+service.protocol:t+service.type=LoadBalancer": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1config+service.type=LoadBalancer"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1config"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.protocol"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.protocol:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer"
+        }
+      ]
+    },
+    "constrains/config+service.protocol+service.protocol:t+service.type=LoadBalancer": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1config"
+        },
+        {
+          "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+        }
+      ]
+    },
+    "constrains/config+service.protocol+service.protocol:t+service.type=LoadBalancer+2more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1config"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.protocol+service.protocol:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tempoQuery.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1config"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tempoQuery.enabled:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1config"
+            },
+            {
+              "properties": {
+                "tempoQuery": {
+                  "properties": {
+                    "ingress": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tempoQuery"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/config+service.protocol+service.protocol:t+service.type=LoadBalancer@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1config+service.type=LoadBalancer"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+service.protocol+service.protocol:t+service.type=LoadBalancer"
+        }
+      ]
+    },
+    "constrains/config+service.type=LoadBalancer": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1config"
+        },
+        {
+          "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+        }
+      ]
     },
     "constrains/config@2": {
-      "$ref": "#/definitions/constrains~1config@3"
-    },
-    "constrains/config@3": {
       "not": {
         "properties": {
           "config": {
-            "pattern": "\\{\\{",
             "type": "string"
           }
         },
@@ -430,30 +2684,54 @@
         "type": "object"
       }
     },
-    "constrains/config@4": {
-      "not": {
-        "properties": {
-          "config": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      }
+    "constrains/config@3": {
+      "properties": {
+        "config": {
+          "pattern": "\\{\\{",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/endpoint": {
+      "properties": {
+        "endpoint": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "endpoint"
+      ],
+      "type": "object"
+    },
+    "constrains/endpoint:t": {
+      "properties": {
+        "endpoint": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "endpoint"
+      ],
+      "type": "object"
     },
     "constrains/fullnameOverride": {
       "not": {
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
     },
     "constrains/fullnameOverride:t": {
@@ -472,17 +2750,48 @@
       ],
       "type": "object"
     },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1config@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+        }
+      ]
+    },
     "constrains/nameOverride": {
       "not": {
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1nameOverride@2"
       }
     },
     "constrains/nameOverride:t": {
@@ -501,45 +2810,1205 @@
       ],
       "type": "object"
     },
-    "constrains/tempo+tempo=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "tempo": {}
-            },
-            "required": [
-              "tempo"
-            ],
-            "type": "object"
-          }
-        },
-        {
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/networkPolicy.enabled:t": {
+      "properties": {
+        "networkPolicy": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "networkPolicy"
+      ],
+      "type": "object"
+    },
+    "constrains/protocols.grpc": {
+      "additionalProperties": {},
+      "properties": {
+        "protocols": {
+          "additionalProperties": {},
           "properties": {
-            "tempo": {
+            "grpc": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "constrains/protocols.grpc.endpoint": {
+      "properties": {
+        "protocols": {
+          "properties": {
+            "grpc": {
+              "$ref": "#/definitions/constrains~1endpoint"
+            }
+          },
+          "required": [
+            "grpc"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
+    },
+    "constrains/protocols.grpc.endpoint:t": {
+      "properties": {
+        "protocols": {
+          "properties": {
+            "grpc": {
+              "$ref": "#/definitions/constrains~1endpoint:t"
+            }
+          },
+          "required": [
+            "grpc"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
+    },
+    "constrains/protocols.grpc=null": {
+      "properties": {
+        "protocols": {
+          "properties": {
+            "grpc": {
               "enum": [
                 null
               ]
             }
           },
           "required": [
-            "tempo"
+            "grpc"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
+    },
+    "constrains/protocols.grpc@2": {
+      "properties": {
+        "protocols": {
+          "properties": {
+            "grpc": {}
+          },
+          "required": [
+            "grpc"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
+    },
+    "constrains/protocols=null": {
+      "properties": {
+        "protocols": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
+    },
+    "constrains/service+service.type+service.type=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
           ],
           "type": "object"
         }
       ]
     },
-    "constrains/tempo.pullSecrets:t": {
+    "constrains/service.protocol": {
+      "properties": {
+        "service": {
+          "properties": {
+            "protocol": {
+              "pattern": "UDP",
+              "type": "string"
+            }
+          },
+          "required": [
+            "protocol"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.protocol+service.protocol:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1service.protocol:t"
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "protocol": {
+                  "pattern": "TCP",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "protocol"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/service.protocol:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1service.protocol:t@2"
+      }
+    },
+    "constrains/service.protocol:t@2": {
+      "properties": {
+        "service": {
+          "properties": {
+            "protocol": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "protocol"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.type=LoadBalancer": {
+      "not": {
+        "$ref": "#/definitions/constrains~1service.type=LoadBalancer@2"
+      }
+    },
+    "constrains/service.type=LoadBalancer@2": {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "enum": [
+                "LoadBalancer"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.create:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+      }
+    },
+    "constrains/serviceAccount.create:t@2": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "create": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "name": {}
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/serviceAccount.name/allOf/array+not/array": {
+      "allOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+          }
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/array+not/array@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/array+not/array@3": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@4"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/array+not/array@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/not/object+object": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@4"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/not/object+object@2": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+              }
+            ]
+          },
+          "propertyNames": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+          }
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/not/object+object@3": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+          }
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/allOf/not/object+object@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+              }
+            ]
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/array": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/serviceAccount.name/array@2": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/serviceAccount.name/array@3": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/serviceAccount.name/not/object": {
+      "not": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+            }
+          ]
+        },
+        "propertyNames": {
+          "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+        },
+        "type": "object"
+      }
+    },
+    "constrains/serviceAccount.name/null,boolean,number": {
+      "type": [
+        "null",
+        "boolean",
+        "number"
+      ]
+    },
+    "constrains/serviceAccount.name/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/serviceAccount.name/object@2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@3"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/serviceAccount.name/object@3": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+      },
+      "type": "object"
+    },
+    "constrains/serviceAccount.name/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "type": "string"
+    },
+    "constrains/serviceAccount.name/string;pattern-x20-x2d@2": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/serviceAccount.name/string;pattern-x20-x2d@3": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/serviceAccount.name/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/serviceAccount.name/string;pattern-x3a-x2d": {
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/serviceAccount.name:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+      }
+    },
+    "constrains/serviceAccount.name:t@2": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@2": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "allOf": [
+                {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+                                }
+                              ]
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+                                }
+                              ]
+                            },
+                            "propertyNames": {
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x2d"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a"
+                      }
+                    ]
+                  },
+                  "propertyNames": {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x2d"
+                  },
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name~1not~1object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@3": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "allOf": [
+                {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array"
+                                }
+                              ]
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
+                            }
+                          },
+                          {
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1not~1object+object@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array"
+                                }
+                              ]
+                            },
+                            "propertyNames": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+                                }
+                              ]
+                            },
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "propertyNames": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+                      }
+                    ]
+                  },
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name~1not~1object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@4": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "maxItems": 1,
+              "maxProperties": 1
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@5": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@6": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@7": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "tempo": {
+              "properties": {
+                "receivers": {
+                  "properties": {
+                    "jaeger": {
+                      "$ref": "#/definitions/constrains~1protocols.grpc=null"
+                    }
+                  },
+                  "required": [
+                    "jaeger"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "receivers"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tempo"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "receivers": {
+                    "properties": {
+                      "jaeger": {
+                        "$ref": "#/definitions/constrains~1protocols.grpc@2"
+                      }
+                    },
+                    "required": [
+                      "jaeger"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "receivers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null"
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.grpc+tempo.receivers.jaeger.protocols.grpc=null"
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.grpc.endpoint": {
       "not": {
         "properties": {
           "tempo": {
             "properties": {
-              "pullSecrets": {
-                "$ref": "#/definitions/t"
+              "receivers": {
+                "properties": {
+                  "jaeger": {
+                    "$ref": "#/definitions/constrains~1protocols.grpc.endpoint"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "pullSecrets"
+              "receivers"
             ],
             "type": "object"
           }
@@ -550,17 +4019,162 @@
         "type": "object"
       }
     },
-    "constrains/tempo.tag": {
+    "constrains/tempo.receivers.jaeger.protocols.grpc.endpoint:t": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "receivers": {
+              "properties": {
+                "jaeger": {
+                  "$ref": "#/definitions/constrains~1protocols.grpc.endpoint:t"
+                }
+              },
+              "required": [
+                "jaeger"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "receivers"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_binary+1more": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "receivers": {
+                    "properties": {
+                      "jaeger": {
+                        "properties": {
+                          "protocols": {
+                            "properties": {
+                              "thrift_binary": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "thrift_binary"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jaeger"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "receivers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "tempo": {
+                  "properties": {
+                    "receivers": {
+                      "properties": {
+                        "jaeger": {
+                          "properties": {
+                            "protocols": {
+                              "properties": {
+                                "thrift_binary": {}
+                              },
+                              "required": [
+                                "thrift_binary"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "protocols"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jaeger"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "receivers"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tempo"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_binary.endpoint": {
       "not": {
         "properties": {
           "tempo": {
             "properties": {
-              "tag": {
-                "type": "string"
+              "receivers": {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "protocols": {
+                        "properties": {
+                          "thrift_binary": {
+                            "$ref": "#/definitions/constrains~1endpoint"
+                          }
+                        },
+                        "required": [
+                          "thrift_binary"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "protocols"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "tag"
+              "receivers"
             ],
             "type": "object"
           }
@@ -570,6 +4184,772 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_binary.endpoint:t": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "receivers": {
+              "properties": {
+                "jaeger": {
+                  "properties": {
+                    "protocols": {
+                      "properties": {
+                        "thrift_binary": {
+                          "$ref": "#/definitions/constrains~1endpoint:t"
+                        }
+                      },
+                      "required": [
+                        "thrift_binary"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "protocols"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jaeger"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "receivers"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_compact+1more": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "receivers": {
+                    "properties": {
+                      "jaeger": {
+                        "properties": {
+                          "protocols": {
+                            "properties": {
+                              "thrift_compact": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "thrift_compact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jaeger"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "receivers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "tempo": {
+                  "properties": {
+                    "receivers": {
+                      "properties": {
+                        "jaeger": {
+                          "properties": {
+                            "protocols": {
+                              "properties": {
+                                "thrift_compact": {}
+                              },
+                              "required": [
+                                "thrift_compact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "protocols"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jaeger"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "receivers"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tempo"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_compact.endpoint": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "receivers": {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "protocols": {
+                        "properties": {
+                          "thrift_compact": {
+                            "$ref": "#/definitions/constrains~1endpoint"
+                          }
+                        },
+                        "required": [
+                          "thrift_compact"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "protocols"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "receivers"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_compact.endpoint:t": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "receivers": {
+              "properties": {
+                "jaeger": {
+                  "properties": {
+                    "protocols": {
+                      "properties": {
+                        "thrift_compact": {
+                          "$ref": "#/definitions/constrains~1endpoint:t"
+                        }
+                      },
+                      "required": [
+                        "thrift_compact"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "protocols"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jaeger"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "receivers"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_http+1more": {
+      "anyOf": [
+        {
+          "properties": {
+            "tempo": {
+              "properties": {
+                "receivers": {
+                  "properties": {
+                    "jaeger": {
+                      "properties": {
+                        "protocols": {
+                          "properties": {
+                            "thrift_http": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "thrift_http"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "protocols"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jaeger"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "receivers"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tempo"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "receivers": {
+                    "properties": {
+                      "jaeger": {
+                        "properties": {
+                          "protocols": {
+                            "properties": {
+                              "thrift_http": {}
+                            },
+                            "required": [
+                              "thrift_http"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jaeger"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "receivers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_http+1more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more"
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_http+1more@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.jaeger.protocols.thrift_http+1more"
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_http.endpoint": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "receivers": {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "protocols": {
+                        "properties": {
+                          "thrift_http": {
+                            "$ref": "#/definitions/constrains~1endpoint"
+                          }
+                        },
+                        "required": [
+                          "thrift_http"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "protocols"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "receivers"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tempo.receivers.jaeger.protocols.thrift_http.endpoint:t": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "receivers": {
+              "properties": {
+                "jaeger": {
+                  "properties": {
+                    "protocols": {
+                      "properties": {
+                        "thrift_http": {
+                          "$ref": "#/definitions/constrains~1endpoint:t"
+                        }
+                      },
+                      "required": [
+                        "thrift_http"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "protocols"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jaeger"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "receivers"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "tempo": {
+              "properties": {
+                "receivers": {
+                  "properties": {
+                    "otlp": {
+                      "$ref": "#/definitions/constrains~1protocols.grpc=null"
+                    }
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "receivers"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tempo"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "receivers": {
+                    "properties": {
+                      "otlp": {
+                        "$ref": "#/definitions/constrains~1protocols.grpc@2"
+                      }
+                    },
+                    "required": [
+                      "otlp"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "receivers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null"
+      }
+    },
+    "constrains/tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.grpc+tempo.receivers.otlp.protocols.grpc=null"
+      }
+    },
+    "constrains/tempo.receivers.otlp.protocols.grpc.endpoint": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "receivers": {
+                "properties": {
+                  "otlp": {
+                    "$ref": "#/definitions/constrains~1protocols.grpc.endpoint"
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "receivers"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tempo.receivers.otlp.protocols.grpc.endpoint:t": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "receivers": {
+              "properties": {
+                "otlp": {
+                  "$ref": "#/definitions/constrains~1protocols.grpc.endpoint:t"
+                }
+              },
+              "required": [
+                "otlp"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "receivers"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "tempo": {
+              "properties": {
+                "receivers": {
+                  "properties": {
+                    "otlp": {
+                      "properties": {
+                        "protocols": {
+                          "properties": {
+                            "http": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "http"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "protocols"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "receivers"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tempo"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "receivers": {
+                    "properties": {
+                      "otlp": {
+                        "properties": {
+                          "protocols": {
+                            "properties": {
+                              "http": {}
+                            },
+                            "required": [
+                              "http"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "otlp"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "receivers"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null"
+      }
+    },
+    "constrains/tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.receivers.otlp.protocols.http+tempo.receivers.otlp.protocols.http=null"
+      }
+    },
+    "constrains/tempo.receivers.otlp.protocols.http.endpoint": {
+      "not": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "receivers": {
+                "properties": {
+                  "otlp": {
+                    "properties": {
+                      "protocols": {
+                        "properties": {
+                          "http": {
+                            "$ref": "#/definitions/constrains~1endpoint"
+                          }
+                        },
+                        "required": [
+                          "http"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "protocols"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "receivers"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/tempo.receivers.otlp.protocols.http.endpoint:t": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "receivers": {
+              "properties": {
+                "otlp": {
+                  "properties": {
+                    "protocols": {
+                      "properties": {
+                        "http": {
+                          "$ref": "#/definitions/constrains~1endpoint:t"
+                        }
+                      },
+                      "required": [
+                        "http"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "protocols"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "otlp"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "receivers"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempo.tag": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tempo.tag@2"
+      }
+    },
+    "constrains/tempo.tag@2": {
+      "properties": {
+        "tempo": {
+          "properties": {
+            "tag": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "tag"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tempo"
+      ],
+      "type": "object"
+    },
+    "constrains/tempoQuery.enabled:t": {
+      "properties": {
+        "tempoQuery": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "tempoQuery"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -595,6 +4975,70 @@
           "const": true
         }
       ]
+    },
+    "values/anyOf/null,boolean,number+string": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+        },
+        {
+          "not": {
+            "pattern": "[^A-Za-z0-9_./+-]"
+          },
+          "type": "string"
+        }
+      ]
+    },
+    "values/not/object": {
+      "not": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name~1null,boolean,number"
+            },
+            {
+              "$ref": "#/definitions/values~1string;pattern-x3a"
+            }
+          ]
+        },
+        "propertyNames": {
+          "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+        },
+        "type": "object"
+      }
+    },
+    "values/string": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "type": "string"
+    },
+    "values/tempo.receivers.jaeger.protocols.grpc": {
+      "additionalProperties": {},
+      "properties": {
+        "endpoint": {}
+      }
+    },
+    "values/tempo.resources": {
+      "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
     }
   },
   "properties": {
@@ -635,7 +5079,39 @@
       "description": "Overrides the chart's name"
     },
     "networkPolicy": {
-      "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld"
+      "additionalProperties": {},
+      "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
+      "properties": {
+        "allowExternal": {
+          "description": "Don't require client label for connections\nan ingress network policy"
+        },
+        "egress": {
+          "additionalProperties": {},
+          "properties": {
+            "blockDNSResolution": {
+              "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace."
+            },
+            "enabled": {
+              "description": "When enabled, an egress network policy will be\ncreated allowing tempo to connect to external data sources from kubernetes cluster."
+            },
+            "ports": {
+              "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443"
+            },
+            "to": {
+              "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
+            }
+          }
+        },
+        "enabled": {
+          "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now."
+        },
+        "explicitNamespacesSelector": {
+          "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
+        },
+        "ingress": {
+          "description": "The Policy model to apply. When set to false, only pods with the correct\nclient label will have network access to  tempo port defined.\nWhen true, tempo will accept connections from any source\n(with the correct destination port).\nWhen true enables the creation"
+        }
+      }
     },
     "nodeSelector": {
       "description": "Node labels for pod assignment. See: https://kubernetes.io/docs/user-guide/node-selection/"
@@ -643,10 +5119,17 @@
     "persistence": {
       "additionalProperties": {},
       "properties": {
+        "accessModes": {
+          "description": "storageClassName: local-path"
+        },
+        "annotations": {},
         "enableStatefulSetAutoDeletePVC": {
           "description": "Enable StatefulSetAutoDeletePVC feature"
         },
-        "enabled": {}
+        "enabled": {},
+        "selector": {},
+        "size": {},
+        "storageClassName": {}
       },
       "type": "object"
     },
@@ -666,20 +5149,57 @@
     "securityContext": {
       "description": "securityContext for container"
     },
-    "service": {},
+    "service": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "clusterIP": {},
+        "externalIPs": {},
+        "labels": {},
+        "loadBalancerIP": {
+          "description": "(string) IP address, in case of 'type: LoadBalancer'"
+        },
+        "loadBalancerSourceRanges": {},
+        "protocol": {
+          "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\""
+        },
+        "targetPort": {},
+        "type": {}
+      }
+    },
     "serviceAccount": {
       "additionalProperties": {},
       "properties": {
+        "annotations": {
+          "description": "Annotations for the service account"
+        },
         "automountServiceAccountToken": {},
         "create": {
           "description": "Specifies whether a ServiceAccount should be created"
+        },
+        "imagePullSecrets": {
+          "description": "Image pull secrets for the service account"
+        },
+        "labels": {
+          "description": "Labels for the service account"
         },
         "name": {
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       }
     },
-    "serviceMonitor": {},
+    "serviceMonitor": {
+      "additionalProperties": {},
+      "properties": {
+        "additionalLabels": {},
+        "annotations": {
+          "description": "scrapeTimeout: 10s"
+        },
+        "enabled": {},
+        "interval": {},
+        "scrapeTimeout": {}
+      }
+    },
     "tempo": {
       "additionalProperties": {},
       "allOf": [
@@ -716,11 +5236,90 @@
         }
       ],
       "properties": {
+        "extraArgs": {
+          "description": "allowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nAdditional container arguments"
+        },
+        "extraEnv": {
+          "description": "Environment variables to add"
+        },
+        "extraEnvFrom": {
+          "description": "Environment variables from secrets or configmaps to add to the ingester pods"
+        },
+        "extraVolumeMounts": {
+          "description": "Volume mounts to add\n- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim"
+        },
+        "livenessProbe": {
+          "description": "Readiness and Liveness Probe Configuration Options"
+        },
+        "memBallastSizeMbs": {},
+        "metricsGenerator": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "If true, enables Tempo's metrics generator (https://grafana.com/docs/tempo/next/metrics-generator/)"
+            }
+          }
+        },
         "per_tenant_overrides": {
           "description": "The `per tenant` aka `tenant-specific` runtime overrides. This allows overriding values set in the configuration on a per-tenant basis. Note that *all* values must be given for each per-tenant configuration block. Refer to [Runtime overrides](https://grafana.com/docs/tempo/latest/configuration/#runtime-overrides) and [Tenant-Specific overrides](https://grafana.com/docs/tempo/latest/configuration/#tenant-specific-overrides) documentation for more details.\n'tenant-id':\nmetrics_generator:\nprocessors:\n- service-graphs\n- span-metrics"
         },
+        "pullPolicy": {
+          "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName"
+        },
         "pullSecrets": {},
-        "tag": {}
+        "readinessProbe": {},
+        "receivers": {
+          "additionalProperties": {},
+          "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+          "properties": {
+            "jaeger": {
+              "additionalProperties": {},
+              "properties": {
+                "protocols": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "grpc": {
+                      "$ref": "#/definitions/values~1tempo.receivers.jaeger.protocols.grpc"
+                    },
+                    "thrift_binary": {
+                      "$ref": "#/definitions/values~1tempo.receivers.jaeger.protocols.grpc"
+                    },
+                    "thrift_compact": {
+                      "$ref": "#/definitions/values~1tempo.receivers.jaeger.protocols.grpc"
+                    },
+                    "thrift_http": {
+                      "$ref": "#/definitions/values~1tempo.receivers.jaeger.protocols.grpc"
+                    }
+                  }
+                }
+              }
+            },
+            "otlp": {
+              "additionalProperties": {},
+              "properties": {
+                "protocols": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "grpc": {
+                      "$ref": "#/definitions/values~1tempo.receivers.jaeger.protocols.grpc"
+                    },
+                    "http": {
+                      "$ref": "#/definitions/values~1tempo.receivers.jaeger.protocols.grpc"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "registry": {},
+        "repository": {},
+        "resources": {
+          "$ref": "#/definitions/values~1tempo.resources"
+        },
+        "securityContext": {},
+        "tag": {},
+        "updateStrategy": {}
       },
       "type": "object"
     },
@@ -730,7 +5329,52 @@
         "enabled": {
           "description": "if False the tempo-query container is not deployed"
         },
-        "pullSecrets": {}
+        "extraArgs": {
+          "description": "Additional container arguments"
+        },
+        "extraEnv": {
+          "description": "Environment variables to add"
+        },
+        "extraVolumeMounts": {
+          "description": "Volume mounts to add"
+        },
+        "ingress": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated"
+            },
+            "enabled": {},
+            "extraPaths": {
+              "description": "Extra paths to prepend to every host configuration. This is useful when working with annotation based services.\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nOr for k8s > 1.19\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
+            },
+            "labels": {
+              "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+            },
+            "path": {},
+            "pathType": {
+              "description": "pathType is only for k8s >= 1.1="
+            }
+          }
+        },
+        "pullPolicy": {
+          "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nRefers to: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName"
+        },
+        "pullSecrets": {},
+        "repository": {},
+        "resources": {
+          "$ref": "#/definitions/values~1tempo.resources"
+        },
+        "securityContext": {
+          "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"
+        },
+        "service": {
+          "additionalProperties": {},
+          "properties": {
+            "port": {}
+          }
+        },
+        "tag": {}
       }
     },
     "tolerations": {

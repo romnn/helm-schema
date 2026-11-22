@@ -4,7 +4,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/helm-condition-1"
+        "$ref": "#/definitions/helm-condition-2"
       },
       "then": {
         "additionalProperties": {},
@@ -17,7 +17,30 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/helm-condition-3"
+        "$ref": "#/definitions/helm-condition-0"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/helm-condition-4"
       },
       "then": {
         "additionalProperties": {},
@@ -40,7 +63,7 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/helm-condition-5"
+        "$ref": "#/definitions/helm-condition-6"
       },
       "then": {
         "additionalProperties": {},
@@ -82,92 +105,90 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "properties": {
-              "ingress": {
+            "allOf": [
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/definitions/t"
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "ingress"
                 ],
                 "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            ]
           },
           {
             "anyOf": [
               {
                 "not": {
                   "properties": {
-                    "service": {}
+                    "ingress": {}
                   },
                   "required": [
-                    "service"
+                    "ingress"
                   ],
                   "type": "object"
                 }
               },
               {
                 "properties": {
-                  "service": {
+                  "ingress": {
                     "enum": [
                       null
                     ]
                   }
                 },
                 "required": [
-                  "service"
+                  "ingress"
                 ],
                 "type": "object"
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
           },
           {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/helm-condition-13"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/helm-condition-12"
       },
       "then": false
     }
@@ -200,20 +221,63 @@
       "else": false,
       "if": {
         "properties": {
-          "fullnameOverride": {
-            "$ref": "#/definitions/t"
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
           }
         },
         "required": [
-          "fullnameOverride"
+          "ingress"
         ],
         "type": "object"
       },
-      "then": {
-        "$ref": "#/definitions/helm-condition-0"
-      }
+      "then": true
     },
     "helm-condition-10": {
+      "allOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "ingress": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/helm-condition-9"
+        }
+      ]
+    },
+    "helm-condition-11": {
       "not": {
         "properties": {
           "fullnameOverride": {
@@ -226,7 +290,7 @@
         "type": "object"
       }
     },
-    "helm-condition-11": {
+    "helm-condition-12": {
       "allOf": [
         {
           "properties": {
@@ -259,27 +323,44 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/helm-condition-10"
+          "$ref": "#/definitions/helm-condition-11"
         },
         {
-          "$ref": "#/definitions/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-7"
         }
       ]
     },
-    "helm-condition-12": {
+    "helm-condition-13": {
       "anyOf": [
         {
-          "$ref": "#/definitions/helm-condition-7"
+          "$ref": "#/definitions/helm-condition-8"
         },
         {
-          "$ref": "#/definitions/helm-condition-9"
+          "$ref": "#/definitions/helm-condition-10"
         },
         {
-          "$ref": "#/definitions/helm-condition-11"
+          "$ref": "#/definitions/helm-condition-12"
         }
       ]
     },
     "helm-condition-2": {
+      "else": false,
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/definitions/helm-condition-1"
+      }
+    },
+    "helm-condition-3": {
       "else": false,
       "if": {
         "properties": {
@@ -302,7 +383,7 @@
       },
       "then": true
     },
-    "helm-condition-3": {
+    "helm-condition-4": {
       "else": false,
       "if": {
         "properties": {
@@ -324,10 +405,10 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/definitions/helm-condition-2"
+        "$ref": "#/definitions/helm-condition-3"
       }
     },
-    "helm-condition-4": {
+    "helm-condition-5": {
       "else": false,
       "if": {
         "properties": {
@@ -342,7 +423,7 @@
       },
       "then": true
     },
-    "helm-condition-5": {
+    "helm-condition-6": {
       "else": false,
       "if": {
         "properties": {
@@ -364,10 +445,10 @@
         "type": "object"
       },
       "then": {
-        "$ref": "#/definitions/helm-condition-4"
+        "$ref": "#/definitions/helm-condition-5"
       }
     },
-    "helm-condition-6": {
+    "helm-condition-7": {
       "not": {
         "properties": {
           "nameOverride": {
@@ -380,7 +461,7 @@
         "type": "object"
       }
     },
-    "helm-condition-7": {
+    "helm-condition-8": {
       "allOf": [
         {
           "properties": {
@@ -435,11 +516,11 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/helm-condition-6"
+          "$ref": "#/definitions/helm-condition-7"
         }
       ]
     },
-    "helm-condition-8": {
+    "helm-condition-9": {
       "not": {
         "properties": {
           "fullnameOverride": {
@@ -451,43 +532,6 @@
         ],
         "type": "object"
       }
-    },
-    "helm-condition-9": {
-      "allOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "ingress": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ingress"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-8"
-        }
-      ]
     },
     "t": {
       "anyOf": [
@@ -527,6 +571,7 @@
       "properties": {
         "annotations": {},
         "enabled": {},
+        "hosts": {},
         "ingressClassName": {},
         "tls": {}
       },

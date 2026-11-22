@@ -346,174 +346,160 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "acmesolver": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "acmesolver": {}
+                  },
+                  "required": [
+                    "acmesolver"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "acmesolver"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "acmesolver": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "acmesolver"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "acmesolver": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "acmesolver"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "global": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {}
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "global": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "image": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "image": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "image": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "prometheus": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "prometheus": {}
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "prometheus": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "prometheus": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {}
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/helm-condition-14"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/helm-condition-26"
+            ]
           },
           {
-            "$ref": "#/definitions/helm-condition-37"
+            "$ref": "#/definitions/helm-condition-14"
           },
           {
-            "$ref": "#/definitions/helm-condition-59"
+            "allOf": [
+              {
+                "$ref": "#/definitions/helm-condition-26"
+              },
+              {
+                "$ref": "#/definitions/helm-condition-37"
+              },
+              {
+                "$ref": "#/definitions/helm-condition-47"
+              }
+            ]
           }
         ]
       },
@@ -1533,33 +1519,20 @@
     "helm-condition-38": {
       "not": {
         "properties": {
-          "fullnameOverride": {
-            "type": "string"
+          "global": {
+            "type": "object"
           }
         },
         "required": [
-          "fullnameOverride"
+          "global"
         ],
         "type": "object"
       }
     },
     "helm-condition-39": {
-      "allOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-38"
-        }
-      ]
+      "not": {
+        "$ref": "#/definitions/helm-condition-17"
+      }
     },
     "helm-condition-4": {
       "not": {
@@ -1598,19 +1571,29 @@
     },
     "helm-condition-41": {
       "not": {
+        "$ref": "#/definitions/helm-condition-21"
+      }
+    },
+    "helm-condition-42": {
+      "not": {
+        "$ref": "#/definitions/helm-condition-24"
+      }
+    },
+    "helm-condition-43": {
+      "not": {
         "properties": {
-          "nameOverride": {
-            "$ref": "#/definitions/t"
+          "fullnameOverride": {
+            "type": "string"
           }
         },
         "required": [
-          "nameOverride"
+          "fullnameOverride"
         ],
         "type": "object"
       }
     },
-    "helm-condition-42": {
-      "anyOf": [
+    "helm-condition-44": {
+      "allOf": [
         {
           "properties": {
             "fullnameOverride": {
@@ -1623,93 +1606,11 @@
           "type": "object"
         },
         {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-41"
+          "$ref": "#/definitions/helm-condition-43"
         }
       ]
     },
-    "helm-condition-43": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "creator": {}
-                },
-                "required": [
-                  "creator"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "creator": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "creator"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "creator": {}
-                },
-                "required": [
-                  "creator"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "creator": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "creator"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "properties": {
-            "creator": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "creator"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "helm-condition-44": {
+    "helm-condition-45": {
       "not": {
         "properties": {
           "fullnameOverride": {
@@ -1722,97 +1623,40 @@
         "type": "object"
       }
     },
-    "helm-condition-45": {
-      "anyOf": [
-        {
-          "properties": {
-            "fullnameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-44"
-        }
-      ]
-    },
     "helm-condition-46": {
-      "anyOf": [
+      "allOf": [
         {
-          "properties": {
-            "nameOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/helm-condition-45"
         },
         {
-          "$ref": "#/definitions/helm-condition-41"
+          "$ref": "#/definitions/helm-condition-42"
         }
       ]
     },
     "helm-condition-47": {
-      "allOf": [
+      "anyOf": [
         {
-          "properties": {
-            "global": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/helm-condition-38"
+        },
+        {
+          "$ref": "#/definitions/helm-condition-39"
         },
         {
           "$ref": "#/definitions/helm-condition-40"
         },
         {
+          "$ref": "#/definitions/helm-condition-41"
+        },
+        {
           "$ref": "#/definitions/helm-condition-42"
         },
         {
-          "$ref": "#/definitions/helm-condition-43"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-45"
+          "$ref": "#/definitions/helm-condition-44"
         },
         {
           "$ref": "#/definitions/helm-condition-46"
         }
       ]
-    },
-    "helm-condition-48": {
-      "not": {
-        "$ref": "#/definitions/helm-condition-21"
-      }
-    },
-    "helm-condition-49": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "nodeSelector": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "nodeSelector"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
     },
     "helm-condition-5": {
       "not": {
@@ -1843,259 +1687,6 @@
           }
         ]
       }
-    },
-    "helm-condition-50": {
-      "anyOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {}
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "nodeSelector": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "nodeSelector"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "nodeSelector": {}
-                    },
-                    "required": [
-                      "nodeSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "nodeSelector": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "nodeSelector"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "properties": {
-            "global": {
-              "properties": {
-                "nodeSelector": {
-                  "type": "object"
-                }
-              },
-              "required": [
-                "nodeSelector"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-49"
-        }
-      ]
-    },
-    "helm-condition-51": {
-      "allOf": [
-        {
-          "properties": {
-            "global": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-48"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-42"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-43"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-50"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-45"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-46"
-        }
-      ]
-    },
-    "helm-condition-52": {
-      "not": {
-        "$ref": "#/definitions/helm-condition-24"
-      }
-    },
-    "helm-condition-53": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/helm-condition-44"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-52"
-        }
-      ]
-    },
-    "helm-condition-54": {
-      "not": {
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-condition-55": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/helm-condition-54"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-42"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-43"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-45"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-46"
-        }
-      ]
-    },
-    "helm-condition-56": {
-      "not": {
-        "$ref": "#/definitions/helm-condition-17"
-      }
-    },
-    "helm-condition-57": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/helm-condition-56"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-42"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-45"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-46"
-        }
-      ]
-    },
-    "helm-condition-58": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/helm-condition-52"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-42"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-45"
-        }
-      ]
-    },
-    "helm-condition-59": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/helm-condition-39"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-47"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-51"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-53"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-55"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-57"
-        },
-        {
-          "$ref": "#/definitions/helm-condition-58"
-        }
-      ]
     },
     "helm-condition-6": {
       "not": {
@@ -2327,98 +1918,101 @@
     "nodeSelector": {},
     "podAnnotations": {},
     "podDisruptionBudget": {},
+    "podDnsConfig": {},
+    "podDnsPolicy": {},
     "podLabels": {},
     "prometheus": {
       "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "podmonitor": {}
-                      },
-                      "required": [
-                        "podmonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
+                "allOf": [
                   {
                     "properties": {
-                      "podmonitor": {
-                        "enum": [
-                          null
-                        ]
+                      "enabled": {
+                        "$ref": "#/definitions/t"
                       }
                     },
                     "required": [
-                      "podmonitor"
+                      "enabled"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "podmonitor": {}
+                          },
+                          "required": [
+                            "podmonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "podmonitor": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "podmonitor"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/helm-condition-11"
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/helm-condition-11"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "servicemonitor": {}
-                      },
-                      "required": [
-                        "servicemonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
+                "allOf": [
                   {
                     "properties": {
-                      "servicemonitor": {
-                        "enum": [
-                          null
-                        ]
+                      "enabled": {
+                        "$ref": "#/definitions/t"
                       }
                     },
                     "required": [
-                      "servicemonitor"
+                      "enabled"
                     ],
                     "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "servicemonitor": {}
+                          },
+                          "required": [
+                            "servicemonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "servicemonitor": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "servicemonitor"
+                        ],
+                        "type": "object"
+                      }
+                    ]
                   }
                 ]
               }

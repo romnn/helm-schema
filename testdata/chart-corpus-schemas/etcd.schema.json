@@ -4,25 +4,665 @@
   "allOf": [
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "auth": {}
+              },
+              "required": [
+                "auth"
+              ],
+              "type": "object"
+            }
           },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token+auth.token.type+auth.token.type=null"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
+                    }
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1auth.token.type"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1auth.token.type=null"
+                                }
+                              ]
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-1"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-1"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1group-1"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.type=jwt"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1group-0"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type@2"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-0"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type@2"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type=jwt"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1auth.token.type@2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "auth": {
+                          "properties": {
+                            "token": {}
+                          },
+                          "required": [
+                            "token"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "auth"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "properties": {
+                          "token": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "token"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "auth": {}
+                      },
+                      "required": [
+                        "auth"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "auth": {
+                "enum": [
+                  null
+                ]
+              }
             },
-            "then": {
-              "$ref": "#/definitions/when~1auth.token.type=jwt~1then~1any~1else~1fail"
+            "required": [
+              "auth"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1auth.token.enabled=true+auth.token.type=jwt"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
             }
           }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-        },
-        "then": false
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -37,59 +677,27 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1auth.token.enabled=true+auth.token.type=jwt"
             },
-            "then": {
-              "$ref": "#/definitions/when~1auth.token.type=jwt~1then~1any~1else~1fail"
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             }
-          }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
+          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more"
             },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": true,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1auth.token.type@2"
-                    },
-                    "then": false
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
-                  },
-                  "then": false
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
-                },
-                "then": false
-              }
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -109,7 +717,7 @@
             "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
           },
           {
-            "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+            "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
           }
         ]
       },
@@ -137,792 +745,28 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "auth": {
-                      "properties": {
-                        "token": {}
-                      },
-                      "required": [
-                        "token"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "auth"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "token": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "token"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1auth+auth=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1auth+auth=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.privateKey.existingSecret:t+auth.token.type+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.type+auth.token.type=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@2"
-                }
-              }
-            ]
-          },
-          {
-            "not": {
-              "allOf": [
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
-                          }
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@2"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type@2"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type=jwt"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.enabled=true"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1auth.token.type@2"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1auth.token.enabled=true+auth.token.type=jwt"
             },
-            "then": {
-              "$ref": "#/definitions/when~1auth.token.type=jwt~1then~1any~1else~1fail"
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
             }
-          }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
+          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more"
             },
-            "then": {
-              "else": false,
-              "if": {
-                "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-              },
-              "then": {
-                "else": {
-                  "else": {
-                    "else": true,
-                    "if": {
-                      "$ref": "#/definitions/constrains~1auth.token.type@2"
-                    },
-                    "then": false
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
-                  },
-                  "then": false
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
-                },
-                "then": false
-              }
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -937,41 +781,7 @@
     }
   ],
   "definitions": {
-    "constrains/auth+auth=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "auth": {}
-            },
-            "required": [
-              "auth"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "auth": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "auth"
-          ],
-          "type": "object"
-        }
-      ]
-    },
     "constrains/auth.token+auth.token.enabled+auth.token.enabled=null": {
-      "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@3"
-    },
-    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@2": {
-      "$ref": "#/definitions/constrains~1auth.token+auth.token.enabled+auth.token.enabled=null@3"
-    },
-    "constrains/auth.token+auth.token.enabled+auth.token.enabled=null@3": {
       "anyOf": [
         {
           "not": {
@@ -1024,7 +834,7 @@
             "auth": {
               "properties": {
                 "token": {
-                  "$ref": "#/definitions/constrains~1enabled"
+                  "$ref": "#/definitions/constrains~1enabled@2"
                 }
               },
               "required": [
@@ -1041,39 +851,23 @@
       ]
     },
     "constrains/auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=jwt+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1auth.token.type"
-        },
+      "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+            "$ref": "#/definitions/constrains~1auth.token.type@2"
           }
         },
         {
-          "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+          "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null@2"
         },
         {
-          "$ref": "#/definitions/constrains~1auth.token.type=null"
+          "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null@2"
         },
         {
-          "$ref": "#/definitions/constrains~1auth.token.type@2"
-        }
-      ]
-    },
-    "constrains/auth.token+auth.token.enabled=true+auth.token.type+auth.token.type=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1auth.token.type"
+          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
         },
         {
           "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1auth.token.type=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1auth.token.type@2"
         }
       ]
     },
@@ -1085,7 +879,7 @@
               "$ref": "#/definitions/constrains~1auth.token+auth.token.type+auth.token.type=null"
             },
             {
-              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
+              "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
             }
           ]
         },
@@ -1111,15 +905,20 @@
     },
     "constrains/auth.token.enabled=true": {
       "not": {
-        "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
+        "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
       }
+    },
+    "constrains/auth.token.enabled=true+auth.token.type=jwt": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+        }
+      ]
     },
     "constrains/auth.token.enabled=true@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1auth.token.enabled=true@3"
-      }
-    },
-    "constrains/auth.token.enabled=true@3": {
       "properties": {
         "auth": {
           "properties": {
@@ -1140,15 +939,10 @@
     },
     "constrains/auth.token.privateKey.existingSecret:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
+        "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@2"
       }
     },
     "constrains/auth.token.privateKey.existingSecret:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t@3"
-      }
-    },
-    "constrains/auth.token.privateKey.existingSecret:t@3": {
       "properties": {
         "auth": {
           "properties": {
@@ -1211,18 +1005,18 @@
       }
     },
     "constrains/auth.token.type+auth.token.type=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1auth.token.type"
-        },
-        {
-          "$ref": "#/definitions/constrains~1auth.token.type=null"
-        }
-      ]
+      "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null@2"
     },
     "constrains/auth.token.type+auth.token.type=null@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1auth.token.type+auth.token.type=null"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1auth.token.type"
+          },
+          {
+            "$ref": "#/definitions/constrains~1auth.token.type=null"
+          }
+        ]
       }
     },
     "constrains/auth.token.type=jwt": {
@@ -1378,17 +1172,23 @@
       }
     },
     "constrains/enabled": {
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1enabled@2"
+      }
     },
     "constrains/enabled+enabled=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
+          }
+        }
+      ]
+    },
+    "constrains/enabled+enabled=null@2": {
       "anyOf": [
         {
           "not": {
@@ -1432,6 +1232,17 @@
       ],
       "type": "object"
     },
+    "constrains/enabled@2": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "properties": {
         "fullnameOverride": {
@@ -1443,42 +1254,12 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride+fullnameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
-    },
-    "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          }
-        }
-      ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -1488,6 +1269,47 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1auth.token.enabled=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1auth.token.type=jwt"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels@3"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1auth.token.enabled=true@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride"
+        }
+      ]
     },
     "constrains/nameOverride": {
       "properties": {
@@ -1555,7 +1377,32 @@
       ],
       "type": "object"
     },
+    "constrains/type": {
+      "not": {
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/type+type=null": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1type+type=null@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1type"
+        }
+      ]
+    },
+    "constrains/type+type=null@2": {
       "anyOf": [
         {
           "not": {
@@ -1641,53 +1488,6 @@
           "const": true
         }
       ]
-    },
-    "when/auth.token.type=jwt/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1auth.token.type=jwt@2"
-      },
-      "then": true
-    },
-    "when/enabled+enabled=null/then/fail/else/enabled": {
-      "else": {
-        "$ref": "#/definitions/when~1enabled~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1enabled+enabled=null"
-      },
-      "then": false
-    },
-    "when/enabled/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1enabled"
-      },
-      "then": false
-    },
-    "when/type+type=null/then/fail/else/type": {
-      "else": {
-        "$ref": "#/definitions/when~1type~1then~1fail~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1type+type=null"
-      },
-      "then": false
-    },
-    "when/type/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "properties": {
-          "type": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "type"
-        ],
-        "type": "object"
-      },
-      "then": false
     }
   },
   "properties": {
@@ -1739,112 +1539,119 @@
           "allOf": [
             {
               "if": {
-                "else": {
-                  "else": {
-                    "$ref": "#/definitions/when~1enabled+enabled=null~1then~1fail~1else~1enabled"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                  },
-                  "then": false
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1enabled=true"
-                },
-                "then": {
-                  "else": {
+                "anyOf": [
+                  {
                     "else": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
+                          }
+                        }
+                      ]
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1enabled=true"
+                    },
+                    "then": {
                       "else": {
                         "else": {
-                          "else": true,
+                          "else": {
+                            "else": {
+                              "else": true,
+                              "if": {
+                                "$ref": "#/definitions/constrains~1enabled@2"
+                              },
+                              "then": {
+                                "$ref": "#/definitions/constrains~1type"
+                              }
+                            },
+                            "if": {
+                              "$ref": "#/definitions/constrains~1type+type=null@2"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1enabled"
+                            }
+                          },
                           "if": {
-                            "$ref": "#/definitions/constrains~1enabled"
+                            "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
                           },
                           "then": {
-                            "$ref": "#/definitions/when~1type~1then~1fail~1else~1any"
+                            "$ref": "#/definitions/constrains~1type+type=null"
                           }
                         },
                         "if": {
-                          "$ref": "#/definitions/constrains~1type+type=null"
+                          "$ref": "#/definitions/constrains~1type+type=null@2"
                         },
                         "then": {
-                          "$ref": "#/definitions/when~1enabled~1then~1fail~1else~1any"
+                          "$ref": "#/definitions/constrains~1enabled+enabled=null"
                         }
                       },
                       "if": {
-                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
                       },
                       "then": {
-                        "$ref": "#/definitions/when~1type+type=null~1then~1fail~1else~1type"
-                      }
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1type+type=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/when~1enabled+enabled=null~1then~1fail~1else~1enabled"
-                    }
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                  },
-                  "then": {
-                    "else": {
-                      "$ref": "#/definitions/when~1type+type=null~1then~1fail~1else~1type"
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1type+type=null"
-                    },
-                    "then": false
-                  }
-                }
-              },
-              "then": false
-            },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "jwt"
+                        "allOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1type+type=null@2"
+                            }
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1type+type=null"
+                          }
                         ]
                       }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
+                    }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1enabled=true"
-                  },
-                  {
-                    "anyOf": [
+                    "allOf": [
                       {
                         "properties": {
-                          "privateKey": {
+                          "type": {
                             "enum": [
-                              null
+                              "jwt"
                             ]
                           }
                         },
                         "required": [
-                          "privateKey"
+                          "type"
                         ],
                         "type": "object"
                       },
                       {
-                        "not": {
-                          "properties": {
-                            "privateKey": {}
+                        "$ref": "#/definitions/constrains~1enabled=true"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "privateKey": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "privateKey"
+                            ],
+                            "type": "object"
                           },
-                          "required": [
-                            "privateKey"
-                          ],
-                          "type": "object"
-                        }
+                          {
+                            "not": {
+                              "properties": {
+                                "privateKey": {}
+                              },
+                              "required": [
+                                "privateKey"
+                              ],
+                              "type": "object"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }

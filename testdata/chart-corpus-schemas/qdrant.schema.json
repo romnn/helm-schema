@@ -3,21 +3,115 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "config": {
+          "additionalProperties": {},
+          "description": "modification example for configuration to overwrite defaults",
+          "properties": {
+            "cluster": {
+              "additionalProperties": {},
+              "properties": {
+                "p2p": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "config": {
+          "additionalProperties": {},
+          "description": "modification example for configuration to overwrite defaults",
+          "properties": {
+            "cluster": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
+            "$ref": "#/definitions/constrains~1replicaCount=1"
           },
           {
-            "$ref": "#/definitions/constrains~1config.cluster.p2p+config.cluster.p2p=null"
+            "$ref": "#/definitions/constrains~1snapshotRestoration.enabled:t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "snapshotRestoration": {
+            "additionalProperties": {},
+            "properties": {
+              "snapshots": {
+                "description": "- /qdrant/snapshot-restoration/test_collection/test_collection-2022-10-24-13-56-50.snapshot:test_collection",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
         "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.cluster+config.cluster=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config.cluster+config.cluster=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.cluster.p2p+config.cluster.p2p=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config+config=null"
+              }
+            ]
+          },
           {
             "allOf": [
               {
@@ -60,114 +154,7 @@
                 "$ref": "#/definitions/constrains~1nameOverride:t"
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config+config=null"
           },
-          {
-            "$ref": "#/definitions/constrains~1config.cluster+config.cluster=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1snapshotRestoration.enabled:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1replicaCount=1"
-          },
-          "then": true
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "snapshotRestoration": {
-            "additionalProperties": {},
-            "properties": {
-              "snapshots": {
-                "description": "- /qdrant/snapshot-restoration/test_collection/test_collection-2022-10-24-13-56-50.snapshot:test_collection",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.cluster+config.cluster=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1config+config=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "not": {
               "properties": {
@@ -175,6 +162,27 @@
               },
               "required": [
                 "snapshotRestoration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config+config=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.cluster+config.cluster=null"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
               ],
               "type": "object"
             }
@@ -191,6 +199,29 @@
               "snapshotRestoration"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.cluster.p2p+config.cluster.p2p=null"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "config": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -198,45 +229,28 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config+config=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1nameOverride:t"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.cluster+config.cluster=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.cluster.p2p+config.cluster.p2p=null"
+        "properties": {
+          "additionalLabels": {
+            "$ref": "#/definitions/t"
           }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "additionalLabels": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "additionalLabels"
-          ],
-          "type": "object"
         },
-        "then": true
+        "required": [
+          "additionalLabels"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -434,60 +448,53 @@
       ],
       "type": "object"
     },
-    "constrains/replicaCount+replicaCount=1": {
-      "anyOf": [
+    "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1replicaCount=1"
-        },
-        {
-          "properties": {
-            "replicaCount": {
-              "allOf": [
-                {
-                  "pattern": "",
-                  "type": "string"
-                },
-                {
-                  "anyOf": [
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1replicaCount=1"
+            },
+            {
+              "properties": {
+                "replicaCount": {
+                  "allOf": [
                     {
-                      "pattern": "^1$",
+                      "pattern": "",
                       "type": "string"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "pattern": "^1$",
+                          "type": "string"
+                        }
+                      ]
                     }
                   ]
                 }
-              ]
-            }
-          },
-          "required": [
-            "replicaCount"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1"
-            },
-            {
-              "$ref": "#/definitions/constrains~1snapshotRestoration.enabled:t"
+              },
+              "required": [
+                "replicaCount"
+              ],
+              "type": "object"
             }
           ]
         },
         {
+          "$ref": "#/definitions/constrains~1snapshotRestoration.enabled:t"
+        }
+      ]
+    },
+    "constrains/replicaCount+replicaCount=1+snapshotRestoration.enabled:t@2": {
+      "anyOf": [
+        {
           "not": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1snapshotRestoration.enabled:t"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
           }
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicaCount+replicaCount=1+snapshotRestoration.enabled:t"
         }
       ]
     },
@@ -590,58 +597,49 @@
             ]
           },
           "then": false
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "cluster": {
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "p2p": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "p2p"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "p2p": {}
+                          },
+                          "required": [
+                            "p2p"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ]
+            }
+          }
         }
       ],
       "description": "modification example for configuration to overwrite defaults",
-      "properties": {
-        "cluster": {
-          "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "p2p": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "p2p"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "p2p": {}
-                      },
-                      "required": [
-                        "p2p"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              "then": false
-            }
-          ],
-          "properties": {
-            "p2p": {
-              "additionalProperties": {},
-              "properties": {
-                "enable_tls": {},
-                "port": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
-      },
       "type": "object"
     },
     "containerSecurityContext": {},

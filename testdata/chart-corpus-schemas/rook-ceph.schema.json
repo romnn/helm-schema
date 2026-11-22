@@ -6,30 +6,64 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
+            "$ref": "#/definitions/constrains~1csi+csi=null"
           },
           {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.registrar+csi.registrar=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.registrar+csi.registrar=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi:t"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "csiAddons": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "csiAddons"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "csiAddons": {}
+                        },
+                        "required": [
+                          "csiAddons"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
             "properties": {
               "csi": {
                 "properties": {
-                  "registrar": {
+                  "csiAddons": {
                     "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
                   }
                 },
                 "required": [
-                  "registrar"
+                  "csiAddons"
                 ],
                 "type": "object"
               }
@@ -38,6 +72,9 @@
               "csi"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1csi:t"
           }
         ]
       },
@@ -47,7 +84,7 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "registrar": {
+              "csiAddons": {
                 "type": "object"
               }
             }
@@ -59,58 +96,67 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1discover+discover=null"
+            "$ref": "#/definitions/constrains~1csi+csi=null"
           },
           {
-            "$ref": "#/definitions/constrains~1discover+discover=null"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "cephcsi": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "cephcsi"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "cephcsi": {}
+                        },
+                        "required": [
+                          "cephcsi"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
-            "properties": {
-              "discover": {
-                "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
-              }
-            },
-            "required": [
-              "discover"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "discover": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi.attacher+csi.attacher=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.attacher+csi.attacher=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
+            "$ref": "#/definitions/constrains~1csi:t"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
-                  "attacher": {
+                  "cephcsi": {
                     "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
                   }
                 },
                 "required": [
-                  "attacher"
+                  "cephcsi"
                 ],
                 "type": "object"
               }
@@ -119,9 +165,6 @@
               "csi"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi:t"
           }
         ]
       },
@@ -131,7 +174,97 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "attacher": {
+              "cephcsi": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1csi+csi=null"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "snapshotter": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "snapshotter"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "snapshotter": {}
+                        },
+                        "required": [
+                          "snapshotter"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1csi:t"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "snapshotter": {
+                    "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "snapshotter"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "snapshotter": {
                 "type": "object"
               }
             }
@@ -148,7 +281,7 @@
                 "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
               }
             ]
           },
@@ -158,7 +291,7 @@
                 "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
               }
             ]
           }
@@ -274,10 +407,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
+            "$ref": "#/definitions/constrains~1csi+csi=null"
           },
           {
             "properties": {
@@ -299,10 +429,50 @@
             "type": "object"
           },
           {
-            "$ref": "#/definitions/constrains~1csi.resizer+csi.resizer=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.resizer+csi.resizer=null"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "resizer": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "resizer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "resizer": {}
+                        },
+                        "required": [
+                          "resizer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
             "$ref": "#/definitions/constrains~1csi:t"
@@ -321,61 +491,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
-          },
-          {
-            "properties": {
-              "ceph-csi-operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "controllerManager": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "controllerManager"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "controllerManager": {}
-                          },
-                          "required": [
-                            "controllerManager"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ceph-csi-operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1ceph-csi-operator!=null~1then~1fail"
       }
     },
     {
@@ -474,60 +589,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.snapshotter+csi.snapshotter=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.snapshotter+csi.snapshotter=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi:t"
-          },
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "snapshotter": {
-                    "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "snapshotter"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "snapshotter": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
+        "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
       },
       "then": {
         "allOf": [
@@ -649,238 +711,6 @@
       }
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t@2"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1monitoring.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@7"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@4"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@5"
-              },
-              {
-                "properties": {
-                  "csi": {
-                    "properties": {
-                      "serviceMonitor": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "csi"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.enabled:t"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@7"
-                    }
-                  ]
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@3"
-              },
-              {
-                "properties": {
-                  "csi": {
-                    "properties": {
-                      "serviceMonitor": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object@2"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceMonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "csi"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@4"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t@2"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1ceph-csi-operator.serviceAccount.create!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.csiAddons+csi.csiAddons=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.csiAddons+csi.csiAddons=null"
-          },
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "csiAddons": {
-                    "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "csiAddons"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "csiAddons": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "ceph-csi-operator": {
@@ -889,77 +719,6 @@
             "object"
           ]
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
-          },
-          {
-            "properties": {
-              "ceph-csi-operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "controllerManager": {
-                            "properties": {
-                              "manager": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "manager"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "controllerManager"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "controllerManager": {
-                              "properties": {
-                                "manager": {}
-                              },
-                              "required": [
-                                "manager"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "controllerManager"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ceph-csi-operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1ceph-csi-operator!=null~1then~1fail"
       }
     },
     {
@@ -1063,42 +822,286 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1monitoring.enabled:t@2"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+              }
+            ]
           },
           {
-            "anyOf": [
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
+              },
               {
                 "properties": {
-                  "csi": {
-                    "properties": {
-                      "serviceMonitor": {
-                        "enum": [
-                          null
+                  "ceph-csi-operator": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "controllerManager": {
+                                "properties": {
+                                  "manager": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "manager"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "controllerManager"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "properties": {
+                                "controllerManager": {
+                                  "properties": {
+                                    "manager": {}
+                                  },
+                                  "required": [
+                                    "manager"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "controllerManager"
+                              ],
+                              "type": "object"
+                            }
+                          }
                         ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ceph-csi-operator"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
+              },
+              {
+                "properties": {
+                  "ceph-csi-operator": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "controllerManager": {
+                                  "properties": {
+                                    "manager": {
+                                      "properties": {
+                                        "env": {}
+                                      },
+                                      "required": [
+                                        "env"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "manager"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "controllerManager"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "controllerManager": {
+                                "properties": {
+                                  "manager": {
+                                    "properties": {
+                                      "env": {
+                                        "enum": [
+                                          null
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "env"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "manager"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "controllerManager"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ceph-csi-operator"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
+              },
+              {
+                "properties": {
+                  "ceph-csi-operator": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "controllerManager": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "controllerManager"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "properties": {
+                                "controllerManager": {}
+                              },
+                              "required": [
+                                "controllerManager"
+                              ],
+                              "type": "object"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ceph-csi-operator"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "ceph-csi-operator": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "ceph-csi-operator"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1csi+csi=null"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "registrar": {}
+                        },
+                        "required": [
+                          "registrar"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "serviceMonitor"
+                      "csi"
                     ],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "csi"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
+                {
                   "properties": {
                     "csi": {
                       "properties": {
-                        "serviceMonitor": {}
+                        "registrar": {
+                          "enum": [
+                            null
+                          ]
+                        }
                       },
                       "required": [
-                        "serviceMonitor"
+                        "registrar"
                       ],
                       "type": "object"
                     }
@@ -1108,12 +1111,46 @@
                   ],
                   "type": "object"
                 }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1csi:t"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "registrar": {
+                    "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "registrar"
+                ],
+                "type": "object"
               }
-            ]
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "registrar": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1132,54 +1169,56 @@
             "type": "object"
           },
           {
-            "not": {
-              "properties": {
-                "image": {}
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1monitoring.enabled:t@2"
               },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "crds": {}
-              },
-              "required": [
-                "crds"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "crds": {
-                "enum": [
-                  null
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "csi": {
+                          "properties": {
+                            "serviceMonitor": {}
+                          },
+                          "required": [
+                            "serviceMonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "csi"
+                      ],
+                      "type": "object"
+                    }
+                  }
                 ]
               }
-            },
-            "required": [
-              "crds"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
+            ]
+          },
           {
             "properties": {
               "rbacAggregate": {
@@ -1196,6 +1235,78 @@
           {
             "not": {
               "properties": {
+                "csi": {}
+              },
+              "required": [
+                "csi"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "scaleDownOperator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "scaleDownOperator"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "scaleDownOperator": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "scaleDownOperator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "scaleDownOperator": {}
+              },
+              "required": [
+                "scaleDownOperator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "monitoring": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
                 "rbacAggregate": {}
               },
               "required": [
@@ -1203,28 +1314,174 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "not": {
+              "properties": {
+                "monitoring": {}
+              },
+              "required": [
+                "monitoring"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@7"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object@2"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@7"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1monitoring.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "csi": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create!=null"
-        },
-        "then": false
-      }
     },
     {
       "if": {
@@ -1238,7 +1495,7 @@
                 "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
               }
             ]
           },
@@ -1251,7 +1508,7 @@
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@8"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
               }
             ]
           }
@@ -1286,12 +1543,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1csi+csi=null"
-      },
-      "then": false
     },
     {
       "if": {
@@ -1369,7 +1620,7 @@
                 "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@9"
@@ -1382,7 +1633,7 @@
                 "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@9"
@@ -1425,34 +1676,53 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more"
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "provisioner": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "provisioner"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "provisioner": {}
+                        },
+                        "required": [
+                          "provisioner"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create!=null"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.cephcsi+csi.cephcsi=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.cephcsi+csi.cephcsi=null"
+            "$ref": "#/definitions/constrains~1csi+csi=null"
           },
           {
             "$ref": "#/definitions/constrains~1csi:t"
@@ -1461,12 +1731,12 @@
             "properties": {
               "csi": {
                 "properties": {
-                  "cephcsi": {
+                  "provisioner": {
                     "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
                   }
                 },
                 "required": [
-                  "cephcsi"
+                  "provisioner"
                 ],
                 "type": "object"
               }
@@ -1484,7 +1754,7 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "cephcsi": {
+              "provisioner": {
                 "type": "object"
               }
             }
@@ -1494,23 +1764,104 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
-        },
-        "then": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "attacher": {}
+                        },
+                        "required": [
+                          "attacher"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "attacher": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "attacher"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1csi+csi=null"
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "attacher": {
+                    "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "attacher"
+                ],
+                "type": "object"
+              }
             },
-            "then": true
+            "required": [
+              "csi"
+            ],
+            "type": "object"
           },
-          "if": {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
-          },
-          "then": true
+          {
+            "$ref": "#/definitions/constrains~1csi:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "attacher": {
+                "type": "object"
+              }
+            }
+          }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1csi.installCsiOperator:t~1then~1any~1else~1csi.installCsiOperator+csi.installCsiOperator=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1528,50 +1879,58 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "scaleDownOperator": {
-              "type": "boolean"
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "discover": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "discover"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "discover": {}
+                    },
+                    "required": [
+                      "discover"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
             }
           },
-          "required": [
-            "scaleDownOperator"
-          ],
-          "type": "object"
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "properties": {
-              "monitoring": {
-                "enum": [
-                  null
-                ]
+              "discover": {
+                "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
               }
             },
             "required": [
-              "monitoring"
+              "discover"
             ],
             "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "monitoring": {}
-              },
-              "required": [
-                "monitoring"
-              ],
-              "type": "object"
-            }
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "discover": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1676,70 +2035,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more@2"
+            "$ref": "#/definitions/when~1csi.installCsiOperator:t~1then~1any~1else~1csi.installCsiOperator+csi.installCsiOperator=null"
           },
           {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+            "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
           }
         ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1ceph-csi-operator.serviceAccount.create!=null+1more~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "scaleDownOperator": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "scaleDownOperator"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "scaleDownOperator": {}
-              },
-              "required": [
-                "scaleDownOperator"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
-        },
-        "then": {
-          "else": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
-            },
-            "then": true
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
-          },
-          "then": true
-        }
       },
       "then": {
         "additionalProperties": {},
@@ -1757,142 +2058,103 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
+              }
+            ]
           },
           {
-            "properties": {
-              "ceph-csi-operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "controllerManager": {
-                              "properties": {
-                                "manager": {
-                                  "properties": {
-                                    "env": {}
-                                  },
-                                  "required": [
-                                    "env"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "manager"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "controllerManager"
-                          ],
-                          "type": "object"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "properties": {
+                "ceph-csi-operator": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
                         }
                       },
-                      {
-                        "properties": {
-                          "controllerManager": {
-                            "properties": {
-                              "manager": {
-                                "properties": {
-                                  "env": {
-                                    "enum": [
-                                      null
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "env"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "manager"
-                            ],
-                            "type": "object"
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ceph-csi-operator"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "ceph-csi-operator": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
                           }
-                        },
-                        "required": [
-                          "controllerManager"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "ceph-csi-operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/definitions/when~1ceph-csi-operator!=null~1then~1fail"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1csi.provisioner+csi.provisioner=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi.provisioner+csi.provisioner=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi+csi=null@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1csi:t"
-          },
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "provisioner": {
-                    "$ref": "#/definitions/constrains~1csi:t~1anyOf~1:t+object"
-                  }
-                },
-                "required": [
-                  "provisioner"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "provisioner": {
-                "type": "object"
-              }
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ceph-csi-operator"
+              ],
+              "type": "object"
             }
-          }
-        }
+          ]
+        },
+        "then": false
       }
     }
   ],
@@ -1900,15 +2162,28 @@
     "constrains/ceph-csi-operator+ceph-csi-operator.fullnameOverride+7more": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride+ceph-csi-operator.nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+            }
+          ]
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride+ceph-csi-operator.nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
             }
           ]
         },
@@ -1918,126 +2193,10 @@
               "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride@2"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride@2"
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride+ceph-csi-operator.nameOverride:t"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride@2"
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
             }
           ]
         }
@@ -2048,48 +2207,35 @@
         "allOf": [
           {
             "not": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-                }
-              ]
+              "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more"
             }
           },
           {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
               }
             ]
           },
           {
             "anyOf": [
               {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride@2"
@@ -2099,13 +2245,13 @@
           {
             "anyOf": [
               {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
@@ -2115,18 +2261,16 @@
           {
             "anyOf": [
               {
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
-                }
+                "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride"
               },
               {
                 "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride@2"
@@ -2137,33 +2281,141 @@
       }
     },
     "constrains/ceph-csi-operator+ceph-csi-operator.serviceAccount+3more": {
-      "anyOf": [
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@6"
+            },
+            {
+              "properties": {
+                "ceph-csi-operator": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object@2"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ceph-csi-operator"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@7"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@3"
+            },
+            {
+              "properties": {
+                "ceph-csi-operator": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ceph-csi-operator"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@4"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@6"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@2"
+          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
         }
       ]
     },
@@ -2272,141 +2524,15 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/ceph-csi-operator+ceph-csi-operator.serviceAccount+3more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@6"
-        },
-        {
-          "properties": {
-            "ceph-csi-operator": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object@2"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ceph-csi-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@7"
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@3"
-        },
-        {
-          "properties": {
-            "ceph-csi-operator": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/definitions/constrains~1ceph-csi-operator+ceph-csi-operator.serviceAccount+3more~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ceph-csi-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name@2"
-        }
-      ]
-    },
     "constrains/ceph-csi-operator.fullnameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
       }
     },
-    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+3more": {
+    "constrains/ceph-csi-operator.fullnameOverride+ceph-csi-operator.fullnameOverride:t+2more": {
       "anyOf": [
         {
           "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-            },
             {
               "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t"
             },
@@ -2414,7 +2540,33 @@
               "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
             }
           ]
         }
@@ -2422,15 +2574,10 @@
     },
     "constrains/ceph-csi-operator.fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@2"
       }
     },
     "constrains/ceph-csi-operator.fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ceph-csi-operator.fullnameOverride:t@3"
-      }
-    },
-    "constrains/ceph-csi-operator.fullnameOverride:t@3": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -2487,15 +2634,10 @@
     },
     "constrains/ceph-csi-operator.nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@2"
       }
     },
     "constrains/ceph-csi-operator.nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ceph-csi-operator.nameOverride:t@3"
-      }
-    },
-    "constrains/ceph-csi-operator.nameOverride:t@3": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -2533,58 +2675,12 @@
       ],
       "type": "object"
     },
-    "constrains/ceph-csi-operator.serviceAccount.create!=null": {
-      "properties": {
-        "ceph-csi-operator": {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "create": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ceph-csi-operator"
-      ],
-      "type": "object"
-    },
     "constrains/ceph-csi-operator.serviceAccount.create:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
+        "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@2"
       }
-    },
-    "constrains/ceph-csi-operator.serviceAccount.create:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name:t@2"
-        }
-      ]
     },
     "constrains/ceph-csi-operator.serviceAccount.create:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create:t@3"
-      }
-    },
-    "constrains/ceph-csi-operator.serviceAccount.create:t@3": {
       "properties": {
         "ceph-csi-operator": {
           "properties": {
@@ -3518,58 +3614,12 @@
       "type": "object"
     },
     "constrains/csi+csi=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "csi": {}
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "csi": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "csi"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/csi+csi=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1csi+csi=null"
-      }
-    },
-    "constrains/csi+csi=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1csi+csi=null"
-      }
-    },
-    "constrains/csi.attacher+csi.attacher=null": {
       "not": {
         "anyOf": [
           {
             "not": {
               "properties": {
-                "csi": {
-                  "properties": {
-                    "attacher": {}
-                  },
-                  "required": [
-                    "attacher"
-                  ],
-                  "type": "object"
-                }
+                "csi": {}
               },
               "required": [
                 "csi"
@@ -3580,115 +3630,15 @@
           {
             "properties": {
               "csi": {
-                "properties": {
-                  "attacher": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "attacher"
-                ],
-                "type": "object"
+                "enum": [
+                  null
+                ]
               }
             },
             "required": [
               "csi"
             ],
             "type": "object"
-          }
-        ]
-      }
-    },
-    "constrains/csi.cephcsi+csi.cephcsi=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "cephcsi": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "cephcsi"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "csi": {
-                  "properties": {
-                    "cephcsi": {}
-                  },
-                  "required": [
-                    "cephcsi"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "csi"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
-    },
-    "constrains/csi.csiAddons+csi.csiAddons=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "csiAddons": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "csiAddons"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "csi": {
-                  "properties": {
-                    "csiAddons": {}
-                  },
-                  "required": [
-                    "csiAddons"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "csi"
-              ],
-              "type": "object"
-            }
           }
         ]
       }
@@ -3713,9 +3663,6 @@
       }
     },
     "constrains/csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null": {
-      "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2"
-    },
-    "constrains/csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null@2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1csi.installCsiOperator"
@@ -3777,144 +3724,6 @@
         "csi"
       ],
       "type": "object"
-    },
-    "constrains/csi.provisioner+csi.provisioner=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "provisioner": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "provisioner"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "csi": {
-                  "properties": {
-                    "provisioner": {}
-                  },
-                  "required": [
-                    "provisioner"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "csi"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
-    },
-    "constrains/csi.registrar+csi.registrar=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "csi": {
-                  "properties": {
-                    "registrar": {}
-                  },
-                  "required": [
-                    "registrar"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "csi"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "registrar": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "registrar"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "constrains/csi.resizer+csi.resizer=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "resizer": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "resizer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "csi": {
-                  "properties": {
-                    "resizer": {}
-                  },
-                  "required": [
-                    "resizer"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "csi"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
     },
     "constrains/csi.serviceMonitor.enabled:t": {
       "not": {
@@ -4006,7 +3815,7 @@
             "serviceMonitor": {
               "properties": {
                 "namespace": {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-x20-x25"
+                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-x20-x2e"
                 }
               },
               "required": [
@@ -4033,7 +3842,7 @@
             "serviceMonitor": {
               "properties": {
                 "namespace": {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-x20-x2e"
+                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-x20-x5b"
                 }
               },
               "required": [
@@ -4060,7 +3869,7 @@
             "serviceMonitor": {
               "properties": {
                 "namespace": {
-                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-x20-x5b"
+                  "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.name~1string;pattern-x20-x25"
                 }
               },
               "required": [
@@ -4162,52 +3971,6 @@
       ],
       "type": "object"
     },
-    "constrains/csi.snapshotter+csi.snapshotter=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "csi": {
-                "properties": {
-                  "snapshotter": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "snapshotter"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "csi"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "csi": {
-                  "properties": {
-                    "snapshotter": {}
-                  },
-                  "required": [
-                    "snapshotter"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "csi"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
-    },
     "constrains/csi:t": {
       "properties": {
         "csi": {
@@ -4229,36 +3992,6 @@
         }
       ]
     },
-    "constrains/discover+discover=null": {
-      "not": {
-        "anyOf": [
-          {
-            "properties": {
-              "discover": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "discover"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "discover": {}
-              },
-              "required": [
-                "discover"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      }
-    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -4269,6 +4002,34 @@
         "enabled"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1csi.serviceMonitor.namespace@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1monitoring.enabled:t"
+        }
+      ]
     },
     "constrains/monitoring.enabled:t": {
       "not": {
@@ -4467,64 +4228,14 @@
       ],
       "type": "string"
     },
-    "when/ceph-csi-operator!=null/then/fail": {
-      "if": {
-        "properties": {
-          "ceph-csi-operator": {
-            "not": {
-              "enum": [
-                null
-              ]
-            }
-          }
-        },
-        "required": [
-          "ceph-csi-operator"
-        ],
-        "type": "object"
+    "when/csi.installCsiOperator:t/then/any/else/csi.installCsiOperator+csi.installCsiOperator=null": {
+      "else": {
+        "$ref": "#/definitions/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
       },
-      "then": false
-    },
-    "when/ceph-csi-operator.serviceAccount.create!=null+1more/then/fail": {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1ceph-csi-operator.serviceAccount.create!=null"
-          },
-          {
-            "properties": {
-              "ceph-csi-operator": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "name": {
-                        "not": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ceph-csi-operator"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1csi.installCsiOperator:t"
       },
-      "then": false
+      "then": true
     }
   },
   "properties": {

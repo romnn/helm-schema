@@ -4,34 +4,31 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1nameOverride:t"
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "This is to override the chart name when naming resources",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "This is to fully override the name of the chart & release when naming resources",
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -78,50 +75,7 @@
                 }
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "This is to override the chart name when naming resources",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "This is to fully override the name of the chart & release when naming resources",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
           {
             "properties": {
               "image": {
@@ -135,24 +89,6 @@
             ],
             "type": "object"
           },
-          {
-            "not": {
-              "properties": {
-                "image": {}
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "properties": {
               "nodePort": {
@@ -169,28 +105,21 @@
           {
             "not": {
               "properties": {
-                "nodePort": {}
-              },
-              "required": [
-                "nodePort"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
                 "loadBalancer": {}
               },
               "required": [
                 "loadBalancer"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "nodePort": {}
+              },
+              "required": [
+                "nodePort"
               ],
               "type": "object"
             }
@@ -205,6 +134,41 @@
             },
             "required": [
               "loadBalancer"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {}
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
             ],
             "type": "object"
           }

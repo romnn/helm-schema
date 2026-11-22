@@ -4,31 +4,293 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1worker.enabled:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1worker.pdb.minAvailable:t~1then~1any~1else~1fail"
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "worker": {}
               },
-              "if": {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              },
-              "then": true
+              "required": [
+                "worker"
+              ],
+              "type": "object"
             }
+          },
+          {
+            "properties": {
+              "worker": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "worker"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+              }
+            ]
           }
-        }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1worker+worker.pdb.enabled:t+worker.pdb.maxUnavailable:t+1more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -86,55 +348,27 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null+3more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1postgresql.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -155,471 +389,28 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "worker": {}
-              },
-              "required": [
-                "worker"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "worker": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "worker"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1postgresql.namespaceOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null+3more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1postgresql.namespaceOverride:t"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1postgresql.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1postgresql.namespaceOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1postgresql.namespaceOverride:t"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -684,17 +475,7 @@
           {
             "properties": {
               "postgresql": {
-                "properties": {
-                  "enabled": {
-                    "enum": [
-                      true
-                    ]
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1enabled=true"
               }
             },
             "required": [
@@ -717,55 +498,27 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null+3more"
             },
-            "then": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1postgresql+postgresql.enabled+postgresql.enabled=null~1then~1any~1else~1fail"
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
             }
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1postgresql.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              "then": false
+            {
+              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
             }
-          }
+          ]
         }
       },
       "then": {
@@ -984,31 +737,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1worker.enabled:t"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1worker+worker.pdb.enabled:t+worker.pdb.maxUnavailable:t+1more"
           },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1worker.pdb.minAvailable:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              },
-              "then": true
-            }
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
           }
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1052,31 +788,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1worker.enabled:t"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1worker.pdb.minAvailable:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
-              },
-              "then": true
-            }
+          {
+            "$ref": "#/definitions/constrains~1worker+worker.pdb.enabled:t+worker.pdb.maxUnavailable:t+1more"
           }
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1134,17 +853,7 @@
           {
             "properties": {
               "valkey": {
-                "properties": {
-                  "enabled": {
-                    "enum": [
-                      true
-                    ]
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1enabled=true"
               }
             },
             "required": [
@@ -1237,6 +946,19 @@
       ],
       "type": "object"
     },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1247,28 +969,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+              "$ref": "#/definitions/constrains~1group-9"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride@3"
+              "$ref": "#/definitions/constrains~1group-4"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1group-0"
             }
           ]
         },
@@ -1278,7 +988,7 @@
               "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
@@ -1290,7 +1000,7 @@
               "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             }
           ]
         },
@@ -1300,10 +1010,10 @@
               "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride"
             },
             {
               "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
@@ -1322,43 +1032,29 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1group-9"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+              "$ref": "#/definitions/constrains~1group-7"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              "$ref": "#/definitions/constrains~1group-0"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
             },
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              }
+              "$ref": "#/definitions/constrains~1fullnameOverride"
             },
             {
               "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
@@ -1371,38 +1067,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1group-9"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              "$ref": "#/definitions/constrains~1group-3"
             },
             {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1group-0"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1420,7 +1098,7 @@
               "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             }
           ]
         }
@@ -1428,15 +1106,10 @@
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -1483,22 +1156,123 @@
       ],
       "type": "object"
     },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-3"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
+        }
+      ]
+    },
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-7"
+        }
+      ]
+    },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1worker.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        }
+      ]
+    },
     "constrains/nameOverride": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@3"
+        "$ref": "#/definitions/constrains~1nameOverride@2"
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -1510,11 +1284,6 @@
       "type": "object"
     },
     "constrains/nameOverride@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@3"
-      }
-    },
-    "constrains/nameOverride@3": {
       "properties": {
         "nameOverride": {
           "type": "string"
@@ -1526,23 +1295,6 @@
       "type": "object"
     },
     "constrains/namespaceOverride": {
-      "$ref": "#/definitions/constrains~1namespaceOverride@3"
-    },
-    "constrains/namespaceOverride:t": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
-      "$ref": "#/definitions/constrains~1namespaceOverride@3"
-    },
-    "constrains/namespaceOverride@3": {
       "not": {
         "properties": {
           "namespaceOverride": {
@@ -1554,6 +1306,17 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/namespaceOverride:t": {
+      "properties": {
+        "namespaceOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "namespaceOverride"
+      ],
+      "type": "object"
     },
     "constrains/passwordUpdateJob.enabled!=null": {
       "properties": {
@@ -1736,6 +1499,31 @@
         }
       ]
     },
+    "constrains/postgresql+postgresql.enabled+postgresql.enabled=null+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1postgresql"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled=null"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+        }
+      ]
+    },
     "constrains/postgresql.enabled": {
       "not": {
         "properties": {
@@ -1781,7 +1569,7 @@
     "constrains/postgresql.fullnameOverride:t": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         }
       },
       "required": [
@@ -1792,7 +1580,7 @@
     "constrains/postgresql.nameOverride:t": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       },
       "required": [
@@ -1822,21 +1610,34 @@
       ],
       "type": "object"
     },
+    "constrains/postgresql.passwordUpdateJob.enabled:t+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+        }
+      ]
+    },
     "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-      }
+      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
     },
     "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
     },
     "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t": {
       "properties": {
@@ -1861,6 +1662,25 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/worker+worker.pdb.enabled:t+worker.pdb.maxUnavailable:t+1more": {
+      "allOf": [
+        {
+          "else": {
+            "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1worker.pdb.maxUnavailable:t@2"
+          },
+          "then": true
+        },
+        {
+          "$ref": "#/definitions/constrains~1worker.pdb.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1worker.enabled:t"
+        }
+      ]
     },
     "constrains/worker.enabled:t": {
       "properties": {
@@ -1986,97 +1806,6 @@
         "global": {}
       },
       "type": "object"
-    },
-    "when/fullnameOverride!=null+nameOverride!=null+namespaceOverride!=null+3more/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "namespaceOverride": {
-                "not": {
-                  "enum": [
-                    null
-                  ]
-                }
-              }
-            },
-            "required": [
-              "namespaceOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "nameOverride": {
-                "not": {
-                  "enum": [
-                    null
-                  ]
-                }
-              }
-            },
-            "required": [
-              "nameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret!=null"
-          },
-          {
-            "properties": {
-              "fullnameOverride": {
-                "not": {
-                  "enum": [
-                    null
-                  ]
-                }
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword!=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled!=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/postgresql+postgresql.enabled+postgresql.enabled=null/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1postgresql"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled=null"
-          }
-        ]
-      },
-      "then": true
-    },
-    "when/postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-      },
-      "then": true
-    },
-    "when/worker.pdb.minAvailable:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1worker.pdb.minAvailable:t"
-      },
-      "then": true
     }
   },
   "properties": {
@@ -2333,21 +2062,6 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/definitions/when~1fullnameOverride!=null+nameOverride!=null+namespaceOverride!=null+3more~1then~1fail"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
               },
               {
@@ -2425,20 +2139,92 @@
         },
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1enabled+enabled=null"
-              },
-              {
-                "type": "object"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
           "then": {
-            "$ref": "#/definitions/when~1fullnameOverride!=null+nameOverride!=null+namespaceOverride!=null+3more~1then~1fail"
+            "if": {
+              "allOf": [
+                {
+                  "properties": {
+                    "namespaceOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "namespaceOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "nameOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret!=null"
+                },
+                {
+                  "properties": {
+                    "fullnameOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled!=null"
+                }
+              ]
+            },
+            "then": false
           }
         }
       ],

@@ -4,167 +4,33 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1majorVersion:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1image.tag"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
-                    }
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1image.tag:t@2"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1majorVersion:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1image.tag"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                }
-              }
+        "properties": {
+          "config": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "description": "such as opensearch.yml and log4j2.properties",
+            "type": [
+              "array",
+              "null",
+              "object"
             ]
-          },
-          {
-            "not": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1image.tag:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1majorVersion:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1image.tag"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "not": {
-          "$ref": "#/definitions/constrains~1majorVersion:t@2"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "type": "object"
           }
         }
       }
     },
     {
       "if": {
-        "else": {
-          "else": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1nodeGroup"
-            },
-            "then": false
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
-          },
-          "then": false
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
-        },
-        "then": false
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1image.tag:t@2"
-        },
-        "then": {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1majorVersion:t@2"
-          },
-          "then": false
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "description": "override image tag, which is .Chart.AppVersion by default",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1nameOverride:t"
       },
       "then": {
         "additionalProperties": {},
@@ -177,26 +43,73 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1persistence.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "description": "override image, which is busybox by default\nimage: busybox\noverride image tag, which is latest by default\nimageTag:",
-                "type": "object"
+        "anyOf": [
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1persistence.enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+              },
+              "then": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "else": true,
+                        "if": {
+                          "$ref": "#/definitions/constrains~1nodeGroup@2"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1nodeGroup"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                      }
+                    }
+                  ]
+                }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
           {
             "not": {
               "properties": {
@@ -220,42 +133,149 @@
               "persistence"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1majorVersion:t"
           },
           {
-            "anyOf": [
-              {
-                "properties": {
-                  "image": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              },
+            "allOf": [
               {
                 "not": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1image.tag:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1majorVersion:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1image.tag"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@3"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                          }
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                          }
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    }
+                  ]
                 }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@3"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1majorVersion:t"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1majorVersion:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -265,11 +285,26 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1persistence.enabled:t"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1persistence.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "persistence": {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "description": "override image, which is busybox by default\nimage: busybox\noverride image tag, which is latest by default\nimageTag:",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1persistence.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -288,6 +323,58 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1majorVersion:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1image.tag:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "override image tag, which is .Chart.AppVersion by default",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1majorVersion:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "podAnnotations": {
+          "description": "iam.amazonaws.com/role: es-cluster",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
         }
       }
     }
@@ -363,33 +450,18 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
-          }
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
         },
         {
           "not": {
@@ -410,20 +482,38 @@
       "type": "object"
     },
     "constrains/nodeGroup": {
-      "properties": {
-        "nodeGroup": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1nodeGroup@2"
+      }
     },
     "constrains/nodeGroup+nodeGroup=null": {
-      "anyOf": [
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
+          }
+        },
         {
           "$ref": "#/definitions/constrains~1nodeGroup"
+        }
+      ]
+    },
+    "constrains/nodeGroup+nodeGroup=null@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+        }
+      ]
+    },
+    "constrains/nodeGroup+nodeGroup=null@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@2"
         },
         {
           "not": {
@@ -441,7 +531,7 @@
         }
       ]
     },
-    "constrains/nodeGroup+nodeGroup=null@2": {
+    "constrains/nodeGroup+nodeGroup=null@4": {
       "anyOf": [
         {
           "not": {
@@ -472,10 +562,126 @@
       ],
       "type": "object"
     },
+    "constrains/nodeGroup@2": {
+      "properties": {
+        "nodeGroup": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence+persistence.storageClass+persistence.storageClass=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+          }
+        }
+      ]
+    },
     "constrains/persistence.enabled:t": {
       "properties": {
         "persistence": {
           "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+      }
+    },
+    "constrains/persistence.storageClass+persistence.storageClass=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+        }
+      ]
+    },
+    "constrains/persistence.storageClass:t": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass=null": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass@2": {
+      "not": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "storageClass": {}
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/persistence.storageClass@3": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -675,7 +881,9 @@
               "description": "Add default labels for the volumeClaimTemplate of the StatefulSet"
             }
           }
-        }
+        },
+        "size": {},
+        "storageClass": {}
       },
       "type": "object"
     },
@@ -686,6 +894,7 @@
       "description": "This is the pod affinity settings as defined in\nhttps://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#types-of-inter-pod-affinity-and-anti-affinity"
     },
     "podAnnotations": {
+      "additionalProperties": {},
       "description": "iam.amazonaws.com/role: es-cluster"
     },
     "podManagementPolicy": {

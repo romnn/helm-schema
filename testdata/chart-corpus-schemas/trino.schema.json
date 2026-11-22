@@ -4,53 +4,45 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/definitions/t"
-            }
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor"
           },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor=null"
           },
-          "then": {
-            "else": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1serviceMonitor.worker+serviceMonitor.worker=null~1then~1fail~1else~1any@2"
-                }
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
               },
-              "if": {
+              {
                 "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1serviceMonitor.worker+serviceMonitor.worker=null~1then~1fail~1else~1any@2"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-              },
-              "then": false
-            }
+              }
+            ]
           }
-        }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.enabled:t+2more"
+          },
+          {
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
         "if": {
@@ -81,53 +73,22 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
-          },
-          "then": {
-            "else": {
-              "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1serviceMonitor.worker+serviceMonitor.worker=null~1then~1fail~1else~1any"
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-              },
-              "then": false
+        "allOf": [
+          {
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/definitions/t"
+              }
             },
-            "if": {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1serviceMonitor.worker+serviceMonitor.worker=null~1then~1fail~1else~1any"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-              },
-              "then": false
-            }
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.enabled:t+2more"
           }
-        }
+        ]
       },
       "then": {
         "if": {
@@ -168,53 +129,90 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
-    "constrains/serviceMonitor+serviceMonitor=null": {
-      "anyOf": [
+    "constrains/serviceMonitor": {
+      "not": {
+        "properties": {
+          "serviceMonitor": {}
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.enabled:t+2more": {
+      "allOf": [
         {
-          "not": {
-            "properties": {
-              "serviceMonitor": {}
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
+          "else": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                }
+              }
+            ]
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                }
+              }
+            ]
           }
         },
         {
           "properties": {
             "serviceMonitor": {
-              "enum": [
-                null
-              ]
+              "properties": {
+                "worker": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "worker"
+              ],
+              "type": "object"
             }
           },
           "required": [
             "serviceMonitor"
           ],
           "type": "object"
+        }
+      ]
+    },
+    "constrains/serviceMonitor+serviceMonitor=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor=null"
         }
       ]
     },
@@ -262,26 +260,17 @@
         }
       ]
     },
-    "constrains/serviceMonitor.worker.enabled:t": {
+    "constrains/serviceMonitor.worker+serviceMonitor.worker=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+      }
+    },
+    "constrains/serviceMonitor=null": {
       "properties": {
         "serviceMonitor": {
-          "properties": {
-            "worker": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "worker"
-          ],
-          "type": "object"
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
@@ -313,20 +302,6 @@
           "const": true
         }
       ]
-    },
-    "when/serviceMonitor.worker+serviceMonitor.worker=null/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-      },
-      "then": false
-    },
-    "when/serviceMonitor.worker+serviceMonitor.worker=null/then/fail/else/any@2": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-      },
-      "then": false
     }
   },
   "properties": {

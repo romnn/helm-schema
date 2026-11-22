@@ -4,19 +4,14 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1tls.enabled:t"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tls.enabled:t+tls.existingSecret:t"
           },
-          "then": {
-            "$ref": "#/definitions/when~1tls.existingSecret:t~1then~1fail~1else~1any"
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
           }
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -34,13 +29,13 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1nameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride"
@@ -59,10 +54,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride"
@@ -78,10 +73,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride"
@@ -101,6 +96,9 @@
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
                 "not": {
@@ -108,9 +106,6 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
-              },
-              {
                 "$ref": "#/definitions/constrains~1tls.enabled:t"
               }
             ]
@@ -121,13 +116,13 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1fullnameOverride"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride"
@@ -149,10 +144,10 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+                "$ref": "#/definitions/constrains~1fullnameOverride"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride"
@@ -171,10 +166,10 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
+                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+                "$ref": "#/definitions/constrains~1fullnameOverride"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride"
@@ -189,14 +184,7 @@
                 "$ref": "#/definitions/constrains~1tls.enabled:t"
               }
             ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
           {
             "not": {
               "properties": {
@@ -227,19 +215,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1tls.enabled:t"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tls.enabled:t+tls.existingSecret:t"
           },
-          "then": {
-            "$ref": "#/definitions/when~1tls.existingSecret:t~1then~1fail~1else~1any"
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
           }
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -253,19 +236,14 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1tls.enabled:t"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
-          "then": {
-            "$ref": "#/definitions/when~1tls.existingSecret:t~1then~1fail~1else~1any"
+          {
+            "$ref": "#/definitions/constrains~1tls.enabled:t+tls.existingSecret:t"
           }
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -381,29 +359,36 @@
       ],
       "type": "object"
     },
+    "constrains/tls.enabled:t+tls.existingSecret:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tls.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.enabled:t"
+        }
+      ]
+    },
     "constrains/tls.existingSecret:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1tls.existingSecret:t@2"
+        "properties": {
+          "tls": {
+            "properties": {
+              "existingSecret": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "existingSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
       }
-    },
-    "constrains/tls.existingSecret:t@2": {
-      "properties": {
-        "tls": {
-          "properties": {
-            "existingSecret": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "existingSecret"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -429,13 +414,6 @@
           "const": true
         }
       ]
-    },
-    "when/tls.existingSecret:t/then/fail/else/any": {
-      "else": true,
-      "if": {
-        "$ref": "#/definitions/constrains~1tls.existingSecret:t@2"
-      },
-      "then": false
     }
   },
   "properties": {

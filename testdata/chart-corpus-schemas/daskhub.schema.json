@@ -31,209 +31,317 @@
       "if": {
         "anyOf": [
           {
-            "properties": {
-              "dask-kubernetes": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "dask-kubernetes"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "dask-kubernetes": {}
-              },
-              "required": [
-                "dask-kubernetes"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "jupyterhub": {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            }
-          },
-          "required": [
-            "jupyterhub"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1jupyterhub.scheduling.userScheduler.enabled:t"
-          },
-          "then": {
-            "else": false,
-            "if": {
-              "properties": {
-                "jupyterhub": {
-                  "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
-                }
-              },
-              "required": [
-                "jupyterhub"
-              ],
-              "type": "object"
-            },
-            "then": {
-              "else": true,
-              "if": {
+            "allOf": [
+              {
                 "properties": {
-                  "jupyterhub": {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                  "dask-gateway": {
+                    "$ref": "#/definitions/constrains~1traefik+traefik=null"
                   }
                 },
                 "required": [
-                  "jupyterhub"
+                  "dask-gateway"
                 ],
                 "type": "object"
               },
-              "then": false
-            }
-          }
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jupyterhub": {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "dask-gateway": {
-            "properties": {
-              "rbac": {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "dask-gateway"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dask-gateway": {
-            "additionalProperties": {},
-            "properties": {
-              "rbac": {
-                "additionalProperties": {},
-                "description": "rbac nested configuration relates to the choice of creating or replacing\nresources like (Cluster)Role, (Cluster)RoleBinding, and ServiceAccount.",
+              {
                 "properties": {
-                  "traefik": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "dask-gateway": {
-                "$ref": "#/definitions/constrains~1traefik+traefik=null"
-              }
-            },
-            "required": [
-              "dask-gateway"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "dask-gateway": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
+                  "dask-gateway": {
+                    "allOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "traefik": {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
                               "properties": {
-                                "service": {}
+                                "traefik": {
+                                  "properties": {
+                                    "service": {}
+                                  },
+                                  "required": [
+                                    "service"
+                                  ],
+                                  "type": "object"
+                                }
                               },
                               "required": [
-                                "service"
+                                "traefik"
                               ],
                               "type": "object"
                             }
                           },
+                          {
+                            "properties": {
+                              "traefik": {
+                                "properties": {
+                                  "service": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "service"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "traefik"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "dask-gateway"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1dask-gateway.gateway+dask-gateway.gateway=null"
+              },
+              {
+                "properties": {
+                  "dask-gateway": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "gateway": {
+                                  "properties": {
+                                    "prefix": {}
+                                  },
+                                  "required": [
+                                    "prefix"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "gateway"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "gateway": {
+                                "$ref": "#/definitions/constrains~1prefix=null"
+                              }
+                            },
+                            "required": [
+                              "gateway"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "dask-gateway"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "dask-gateway": {
+                      "properties": {
+                        "gateway": {
+                          "properties": {
+                            "prefix": {
+                              "type": "string"
+                            }
+                          },
                           "required": [
-                            "traefik"
+                            "prefix"
                           ],
                           "type": "object"
                         }
                       },
-                      {
+                      "required": [
+                        "gateway"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "dask-gateway"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1dask-gateway.gateway+dask-gateway.gateway=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1dask-gateway.gateway+dask-gateway.gateway=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1dask-gateway.gateway?"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1dask-gateway.gateway"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1dask-gateway.gateway?"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1dask-gateway.gateway"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1dask-gateway.gateway?"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "dask-gateway": {
+                          "properties": {
+                            "gateway": {}
+                          },
+                          "required": [
+                            "gateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "dask-gateway"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1dask-gateway.gateway+dask-gateway.gateway=null"
+                  },
+                  {
+                    "properties": {
+                      "dask-gateway": {
                         "properties": {
-                          "traefik": {
-                            "properties": {
-                              "service": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "service"
-                            ],
-                            "type": "object"
+                          "gateway": {
+                            "enum": [
+                              null
+                            ]
                           }
                         },
                         "required": [
-                          "traefik"
+                          "gateway"
                         ],
                         "type": "object"
                       }
-                    ]
+                    },
+                    "required": [
+                      "dask-gateway"
+                    ],
+                    "type": "object"
                   }
                 ]
               }
-            },
-            "required": [
-              "dask-gateway"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1dask-gateway.gateway+dask-gateway.gateway=null"
+              },
+              {
+                "properties": {
+                  "dask-gateway": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "gateway": {
+                                  "properties": {
+                                    "auth": {}
+                                  },
+                                  "required": [
+                                    "auth"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "gateway"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "gateway": {
+                                "properties": {
+                                  "auth": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "auth"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "gateway"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "dask-gateway"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
@@ -254,6 +362,102 @@
           "type": "object"
         },
         "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "jupyterhub": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                }
+              },
+              "required": [
+                "jupyterhub"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jupyterhub": {
+                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+              }
+            },
+            "required": [
+              "jupyterhub"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1jupyterhub.scheduling.userScheduler.enabled:t"
+          },
+          {
+            "properties": {
+              "jupyterhub": {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            },
+            "required": [
+              "jupyterhub"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jupyterhub": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "dask-gateway": {
+          "additionalProperties": {},
+          "properties": {
+            "gateway": {
+              "additionalProperties": {},
+              "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+              "properties": {
+                "auth": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "dask-gateway": {
+          "additionalProperties": {},
+          "properties": {
+            "gateway": {
+              "additionalProperties": {},
+              "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+              "properties": {
+                "image": {
+                  "description": "The image to use for the dask-gateway-server pod (api pod)",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -287,19 +491,15 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "dask-gateway": {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            }
-          },
-          "required": [
-            "dask-gateway"
-          ],
-          "type": "object"
+        "properties": {
+          "dask-gateway": {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
         },
-        "then": true
+        "required": [
+          "dask-gateway"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -320,39 +520,114 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {}
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1dask-gateway.gateway.auth.type=jupyterhub"
           },
           {
-            "$ref": "#/definitions/constrains~1dask-kubernetes.enabled:t"
+            "properties": {
+              "dask-gateway": {
+                "$ref": "#/definitions/constrains~1gateway.auth.jupyterhub.apiToken:t"
+              }
+            },
+            "required": [
+              "dask-gateway"
+            ],
+            "type": "object"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "jupyterhub": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "apiToken": {
+                            "description": "A JupyterHub api token for dask-gateway to use. See\nhttps://gateway.dask.org/install-kube.html#authenticating-with-jupyterhub.",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dask-gateway": {
+            "properties": {
+              "rbac": {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "dask-gateway"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "dask-gateway": {
+                "additionalProperties": {},
+                "properties": {
+                  "rbac": {
+                    "additionalProperties": {},
+                    "description": "rbac nested configuration relates to the choice of creating or replacing\nresources like (Cluster)Role, (Cluster)RoleBinding, and ServiceAccount.",
+                    "properties": {
+                      "gateway": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "dask-gateway": {
+                "additionalProperties": {},
+                "properties": {
+                  "rbac": {
+                    "additionalProperties": {},
+                    "description": "rbac nested configuration relates to the choice of creating or replacing\nresources like (Cluster)Role, (Cluster)RoleBinding, and ServiceAccount.",
+                    "properties": {
+                      "traefik": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -370,19 +645,149 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "dask-gateway": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        "anyOf": [
+          {
+            "properties": {
+              "dask-kubernetes": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dask-kubernetes"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "dask-kubernetes": {}
+              },
+              "required": [
+                "dask-kubernetes"
+              ],
+              "type": "object"
             }
           },
-          "required": [
-            "dask-gateway"
-          ],
-          "type": "object"
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1dask-kubernetes.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "dask-gateway": {
+          "additionalProperties": {},
+          "properties": {
+            "gateway": {
+              "additionalProperties": {},
+              "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+              "properties": {
+                "prefix": {
+                  "description": "Users connect to the Gateway through the JupyterHub service.",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1dask-gateway.gateway?"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1dask-gateway.gateway.auth.type=jupyterhub"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dask-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "jupyterhub": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dask-gateway": {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          }
         },
-        "then": true
+        "required": [
+          "dask-gateway"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -398,9 +803,160 @@
           }
         }
       }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "dask-gateway": {
+          "additionalProperties": {},
+          "properties": {
+            "gateway": {
+              "additionalProperties": {},
+              "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
+              "properties": {
+                "service": {
+                  "description": "Configuration for the gateway-server service",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
+    "constrains/auth.type": {
+      "not": {
+        "$ref": "#/definitions/constrains~1auth.type@2"
+      }
+    },
+    "constrains/auth.type+auth.type=null": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1auth.type@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1auth.type=null"
+        }
+      ]
+    },
+    "constrains/auth.type=null": {
+      "properties": {
+        "auth": {
+          "properties": {
+            "type": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/auth.type@2": {
+      "properties": {
+        "auth": {
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/auth.type@3": {
+      "properties": {
+        "auth": {
+          "properties": {
+            "type": {}
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/dask-gateway.gateway": {
+      "not": {
+        "properties": {
+          "dask-gateway": {
+            "properties": {
+              "gateway": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "gateway"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "dask-gateway"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/dask-gateway.gateway+dask-gateway.gateway=null": {
+      "properties": {
+        "dask-gateway": {
+          "$ref": "#/definitions/constrains~1gateway+gateway=null"
+        }
+      },
+      "required": [
+        "dask-gateway"
+      ],
+      "type": "object"
+    },
+    "constrains/dask-gateway.gateway.auth.type=jupyterhub": {
+      "properties": {
+        "dask-gateway": {
+          "$ref": "#/definitions/constrains~1gateway.auth.type=jupyterhub"
+        }
+      },
+      "required": [
+        "dask-gateway"
+      ],
+      "type": "object"
+    },
+    "constrains/dask-gateway.gateway?": {
+      "properties": {
+        "dask-gateway": {
+          "required": [
+            "gateway"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "dask-gateway"
+      ],
+      "type": "object"
+    },
     "constrains/dask-kubernetes.enabled:t": {
       "properties": {
         "dask-kubernetes": {
@@ -424,15 +980,9 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+      }
     },
     "constrains/fullnameOverride!=null": {
       "properties": {
@@ -450,6 +1000,11 @@
       "type": "object"
     },
     "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -459,6 +1014,241 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/fullnameOverride@2": {
+      "properties": {
+        "fullnameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/gateway+gateway=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "gateway": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "gateway"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "gateway": {}
+                },
+                "required": [
+                  "gateway"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/gateway.auth+gateway.auth.type+gateway.auth.type=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "gateway": {
+              "$ref": "#/definitions/constrains~1auth.type@2"
+            }
+          },
+          "required": [
+            "gateway"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1gateway.auth.type=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1gateway.auth.type"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1gateway.auth.type=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1gateway.auth.type"
+        }
+      ]
+    },
+    "constrains/gateway.auth.jupyterhub.apiToken": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "jupyterhub": {
+                  "properties": {
+                    "apiToken": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "apiToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jupyterhub"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "gateway"
+      ],
+      "type": "object"
+    },
+    "constrains/gateway.auth.jupyterhub.apiToken:t": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "jupyterhub": {
+                  "properties": {
+                    "apiToken": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "apiToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jupyterhub"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "gateway"
+      ],
+      "type": "object"
+    },
+    "constrains/gateway.auth.type": {
+      "not": {
+        "properties": {
+          "gateway": {
+            "$ref": "#/definitions/constrains~1auth.type@3"
+          }
+        },
+        "required": [
+          "gateway"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/gateway.auth.type=jupyterhub": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "jupyterhub"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "gateway"
+      ],
+      "type": "object"
+    },
+    "constrains/gateway.auth.type=null": {
+      "properties": {
+        "gateway": {
+          "$ref": "#/definitions/constrains~1auth.type=null"
+        }
+      },
+      "required": [
+        "gateway"
+      ],
+      "type": "object"
+    },
+    "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@7"
+        }
+      ]
     },
     "constrains/jupyterhub.scheduling.userScheduler.enabled:t": {
       "properties": {
@@ -475,6 +1265,16 @@
       "not": {
         "$ref": "#/definitions/constrains~1nameOverride@2"
       }
+    },
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        }
+      ]
     },
     "constrains/nameOverride:t": {
       "not": {
@@ -503,37 +1303,239 @@
       ],
       "type": "object"
     },
-    "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more": {
+    "constrains/prefix": {
+      "not": {
+        "properties": {
+          "prefix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "prefix"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/prefix+prefix=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1prefix"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1prefix+prefix=null@2"
+          }
+        }
+      ]
+    },
+    "constrains/prefix+prefix=null@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+          "not": {
+            "properties": {
+              "prefix": {}
+            },
+            "required": [
+              "prefix"
+            ],
+            "type": "object"
+          }
         },
         {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+          "$ref": "#/definitions/constrains~1prefix=null"
+        }
+      ]
+    },
+    "constrains/prefix=null": {
+      "properties": {
+        "prefix": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "prefix"
+      ],
+      "type": "object"
+    },
+    "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@4"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@5"
+          "anyOf": [
+            {
+              "properties": {
+                "scheduling": {
+                  "properties": {
+                    "userScheduler": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "allOf": [
+                                {
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      false,
+                                      {
+                                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
+                                      }
+                                    ]
+                                  },
+                                  "propertyNames": {
+                                    "anyOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
+                                      }
+                                    ]
+                                  },
+                                  "type": "object"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "userScheduler"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "scheduling"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@4"
+                  }
+                ]
+              }
+            },
+            {
+              "properties": {
+                "scheduling": {
+                  "properties": {
+                    "userScheduler": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
+                                },
+                                {
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
+                                      }
+                                    ]
+                                  },
+                                  "propertyNames": {
+                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
+                                  },
+                                  "type": "object"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "userScheduler"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "scheduling"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            }
+          ]
         },
         {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@6"
+          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
         }
       ]
     },
@@ -588,191 +1590,10 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
-        },
-        {
-          "properties": {
-            "scheduling": {
-              "properties": {
-                "userScheduler": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "name": {
-                          "allOf": [
-                            {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  false,
-                                  {
-                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
-                                  }
-                                ]
-                              },
-                              "propertyNames": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x20-x2d"
-                                  }
-                                ]
-                              },
-                              "type": "object"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "userScheduler"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "scheduling"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@4"
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@3"
-        },
-        {
-          "properties": {
-            "scheduling": {
-              "properties": {
-                "userScheduler": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "name": {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1not~1object"
-                            },
-                            {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1null,boolean,number"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1string;pattern-x3a"
-                                  }
-                                ]
-                              },
-                              "propertyNames": {
-                                "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more~1anyOf~1string;pattern-x20-x2d"
-                              },
-                              "type": "object"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "userScheduler"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "scheduling"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name@6"
-        }
-      ]
-    },
     "constrains/scheduling.userScheduler.enabled:t": {
       "not": {
         "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
       }
-    },
-    "constrains/scheduling.userScheduler.enabled:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
-        }
-      ]
-    },
-    "constrains/scheduling.userScheduler.enabled:t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.name:t@2"
-        }
-      ]
     },
     "constrains/scheduling.userScheduler.enabled:t@2": {
       "properties": {
@@ -2044,22 +2865,33 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nameOverride"
@@ -2072,15 +2904,80 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1nameOverride"
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1gateway.auth.jupyterhub.apiToken"
+                            }
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1gateway.auth.type=jupyterhub"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1gateway.auth.jupyterhub.apiToken:t"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1gateway.auth+gateway.auth.type+gateway.auth.type=null"
+                        }
+                      }
+                    ]
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      "allOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1gateway.auth+gateway.auth.type+gateway.auth.type=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1gateway.auth.type=jupyterhub"
+                              }
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1gateway.auth.jupyterhub.apiToken:t"
+                              }
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1gateway.auth.jupyterhub.apiToken"
+                            }
+                          ]
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            }
+                          ]
+                        }
+                      ]
                     }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
                   }
                 ]
               }
@@ -2114,43 +3011,12 @@
         },
         {
           "if": {
-            "$ref": "#/definitions/constrains~1traefik+traefik=null"
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "type": "object"
+                "$ref": "#/definitions/constrains~1gateway+gateway=null"
               },
               {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "gateway": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "gateway"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "gateway": {}
-                      },
-                      "required": [
-                        "gateway"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1traefik+traefik=null"
               }
             ]
           },
@@ -2247,294 +3113,116 @@
         },
         "gateway": {
           "additionalProperties": {},
-          "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
-          "properties": {
-            "affinity": {
-              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
-            },
-            "annotations": {
-              "additionalProperties": {},
-              "description": "Annotations to apply to the gateway-server pods.",
-              "type": "object"
-            },
-            "auth": {
-              "additionalProperties": {},
-              "properties": {
-                "custom": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "class": {
-                      "description": "The full authenticator class name."
-                    },
-                    "config": {
-                      "additionalProperties": {},
-                      "description": "Configuration fields to set on the authenticator class.",
-                      "type": "object"
-                    }
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1prefix"
                   },
-                  "type": "object"
-                },
-                "jupyterhub": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "apiToken": {
-                      "description": "A JupyterHub api token for dask-gateway to use. See\nhttps://gateway.dask.org/install-kube.html#authenticating-with-jupyterhub."
-                    },
-                    "apiTokenFromSecretKey": {
-                      "type": "string"
-                    },
-                    "apiTokenFromSecretName": {
-                      "description": "The JupyterHub Helm chart will automatically generate a token for a\nregistered service. If you don't specify an apiToken explicitly as\nrequired in dask-gateway version <=2022.6.1, the dask-gateway Helm chart\nwill try to look for a token from a k8s Secret created by the JupyterHub\nHelm chart in the same namespace. A failure to find this k8s Secret and\nkey will cause a MountFailure for when the api-dask-gateway pod is\nstarting.",
-                      "type": "string"
-                    },
-                    "apiUrl": {
-                      "description": "JupyterHub's api url. Inferred from JupyterHub's service name if running\nin the same namespace."
-                    }
-                  },
-                  "type": "object"
-                },
-                "kerberos": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "keytab": {
-                      "description": "Path to the HTTP keytab for this node."
-                    }
-                  },
-                  "type": "object"
-                },
-                "simple": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "password": {
-                      "description": "A shared password to use for all users."
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": {
-                  "description": "Use JupyterHub to authenticate with Dask Gateway",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "backend": {
-              "additionalProperties": {},
-              "description": "backend nested configuration relates to the scheduler and worker resources\ncreated for DaskCluster k8s resources by the controller.",
-              "properties": {
-                "environment": {
-                  "additionalProperties": {},
-                  "description": "A mapping of environment variables to set for both schedulers and workers.",
-                  "type": "object"
-                },
-                "image": {
-                  "additionalProperties": {},
-                  "description": "The image to use for both schedulers and workers.",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "pullPolicy": {},
-                    "tag": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "imagePullSecrets": {
-                  "description": "Image pull secrets for a dask cluster's scheduler and worker pods",
-                  "items": {},
-                  "type": "array"
-                },
-                "namespace": {
-                  "description": "The namespace to launch dask clusters in. If not specified, defaults to\nthe same namespace the gateway is running in."
-                },
-                "scheduler": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "cores": {
-                      "additionalProperties": {},
-                      "description": "Cores request/limit for the scheduler.",
+                  {
+                    "not": {
                       "properties": {
-                        "limit": {},
-                        "request": {}
+                        "auth": {}
                       },
-                      "type": "object"
-                    },
-                    "extraContainerConfig": {
-                      "additionalProperties": {},
-                      "description": "Any extra configuration for the scheduler container.\nSets `c.KubeClusterConfig.scheduler_extra_container_config`.",
-                      "type": "object"
-                    },
-                    "extraPodConfig": {
-                      "additionalProperties": {},
-                      "description": "Any extra configuration for the scheduler pod. Sets\n`c.KubeClusterConfig.scheduler_extra_pod_config`.",
-                      "type": "object"
-                    },
-                    "memory": {
-                      "additionalProperties": {},
-                      "description": "Memory request/limit for the scheduler.",
-                      "properties": {
-                        "limit": {},
-                        "request": {}
-                      },
+                      "required": [
+                        "auth"
+                      ],
                       "type": "object"
                     }
                   },
-                  "type": "object"
-                },
-                "worker": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "cores": {
-                      "additionalProperties": {},
-                      "description": "Cores request/limit for each worker.",
-                      "properties": {
-                        "limit": {},
-                        "request": {}
+                  {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1auth.type@2"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1prefix"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1prefix+prefix=null@2"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1auth.type"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1auth.type+auth.type=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1prefix+prefix=null"
+                        }
                       },
-                      "type": "object"
-                    },
-                    "extraContainerConfig": {
-                      "additionalProperties": {},
-                      "description": "Any extra configuration for the worker container. Sets\n`c.KubeClusterConfig.worker_extra_container_config`.",
-                      "type": "object"
-                    },
-                    "extraPodConfig": {
-                      "additionalProperties": {},
-                      "description": "Any extra configuration for the worker pod. Sets\n`c.KubeClusterConfig.worker_extra_pod_config`.",
-                      "type": "object"
-                    },
-                    "memory": {
-                      "additionalProperties": {},
-                      "description": "Memory request/limit for each worker.",
-                      "properties": {
-                        "limit": {},
-                        "request": {}
+                      "if": {
+                        "$ref": "#/definitions/constrains~1prefix+prefix=null@2"
                       },
-                      "type": "object"
+                      "then": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1auth.type"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1auth.type+auth.type=null"
+                            }
+                          }
+                        ]
+                      }
                     },
-                    "threads": {
-                      "description": "Number of threads available for a worker. Sets\n`c.KubeClusterConfig.worker_threads`"
+                    "if": {
+                      "$ref": "#/definitions/constrains~1auth.type+auth.type=null"
+                    },
+                    "then": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1prefix+prefix=null"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1prefix+prefix=null@2"
+                          }
+                        }
+                      ]
                     }
                   },
-                  "type": "object"
-                }
+                  {
+                    "not": {
+                      "properties": {
+                        "prefix": {}
+                      },
+                      "required": [
+                        "prefix"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "auth": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "auth"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prefix=null"
+                  }
+                ]
               },
-              "type": "object"
-            },
-            "env": {
-              "description": "Add additional environment variables to the gateway pod\ne.g.\nenv:\n- name: MYENV\nvalue: \"my value\"",
-              "items": {},
-              "type": "array"
-            },
-            "extraConfig": {
-              "additionalProperties": {},
-              "description": "Any extra configuration code to append to the generated `dask_gateway_config.py`\nfile. Can be either a single code-block, or a map of key -> code-block\n(code-blocks are run in alphabetical order by key, the key value itself is\nmeaningless). The map version is useful as it supports merging multiple\n`values.yaml` files, but is unnecessary in other cases.",
-              "type": "object"
-            },
-            "image": {
-              "additionalProperties": {},
-              "description": "The image to use for the dask-gateway-server pod (api pod)",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "pullPolicy": {},
-                "tag": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "imagePullSecrets": {
-              "description": "Image pull secrets for gateway-server pod",
-              "items": {},
-              "type": "array"
-            },
-            "livenessProbe": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "Enables the livenessProbe.",
-                  "type": "boolean"
-                },
-                "failureThreshold": {
-                  "type": "integer"
-                },
-                "initialDelaySeconds": {
-                  "description": "Configures the livenessProbe.",
-                  "type": "integer"
-                },
-                "periodSeconds": {
-                  "type": "integer"
-                },
-                "timeoutSeconds": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "loglevel": {
-              "description": "The gateway server log level",
-              "type": "string"
-            },
-            "nodeSelector": {
-              "additionalProperties": {},
-              "description": "nodeSelector, affinity, and tolerations the for the `api` pod running dask-gateway-server",
-              "type": "object"
-            },
-            "prefix": {
-              "description": "Users connect to the Gateway through the JupyterHub service.",
-              "type": "string"
-            },
-            "readinessProbe": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "Enables the readinessProbe.",
-                  "type": "boolean"
-                },
-                "failureThreshold": {
-                  "type": "integer"
-                },
-                "initialDelaySeconds": {
-                  "description": "Configures the readinessProbe.",
-                  "type": "integer"
-                },
-                "periodSeconds": {
-                  "type": "integer"
-                },
-                "timeoutSeconds": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "replicas": {
-              "description": "Number of instances of the gateway-server to run",
-              "type": "integer"
-            },
-            "resources": {
-              "additionalProperties": {},
-              "description": "Resource requests/limits for the gateway-server pod.",
-              "type": "object"
-            },
-            "service": {
-              "additionalProperties": {},
-              "description": "Configuration for the gateway-server service",
-              "properties": {
-                "annotations": {
-                  "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
-                }
-              },
-              "type": "object"
-            },
-            "tolerations": {
-              "items": {},
-              "type": "array"
+              "then": false
             }
-          },
+          ],
+          "description": "Futher Dask Gateway configuration goes here\nSee https://github.com/dask/dask-gateway/blob/master/resources/helm/dask-gateway/values.yaml",
           "type": "object"
         },
         "global": {
@@ -2563,8 +3251,7 @@
               "additionalProperties": {},
               "properties": {
                 "serviceAccountName": {}
-              },
-              "type": "object"
+              }
             },
             "traefik": {
               "additionalProperties": {},
@@ -2615,9 +3302,7 @@
             "additionalArguments": {
               "description": "Any additional arguments to forward to traefik"
             },
-            "affinity": {
-              "$ref": "#/definitions/values~1dask-gateway.controller.affinity"
-            },
+            "affinity": {},
             "annotations": {
               "description": "Any annotations to add to the proxy pods"
             },
@@ -2635,17 +3320,12 @@
               },
               "type": "object"
             },
-            "imagePullSecrets": {
-              "items": {},
-              "type": "array"
-            },
+            "imagePullSecrets": {},
             "loglevel": {
               "description": "The proxy log level"
             },
             "nodeSelector": {
-              "additionalProperties": {},
-              "description": "Settings for nodeSelector, affinity, and tolerations for the traefik pods",
-              "type": "object"
+              "description": "Settings for nodeSelector, affinity, and tolerations for the traefik pods"
             },
             "replicas": {
               "description": "Number of instances of the proxy to run"
@@ -2691,10 +3371,7 @@
               },
               "type": "object"
             },
-            "tolerations": {
-              "items": {},
-              "type": "array"
-            }
+            "tolerations": {}
           },
           "type": "object"
         }
@@ -2718,64 +3395,48 @@
           "if": {
             "allOf": [
               {
+                "not": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
                 "anyOf": [
                   {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+2more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+1more"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@2"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
-                      }
-                    ]
+                    "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
                   },
                   {
                     "allOf": [
                       {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        }
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
                       },
                       {
                         "not": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            }
-                          ]
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
                         }
                       },
                       {
@@ -2787,56 +3448,6 @@
                     ]
                   }
                 ]
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.serviceAccount.create:t@2"
-                          }
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
-                          }
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+2more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t+1more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling+scheduling.userScheduler+scheduling.userScheduler.enabled:t+4more@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1scheduling.userScheduler.enabled:t@2"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
               }
             ]
           },

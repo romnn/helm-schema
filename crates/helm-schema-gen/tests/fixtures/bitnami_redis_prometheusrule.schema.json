@@ -79,36 +79,37 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "metrics": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "metrics": {}
+                  },
+                  "required": [
+                    "metrics"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "metrics"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "metrics": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
-            "properties": {
-              "metrics": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/helm-condition-21"
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/helm-condition-21"
       },
       "then": false
     }

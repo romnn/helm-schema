@@ -4,27 +4,110 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "awsEKS": {
-              "properties": {
-                "sgp": {
-                  "$ref": "#/definitions/constrains~1enabled:t"
-                }
-              },
-              "required": [
-                "sgp"
-              ],
-              "type": "object"
-            }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1route.tls:t"
           },
-          "required": [
-            "awsEKS"
-          ],
-          "type": "object"
+          {
+            "$ref": "#/definitions/constrains~1route.tls+route.tls=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls.certificate:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "route": {
+            "additionalProperties": {},
+            "description": "Note: This is the Openshift route",
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "certificate": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1route.tls:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls+route.tls=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls.destinationCACertificate:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "route": {
+            "additionalProperties": {},
+            "description": "Note: This is the Openshift route",
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "destinationCACertificate": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnamespaceOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "awsEKS": {
+            "properties": {
+              "sgp": {
+                "$ref": "#/definitions/constrains~1enabled:t@2"
+              }
+            },
+            "required": [
+              "sgp"
+            ],
+            "type": "object"
+          }
         },
-        "then": true
+        "required": [
+          "awsEKS"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -53,11 +136,942 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
+        "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1database+database.type+database.type=null"
+                }
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1group-13"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.caCertificate+route.tls.caCertificate:t+8more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1database+database.type+database.type=null"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "database": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "database"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "awsEKS": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "awsEKS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ssl": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ssl"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1monitoring=null"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1monitoring=null"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "monitoring": {}
+                      },
+                      "required": [
+                        "monitoring"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "$ref": "#/definitions/constrains~1serviceMonitor=null"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "monitoring": {
+                          "properties": {
+                            "serviceMonitor": {}
+                          },
+                          "required": [
+                            "serviceMonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "monitoring"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "database": {
+                          "properties": {
+                            "persistence": {}
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "database"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "database": {
+                        "$ref": "#/definitions/constrains~1persistence=null"
+                      }
+                    },
+                    "required": [
+                      "database"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "database": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "database"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "database": {}
+                      },
+                      "required": [
+                        "database"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "route": {}
+              },
+              "required": [
+                "route"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ssl.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ssl.enabled:t"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ssl.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnamespaceOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ssl.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ssl.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ssl.enabled:t"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1ssl.keystore"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more@2"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+6more"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+6more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnamespaceOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "route": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "route"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "monitoring": {}
+              },
+              "required": [
+                "monitoring"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "ssl": {}
+              },
+              "required": [
+                "ssl"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "database": {}
+              },
+              "required": [
+                "database"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "awsEKS": {}
+              },
+              "required": [
+                "awsEKS"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "awsEKS": {
+                          "properties": {
+                            "sgp": {}
+                          },
+                          "required": [
+                            "sgp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "awsEKS"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "awsEKS": {
+                        "properties": {
+                          "sgp": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "sgp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "awsEKS"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "awsEKS": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "awsEKS"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "awsEKS": {}
+                      },
+                      "required": [
+                        "awsEKS"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1database.persistence.existingClaim:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1database.persistence.enabled:t"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1group-13"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.caCertificate+route.tls.caCertificate:t+8more"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1database.persistence.type@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1database.persistence.type"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1database.persistence.type=null"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "database": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "postgres"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
         },
-        "then": true
+        "required": [
+          "database"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "database": {
+            "additionalProperties": {},
+            "description": "Backend database",
+            "properties": {
+              "postgresBackupHook": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1route.tls+route.tls=null@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "route": {
+            "additionalProperties": {},
+            "description": "Note: This is the Openshift route",
+            "properties": {
+              "tls": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1ssl.enabled:t"
       },
       "then": {
         "allOf": [
@@ -92,1363 +1106,123 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {}
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "awsEKS": {
-                      "properties": {
-                        "sgp": {}
-                      },
-                      "required": [
-                        "sgp"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "awsEKS"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "$ref": "#/definitions/constrains~1route.tls:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls+route.tls=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls.caCertificate:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "route": {
+            "additionalProperties": {},
+            "description": "Note: This is the Openshift route",
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
                 "properties": {
-                  "awsEKS": {
-                    "properties": {
-                      "sgp": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "sgp"
-                    ],
-                    "type": "object"
+                  "caCertificate": {
+                    "type": "string"
                   }
-                },
-                "required": [
-                  "awsEKS"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1awsEKS+awsEKS=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1monitoring+monitoring=null"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "monitoring": {
-                    "$ref": "#/definitions/constrains~1serviceMonitor=null"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "monitoring": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "monitoring"
-                  ],
-                  "type": "object"
                 }
               }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
+            }
           }
         }
       }
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1route.enabled:t"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1awsEKS+awsEKS=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnamespaceOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
+            "additionalProperties": {},
             "properties": {
-              "ssl": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ssl"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "ssl": {}
-              },
-              "required": [
-                "ssl"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1monitoring+monitoring=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more@2"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "allOf": [
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+6more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                      }
+              "route": {
+                "additionalProperties": {},
+                "description": "Note: This is the Openshift route",
+                "properties": {
+                  "annotations": {
+                    "description": "Used to add custom labels to the Route\nUseful if for example you have multiple Ingress controllers (Routers) and want your Routers to bind to specific Routes\ntraffic: internal",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
                     ]
                   }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        }
-                      ]
-                    }
-                  ]
                 }
-              ]
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "route": {
+                "additionalProperties": {},
+                "description": "Note: This is the Openshift route",
+                "properties": {
+                  "labels": {
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
             }
           }
         ]
-      },
-      "then": false
+      }
     },
     {
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1route.tls:t"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1route.tls+route.tls=null"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1route.tls.key:t"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ssl.keystore"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1route.enabled:t"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "route": {
+            "additionalProperties": {},
+            "description": "Note: This is the Openshift route",
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -1469,6 +1243,12 @@
           "$ref": "#/definitions/constrains~1automountServiceAccountToken@4"
         },
         {
+          "$ref": "#/definitions/constrains~1automountServiceAccountToken=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1automountServiceAccountToken@5"
+        },
+        {
           "allOf": [
             {
               "anyOf": [
@@ -1486,12 +1266,6 @@
               "$ref": "#/definitions/constrains~1automountServiceAccountToken"
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1automountServiceAccountToken=true"
-        },
-        {
-          "$ref": "#/definitions/constrains~1automountServiceAccountToken@5"
         },
         {
           "$ref": "#/definitions/constrains~1automountServiceAccountToken@2"
@@ -1819,34 +1593,6 @@
       ],
       "type": "object"
     },
-    "constrains/awsEKS+awsEKS=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "awsEKS": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "awsEKS"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "awsEKS": {}
-            },
-            "required": [
-              "awsEKS"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -1858,7 +1604,127 @@
       ],
       "type": "object"
     },
+    "constrains/database+database.type+database.type=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "database": {
+              "$ref": "#/definitions/constrains~1type@2"
+            }
+          },
+          "required": [
+            "database"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "database": {
+                "$ref": "#/definitions/constrains~1type@3"
+              }
+            },
+            "required": [
+              "database"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "database": {
+              "$ref": "#/definitions/constrains~1type=null"
+            }
+          },
+          "required": [
+            "database"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/database.persistence+database.persistence.enabled:t+3more": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1database.persistence.enabled:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1database.persistence.existingClaim:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1database.persistence.type@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1database.persistence.type"
+        },
+        {
+          "$ref": "#/definitions/constrains~1database.persistence.type=null"
+        }
+      ]
+    },
+    "constrains/database.persistence.enabled:t": {
+      "properties": {
+        "database": {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        }
+      },
+      "required": [
+        "database"
+      ],
+      "type": "object"
+    },
+    "constrains/database.persistence.existingClaim:t": {
+      "properties": {
+        "database": {
+          "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+        }
+      },
+      "required": [
+        "database"
+      ],
+      "type": "object"
+    },
+    "constrains/database.persistence.type": {
+      "not": {
+        "properties": {
+          "database": {
+            "$ref": "#/definitions/constrains~1persistence.type@3"
+          }
+        },
+        "required": [
+          "database"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/database.persistence.type=null": {
+      "properties": {
+        "database": {
+          "$ref": "#/definitions/constrains~1persistence.type=null"
+        }
+      },
+      "required": [
+        "database"
+      ],
+      "type": "object"
+    },
+    "constrains/database.persistence.type@2": {
+      "properties": {
+        "database": {
+          "$ref": "#/definitions/constrains~1persistence.type@2"
+        }
+      },
+      "required": [
+        "database"
+      ],
+      "type": "object"
+    },
     "constrains/enabled:t": {
+      "$ref": "#/definitions/constrains~1enabled:t@2"
+    },
+    "constrains/enabled:t@2": {
       "properties": {
         "enabled": {
           "$ref": "#/definitions/t"
@@ -1880,252 +1746,228 @@
           "$ref": "#/definitions/constrains~1fullnameOverride@2"
         },
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
-        },
-        {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t"
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more@2": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+          }
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t@2"
             }
           ]
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ssl.keystore@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more@2": {
       "anyOf": [
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
+              "$ref": "#/definitions/constrains~1group-12"
             },
             {
               "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1group-11"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
+              "$ref": "#/definitions/constrains~1ssl.enabled:t"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
+              "$ref": "#/definitions/constrains~1ssl.keystore"
             },
             {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
+              "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
+              "$ref": "#/definitions/constrains~1ssl.enabled:t"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
+              "$ref": "#/definitions/constrains~1ssl.keystore"
             },
             {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
+              "$ref": "#/definitions/constrains~1ssl.enabled:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ssl.keystore"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
+            }
+          ]
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1ssl.enabled:t"
+          }
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-12"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-10"
             },
             {
               "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1group-12"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              "$ref": "#/definitions/constrains~1group-10"
             },
             {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              "$ref": "#/definitions/constrains~1group-11"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
+              "$ref": "#/definitions/constrains~1ssl.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ssl.keystore"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-12"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
+              "$ref": "#/definitions/constrains~1nameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keystore@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ssl.enabled:t"
         }
       ]
     },
@@ -2137,29 +1979,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t@3": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              }
+              "$ref": "#/definitions/constrains~1fullnameOverride"
             }
           ]
         }
@@ -2167,28 +1990,23 @@
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -2218,14 +2036,7 @@
     "constrains/fullnamespaceOverride+fullnamespaceOverride:t": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnamespaceOverride"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
         },
         {
           "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
@@ -2240,9 +2051,7 @@
               "$ref": "#/definitions/constrains~1fullnamespaceOverride:t"
             },
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
-              }
+              "$ref": "#/definitions/constrains~1fullnamespaceOverride"
             }
           ]
         },
@@ -2253,15 +2062,10 @@
     },
     "constrains/fullnamespaceOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
       }
     },
     "constrains/fullnamespaceOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@3"
-      }
-    },
-    "constrains/fullnamespaceOverride:t@3": {
       "properties": {
         "fullnamespaceOverride": {
           "$ref": "#/definitions/t"
@@ -2283,51 +2087,222 @@
       ],
       "type": "object"
     },
-    "constrains/monitoring+monitoring=null": {
-      "anyOf": [
+    "constrains/group-0": {
+      "allOf": [
         {
-          "properties": {
-            "monitoring": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "monitoring"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1group-9"
         },
         {
-          "not": {
-            "properties": {
-              "monitoring": {}
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1tls.key:t"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.caCertificate:t"
+        }
+      ]
+    },
+    "constrains/group-10": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnamespaceOverride:t@2"
+        }
+      ]
+    },
+    "constrains/group-11": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnamespaceOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
+        }
+      ]
+    },
+    "constrains/group-12": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1ssl.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ssl.keyStorePassword"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ssl.keystore"
+        }
+      ]
+    },
+    "constrains/group-13": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1database.persistence+database.persistence.enabled:t+3more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+4more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+fullnamespaceOverride+6more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnamespaceOverride+fullnamespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.key:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls:t"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.key:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        }
+      ]
+    },
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tls.certificate:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.certificate@2"
+        }
+      ]
+    },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.key:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tls.caCertificate"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.caCertificate:t@2"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls+tls=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.key"
         }
       ]
     },
     "constrains/monitoring.serviceMonitor.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1monitoring.serviceMonitor.enabled:t@2"
-      }
-    },
-    "constrains/monitoring.serviceMonitor.enabled:t@2": {
       "properties": {
         "monitoring": {
           "properties": {
             "serviceMonitor": {
-              "$ref": "#/definitions/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t@2"
             }
           },
           "required": [
             "serviceMonitor"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "monitoring"
+      ],
+      "type": "object"
+    },
+    "constrains/monitoring=null": {
+      "properties": {
+        "monitoring": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
@@ -2346,14 +2321,7 @@
           "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
@@ -2365,12 +2333,10 @@
         {
           "allOf": [
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              }
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
+              "$ref": "#/definitions/constrains~1nameOverride"
             }
           ]
         }
@@ -2378,27 +2344,15 @@
     },
     "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1nameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -2417,6 +2371,509 @@
       },
       "required": [
         "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.enabled:t": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1enabled:t@2"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.existingClaim:t": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "existingClaim": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "existingClaim"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.type": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.type@2"
+      }
+    },
+    "constrains/persistence.type+persistence.type=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.type=null"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1persistence.type@3"
+          }
+        }
+      ]
+    },
+    "constrains/persistence.type=null": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1type=null"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.type@2": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1type@2"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.type@3": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1type@3"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence=null": {
+      "properties": {
+        "persistence": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/route.enabled:t": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1enabled:t@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.enabled:t+route.tls+route.tls.caCertificate+route.tls.caCertificate:t+6more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1route.tls.caCertificate"
+            },
+            {
+              "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.certificate+route.tls.certificate:t+4more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1route.tls.caCertificate"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls:t+route.tls=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.tls.caCertificate:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.certificate+route.tls.certificate:t+4more"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1route.tls.caCertificate:t"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/route.enabled:t+route.tls+route.tls.caCertificate+route.tls.caCertificate:t+8more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.caCertificate+route.tls.caCertificate:t+6more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1route.tls.destinationCACertificate"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1route.tls.destinationCACertificate"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls:t+route.tls=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.tls.destinationCACertificate:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.caCertificate+route.tls.caCertificate:t+6more"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1route.tls.destinationCACertificate:t"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/route.enabled:t+route.tls+route.tls.certificate+route.tls.certificate:t+4more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1route.tls.certificate:t"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.key+route.tls.key:t+route.tls:t+1more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls:t+route.tls=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.tls.certificate:t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1route.tls.certificate"
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls.key+route.tls.key:t+route.tls:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1route.tls.certificate"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/route.enabled:t+route.tls+route.tls.key+route.tls.key:t+route.tls:t+1more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1route.tls.key"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1route.tls.key:t"
+                  }
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.enabled:t+route.tls+route.tls:t+route.tls=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1route.tls.key:t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1route.tls.key"
+        }
+      ]
+    },
+    "constrains/route.enabled:t+route.tls+route.tls:t+route.tls=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1route.tls"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1route.tls"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1route.tls=null"
+                  }
+                ]
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1route.tls:t"
+                  }
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1route.tls:t"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1route.enabled:t"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1route.tls=null"
+        }
+      ]
+    },
+    "constrains/route.tls": {
+      "not": {
+        "properties": {
+          "route": {
+            "properties": {
+              "tls": {}
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "route"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/route.tls+route.tls=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1route.tls+route.tls=null@2"
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1route.tls"
+              },
+              {
+                "$ref": "#/definitions/constrains~1route.tls=null"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "constrains/route.tls+route.tls=null@2": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1route.tls"
+          },
+          {
+            "$ref": "#/definitions/constrains~1route.tls=null"
+          }
+        ]
+      }
+    },
+    "constrains/route.tls.caCertificate": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.caCertificate"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.caCertificate:t": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.caCertificate:t@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.certificate": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.certificate@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.certificate:t": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.certificate:t@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.destinationCACertificate": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.destinationCACertificate@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.destinationCACertificate:t": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.key": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.key@2"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls.key:t": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls.key:t"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls:t": {
+      "properties": {
+        "route": {
+          "$ref": "#/definitions/constrains~1tls:t"
+        }
+      },
+      "required": [
+        "route"
+      ],
+      "type": "object"
+    },
+    "constrains/route.tls=null": {
+      "properties": {
+        "route": {
+          "properties": {
+            "tls": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "tls"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "route"
       ],
       "type": "object"
     },
@@ -2441,32 +2898,6 @@
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken+5more": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
-            }
-          ]
-        },
-        {
           "properties": {
             "serviceAccount": {
               "properties": {
@@ -2484,328 +2915,6 @@
             "serviceAccount"
           ],
           "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name"
-                        },
-                        {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "name": {
-                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1string;pattern-x20-x5b"
-                                }
-                              },
-                              "required": [
-                                "name"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "serviceAccount": {
-                                  "properties": {
-                                    "name": {
-                                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object@8"
-                                    }
-                                  },
-                                  "required": [
-                                    "name"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
-                            }
-                          ]
-                        },
-                        {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "name": {
-                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1string;pattern-x20-x2e"
-                                }
-                              },
-                              "required": [
-                                "name"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "name": {
-                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object@4"
-                                }
-                              },
-                              "required": [
-                                "name"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                        },
-                        {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "name": {
-                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1string;pattern-x20-x25"
-                                }
-                              },
-                              "required": [
-                                "name"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.name"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@7"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken=true"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
-                    },
-                    {
-                      "properties": {
-                        "serviceAccount": {
-                          "$ref": "#/definitions/constrains~1automountServiceAccountToken"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken=null"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken=false"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@4"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@2"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@8"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@6"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@5"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "automountServiceAccountToken": {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object@8"
-                    }
-                  },
-                  "required": [
-                    "automountServiceAccountToken"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
-            }
-          ]
         },
         {
           "properties": {
@@ -2882,6 +2991,354 @@
             "serviceAccount"
           ],
           "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object@8"
+                    }
+                  },
+                  "required": [
+                    "automountServiceAccountToken"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@7"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken=true"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken=null"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken=false"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@4"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken"
+                    },
+                    {
+                      "properties": {
+                        "serviceAccount": {
+                          "$ref": "#/definitions/constrains~1automountServiceAccountToken"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@2"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@8"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@6"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@5"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1string;pattern-x20-x2e"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object@4"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "name": {
+                                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1allOf~1not~1object+object@8"
+                                    }
+                                  },
+                                  "required": [
+                                    "name"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1string;pattern-x20-x25"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                        },
+                        {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "name": {
+                                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more~1string;pattern-x20-x5b"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.name"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -3453,25 +3910,35 @@
       "type": "string"
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken+6more": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          },
-          {
-            "allOf": [
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more"
+        },
+        {
+          "not": {
+            "anyOf": [
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more"
-                }
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken+5more"
+                    }
+                  }
+                ]
               }
             ]
           }
-        ]
-      }
+        }
+      ]
     },
     "constrains/serviceAccount+serviceAccount.name": {
       "allOf": [
@@ -3557,15 +4024,10 @@
     },
     "constrains/serviceAccount.create:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
+        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
       }
     },
     "constrains/serviceAccount.create:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1serviceAccount.create:t@3"
-      }
-    },
-    "constrains/serviceAccount.create:t@3": {
       "properties": {
         "serviceAccount": {
           "$ref": "#/definitions/constrains~1create:t"
@@ -3628,14 +4090,9 @@
       "type": "object"
     },
     "constrains/ssl.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ssl.enabled:t@2"
-      }
-    },
-    "constrains/ssl.enabled:t@2": {
       "properties": {
         "ssl": {
-          "$ref": "#/definitions/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t@2"
         }
       },
       "required": [
@@ -3644,11 +4101,6 @@
       "type": "object"
     },
     "constrains/ssl.keyStorePassword": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ssl.keyStorePassword@2"
-      }
-    },
-    "constrains/ssl.keyStorePassword@2": {
       "properties": {
         "ssl": {
           "properties": {
@@ -3668,11 +4120,6 @@
       "type": "object"
     },
     "constrains/ssl.keystore": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ssl.keystore@2"
-      }
-    },
-    "constrains/ssl.keystore@2": {
       "properties": {
         "ssl": {
           "properties": {
@@ -3688,6 +4135,303 @@
       },
       "required": [
         "ssl"
+      ],
+      "type": "object"
+    },
+    "constrains/tls+tls=null": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "tls": {}
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "tls": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "constrains/tls.caCertificate": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "caCertificate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "caCertificate"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.caCertificate:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.caCertificate:t@2"
+      }
+    },
+    "constrains/tls.caCertificate:t@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "caCertificate": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "caCertificate"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.certificate": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.certificate@2"
+      }
+    },
+    "constrains/tls.certificate:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.certificate:t@2"
+      }
+    },
+    "constrains/tls.certificate:t@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "certificate": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "certificate"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.certificate@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "certificate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "certificate"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.destinationCACertificate": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.destinationCACertificate@2"
+      }
+    },
+    "constrains/tls.destinationCACertificate:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+      }
+    },
+    "constrains/tls.destinationCACertificate:t@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "destinationCACertificate": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "destinationCACertificate"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.destinationCACertificate@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "destinationCACertificate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "destinationCACertificate"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.key": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.key@2"
+      }
+    },
+    "constrains/tls.key:t": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "key": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.key@2": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls:t": {
+      "properties": {
+        "tls": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/type": {
+      "not": {
+        "$ref": "#/definitions/constrains~1type@2"
+      }
+    },
+    "constrains/type+type=null": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1type+type=null@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1type"
+        }
+      ]
+    },
+    "constrains/type+type=null@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1type+type=null@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1type+type=null"
+        }
+      ]
+    },
+    "constrains/type+type=null@3": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1type@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1type=null"
+        }
+      ]
+    },
+    "constrains/type=null": {
+      "properties": {
+        "type": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "constrains/type@2": {
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "constrains/type@3": {
+      "properties": {
+        "type": {}
+      },
+      "required": [
+        "type"
       ],
       "type": "object"
     },
@@ -3801,13 +4545,6 @@
         "pattern": "[^A-Za-z0-9_./+-]"
       },
       "type": "string"
-    },
-    "when/enabled:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1enabled:t"
-      },
-      "then": true
     }
   },
   "properties": {
@@ -3871,7 +4608,179 @@
       "description": "javaOpts:\npluginsDirectory: /plugins\nsiteUrl:"
     },
     "database": {
-      "description": "Backend database"
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {}
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "postgres"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "postgresBackupHook": {}
+                          },
+                          "required": [
+                            "postgresBackupHook"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "postgresBackupHook": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "postgresBackupHook"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence=null"
+              },
+              {
+                "else": {
+                  "$ref": "#/definitions/constrains~1type+type=null@2"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                },
+                "then": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": true,
+                            "if": {
+                              "$ref": "#/definitions/constrains~1persistence.type@2"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1type"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1type+type=null@3"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1persistence.type"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1persistence.type+persistence.type=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1type+type=null"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1type+type=null@3"
+                      },
+                      "then": {
+                        "allOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1persistence.type+persistence.type=null"
+                            }
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1persistence.type"
+                          }
+                        ]
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistence.type+persistence.type=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1type+type=null@2"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1type+type=null@2"
+                  }
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "description": "Backend database",
+      "properties": {
+        "persistence": {
+          "additionalProperties": {},
+          "description": "if h2 is used, the persistentVolume and pvc are used to store the database. Only for non-production environments.",
+          "properties": {
+            "annotations": {},
+            "enabled": {},
+            "existingClaim": {},
+            "extraPvcLabels": {
+              "description": "selectorLabels: {}\nSub-directory of the PV to mount. Can be templated.\nsubPath: \"\"\nName of an existing PVC. Can be templated.\nexistingClaim:\nExtra labels to apply to a PVC."
+            },
+            "finalizers": {
+              "description": "annotations: {}"
+            },
+            "lookupVolumeName": {
+              "description": "If 'lookupVolumeName' is set to true, Helm will attempt to retrieve\nthe current value of 'spec.volumeName' and incorporate it into the template."
+            },
+            "selectorLabels": {},
+            "size": {},
+            "storageClassName": {},
+            "type": {}
+          },
+          "type": "object"
+        },
+        "postgresBackupHook": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Only when you use postgres\nenables a pre-upgrade hook that backups the metabase database with pg_dump prior to upgrading the Helm release"
+            }
+          }
+        },
+        "type": {
+          "description": "Database type (h2 / mysql / postgres), default: h2"
+        }
+      },
+      "type": "object"
     },
     "deploymentAnnotations": {},
     "deploymentLabels": {},
@@ -3964,7 +4873,287 @@
     "replicaCount": {},
     "resources": {},
     "route": {
-      "description": "Note: This is the Openshift route"
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-7"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls+tls=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tls:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls+tls=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1tls.caCertificate"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls+tls=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls+tls=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.destinationCACertificate"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.certificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tls.caCertificate:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t@2"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "description": "Note: This is the Openshift route",
+      "properties": {
+        "annotations": {
+          "additionalProperties": {},
+          "description": "Used to add custom labels to the Route\nUseful if for example you have multiple Ingress controllers (Routers) and want your Routers to bind to specific Routes\ntraffic: internal"
+        },
+        "enabled": {},
+        "host": {},
+        "labels": {},
+        "path": {
+          "description": "haproxy.router.openshift.io/timeout: \"60s\"\nhost: \"\""
+        },
+        "tls": {
+          "additionalProperties": {},
+          "properties": {
+            "caCertificate": {},
+            "certificate": {},
+            "destinationCACertificate": {},
+            "insecureEdgeTerminationPolicy": {},
+            "key": {},
+            "termination": {}
+          }
+        },
+        "wildcardPolicy": {}
+      },
+      "type": "object"
     },
     "securityContext": {},
     "service": {
@@ -4043,10 +5232,51 @@
           "if": {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1create:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1automountServiceAccountToken+automountServiceAccountToken=false+2more"
               },
               {
+                "properties": {
+                  "name": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1serviceAccount~1not~1object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1automountServiceAccountToken+automountServiceAccountToken=false+2more"
               },
               {
                 "properties": {
@@ -4087,12 +5317,58 @@
         },
         {
           "if": {
+            "$ref": "#/definitions/constrains~1create:t"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "automountServiceAccountToken": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
+                    },
+                    "pattern": "[\\r\\n]",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                    "type": "string"
+                  },
+                  {
+                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
+                    "type": "boolean"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+                    "type": "string"
+                  }
+                ],
+                "description": "autoMount is deprecated in favor of automountServiceAccountToken\nIf you want to disable auto mount of Service Account Token then you can set the value to false;\nhttps://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#opt-out-of-api-credential-automounting"
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1automountServiceAccountToken+automountServiceAccountToken=false+2more"
+                "$ref": "#/definitions/constrains~1create:t"
               },
               {
-                "$ref": "#/definitions/constrains~1create:t"
+                "$ref": "#/definitions/constrains~1automountServiceAccountToken+automountServiceAccountToken=false+2more"
               }
             ]
           },
@@ -4244,52 +5520,6 @@
         },
         {
           "if": {
-            "$ref": "#/definitions/constrains~1create:t"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "automountServiceAccountToken": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "pattern": "^[A-Za-z]+\\n[A-Za-z]+$"
-                    },
-                    "pattern": "[\\r\\n]",
-                    "type": "string"
-                  },
-                  {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-                    "type": "string"
-                  },
-                  {
-                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-                    "type": "null"
-                  },
-                  {
-                    "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
-                    "type": "boolean"
-                  },
-                  {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-                    "type": "string"
-                  }
-                ],
-                "description": "autoMount is deprecated in favor of automountServiceAccountToken\nIf you want to disable auto mount of Service Account Token then you can set the value to false;\nhttps://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#opt-out-of-api-credential-automounting"
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1create:t"
@@ -4321,47 +5551,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1automountServiceAccountToken+automountServiceAccountToken=false+2more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1create:t"
-              },
-              {
-                "properties": {
-                  "name": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1serviceAccount~1not~1object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/t"
-                    }
-                  }
-                ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
-              }
-            }
-          }
         }
       ],
       "properties": {
@@ -4389,73 +5578,74 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/definitions/when~1enabled:t~1then~1any~1else~1fail"
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "keystore": {}
-                      },
-                      "required": [
-                        "keystore"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   },
                   {
-                    "properties": {
-                      "keystore": {
-                        "enum": [
-                          null
-                        ]
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "keystore": {}
+                          },
+                          "required": [
+                            "keystore"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "keystore": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "keystore"
+                        ],
+                        "type": "object"
                       }
-                    },
-                    "required": [
-                      "keystore"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/when~1enabled:t~1then~1any~1else~1fail"
               },
               {
-                "anyOf": [
+                "allOf": [
                   {
-                    "properties": {
-                      "keyStorePassword": {
-                        "enum": [
-                          null
-                        ]
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "keyStorePassword": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "keyStorePassword"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "keyStorePassword": {}
+                          },
+                          "required": [
+                            "keyStorePassword"
+                          ],
+                          "type": "object"
+                        }
                       }
-                    },
-                    "required": [
-                      "keyStorePassword"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "keyStorePassword": {}
-                      },
-                      "required": [
-                        "keyStorePassword"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   }
                 ]
               }

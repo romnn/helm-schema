@@ -4,14 +4,117 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "not": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            }
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global+global=null"
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1global+global=null"
+            "else": {
+              "allOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                  }
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.resourceScope+global.resourceScope=null"
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1global+global=null"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.resourceScope+global.resourceScope=null"
+                }
+              ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
+            },
+            "then": true
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                  },
+                  {
+                    "properties": {
+                      "_internal_defaults_do_not_set": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "_internal_defaults_do_not_set"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "_internal_defaults_do_not_set": {}
+                      },
+                      "required": [
+                        "_internal_defaults_do_not_set"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
+              }
+            ]
           }
         ]
       },
@@ -31,57 +134,9 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
-              },
-              {
-                "properties": {
-                  "_internal_defaults_do_not_set": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "_internal_defaults_do_not_set"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "_internal_defaults_do_not_set": {}
-                  },
-                  "required": [
-                    "_internal_defaults_do_not_set"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "not": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            }
+            "$ref": "#/definitions/constrains~1global+global=null@2"
           },
           {
             "allOf": [
@@ -107,76 +162,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "else": {
-          "else": {
-            "else": {
-              "else": {
-                "else": {
-                  "else": false,
-                  "if": {
-                    "properties": {
-                      "global": {
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  "then": {
-                    "else": true,
-                    "if": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "resourceScope": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "resourceScope"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    },
-                    "then": false
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
-                },
-                "then": false
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1global.resourceScope+global.resourceScope=null"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            },
-            "then": false
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1global.resourceScope+global.resourceScope=null"
-          },
-          "then": false
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1defaults!=0+defaults=true"
-        },
-        "then": true
-      },
-      "then": false
     }
   ],
   "definitions": {
@@ -252,35 +237,23 @@
         }
       ]
     },
+    "constrains/global+global=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global+global=null"
+      }
+    },
     "constrains/global.resourceScope+global.resourceScope=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "global": {
-              "properties": {
-                "resourceScope": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "resourceScope"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
+      "not": {
+        "anyOf": [
+          {
             "properties": {
               "global": {
                 "properties": {
-                  "resourceScope": {}
+                  "resourceScope": {
+                    "enum": [
+                      null
+                    ]
+                  }
                 },
                 "required": [
                   "resourceScope"
@@ -292,9 +265,28 @@
               "global"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "resourceScope": {}
+                  },
+                  "required": [
+                    "resourceScope"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
           }
-        }
-      ]
+        ]
+      }
     }
   },
   "properties": {

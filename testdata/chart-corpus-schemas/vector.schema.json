@@ -4,17 +4,14 @@
   "allOf": [
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
-          "then": true
-        }
+          {
+            "$ref": "#/definitions/constrains~1haproxy.enabled:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -28,85 +25,112 @@
     },
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+haproxy.enabled:t+1more"
           },
-          "then": {
-            "else": {
-              "else": {
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t"
+              },
+              {
                 "else": {
                   "else": {
-                    "else": true,
-                    "if": {
-                      "properties": {
-                        "role": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "role"
-                      ],
-                      "type": "object"
-                    },
-                    "then": false
-                  },
-                  "if": {
                     "$ref": "#/definitions/constrains~1role+role=null"
                   },
-                  "then": false
+                  "if": {
+                    "properties": {
+                      "role": {
+                        "enum": [
+                          "Stateless-Aggregator"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "role"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1role+role=null"
+                  }
                 },
                 "if": {
-                  "$ref": "#/definitions/constrains~1role+role=null"
+                  "properties": {
+                    "role": {
+                      "enum": [
+                        "Aggregator"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role"
+                  ],
+                  "type": "object"
                 },
-                "then": false
+                "then": {
+                  "$ref": "#/definitions/constrains~1role+role=null"
+                }
               },
-              "if": {
-                "$ref": "#/definitions/constrains~1haproxy.service.ports:t@2"
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1haproxy.service.ports:t"
+                }
               },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t@2"
-            },
-            "then": false
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1customConfig:t@2"
-        },
-        "then": false
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1nameOverride:t@3"
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customConfig:t"
+                }
+              }
+            ]
           },
-          "then": true
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "nameOverride -- Override the name of resources.",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "not": {
               "properties": {
@@ -130,6 +154,153 @@
               "haproxy"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+haproxy.enabled:t+1more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -137,29 +308,45 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1customConfig:t@2"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
           },
-          "then": {
-            "else": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1haproxy.service.ports:t@2"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t@2"
-            },
-            "then": false
+          {
+            "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "nameOverride -- Override the name of resources.",
+            "type": "string"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1haproxy.service.ports:t"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1customConfig:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -177,284 +364,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "allOf": [
-                {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t+haproxy.serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+haproxy.enabled:t+3more"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                          }
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t+haproxy.serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy.enabled:t"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t@3"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+haproxy.enabled:t+3more"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+        "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
       },
       "then": {
         "allOf": [
@@ -504,215 +414,10 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customConfig:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.service.ports:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customConfig:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.service.ports:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customConfig:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.service.ports:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customConfig:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.service.ports:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1role+role=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
     "constrains/customConfig:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1customConfig:t@2"
-      }
-    },
-    "constrains/customConfig:t@2": {
       "properties": {
         "customConfig": {
           "$ref": "#/definitions/t"
@@ -735,54 +440,6 @@
       "type": "object"
     },
     "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+haproxy.enabled:t+3more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
       "properties": {
         "fullnameOverride": {
           "type": "string"
@@ -793,37 +450,229 @@
       ],
       "type": "object"
     },
-    "constrains/haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more": {
+    "constrains/fullnameOverride+fullnameOverride:t+haproxy.enabled:t+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1fullnameOverride"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+        }
+      ]
+    },
+    "constrains/fullnameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      }
+    },
+    "constrains/fullnameOverride:t@2": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/group-0": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.enabled:t"
+          "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
         },
         {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@4"
+          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name:t"
         },
         {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@5"
+          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@2"
         },
         {
           "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@3"
         },
         {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@5"
         },
         {
           "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@7"
+        }
+      ]
+    },
+    "constrains/haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@4"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@4"
+                  }
+                ]
+              }
+            },
+            {
+              "properties": {
+                "haproxy": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "allOf": [
+                            {
+                              "additionalProperties": {
+                                "anyOf": [
+                                  false,
+                                  {
+                                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1null,boolean,number"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x3a@2"
+                                  }
+                                ]
+                              },
+                              "propertyNames": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x20-x2d"
+                                  }
+                                ]
+                              },
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1not~1object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "haproxy"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "haproxy": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1not~1object"
+                            },
+                            {
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1null,boolean,number"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x3a@2"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x3a"
+                                  }
+                                ]
+                              },
+                              "propertyNames": {
+                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
+                              },
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "haproxy"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
         }
       ]
     },
@@ -878,177 +727,15 @@
       "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
-    "constrains/haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@2"
-        },
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@4"
-              }
-            ]
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@5"
-        },
-        {
-          "properties": {
-            "haproxy": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "allOf": [
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              false,
-                              {
-                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1null,boolean,number"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x3a@2"
-                              }
-                            ]
-                          },
-                          "propertyNames": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x20-x2d"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1not~1object"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "haproxy"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@7"
-        },
-        {
-          "properties": {
-            "haproxy": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1not~1object"
-                        },
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1null,boolean,number"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x3a@2"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1string;pattern-x3a"
-                              }
-                            ]
-                          },
-                          "propertyNames": {
-                            "$ref": "#/definitions/constrains~1haproxy+haproxy.enabled:t+haproxy.serviceAccount+haproxy.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
-                          },
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "haproxy"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name@6"
-        }
-      ]
-    },
     "constrains/haproxy.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-      }
-    },
-    "constrains/haproxy.enabled:t+haproxy.serviceAccount.create:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1haproxy.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-        }
-      ]
-    },
-    "constrains/haproxy.enabled:t+haproxy.serviceAccount.create:t+haproxy.serviceAccount.name:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.name:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-        }
-      ]
+      "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
     },
     "constrains/haproxy.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1haproxy.enabled:t@3"
+      }
+    },
+    "constrains/haproxy.enabled:t@3": {
       "properties": {
         "haproxy": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -1060,11 +747,6 @@
       "type": "object"
     },
     "constrains/haproxy.existingConfigMap:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1haproxy.existingConfigMap:t@2"
-      }
-    },
-    "constrains/haproxy.existingConfigMap:t@2": {
       "properties": {
         "haproxy": {
           "properties": {
@@ -1084,11 +766,6 @@
       "type": "object"
     },
     "constrains/haproxy.service.ports:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1haproxy.service.ports:t@2"
-      }
-    },
-    "constrains/haproxy.service.ports:t@2": {
       "properties": {
         "haproxy": {
           "properties": {
@@ -1980,22 +1657,17 @@
             "$ref": "#/definitions/constrains~1nameOverride@2"
           },
           {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            "$ref": "#/definitions/constrains~1nameOverride:t"
           }
         ]
       }
     },
     "constrains/nameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@3"
-      }
-    },
-    "constrains/nameOverride:t@3": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -2017,20 +1689,34 @@
       ],
       "type": "object"
     },
-    "constrains/role": {
-      "not": {
-        "properties": {
-          "role": {
-            "type": "string"
+    "constrains/role+role=null": {
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "role": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role"
+            ],
+            "type": "object"
           }
         },
-        "required": [
-          "role"
-        ],
-        "type": "object"
-      }
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1role+role=null@2"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1role+role=null@2"
+          }
+        }
+      ]
     },
-    "constrains/role+role=null": {
+    "constrains/role+role=null@2": {
       "anyOf": [
         {
           "not": {
@@ -2057,16 +1743,6 @@
           "type": "object"
         }
       ]
-    },
-    "constrains/role+role=null@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1role+role=null"
-      }
-    },
-    "constrains/role+role=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1role+role=null"
-      }
     },
     "constrains/serviceAccount.create:t": {
       "properties": {
@@ -2286,75 +1962,111 @@
         },
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "anyOf": [
+                "allOf": [
                   {
-                    "properties": {
-                      "service": {
-                        "enum": [
-                          null
-                        ]
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "image": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
                       }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "service": {}
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "serviceAccount": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "serviceAccount"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "serviceAccount": {}
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
                       }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1enabled:t"
                   }
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1enabled:t"
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "service": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "service": {}
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
               }
             ]
           },
@@ -2608,44 +2320,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": false
         }
       ],
       "description": "Optional built-in HAProxy load balancer.",

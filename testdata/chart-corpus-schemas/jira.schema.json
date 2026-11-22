@@ -24,225 +24,65 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              }
-            ]
+            "$ref": "#/definitions/when~1opensearch.enabled:t~1then~1any~1else~1opensearch+opensearch.enabled+opensearch.enabled=null"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "ingress": {}
-                  },
-                  "required": [
-                    "ingress"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
+            "properties": {
+              "opensearch": {
                 "properties": {
-                  "ingress": {
-                    "enum": [
-                      null
-                    ]
+                  "config": {
+                    "$ref": "#/definitions/t"
                   }
                 },
                 "required": [
-                  "ingress"
+                  "config"
                 ],
                 "type": "object"
               }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1gateway.create:t"
+            },
+            "required": [
+              "opensearch"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "ingress": {
-            "description": "Ingress configuration\nUse this section when routing external traffic to Jira via a Kubernetes Ingress\nresource (K8s Ingress API). Requires a pre-provisioned Ingress Controller.\nIf using the Gateway API instead, see the 'gateway' section below.\nhttps://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#ingress",
-            "type": "object"
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "description": "such as opensearch.yml and log4j2.properties",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
           }
         }
       }
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1gateway.create:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress.create:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1ingress.host:t~1then~1any~1else~1fail"
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1gateway.create:t"
-        },
-        "then": {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-          },
-          "then": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
             },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1ingress.host:t~1then~1any~1else~1fail"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1ingress.create:t"
-              },
-              "then": true
+            {
+              "$ref": "#/definitions/constrains~1opensearch+opensearch.enabled+opensearch.enabled=null"
             }
-          }
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "gateway": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "gateway"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "gateway": {}
-              },
-              "required": [
-                "gateway"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1opensearch+opensearch.enabled+opensearch.enabled=null~1then~1any~1else~1fail"
-          }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1opensearch.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
-          },
-          "then": true
+          "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
         }
       },
       "then": {
@@ -371,19 +211,15 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/definitions/t"
+          }
         },
-        "then": true
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -396,11 +232,55 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        "then": true
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1opensearch+opensearch.enabled+opensearch.enabled:t+opensearch.enabled=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1opensearch.majorVersion:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1opensearch.enabled:t~1then~1any~1else~1opensearch+opensearch.enabled+opensearch.enabled=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "podAnnotations": {
+                "description": "iam.amazonaws.com/role: es-cluster",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t"
       },
       "then": {
         "additionalProperties": {},
@@ -410,37 +290,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "ordinals": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ordinals"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "ordinals": {}
-              },
-              "required": [
-                "ordinals"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -475,36 +324,408 @@
     },
     {
       "if": {
-        "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1opensearch.image.tag:t"
+        "$ref": "#/definitions/constrains~1gateway.create:t+gateway.hostnames:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "description": "Ingress configuration\nUse this section when routing external traffic to Jira via a Kubernetes Ingress\nresource (K8s Ingress API). Requires a pre-provisioned Ingress Controller.\nIf using the Gateway API instead, see the 'gateway' section below.\nhttps://atlassian.github.io/data-center-helm-charts/userguide/CONFIGURATION/#ingress",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "jira": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "jira"
+            ],
+            "type": "object"
           },
-          "then": {
+          {
+            "properties": {
+              "fluentd": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "fluentd"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "fluentd": {}
+              },
+              "required": [
+                "fluentd"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ordinals": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ordinals"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1gateway.create:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.host:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.create:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.host:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t"
+              }
+            ]
+          },
+          {
             "else": {
-              "$ref": "#/definitions/when~1opensearch+opensearch.enabled+opensearch.enabled=null~1then~1any~1else~1fail"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1ingress.host:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+                }
+              ]
             },
             "if": {
-              "$ref": "#/definitions/constrains~1opensearch.majorVersion:t"
+              "$ref": "#/definitions/constrains~1gateway.create:t"
             },
-            "then": false
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+              },
+              "then": {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1ingress.host:t"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1ingress.create:t"
+                  },
+                  "then": true
+                }
+              }
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "ordinals": {}
+              },
+              "required": [
+                "ordinals"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t+gateway.hostnames:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "ingress": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1jira.resources+jira.resources=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jira.resources.container+jira.resources.container=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "jira": {
+                          "properties": {
+                            "resources": {
+                              "properties": {
+                                "container": {
+                                  "properties": {
+                                    "requests": {}
+                                  },
+                                  "required": [
+                                    "requests"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "container"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "resources"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jira"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "jira": {
+                        "properties": {
+                          "resources": {
+                            "properties": {
+                              "container": {
+                                "properties": {
+                                  "requests": {
+                                    "enum": [
+                                      null
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "requests"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "container"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "resources"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jira"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1jira.resources.container+jira.resources.container=null"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "jira": {}
+              },
+              "required": [
+                "jira"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1jira.resources+jira.resources=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "jira": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "jira"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "jira": {}
+                      },
+                      "required": [
+                        "jira"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "gateway": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "gateway"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "gateway": {}
+              },
+              "required": [
+                "gateway"
+              ],
+              "type": "object"
+            }
           }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1opensearch+opensearch.enabled+opensearch.enabled=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1opensearch.majorVersion:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1opensearch.image.tag:t"
+            }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1opensearch.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1opensearch.image.tag:t"
-          },
-          "then": {
-            "else": true,
-            "if": {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1opensearch.majorVersion:t"
             },
-            "then": false
-          }
+            {
+              "$ref": "#/definitions/constrains~1opensearch.image.tag:t"
+            }
+          ]
         }
       },
       "then": {
@@ -530,23 +751,20 @@
     {
       "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1opensearch.nameOverride:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1opensearch+opensearch.enabled+opensearch.enabled=null~1then~1any~1else~1fail"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1opensearch+opensearch.enabled+opensearch.enabled=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1opensearch.nameOverride:t"
+            }
+          ]
         },
         "if": {
           "$ref": "#/definitions/constrains~1opensearch.enabled:t"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1opensearch.nameOverride:t"
-          },
-          "then": true
+          "$ref": "#/definitions/constrains~1opensearch.nameOverride:t"
         }
       },
       "then": {
@@ -564,64 +782,6 @@
       }
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1opensearch+opensearch.enabled+opensearch.enabled:t+opensearch.enabled=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1opensearch.majorVersion:t"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "jira": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "jira"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "jira": {}
-              },
-              "required": [
-                "jira"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "opensearch": {
@@ -631,37 +791,6 @@
           ]
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "fluentd": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "fluentd"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "fluentd": {}
-              },
-              "required": [
-                "fluentd"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
     },
     {
       "additionalProperties": {},
@@ -685,6 +814,19 @@
     }
   ],
   "definitions": {
+    "constrains/container=null": {
+      "properties": {
+        "container": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "container"
+      ],
+      "type": "object"
+    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -697,16 +839,6 @@
       "type": "object"
     },
     "constrains/enabled+enabled=null": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/enabled+enabled=null@2": {
       "anyOf": [
         {
           "not": {
@@ -734,6 +866,31 @@
         }
       ]
     },
+    "constrains/enabled+enabled=null+nodeGroup+nodeGroup=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled+enabled=null+nodeGroup+nodeGroup=null@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@5"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null+nodeGroup+nodeGroup=null"
+        }
+      ]
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -755,6 +912,16 @@
         "gateway"
       ],
       "type": "object"
+    },
+    "constrains/gateway.create:t+gateway.hostnames:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1gateway.create:t"
+        }
+      ]
     },
     "constrains/gateway.hostnames:t": {
       "properties": {
@@ -813,7 +980,7 @@
       ],
       "type": "object"
     },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more": {
+    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+6more": {
       "anyOf": [
         {
           "not": {
@@ -821,7 +988,45 @@
           }
         },
         {
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
+          }
+        },
+        {
           "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1persistence.enabled:t"
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1majorVersion:t"
+              }
+            },
             {
               "not": {
                 "anyOf": [
@@ -833,49 +1038,40 @@
                   }
                 ]
               }
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1majorVersion:t"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1image.tag:t@2"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1majorVersion:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1image.tag"
-                }
-              ]
             }
           ]
         }
       ]
     },
-    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2": {
+    "constrains/image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+6more@2": {
       "not": {
         "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1persistence.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+              }
+            ]
+          },
           {
             "anyOf": [
               {
@@ -890,7 +1086,7 @@
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
           },
           {
             "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
@@ -934,6 +1130,9 @@
       "type": "object"
     },
     "constrains/ingress.host:t": {
+      "$ref": "#/definitions/constrains~1ingress.host:t@2"
+    },
+    "constrains/ingress.host:t@2": {
       "properties": {
         "ingress": {
           "properties": {
@@ -952,6 +1151,90 @@
       ],
       "type": "object"
     },
+    "constrains/jira.resources+jira.resources=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "jira": {
+                "properties": {
+                  "resources": {}
+                },
+                "required": [
+                  "resources"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jira"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "jira": {
+              "$ref": "#/definitions/constrains~1resources=null"
+            }
+          },
+          "required": [
+            "jira"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/jira.resources.container+jira.resources.container=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "jira": {
+              "properties": {
+                "resources": {
+                  "$ref": "#/definitions/constrains~1container=null"
+                }
+              },
+              "required": [
+                "resources"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "jira"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "jira": {
+                "properties": {
+                  "resources": {
+                    "properties": {
+                      "container": {}
+                    },
+                    "required": [
+                      "container"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "resources"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jira"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/majorVersion:t": {
       "properties": {
         "majorVersion": {
@@ -963,33 +1246,18 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
-          }
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "properties": {
+            "nameOverride": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
         },
         {
           "not": {
@@ -1010,15 +1278,9 @@
       "type": "object"
     },
     "constrains/nodeGroup": {
-      "properties": {
-        "nodeGroup": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1nodeGroup@2"
+      }
     },
     "constrains/nodeGroup!=null": {
       "properties": {
@@ -1036,19 +1298,46 @@
       "type": "object"
     },
     "constrains/nodeGroup+nodeGroup=null": {
-      "anyOf": [
+      "allOf": [
         {
           "$ref": "#/definitions/constrains~1nodeGroup"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+          }
+        }
+      ]
+    },
+    "constrains/nodeGroup+nodeGroup=null@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@5"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/nodeGroup+nodeGroup=null@3": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@5"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+        }
+      ]
+    },
+    "constrains/nodeGroup+nodeGroup=null@4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
         },
         {
           "not": {
@@ -1066,7 +1355,7 @@
         }
       ]
     },
-    "constrains/nodeGroup+nodeGroup=null@2": {
+    "constrains/nodeGroup+nodeGroup=null@5": {
       "anyOf": [
         {
           "not": {
@@ -1090,6 +1379,17 @@
           "enum": [
             null
           ]
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@2": {
+      "properties": {
+        "nodeGroup": {
+          "type": "string"
         }
       },
       "required": [
@@ -1123,6 +1423,16 @@
         }
       ]
     },
+    "constrains/opensearch+opensearch.enabled+opensearch.enabled=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1opensearch"
+        },
+        {
+          "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled=null"
+        }
+      ]
+    },
     "constrains/opensearch.enabled": {
       "not": {
         "properties": {
@@ -1145,7 +1455,14 @@
     "constrains/opensearch.enabled+opensearch.enabled=null": {
       "properties": {
         "opensearch": {
-          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1enabled+enabled=null"
+            },
+            {
+              "type": "object"
+            }
+          ]
         }
       },
       "required": [
@@ -1176,15 +1493,20 @@
       "type": "object"
     },
     "constrains/opensearch.majorVersion:t": {
-      "properties": {
-        "opensearch": {
-          "$ref": "#/definitions/constrains~1majorVersion:t"
-        }
-      },
-      "required": [
-        "opensearch"
-      ],
-      "type": "object"
+      "$ref": "#/definitions/constrains~1opensearch.majorVersion:t@2"
+    },
+    "constrains/opensearch.majorVersion:t@2": {
+      "not": {
+        "properties": {
+          "opensearch": {
+            "$ref": "#/definitions/constrains~1majorVersion:t"
+          }
+        },
+        "required": [
+          "opensearch"
+        ],
+        "type": "object"
+      }
     },
     "constrains/opensearch.nameOverride:t": {
       "properties": {
@@ -1200,19 +1522,173 @@
     "constrains/opensearch.persistence.enabled:t": {
       "properties": {
         "opensearch": {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
+        }
+      },
+      "required": [
+        "opensearch"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence+persistence.storageClass+persistence.storageClass=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+          }
+        }
+      ]
+    },
+    "constrains/persistence.enabled!=null": {
+      "properties": {
+        "persistence": {
           "properties": {
-            "persistence": {
-              "$ref": "#/definitions/constrains~1enabled:t"
+            "enabled": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
             }
           },
           "required": [
-            "persistence"
+            "enabled"
           ],
           "type": "object"
         }
       },
       "required": [
-        "opensearch"
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.enabled:t": {
+      "properties": {
+        "persistence": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass": {
+      "not": {
+        "$ref": "#/definitions/constrains~1persistence.storageClass@3"
+      }
+    },
+    "constrains/persistence.storageClass+persistence.storageClass=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null@2"
+        }
+      ]
+    },
+    "constrains/persistence.storageClass+persistence.storageClass=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.storageClass@2"
+        }
+      ]
+    },
+    "constrains/persistence.storageClass:t": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass=null": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/persistence.storageClass@2": {
+      "not": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "storageClass": {}
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/persistence.storageClass@3": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "storageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "constrains/resources=null": {
+      "properties": {
+        "resources": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "resources"
       ],
       "type": "object"
     },
@@ -1241,107 +1717,37 @@
         }
       ]
     },
-    "when/image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nodeGroup!=null"
-          },
-          {
-            "properties": {
-              "nameOverride": {
-                "not": {
-                  "enum": [
-                    null
-                  ]
-                }
-              }
-            },
-            "required": [
-              "nameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "tag": {
-                    "not": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "tag"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "majorVersion": {
-                "not": {
-                  "enum": [
-                    null
-                  ]
-                }
-              }
-            },
-            "required": [
-              "majorVersion"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/ingress.host:t/then/any/else/fail": {
-      "else": false,
-      "if": {
-        "$ref": "#/definitions/constrains~1ingress.host:t"
-      },
-      "then": true
-    },
-    "when/nodeGroup+nodeGroup=null/then/fail/else/nodeGroup": {
+    "when/nodeGroup+nodeGroup=null/then/persistence+persistence.storageClass+persistence.storageClass=null/else/nodeGroup": {
       "else": {
-        "else": true,
-        "if": {
-          "$ref": "#/definitions/constrains~1nodeGroup"
+        "else": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1nodeGroup@2"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1persistence.storageClass"
+          }
         },
-        "then": false
+        "if": {
+          "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1nodeGroup"
+        }
       },
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
-          },
-          {
-            "type": "object"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
       },
-      "then": false
+      "then": {
+        "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null"
+      }
     },
-    "when/opensearch+opensearch.enabled+opensearch.enabled=null/then/any/else/fail": {
-      "else": false,
+    "when/opensearch.enabled:t/then/any/else/opensearch+opensearch.enabled+opensearch.enabled=null": {
+      "else": {
+        "$ref": "#/definitions/constrains~1opensearch+opensearch.enabled+opensearch.enabled=null"
+      },
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1opensearch"
-          },
-          {
-            "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1opensearch.enabled:t"
       },
       "then": true
     }
@@ -1430,6 +1836,29 @@
     },
     "jira": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1resources=null"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "resources": {}
+                  },
+                  "required": [
+                    "resources"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "description": "Jira configuration",
       "properties": {
         "additionalAnnotations": {
@@ -1437,6 +1866,85 @@
         },
         "additionalJvmArgs": {
           "description": "Specifies a list of additional arguments that can be passed to the Jira JVM, e.g.\nsystem properties."
+        },
+        "resources": {
+          "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "container": {}
+                      },
+                      "required": [
+                        "container"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1container=null"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
+          "description": "Pod resource requests",
+          "properties": {
+            "container": {
+              "additionalProperties": {},
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "requests": {}
+                          },
+                          "required": [
+                            "requests"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "requests": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "requests"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
+              "description": "Specifies the standard K8s resource requests and/or limits for the Jira\ncontainer. It is important that if the memory resources are specified here,\nthey must allow for the size of the Jira JVM. That means the maximum heap\nsize, the reserved code cache size, plus other JVM overheads, must be\naccommodated. Allowing for (maxHeap+codeCache)*1.5 would be an example.",
+              "properties": {
+                "requests": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "cpu": {
+                      "description": "Initial CPU request by Jira pod"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -1455,35 +1963,223 @@
           "if": {
             "else": {
               "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup"
-                }
+                "$ref": "#/definitions/constrains~1enabled+enabled=null+nodeGroup+nodeGroup=null@2"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+                "$ref": "#/definitions/constrains~1persistence.enabled:t"
               },
-              "then": false
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1enabled+enabled=null+nodeGroup+nodeGroup=null@2"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                },
+                "then": {
+                  "else": {
+                    "else": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/when~1nodeGroup+nodeGroup=null~1then~1persistence+persistence.storageClass+persistence.storageClass=null~1else~1nodeGroup"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null@2"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1enabled+enabled=null+nodeGroup+nodeGroup=null"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@5"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null@2"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
             },
             "if": {
               "$ref": "#/definitions/constrains~1enabled:t"
             },
             "then": {
               "else": {
-                "$ref": "#/definitions/when~1nodeGroup+nodeGroup=null~1then~1fail~1else~1nodeGroup"
+                "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@3"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@2"
+                "$ref": "#/definitions/constrains~1persistence.enabled:t"
               },
-              "then": false
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@3"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                },
+                "then": {
+                  "else": {
+                    "else": {
+                      "$ref": "#/definitions/when~1nodeGroup+nodeGroup=null~1then~1persistence+persistence.storageClass+persistence.storageClass=null~1else~1nodeGroup"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null@2"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@5"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null@2"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
             }
           },
           "then": {
             "if": {
-              "$ref": "#/definitions/constrains~1nodeGroup!=null"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1persistence.enabled!=null"
+                }
+              ]
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+6more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+6more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1persistence.enabled!=null"
+                },
+                {
+                  "properties": {
+                    "nameOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "tag": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "tag"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "majorVersion": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "majorVersion"
+                  ],
+                  "type": "object"
+                }
+              ]
             },
             "then": false
           }
@@ -1492,30 +2188,16 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/definitions/when~1image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null~1then~1fail"
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled=null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
                   },
                   {
                     "$ref": "#/definitions/constrains~1enabled:t"
@@ -1556,28 +2238,13 @@
             ]
           },
           "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": {
-            "$ref": "#/definitions/when~1image.tag!=null+majorVersion!=null+nameOverride!=null+nodeGroup!=null~1then~1fail"
-          }
         }
       ],
       "properties": {
         "clusterName": {},
+        "config": {
+          "description": "such as opensearch.yml and log4j2.properties"
+        },
         "enabled": {
           "description": "Deploy OpenSearch Helm chart and Configure Jira to use it as a search platform"
         },
@@ -1624,8 +2291,14 @@
                   "description": "Add default labels for the volumeClaimTemplate of the StatefulSet"
                 }
               }
-            }
+            },
+            "size": {},
+            "storageClass": {}
           }
+        },
+        "podAnnotations": {
+          "additionalProperties": {},
+          "description": "iam.amazonaws.com/role: es-cluster"
         },
         "podManagementPolicy": {
           "description": "The default is to deploy all pods serially. By setting this to parallel all pods are started at\nthe same time when bootstrapping the cluster"

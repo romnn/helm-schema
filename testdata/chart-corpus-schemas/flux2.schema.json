@@ -4,7 +4,79 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1sourceWatcher.create!=0+sourceWatcher.create=true"
+        "$ref": "#/definitions/constrains~1sourceController.create:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sourceController": {
+                "$ref": "#/definitions/constrains~1service"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sourceController": {
+                "$ref": "#/definitions/constrains~1container"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sourceController": {
+                "$ref": "#/definitions/constrains~1serviceAccount"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1notificationController.create:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "notificationController": {
+            "$ref": "#/definitions/constrains~1container.additionalArgs"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1notificationController+notificationController.create:t+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "notificationController": {
+            "$ref": "#/definitions/constrains~1tag"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1sourceController.create:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sourceController": {
+            "$ref": "#/definitions/constrains~1container.additionalArgs"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
       },
       "then": {
         "allOf": [
@@ -12,9 +84,882 @@
             "additionalProperties": {},
             "properties": {
               "sourceWatcher": {
+                "$ref": "#/definitions/constrains~1service"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sourceWatcher": {
+                "$ref": "#/definitions/constrains~1serviceAccount"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "sourceWatcher": {
+                "$ref": "#/definitions/constrains~1container"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1prometheus"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1prometheus=null"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "$ref": "#/definitions/constrains~1podMonitor=null"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {
+                          "properties": {
+                            "podMonitor": {}
+                          },
+                          "required": [
+                            "podMonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1cli+cli=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "cli": {
+                        "$ref": "#/definitions/constrains~1tag=null"
+                      }
+                    },
+                    "required": [
+                      "cli"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "cli": {
+                          "$ref": "#/definitions/constrains~1tag@3"
+                        }
+                      },
+                      "required": [
+                        "cli"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "policies": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "policies"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:helm-marker-free"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:helm-marker-free"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:helm-marker-free"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:helm-marker-free"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.annotations:t"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "policies": {}
+              },
+              "required": [
+                "policies"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "notificationController": {
+                        "$ref": "#/definitions/constrains~1tag=null"
+                      }
+                    },
+                    "required": [
+                      "notificationController"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "notificationController": {
+                          "$ref": "#/definitions/constrains~1tag@3"
+                        }
+                      },
+                      "required": [
+                        "notificationController"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController+notificationController.create:t+1more"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "distro": {}
+              },
+              "required": [
+                "distro"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1sourceController"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1sourceController.create:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "sourceController": {
+                          "$ref": "#/definitions/constrains~1tag@2"
+                        }
+                      },
+                      "required": [
+                        "sourceController"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1sourceController=null"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceController.create:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "distro": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "distro"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1notificationController.create:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "notificationController": {
+                          "$ref": "#/definitions/constrains~1tag@2"
+                        }
+                      },
+                      "required": [
+                        "notificationController"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1notificationController=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1notificationController"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "sourceWatcher": {
+                          "$ref": "#/definitions/constrains~1tag@2"
+                        }
+                      },
+                      "required": [
+                        "sourceWatcher"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1sourceWatcher"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1sourceWatcher=null"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1cli=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1cli"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "cli": {
+                        "$ref": "#/definitions/constrains~1serviceAccount=null"
+                      }
+                    },
+                    "required": [
+                      "cli"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "cli": {
+                          "$ref": "#/definitions/constrains~1serviceAccount@2"
+                        }
+                      },
+                      "required": [
+                        "cli"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1crds.migration.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1sourceController+sourceController.create:t+sourceController=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "sourceController": {
+                          "$ref": "#/definitions/constrains~1tag@3"
+                        }
+                      },
+                      "required": [
+                        "sourceController"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "sourceController": {
+                        "$ref": "#/definitions/constrains~1tag=null"
+                      }
+                    },
+                    "required": [
+                      "sourceController"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1crds.migration.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1crds.migration.enabled:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1cli.tag"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1cli=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1cli"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "crds": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1crds.migration.enabled:t+notificationController+rbac.create:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "multitenancy": {}
+                      },
+                      "required": [
+                        "multitenancy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "multitenancy": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "multitenancy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "crds": {}
+                      },
+                      "required": [
+                        "crds"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "crds": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "crds"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "crds": {
+                        "$ref": "#/definitions/constrains~1migration=null"
+                      }
+                    },
+                    "required": [
+                      "crds"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "crds": {
+                          "properties": {
+                            "migration": {}
+                          },
+                          "required": [
+                            "migration"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "crds"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher+sourceWatcher.create:t+sourceWatcher=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "sourceWatcher": {
+                          "$ref": "#/definitions/constrains~1tag@3"
+                        }
+                      },
+                      "required": [
+                        "sourceWatcher"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "sourceWatcher": {
+                        "$ref": "#/definitions/constrains~1tag=null"
+                      }
+                    },
+                    "required": [
+                      "sourceWatcher"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1cli"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cli=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cli.tag"
+          },
+          {
+            "$ref": "#/definitions/constrains~1notificationController"
+          },
+          {
+            "$ref": "#/definitions/constrains~1notificationController=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1prometheus"
+          },
+          {
+            "$ref": "#/definitions/constrains~1prometheus=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1sourceController"
+          },
+          {
+            "$ref": "#/definitions/constrains~1sourceController=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1sourceWatcher"
+          },
+          {
+            "$ref": "#/definitions/constrains~1sourceWatcher=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1notificationController.create:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "notificationController": {
+                "$ref": "#/definitions/constrains~1container"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "notificationController": {
+                "$ref": "#/definitions/constrains~1service"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "notificationController": {
+                "$ref": "#/definitions/constrains~1serviceAccount"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "notificationController": {
                 "additionalProperties": {},
                 "properties": {
-                  "serviceAccount": {
+                  "webhookReceiver": {
                     "type": "object"
                   }
                 }
@@ -25,18 +970,28 @@
             "additionalProperties": {},
             "properties": {
               "notificationController": {
-                "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "webhookReceiver": {
+                    "$ref": "#/definitions/constrains~1service"
+                  }
+                }
               }
             }
           },
           {
             "additionalProperties": {},
             "properties": {
-              "sourceWatcher": {
+              "notificationController": {
                 "additionalProperties": {},
                 "properties": {
-                  "container": {
-                    "type": "object"
+                  "webhookReceiver": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "ingress": {
+                        "type": "object"
+                      }
+                    }
                   }
                 }
               }
@@ -47,94 +1002,63 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1sourceWatcher.create!=0+sourceWatcher.create=true"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "notificationController": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "notificationController"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "notificationController": {}
-                  },
-                  "required": [
-                    "notificationController"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "sourceWatcher": {}
-              },
-              "required": [
-                "sourceWatcher"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "sourceWatcher": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "sourceWatcher"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1sourceWatcher.create!=0+sourceWatcher.create=true"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1cli+cli=null"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "sourceWatcher": {
-            "additionalProperties": {},
+          "cli": {
+            "$ref": "#/definitions/constrains~1tag"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1crds.migration.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbac": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "prometheus": {
             "properties": {
-              "container": {
+              "podMonitor": {
+                "$ref": "#/definitions/constrains~1create:t"
+              }
+            },
+            "required": [
+              "podMonitor"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
+            "additionalProperties": {},
+            "description": "Enables podMonitor creation for the Prometheus Operator",
+            "properties": {
+              "podMonitor": {
                 "additionalProperties": {},
                 "properties": {
-                  "additionalArgs": {
+                  "additionalLabels": {
                     "type": [
                       "array",
-                      "integer",
                       "null",
                       "object"
                     ]
@@ -145,35 +1069,600 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "notificationController": {
+                "properties": {
+                  "webhookReceiver": {
+                    "properties": {
+                      "ingress": {
+                        "$ref": "#/definitions/constrains~1create:t"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhookReceiver"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "notificationController"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "notificationController": {
+                "properties": {
+                  "webhookReceiver": {
+                    "properties": {
+                      "ingress": {
+                        "$ref": "#/definitions/constrains~1annotations:t"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhookReceiver"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "notificationController"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1notificationController.create:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "notificationController": {
+            "additionalProperties": {},
+            "properties": {
+              "webhookReceiver": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "description": "ingressClassName: nginx",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1installCRDs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController.create:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "crds": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "properties": {
+                      "controller-gen.kubebuilder.io/version": {}
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/helm-marker-free"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
+                  }
+                ],
+                "description": "Add annotations to all CRD resources, e.g. \"helm.sh/resource-policy\": keep"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sourceWatcher": {
+            "$ref": "#/definitions/constrains~1container.additionalArgs"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1sourceController+sourceController.create:t+sourceController=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sourceController": {
+            "$ref": "#/definitions/constrains~1tag"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1crds.migration.enabled:t+notificationController+rbac.create:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "multitenancy": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1sourceWatcher+sourceWatcher.create:t+sourceWatcher=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sourceWatcher": {
+            "$ref": "#/definitions/constrains~1tag"
+          }
+        }
+      }
     }
   ],
   "definitions": {
-    "constrains/create!=0+create=true": {
+    "constrains/annotations:t": {
       "properties": {
-        "create": {
+        "annotations": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/cli": {
+      "not": {
+        "properties": {
+          "cli": {}
+        },
+        "required": [
+          "cli"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/cli+cli=null": {
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1cli=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cli"
+              }
+            ]
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1cli=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cli"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "constrains/cli.tag": {
+      "not": {
+        "properties": {
+          "cli": {
+            "$ref": "#/definitions/constrains~1tag@2"
+          }
+        },
+        "required": [
+          "cli"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/cli=null": {
+      "properties": {
+        "cli": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "cli"
+      ],
+      "type": "object"
+    },
+    "constrains/container": {
+      "additionalProperties": {},
+      "properties": {
+        "container": {
+          "type": "object"
+        }
+      }
+    },
+    "constrains/container+container=null+create:t": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1create:t"
+        },
+        {
           "anyOf": [
             {
-              "minProperties": 1,
-              "type": "object"
-            },
-            {
               "not": {
-                "const": 0
+                "properties": {
+                  "container": {}
+                },
+                "required": [
+                  "container"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "container": {
+                  "enum": [
+                    null
+                  ]
+                }
               },
-              "type": "number"
-            },
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "minItems": 1,
-              "type": "array"
-            },
-            {
-              "const": true
+              "required": [
+                "container"
+              ],
+              "type": "object"
             }
           ]
+        }
+      ]
+    },
+    "constrains/container.additionalArgs": {
+      "additionalProperties": {},
+      "properties": {
+        "container": {
+          "additionalProperties": {},
+          "properties": {
+            "additionalArgs": {
+              "type": [
+                "array",
+                "integer",
+                "null",
+                "object"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "constrains/crds+crds.annotations": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "crds": {
+                "properties": {
+                  "annotations": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1crds.annotations@4"
+          }
+        ]
+      }
+    },
+    "constrains/crds.annotations": {
+      "not": {
+        "$ref": "#/definitions/constrains~1crds.annotations@5"
+      }
+    },
+    "constrains/crds.annotations+crds.annotations=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "crds": {
+              "properties": {
+                "annotations": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "annotations"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "crds"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.annotations@4"
+        }
+      ]
+    },
+    "constrains/crds.annotations+crds.annotations=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null"
+      }
+    },
+    "constrains/crds.annotations:helm-marker-free": {
+      "properties": {
+        "crds": {
+          "properties": {
+            "annotations": {
+              "$ref": "#/definitions/helm-marker-free"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.annotations:t": {
+      "properties": {
+        "crds": {
+          "$ref": "#/definitions/constrains~1annotations:t"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.annotations@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1crds.annotations@6"
+      }
+    },
+    "constrains/crds.annotations@3": {
+      "not": {
+        "properties": {
+          "crds": {
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "crds"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/crds.annotations@4": {
+      "not": {
+        "properties": {
+          "crds": {
+            "properties": {
+              "annotations": {}
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "crds"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/crds.annotations@5": {
+      "properties": {
+        "crds": {
+          "properties": {
+            "annotations": {
+              "minProperties": 1,
+              "type": "object"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.annotations@6": {
+      "properties": {
+        "crds": {
+          "properties": {
+            "annotations": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "annotations"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.migration.enabled:t": {
+      "properties": {
+        "crds": {
+          "properties": {
+            "migration": {
+              "properties": {
+                "enabled": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "migration"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.migration.enabled:t+notificationController+rbac.create:t": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1crds.migration.enabled:t"
+            },
+            {
+              "properties": {
+                "rbac": {
+                  "$ref": "#/definitions/constrains~1create:t"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1notificationController.create:t"
+        }
+      ]
+    },
+    "constrains/create:t": {
+      "properties": {
+        "create": {
+          "$ref": "#/definitions/t"
         }
       },
       "required": [
@@ -181,23 +1670,650 @@
       ],
       "type": "object"
     },
-    "constrains/sourceWatcher.create!=0+sourceWatcher.create=true": {
+    "constrains/create:t+service+service=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1create:t"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1service=null"
+            },
+            {
+              "not": {
+                "properties": {
+                  "service": {}
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/create:t+serviceAccount+serviceAccount=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1create:t"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount=null"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1serviceAccount@2"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1crds+crds.annotations"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.annotations+crds.annotations=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.annotations:helm-marker-free"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.annotations:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.annotations@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1crds.annotations@5"
+        }
+      ]
+    },
+    "constrains/installCRDs:t": {
+      "properties": {
+        "installCRDs": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "installCRDs"
+      ],
+      "type": "object"
+    },
+    "constrains/migration=null": {
+      "properties": {
+        "migration": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "migration"
+      ],
+      "type": "object"
+    },
+    "constrains/notificationController": {
+      "not": {
+        "properties": {
+          "notificationController": {}
+        },
+        "required": [
+          "notificationController"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/notificationController+notificationController.create:t+1more": {
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1notificationController=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController"
+              }
+            ]
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1notificationController=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1notificationController"
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1notificationController.create:t"
+        }
+      ]
+    },
+    "constrains/notificationController.create:t": {
+      "properties": {
+        "notificationController": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "notificationController"
+      ],
+      "type": "object"
+    },
+    "constrains/notificationController=null": {
+      "properties": {
+        "notificationController": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "notificationController"
+      ],
+      "type": "object"
+    },
+    "constrains/podMonitor=null": {
+      "properties": {
+        "podMonitor": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "podMonitor"
+      ],
+      "type": "object"
+    },
+    "constrains/prometheus": {
+      "not": {
+        "properties": {
+          "prometheus": {}
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/prometheus=null": {
+      "properties": {
+        "prometheus": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "prometheus"
+      ],
+      "type": "object"
+    },
+    "constrains/service": {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "type": "object"
+        }
+      }
+    },
+    "constrains/service=null": {
+      "properties": {
+        "service": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount": {
+      "additionalProperties": {},
+      "properties": {
+        "serviceAccount": {
+          "type": "object"
+        }
+      }
+    },
+    "constrains/serviceAccount=null": {
+      "properties": {
+        "serviceAccount": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount@2": {
+      "properties": {
+        "serviceAccount": {}
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/sourceController": {
+      "not": {
+        "properties": {
+          "sourceController": {}
+        },
+        "required": [
+          "sourceController"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/sourceController+sourceController.create:t+sourceController=null": {
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1sourceController"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceController=null"
+              }
+            ]
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1sourceController"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceController=null"
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1sourceController.create:t"
+        }
+      ]
+    },
+    "constrains/sourceController.create:t": {
+      "properties": {
+        "sourceController": {
+          "$ref": "#/definitions/constrains~1create:t"
+        }
+      },
+      "required": [
+        "sourceController"
+      ],
+      "type": "object"
+    },
+    "constrains/sourceController=null": {
+      "properties": {
+        "sourceController": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "sourceController"
+      ],
+      "type": "object"
+    },
+    "constrains/sourceWatcher": {
+      "not": {
+        "properties": {
+          "sourceWatcher": {}
+        },
+        "required": [
+          "sourceWatcher"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/sourceWatcher+sourceWatcher.create:t+sourceWatcher=null": {
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher=null"
+              }
+            ]
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sourceWatcher=null"
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1sourceWatcher.create:t"
+        }
+      ]
+    },
+    "constrains/sourceWatcher.create:t": {
       "properties": {
         "sourceWatcher": {
-          "$ref": "#/definitions/constrains~1create!=0+create=true"
+          "$ref": "#/definitions/constrains~1create:t"
         }
       },
       "required": [
         "sourceWatcher"
       ],
       "type": "object"
+    },
+    "constrains/sourceWatcher=null": {
+      "properties": {
+        "sourceWatcher": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "sourceWatcher"
+      ],
+      "type": "object"
+    },
+    "constrains/tag": {
+      "additionalProperties": {},
+      "properties": {
+        "tag": {
+          "type": "string"
+        }
+      }
+    },
+    "constrains/tag=null": {
+      "properties": {
+        "tag": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "tag"
+      ],
+      "type": "object"
+    },
+    "constrains/tag@2": {
+      "properties": {
+        "tag": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag"
+      ],
+      "type": "object"
+    },
+    "constrains/tag@3": {
+      "properties": {
+        "tag": {}
+      },
+      "required": [
+        "tag"
+      ],
+      "type": "object"
+    },
+    "helm-marker-free": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-marker-free"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "<no value>"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-marker-free"
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "pattern": "<no value>"
+          },
+          "type": "string"
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/notificationController.service": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "labels": {},
+        "ports": {}
+      }
+    },
+    "values/notificationController.serviceAccount": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "automount": {},
+        "create": {}
+      }
+    },
+    "values/sourceController": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1container+container=null+create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1create:t+service+service=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1create:t+serviceAccount+serviceAccount=null"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "properties": {
+        "affinity": {},
+        "annotations": {},
+        "container": {
+          "additionalProperties": {},
+          "properties": {
+            "additionalArgs": {}
+          }
+        },
+        "create": {},
+        "extraEnv": {},
+        "image": {},
+        "imagePullPolicy": {},
+        "initContainers": {},
+        "labels": {},
+        "nodeSelector": {},
+        "podSecurityContext": {},
+        "priorityClassName": {},
+        "resources": {},
+        "securityContext": {},
+        "service": {
+          "$ref": "#/definitions/values~1notificationController.service"
+        },
+        "serviceAccount": {
+          "$ref": "#/definitions/values~1notificationController.serviceAccount"
+        },
+        "tag": {},
+        "tolerations": {},
+        "volumeMounts": {},
+        "volumes": {}
+      },
+      "type": "object"
     }
   },
   "properties": {
-    "cli": {},
+    "cli": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1serviceAccount@2"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "properties": {
+        "affinity": {},
+        "annotations": {},
+        "image": {},
+        "nodeSelector": {},
+        "resources": {},
+        "securityContext": {},
+        "serviceAccount": {
+          "additionalProperties": {},
+          "properties": {
+            "automount": {}
+          },
+          "type": "object"
+        },
+        "tag": {},
+        "tolerations": {},
+        "volumeMounts": {},
+        "volumes": {}
+      },
+      "type": "object"
+    },
     "clusterDomain": {},
-    "crds": {},
-    "distro": {},
+    "crds": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "migration": {}
+                  },
+                  "required": [
+                    "migration"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1migration=null"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "properties": {
+        "annotations": {
+          "description": "Add annotations to all CRD resources, e.g. \"helm.sh/resource-policy\": keep"
+        },
+        "migration": {
+          "additionalProperties": {},
+          "description": "Enable Flux CRs migration using helm pre upgrade hook job",
+          "properties": {
+            "affinity": {},
+            "annotations": {},
+            "enabled": {},
+            "nodeSelector": {},
+            "resources": {},
+            "securityContext": {},
+            "timeout": {},
+            "tolerations": {},
+            "volumeMounts": {},
+            "volumes": {}
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "distro": {
+      "additionalProperties": {},
+      "properties": {
+        "openshift": {}
+      },
+      "type": "object"
+    },
     "extraObjects": {
       "description": "Array of extra K8s manifests to deploy\nExample usage from https://fluxcd.io/docs/components/source/buckets/#static-authentication\n- apiVersion: source.toolkit.fluxcd.io/v1beta2\nkind: Bucket\nmetadata:\nname: podinfo\nnamespace: default\nspec:\ninterval: 1m\nprovider: generic\nbucketName: podinfo\nendpoint: minio.minio.svc.cluster.local:9000\ninsecure: true\nsecretRef:\nname: minio-credentials\n- apiVersion: v1\nkind: Secret\nmetadata:\nname: minio-credentials\nnamespace: default\ntype: Opaque\ndata:\naccesskey: <BASE64>\nsecretkey: <BASE64>"
     },
@@ -211,93 +2327,158 @@
     "installCRDs": {},
     "kustomizeController": {},
     "logLevel": {},
-    "multitenancy": {},
-    "notificationController": {
+    "multitenancy": {
       "additionalProperties": {},
       "properties": {
-        "create": {}
+        "enabled": {
+          "description": "Implement the patches for Multi-tenancy lockdown.\nSee https://fluxcd.io/docs/installation/#multi-tenancy-lockdown"
+        },
+        "privileged": {
+          "description": "Both kustomize-controller and helm-controller service accounts run privileged\nwith cluster-admin ClusterRoleBinding. Disable if you want to run them with a\nminimum set of permissions."
+        }
       }
     },
-    "policies": {},
-    "prometheus": {
-      "description": "Enables podMonitor creation for the Prometheus Operator"
-    },
-    "rbac": {},
-    "sourceController": {},
-    "sourceWatcher": {
+    "notificationController": {
       "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1create!=0+create=true"
-              },
-              {
-                "anyOf": [
+                "allOf": [
                   {
-                    "properties": {
-                      "serviceAccount": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1create:t"
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {}
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "webhookReceiver": {
+                              "properties": {
+                                "service": {}
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webhookReceiver"
+                          ],
+                          "type": "object"
+                        }
                       },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                      {
+                        "properties": {
+                          "webhookReceiver": {
+                            "$ref": "#/definitions/constrains~1service=null"
+                          }
+                        },
+                        "required": [
+                          "webhookReceiver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
                   }
                 ]
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1create!=0+create=true"
               },
               {
-                "anyOf": [
+                "$ref": "#/definitions/constrains~1container+container=null+create:t"
+              },
+              {
+                "allOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "container": {}
-                      },
-                      "required": [
-                        "container"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1create:t"
                   },
                   {
-                    "properties": {
-                      "container": {
-                        "enum": [
-                          null
-                        ]
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "webhookReceiver": {}
+                          },
+                          "required": [
+                            "webhookReceiver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "webhookReceiver": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "webhookReceiver"
+                        ],
+                        "type": "object"
                       }
-                    },
-                    "required": [
-                      "container"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1create:t+service+service=null"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1create:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "webhookReceiver": {
+                              "properties": {
+                                "ingress": {}
+                              },
+                              "required": [
+                                "ingress"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webhookReceiver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "webhookReceiver": {
+                            "properties": {
+                              "ingress": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "ingress"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webhookReceiver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1create:t+serviceAccount+serviceAccount=null"
               }
             ]
           },
@@ -305,6 +2486,7 @@
         }
       ],
       "properties": {
+        "affinity": {},
         "annotations": {},
         "container": {
           "additionalProperties": {},
@@ -313,16 +2495,115 @@
           }
         },
         "create": {},
+        "extraEnv": {},
+        "image": {},
+        "imagePullPolicy": {},
         "initContainers": {},
         "labels": {},
+        "nodeSelector": {},
+        "podSecurityContext": {},
+        "priorityClassName": {},
+        "replicas": {},
+        "resources": {},
+        "securityContext": {},
+        "service": {
+          "$ref": "#/definitions/values~1notificationController.service"
+        },
         "serviceAccount": {
+          "$ref": "#/definitions/values~1notificationController.serviceAccount"
+        },
+        "tag": {},
+        "tolerations": {},
+        "volumeMounts": {},
+        "volumes": {},
+        "webhookReceiver": {
           "additionalProperties": {},
           "properties": {
-            "automount": {}
+            "ingress": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "description": "ingressClassName: nginx"
+                },
+                "create": {},
+                "labels": {
+                  "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+                }
+              }
+            },
+            "service": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {},
+                "labels": {}
+              }
+            }
           }
         }
       },
       "type": "object"
+    },
+    "policies": {
+      "additionalProperties": {},
+      "properties": {
+        "create": {}
+      },
+      "type": "object"
+    },
+    "prometheus": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1podMonitor=null"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podMonitor": {}
+                  },
+                  "required": [
+                    "podMonitor"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "description": "Enables podMonitor creation for the Prometheus Operator",
+      "properties": {
+        "podMonitor": {
+          "additionalProperties": {},
+          "properties": {
+            "additionalLabels": {
+              "additionalProperties": {}
+            },
+            "create": {
+              "description": "Enables podMonitor endpoint"
+            },
+            "podMetricsEndpoints": {}
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "rbac": {
+      "additionalProperties": {},
+      "properties": {
+        "create": {}
+      }
+    },
+    "sourceController": {
+      "$ref": "#/definitions/values~1sourceController"
+    },
+    "sourceWatcher": {
+      "$ref": "#/definitions/values~1sourceController"
     },
     "watchAllNamespaces": {}
   },

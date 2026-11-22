@@ -53,75 +53,42 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "podMutatorWebhookConfig": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "podMutatorWebhookConfig"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "podMutatorWebhookConfig": {}
-              },
-              "required": [
-                "podMutatorWebhookConfig"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
-            "if": {
-              "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-            },
-            "then": {
+            {
               "else": {
-                "else": false,
-                "if": {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-                },
-                "then": true
+                "$ref": "#/definitions/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
               },
-              "then": true
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                },
+                "then": true
+              }
             }
-          }
+          ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+          "$ref": "#/definitions/constrains~1enableCertManager:t@2"
         },
         "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
-          }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/when~1serviceAccount.create:t~1then~1any~1else~1serviceMonitor.enabled:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
+            }
+          ]
         }
       },
       "then": {
@@ -135,23 +102,17 @@
     },
     {
       "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-        },
-        "then": {
-          "else": false,
-          "if": {
-            "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
           },
-          "then": {
-            "else": false,
-            "if": {
-              "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-            },
-            "then": true
+          {
+            "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
           }
-        }
+        ]
       },
       "then": {
         "allOf": [
@@ -277,75 +238,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1cluster+cluster=null"
-          },
-          {
-            "else": {
-              "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                },
-                "then": {
-                  "else": true,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1webhookTLS.key:t~1then~1fail~1else~1any"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-            },
-            "then": true
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+        "$ref": "#/definitions/constrains~1enableCertManager:t@2"
       },
       "then": {
         "additionalProperties": {},
@@ -361,34 +254,10 @@
       "if": {
         "anyOf": [
           {
-            "else": {
-              "else": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                },
-                "then": {
-                  "else": true,
-                  "if": {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/when~1webhookTLS.key:t~1then~1fail~1else~1any"
-                  }
-                }
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-              },
-              "then": false
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-            },
-            "then": true
+            "$ref": "#/definitions/when~1enableCertManager:t~1then~1any~1else~1keepTLSSecret:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
           },
           {
-            "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+            "$ref": "#/definitions/constrains~1enableCertManager:t@2"
           }
         ]
       },
@@ -404,7 +273,413 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podMutatorWebhookConfig": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "podMutatorWebhookConfig"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1enableCertManager:t~1then~1any~1else~1keepTLSSecret:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster+cluster=null"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "webhookTLS": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "objectSelector": {}
+              },
+              "required": [
+                "objectSelector"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhookTLS.cert@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "creator": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "creator"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1creator+creator=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1creator+creator=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1creator:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "certManager": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "certManager": {}
+                      },
+                      "required": [
+                        "certManager"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enableCertManager:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1controllerConfig"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1controllerConfig=null"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controllerConfig": {
+                          "properties": {
+                            "featureGates": {}
+                          },
+                          "required": [
+                            "featureGates"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controllerConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controllerConfig": {
+                        "$ref": "#/definitions/constrains~1featureGates=null"
+                      }
+                    },
+                    "required": [
+                      "controllerConfig"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1objectSelector=null"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1enableServiceMutatorWebhook:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceMutatorWebhookConfig": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceMutatorWebhookConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceMutatorWebhookConfig": {}
+                      },
+                      "required": [
+                        "serviceMutatorWebhookConfig"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "podMutatorWebhookConfig": {}
+              },
+              "required": [
+                "podMutatorWebhookConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
           {
             "not": {
               "properties": {
@@ -415,6 +690,119 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1creator+creator:t+creator=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+3more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "not": {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+6more"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1creator+creator:t+creator=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+3more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+6more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1cluster+cluster=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enableCertManager:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1controllerConfig"
           },
           {
             "properties": {
@@ -428,335 +816,74 @@
               "webhookConfig"
             ],
             "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key"
-              }
-            ]
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert"
+            "properties": {
+              "serviceMonitor": {
+                "enum": [
+                  null
+                ]
               }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1creator:t"
-        },
-        "then": {
-          "else": {
-            "else": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1creator@2"
-              },
-              "then": false
             },
-            "if": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1creator=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1creator"
-                }
-              ]
-            },
-            "then": false
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
           },
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1creator=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1creator"
-              }
-            ]
-          },
-          "then": false
-        }
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1enableServiceMutatorWebhook:t"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "serviceMutatorWebhookConfig": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "serviceMutatorWebhookConfig"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "serviceMutatorWebhookConfig": {}
-                  },
-                  "required": [
-                    "serviceMutatorWebhookConfig"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "else": false,
-        "if": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "certManager": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "certManager"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "certManager": {}
-                  },
-                  "required": [
-                    "certManager"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "not": {
               "properties": {
-                "objectSelector": {}
+                "webhookTLS": {}
               },
               "required": [
-                "objectSelector"
+                "webhookTLS"
               ],
               "type": "object"
             }
           },
           {
-            "$ref": "#/definitions/constrains~1objectSelector=null"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1cluster+cluster=null"
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceMutatorWebhookConfig": {
+                          "properties": {
+                            "objectSelector": {}
+                          },
+                          "required": [
+                            "objectSelector"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceMutatorWebhookConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceMutatorWebhookConfig": {
+                        "$ref": "#/definitions/constrains~1objectSelector=null"
+                      }
+                    },
+                    "required": [
+                      "serviceMutatorWebhookConfig"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enableServiceMutatorWebhook:t"
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+            "$ref": "#/definitions/constrains~1controllerConfig=null"
           }
         ]
       },
@@ -843,615 +970,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "webhookTLS": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "webhookTLS"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "webhookTLS": {}
-              },
-              "required": [
-                "webhookTLS"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceMutatorWebhookConfig": {
-                      "properties": {
-                        "objectSelector": {}
-                      },
-                      "required": [
-                        "objectSelector"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceMutatorWebhookConfig"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceMutatorWebhookConfig": {
-                    "$ref": "#/definitions/constrains~1objectSelector=null"
-                  }
-                },
-                "required": [
-                  "serviceMutatorWebhookConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1enableServiceMutatorWebhook:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                                  }
-                                ]
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-                                  }
-                                ]
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1enableCertManager:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1creator+creator:t+creator=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+3more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+6more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1creator+creator:t+creator=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+3more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+6more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1creator=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1creator:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1creator@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1creator"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enableCertManager:t@2"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1webhookTLS.caCert+webhookTLS.caCert:t+webhookTLS.cert+webhookTLS.cert:t+2more"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1controllerConfig+controllerConfig=null"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "serviceMonitor": {}
-              },
-              "required": [
-                "serviceMonitor"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1controllerConfig+controllerConfig=null"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "controllerConfig": {
-                      "properties": {
-                        "featureGates": {}
-                      },
-                      "required": [
-                        "featureGates"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "controllerConfig"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "controllerConfig": {
-                    "$ref": "#/definitions/constrains~1featureGates=null"
-                  }
-                },
-                "required": [
-                  "controllerConfig"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     }
   ],
   "definitions": {
@@ -1483,49 +1001,44 @@
         }
       ]
     },
-    "constrains/controllerConfig+controllerConfig=null": {
+    "constrains/controllerConfig": {
+      "not": {
+        "properties": {
+          "controllerConfig": {}
+        },
+        "required": [
+          "controllerConfig"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/controllerConfig=null": {
+      "properties": {
+        "controllerConfig": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "controllerConfig"
+      ],
+      "type": "object"
+    },
+    "constrains/creator+creator:t+creator=null": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "controllerConfig": {}
-            },
-            "required": [
-              "controllerConfig"
-            ],
-            "type": "object"
-          }
-        },
-        {
           "properties": {
-            "controllerConfig": {
+            "creator": {
               "enum": [
                 null
               ]
             }
           },
           "required": [
-            "controllerConfig"
+            "creator"
           ],
           "type": "object"
-        }
-      ]
-    },
-    "constrains/creator": {
-      "not": {
-        "properties": {
-          "creator": {}
-        },
-        "required": [
-          "creator"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/creator+creator:t+creator=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1creator=null"
         },
         {
           "not": {
@@ -1533,12 +1046,58 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1creator@2"
+          "properties": {
+            "creator": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "creator"
+          ],
+          "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1creator"
+          "not": {
+            "properties": {
+              "creator": {}
+            },
+            "required": [
+              "creator"
+            ],
+            "type": "object"
+          }
         }
       ]
+    },
+    "constrains/creator+creator=null": {
+      "not": {
+        "anyOf": [
+          {
+            "properties": {
+              "creator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "creator"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "creator": {}
+              },
+              "required": [
+                "creator"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      }
     },
     "constrains/creator:t": {
       "properties": {
@@ -1551,33 +1110,9 @@
       ],
       "type": "object"
     },
-    "constrains/creator=null": {
-      "properties": {
-        "creator": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "creator"
-      ],
-      "type": "object"
-    },
-    "constrains/creator@2": {
-      "properties": {
-        "creator": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "creator"
-      ],
-      "type": "object"
-    },
     "constrains/enableCertManager:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+        "$ref": "#/definitions/constrains~1enableCertManager:t@2"
       }
     },
     "constrains/enableCertManager:t+fullnameOverride+fullnameOverride:t+keepTLSSecret:t+3more": {
@@ -1598,7 +1133,7 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                     },
                     {
                       "anyOf": [
@@ -1608,17 +1143,30 @@
                               "$ref": "#/definitions/constrains~1enableCertManager:t"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
+                              "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
                             }
                           ]
                         },
                         {
-                          "$ref": "#/definitions/constrains~1enableCertManager:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t"
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1enableCertManager:t@2"
+                            }
+                          ]
                         },
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
+                              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
                             },
                             {
                               "$ref": "#/definitions/constrains~1enableCertManager:t"
@@ -1627,10 +1175,10 @@
                               "$ref": "#/definitions/constrains~1keepTLSSecret:t"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
+                              "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+                              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
                             }
                           ]
                         }
@@ -1649,10 +1197,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.key:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1664,17 +1215,14 @@
               "$ref": "#/definitions/constrains~1keepTLSSecret:t"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.key:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1689,14 +1237,14 @@
               "$ref": "#/definitions/constrains~1webhookTLS.cert:t"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1705,39 +1253,39 @@
               "$ref": "#/definitions/constrains~1webhookTLS.cert:t"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+              "$ref": "#/definitions/constrains~1enableCertManager:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1webhookTLS.key:t"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1enableCertManager:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1enableCertManager:t"
@@ -1746,17 +1294,17 @@
               "$ref": "#/definitions/constrains~1webhookTLS.cert:t"
             },
             {
-              "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
+              "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1enableCertManager:t"
@@ -1765,14 +1313,14 @@
               "$ref": "#/definitions/constrains~1webhookTLS.caCert:t"
             },
             {
-              "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
+              "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1781,29 +1329,29 @@
               "$ref": "#/definitions/constrains~1webhookTLS.caCert:t"
             },
             {
-              "$ref": "#/definitions/constrains~1enableCertManager:t@3"
+              "$ref": "#/definitions/constrains~1enableCertManager:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1enableCertManager:t"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1webhookTLS.key:t"
             },
             {
-              "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1enableCertManager:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             }
           ]
         },
@@ -1818,12 +1366,31 @@
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1webhookTLS.caCert+webhookTLS.caCert:t+webhookTLS.cert+webhookTLS.cert:t+2more"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.key@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.cert@2"
+            }
+          ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1848,50 +1415,29 @@
               "$ref": "#/definitions/constrains~1webhookTLS.cert:t"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.key:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1webhookTLS.key:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+              "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
             }
           ]
-        }
-      ]
-    },
-    "constrains/enableCertManager:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1enableCertManager:t@3"
         }
       ]
     },
     "constrains/enableCertManager:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1enableCertManager:t@3"
-      }
-    },
-    "constrains/enableCertManager:t@3": {
       "properties": {
         "enableCertManager": {
           "$ref": "#/definitions/t"
@@ -1948,15 +1494,10 @@
     },
     "constrains/fullnameOverride:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       }
     },
     "constrains/fullnameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@3"
-      }
-    },
-    "constrains/fullnameOverride:t@3": {
       "properties": {
         "fullnameOverride": {
           "$ref": "#/definitions/t"
@@ -1980,15 +1521,10 @@
     },
     "constrains/keepTLSSecret:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
+        "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
       }
     },
     "constrains/keepTLSSecret:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1keepTLSSecret:t@3"
-      }
-    },
-    "constrains/keepTLSSecret:t@3": {
       "properties": {
         "keepTLSSecret": {
           "$ref": "#/definitions/t"
@@ -2016,9 +1552,7 @@
           "$ref": "#/definitions/constrains~1nameOverride"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          }
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
@@ -3108,39 +2642,12 @@
         "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
       }
     },
-    "constrains/webhookTLS.caCert+webhookTLS.caCert:t+webhookTLS.cert+webhookTLS.cert:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.caCert@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.key@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1webhookTLS.cert@2"
-        }
-      ]
-    },
     "constrains/webhookTLS.caCert:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
+        "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
       }
     },
     "constrains/webhookTLS.caCert:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-      }
-    },
-    "constrains/webhookTLS.caCert:t@3": {
       "properties": {
         "webhookTLS": {
           "properties": {
@@ -3185,15 +2692,10 @@
     },
     "constrains/webhookTLS.cert:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
+        "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
       }
     },
     "constrains/webhookTLS.cert:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-      }
-    },
-    "constrains/webhookTLS.cert:t@3": {
       "properties": {
         "webhookTLS": {
           "properties": {
@@ -3238,15 +2740,10 @@
     },
     "constrains/webhookTLS.key:t": {
       "not": {
-        "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
+        "$ref": "#/definitions/constrains~1webhookTLS.key:t@2"
       }
     },
     "constrains/webhookTLS.key:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
-      }
-    },
-    "constrains/webhookTLS.key:t@3": {
       "properties": {
         "webhookTLS": {
           "properties": {
@@ -3309,22 +2806,28 @@
         }
       ]
     },
+    "when/enableCertManager:t/then/any/else/keepTLSSecret:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t": {
+      "else": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1webhookTLS.caCert:t~1then~1webhookTLS.cert:t+webhookTLS.key:t~1else~1any"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1keepTLSSecret:t@2"
+            }
+          }
+        ]
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1enableCertManager:t@2"
+      },
+      "then": true
+    },
     "when/serviceAccount.create:t/then/any/else/serviceMonitor.enabled:t+webhookTLS.caCert:t+webhookTLS.cert:t+webhookTLS.key:t": {
       "else": {
         "else": {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@3"
-          },
-          "then": {
-            "else": true,
-            "if": {
-              "$ref": "#/definitions/constrains~1webhookTLS.cert:t@3"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1webhookTLS.key:t~1then~1fail~1else~1any"
-            }
-          }
+          "$ref": "#/definitions/when~1webhookTLS.caCert:t~1then~1webhookTLS.cert:t+webhookTLS.key:t~1else~1any"
         },
         "if": {
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
@@ -3336,12 +2839,20 @@
       },
       "then": true
     },
-    "when/webhookTLS.key:t/then/fail/else/any": {
+    "when/webhookTLS.caCert:t/then/webhookTLS.cert:t+webhookTLS.key:t/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1webhookTLS.key:t@3"
+        "$ref": "#/definitions/constrains~1webhookTLS.caCert:t@2"
       },
-      "then": false
+      "then": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1webhookTLS.cert:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1webhookTLS.key:t"
+        }
+      }
     }
   },
   "properties": {
