@@ -281,8 +281,10 @@ pub(super) fn file_catalogs(
     catalogs
 }
 
-// Helm validates release names before rendering; namespace remains caller-supplied text.
-// The six fields and their Go types come from chart/common/util.ToRenderValues.
+// The six fields and their Go types come from chart/common/util.ToRenderValues. Helm validates
+// the release name before rendering. The namespace is environment text in the installable
+// Kubernetes namespace language (ADR 0072): its value stays unknown and no values guard is
+// derived from it.
 pub(super) fn release(state: &mut State, initial_fields: bool) -> Value {
     if !initial_fields {
         // Dependencies share this map in Helm; their writes are not yet imported across units.
@@ -304,7 +306,14 @@ pub(super) fn release(state: &mut State, initial_fields: bool) -> Value {
             ("Name", name),
             (
                 "Namespace",
-                readonly_unknown(TypeCoverage::Scalar(ScalarType::String)),
+                Value::scalar(
+                    ScalarType::String,
+                    Some(super::scalar_value::ScalarContent::StringDomain {
+                        pattern: helm_schema_core::RELEASE_NAMESPACE_PATTERN,
+                        min_bytes: helm_schema_core::RELEASE_NAMESPACE_MIN_BYTES,
+                        max_bytes: helm_schema_core::RELEASE_NAMESPACE_MAX_BYTES,
+                    }),
+                ),
             ),
             ("Service", Value::string("Helm")),
             (

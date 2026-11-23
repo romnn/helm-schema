@@ -141,6 +141,37 @@ pub(super) fn action_free(
     condition.when_false_with_memo(memo)
 }
 
+/// The edited prefix of a text that continues after `value`: the edits see an unfinished text,
+/// so an affix that may reach into the continuation is not applied.
+pub(super) fn leading_prefix(
+    value: &FrozenValue,
+    transforms: &[TextTransform],
+    remaining: &mut usize,
+) -> String {
+    let mut query = Query {
+        inputs: &BTreeMap::default(),
+        memo: &PredicateMemo::default(),
+        remaining: *remaining,
+        prefix_only: true,
+    };
+    let prefix = query.string(value, 0).prefix;
+    *remaining = query.remaining;
+    edited_leading(prefix, transforms)
+}
+
+/// [`leading_prefix`] of literal text.
+pub(super) fn leading_literal_prefix(text: &str, transforms: &[TextTransform]) -> String {
+    edited_leading(Prefix::literal(text), transforms)
+}
+
+fn edited_leading(prefix: Option<Prefix>, transforms: &[TextTransform]) -> String {
+    let mut prefix = prefix.map(|prefix| prefix.concatenate(None));
+    for transform in transforms {
+        prefix = prefix.map(|prefix| prefix.edited(transform));
+    }
+    prefix.map_or_else(String::new, |prefix| prefix.text)
+}
+
 pub(super) fn prefix(
     value: &FrozenValue,
     transforms: &[TextTransform],

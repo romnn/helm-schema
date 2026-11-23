@@ -17,7 +17,7 @@
 use std::fmt::Write as _;
 
 use color_eyre::eyre::{self, OptionExt as _};
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use serde_json::{Value, json};
 use vfs::VfsPath;
 
@@ -41,9 +41,65 @@ const CONFIG_MAP: &str = indoc! {"
 /// Declared defaults only annotate, so every verdict comes from template and
 /// Helm semantics rather than authoring policy (ADR 0043).
 fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
+    law_schema_with_archives(files, &[])
+}
+
+/// [`law_schema`] with packaged dependencies: each archive is a chart directory's files, written
+/// as a gzipped tarball at its path (for example `charts/lib-0.1.0.tgz`).
+fn law_schema_with_archives(
+    files: &[(&str, &str)],
+    archives: &[(&str, &[(&str, &str)])],
+) -> eyre::Result<Value> {
+    let archives: Vec<(&str, ArchiveEntries<'_>)> = archives
+        .iter()
+        .map(|(archive, entries)| {
+            let entries = entries
+                .iter()
+                .map(|(name, source)| (name.as_bytes(), *source))
+                .collect();
+            (*archive, entries)
+        })
+        .collect();
+    law_schema_with_byte_archives(files, &archives)
+}
+
+/// A packaged chart's entries: raw tar names and their sources.
+type ArchiveEntries<'a> = Vec<(&'a [u8], &'a str)>;
+
+/// [`law_schema_with_archives`] whose entry names are raw bytes, as a tarball may hold them.
+fn law_schema_with_byte_archives(
+    files: &[(&str, &str)],
+    archives: &[(&str, ArchiveEntries<'_>)],
+) -> eyre::Result<Value> {
+    use std::io::Write as _;
+
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     for (path, source) in files {
         test_util::write(&chart_dir.join(path)?, source)?;
+    }
+    for (archive, entries) in archives {
+        let mut bytes = Vec::new();
+        {
+            let encoder = flate2::write::GzEncoder::new(&mut bytes, flate2::Compression::default());
+            let mut builder = tar::Builder::new(encoder);
+            for (name, source) in entries {
+                let mut header = tar::Header::new_gnu();
+                let field = &mut header.as_old_mut().name;
+                field
+                    .get_mut(..name.len())
+                    .ok_or_eyre("an entry name fits the tar header")?
+                    .copy_from_slice(name);
+                header.set_size(u64::try_from(source.len())?);
+                header.set_mode(0o644);
+                header.set_entry_type(tar::EntryType::Regular);
+                header.set_cksum();
+                builder.append(&header, std::io::Cursor::new(source.as_bytes()))?;
+            }
+            builder.into_inner()?.finish()?;
+        }
+        let path = chart_dir.join(archive)?;
+        path.parent().create_dir_all()?;
+        path.create_file()?.write_all(&bytes)?;
     }
     let session = crate::AnalysisSession::new(crate::GenerateOptions {
         chart_source: chart_dir.into(),
@@ -3023,11 +3079,9 @@ fn split_requirements_and_absorbing_failures_keep_helm_verdicts() -> eyre::Resul
 
 /// (6a1 exception, longhorn) A coalesced registry rendered as `{{ . }}/` into an image's plain
 /// scalar: a list prints as `[map[]]/…`, which Helm's YAML parse rejects (receipt
-/// `l_longhorn_image_registry_list`). No layer claims the lexical failure of that placement; the
-/// line rejected the corpus document only because its loop havoc kept the values.yaml string
-/// type, which a serialized render now drops (see `transfer/exception-docs-6a1.txt`).
+/// `l_longhorn_image_registry_list`, Helm 4.2.3: the list aborts in YAML parsing, a string
+/// renders).
 #[test]
-#[ignore = "target: step 2 seam (2d follow-up); exact replacement by the 7b2 walk's lexical placement"]
 fn a_coalesced_list_rendered_into_a_plain_scalar_is_rejected() -> eyre::Result<()> {
     let schema = law_schema(&[
         ("Chart.yaml", CHART),
@@ -3109,14 +3163,12 @@ fn r3b_values(chart: &str, overrides: Value) -> eyre::Result<Value> {
     )?)
 }
 
-/// (6a1 exception, owner: step 2 seam, 2d follow-up) datadog `commonLabels` keeps its declared
-/// `{}` type until a `toYaml` row lowers: `resolve_policy.rs` then discards the declared default
-/// (`used_as_serialized` ⇒ `SerializedRender`), and no template demand types the labels. 6a1
-/// makes `agent-apiservice.yaml`'s row lower (bisected against `system-probe-configmap.yaml`
-/// alone). Helm 4.2.3 rejects `commonLabels: 1.5` (`agent-services.yaml`: could not find expected
-/// ':'). Receipts `transfer/receipts-6a/s_datadog_common_labels` (5 hashes in `hashes.txt`).
+/// datadog `commonLabels` is serialized with `toYaml` into a labels mapping's entries. A
+/// non-empty scalar or list there is not a mapping entry, so Helm 4.2.3 rejects
+/// `commonLabels: 1.5` (`agent-services.yaml`: could not find expected ':'). Receipts
+/// `transfer/receipts-6a/s_datadog_common_labels` (5 hashes in `hashes.txt`).
 #[test]
-#[ignore = "target: step 2 seam (2d follow-up): declared type as a function of use evidence, not of whether a row lowers"]
+#[ignore = "lane C: datadog is multi-instance (Release Unknown until step 5's shared heap), its fullname arms read nameOverride, and a helper-text choice is one layout hole"]
 fn datadog_common_labels_keep_their_declared_type_after_a_lowered_serialization() -> eyre::Result<()>
 {
     assert_helm_verdicts(
@@ -3131,7 +3183,6 @@ fn datadog_common_labels_keep_their_declared_type_after_a_lowered_serialization(
 
 /// (6a1 exception control) A labels map renders (receipt c2).
 #[test]
-#[ignore = "slow corpus control for the step-2 seam exception above"]
 fn datadog_common_labels_accept_a_labels_map() -> eyre::Result<()> {
     assert_helm_verdicts(
         &corpus_assert_schema("datadog")?,
@@ -3141,6 +3192,159 @@ fn datadog_common_labels_accept_a_labels_map() -> eyre::Result<()> {
         )],
         true,
     )
+}
+
+/// The datadog shape without the chart: a helper's entries and a guarded `toYaml` of the labels,
+/// captured and indented into `metadata.labels`. Only a mapping keeps the peers' mapping; any other
+/// truthy value is a bare node among its entries, which Helm's YAML parse rejects (receipt
+/// `transfer/receipts-lanec3/labels-splice`). `entries` are the helper's lines before the splice.
+fn spliced_labels_schema(values: &str, entries: &str) -> eyre::Result<Value> {
+    let helpers = formatdoc! {r#"
+        {{{{- define "law.labels" -}}}}
+        {entries}
+        {{{{- if .Values.commonLabels }}}}
+        {{{{ toYaml .Values.commonLabels }}}}
+        {{{{- end }}}}
+        {{{{- end -}}}}
+    "#};
+    law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", values),
+        ("templates/_helpers.tpl", &helpers),
+        (
+            "templates/cm.yaml",
+            indoc! {r#"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: x
+                  labels:
+                {{ include "law.labels" . | indent 4 }}
+            "#},
+        ),
+    ])
+}
+
+/// The splice verdicts of `commonLabels` once every entry before it is known to stay in its
+/// mapping: Helm rejects each truthy non-mapping and renders mappings and falsy values.
+fn assert_labels_splice_verdicts(schema: &Value, document: &Value) -> eyre::Result<()> {
+    let with = |labels: Value| labels_document(document, labels);
+    assert_helm_verdicts(
+        schema,
+        &[
+            ("number", with(json!(1.5))?),
+            ("string", with(json!("3"))?),
+            ("boolean", with(json!(true))?),
+            ("list", with(json!([{}]))?),
+        ],
+        false,
+    )?;
+    assert_labels_splice_acceptances(schema, document)
+}
+
+/// The acceptance half of [`assert_labels_splice_verdicts`]: mappings and falsy values render.
+fn assert_labels_splice_acceptances(schema: &Value, document: &Value) -> eyre::Result<()> {
+    let with = |labels: Value| labels_document(document, labels);
+    assert_helm_verdicts(
+        schema,
+        &[
+            ("labels", with(json!({"team": "dev"}))?),
+            ("empty", with(json!({}))?),
+            ("false", with(json!(false))?),
+        ],
+        true,
+    )
+}
+
+fn labels_document(document: &Value, labels: Value) -> eyre::Result<Value> {
+    let mut document = document.clone();
+    document
+        .as_object_mut()
+        .ok_or_eyre("a values document is a mapping")?
+        .insert("commonLabels".to_owned(), labels);
+    Ok(document)
+}
+
+#[test]
+#[ignore = "a helper's text choice (`if` around `toYaml`) is one layout hole; laying it out arm by arm must keep partial guards first (8 helm-schema-gen regressions otherwise)"]
+fn spliced_labels_reject_every_truthy_non_mapping() -> eyre::Result<()> {
+    let schema = spliced_labels_schema("commonLabels: {}\n", "helm.sh/chart: law")?;
+    assert_labels_splice_verdicts(&schema, &json!({}))
+}
+
+/// A peer entry printing a string drawn from a finite-state language (`typeOf` of a number is
+/// `float64` or `int64`) stays a plain scalar on every spelling, raw or after edits that keep every
+/// spelling (`trunc 7`, `trimSuffix "-"`) and a case mapping, so the image verdicts follow
+/// (receipt `transfer/receipts-lanec3/domain-image`, Helm 4.2.3).
+#[test]
+fn a_string_domain_peer_keeps_the_image_verdicts() -> eyre::Result<()> {
+    let schema = image_schema(
+        "",
+        &[
+            "  kind: {{ typeOf .Values.count }}\n",
+            r#"  short: {{ typeOf .Values.count | trunc 7 | trimSuffix "-" | upper }}"#,
+            "\n",
+        ]
+        .concat(),
+        "",
+    )?;
+    let document = |registry: Value| image_document(registry, &json!({"count": 1}));
+    assert_helm_verdicts(&schema, &[("list", document(json!([{}]))?)], false)?;
+    assert_helm_verdicts(
+        &schema,
+        &[("string", document(json!("reg.example"))?)],
+        true,
+    )
+}
+
+/// A `ConfigMap` after `prefix`, whose `data` holds `before`, an image whose registry is a coalesced
+/// value printed into a plain scalar, and `after` (`before` and `after` are whole lines indented
+/// for `data`). A list registry prints as `[map[]]/`, which Helm's YAML parse rejects.
+fn image_schema(prefix: &str, before: &str, after: &str) -> eyre::Result<Value> {
+    let image = r"  image: {{ with (coalesce .Values.global.imageRegistry .Values.image.registry) }}{{ . }}/{{ end }}{{ .Values.image.repository }}:{{ .Values.image.tag }}";
+    let template = [
+        prefix,
+        "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: x\ndata:\n",
+        before,
+        image,
+        "\n",
+        after,
+    ]
+    .concat();
+    law_schema(&[
+        ("Chart.yaml", CHART),
+        (
+            "values.yaml",
+            indoc! {r#"
+                count: 1
+                x: ""
+                global:
+                  imageRegistry: ""
+                image:
+                  registry: ""
+                  repository: longhornio/manager
+                  tag: v1
+            "#},
+        ),
+        ("templates/d.yaml", &template),
+    ])
+}
+
+fn image_document(registry: Value, extra: &Value) -> eyre::Result<Value> {
+    let mut document = json!({
+        "count": 1,
+        "x": "",
+        "global": {"imageRegistry": null},
+        "image": {"registry": "", "repository": "longhornio/manager", "tag": "v1"},
+    });
+    document["global"]["imageRegistry"] = registry;
+    let fields = document
+        .as_object_mut()
+        .ok_or_eyre("a values document is a mapping")?;
+    for (key, value) in extra.as_object().ok_or_eyre("extra fields are a mapping")? {
+        fields.insert(key.clone(), value.clone());
+    }
+    Ok(document)
 }
 
 /// Fresh nondeterministic branch choices around unknown programs reach a finite validity Top.
@@ -3294,4 +3498,1027 @@ fn a_late_layered_remainder_reaches_the_next_iteration() -> eyre::Result<()> {
         )],
         true,
     )
+}
+
+/// Lane C step 3 law set (Astra item 3): the release name before a labels splice. Helm validates
+/// the name (1 to 53 bytes of its DNS grammar) before rendering, so a quoted name closes its
+/// scalar, `trunc 63 | trimSuffix "-"` leaves it unchanged, and the splice verdicts follow
+/// (receipts `transfer/receipts-lanec3/release-{quoted,raw}`, Helm 4.2.3).
+#[test]
+#[ignore = "waiting for step 5b: needs the initial Release fields once per render"]
+fn a_quoted_release_name_peer_keeps_the_splice_verdicts() -> eyre::Result<()> {
+    let schema = spliced_labels_schema(
+        "commonLabels: {}\n",
+        indoc! {r"
+            helm.sh/chart: law
+            instance: {{ .Release.Name | quote }}"},
+    )?;
+    assert_labels_splice_verdicts(&schema, &json!({}))
+}
+
+#[test]
+#[ignore = "waiting for step 5b: needs the initial Release fields once per render"]
+fn a_truncated_release_name_peer_keeps_the_splice_verdicts() -> eyre::Result<()> {
+    let schema = spliced_labels_schema(
+        "commonLabels: {}\n",
+        indoc! {r#"
+            helm.sh/chart: law
+            name: {{ .Release.Name | trunc 63 | trimSuffix "-" }}"#},
+    )?;
+    assert_labels_splice_verdicts(&schema, &json!({}))
+}
+
+/// The datadog fullname arm: the name joined with the chart name, truncated and trimmed as a
+/// whole, inside double quotes (receipt `transfer/receipts-lanec3/release-printf`).
+#[test]
+#[ignore = "waiting for step 5b: needs the initial Release fields once per render"]
+fn a_composed_release_name_peer_keeps_the_splice_verdicts() -> eyre::Result<()> {
+    let schema = spliced_labels_schema(
+        "commonLabels: {}\n",
+        indoc! {r#"
+            helm.sh/chart: law
+            name: "{{ printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}""#},
+    )?;
+    assert_labels_splice_verdicts(&schema, &json!({}))
+}
+
+/// A parent chart `graph` with one dependency `child`: each body precedes a `ConfigMap`. Helm runs
+/// the child's file first (deeper paths first), and both see one shared Release map.
+fn release_graph_schema(
+    parent_body: &str,
+    child_body: &str,
+    child_values: &str,
+) -> eyre::Result<Value> {
+    let parent = formatdoc! {"
+        {parent_body}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: graph
+    "};
+    let child = formatdoc! {"
+        {child_body}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: child
+    "};
+    law_schema(&[
+        (
+            "Chart.yaml",
+            indoc! {"
+                apiVersion: v2
+                name: graph
+                version: 0.1.0
+                dependencies:
+                  - name: child
+                    version: 0.1.0
+            "},
+        ),
+        ("values.yaml", "{}\n"),
+        ("templates/root.yaml", &parent),
+        (
+            "charts/child/Chart.yaml",
+            indoc! {"
+                apiVersion: v2
+                name: child
+                version: 0.1.0
+            "},
+        ),
+        ("charts/child/values.yaml", child_values),
+        ("charts/child/templates/child.yaml", &child),
+    ])
+}
+
+fn child_raw(raw: Value) -> Value {
+    let mut document = json!({"child": {"raw": null, "global": {}}});
+    document["child"]["raw"] = raw;
+    document
+}
+
+/// A child's write to `.Release`, directly or through an alias, reaches the parent's later read:
+/// `upper` of the written number aborts (receipts
+/// `transfer/receipts-lanec3/release-write-{direct,shallow,pick}`).
+#[test]
+#[ignore = "lane C step 3: chart instances share one Release object in Helm file order (step 5 shared heap)"]
+fn a_child_write_to_release_reaches_the_parent_read() -> eyre::Result<()> {
+    for child in [
+        r#"{{ $_ := set .Release "Service" .Values.raw }}"#,
+        r#"{{ $r := .Release }}{{ $_ := set $r "Service" .Values.raw }}"#,
+        r#"{{ $r := (pick $ "Release").Release }}{{ $_ := set $r "Service" .Values.raw }}"#,
+    ] {
+        let schema =
+            release_graph_schema("{{ $_ := upper .Release.Service }}", child, "raw: ok\n")?;
+        assert_helm_verdicts(&schema, &[("integer", child_raw(json!(7)))], false)?;
+        assert_helm_verdicts(&schema, &[("string", child_raw(json!("text")))], true)?;
+    }
+    Ok(())
+}
+
+/// A write to a deep copy, or a rebinding of the child's own root slot, leaves the shared map
+/// alone (receipts `transfer/receipts-lanec3/release-write-{deep,rebind}`).
+#[test]
+fn a_child_write_to_a_release_copy_stays_in_the_child() -> eyre::Result<()> {
+    for child in [
+        r#"{{ $r := deepCopy .Release }}{{ $_ := set $r "Service" .Values.raw }}"#,
+        r#"{{ $_ := set $ "Release" (dict "Service" .Values.raw) }}"#,
+    ] {
+        let schema =
+            release_graph_schema("{{ $_ := upper .Release.Service }}", child, "raw: ok\n")?;
+        assert_helm_verdicts(
+            &schema,
+            &[
+                ("integer", child_raw(json!(7))),
+                ("string", child_raw(json!("text"))),
+            ],
+            true,
+        )?;
+    }
+    Ok(())
+}
+
+fn release_tpl_schema() -> eyre::Result<Value> {
+    release_graph_schema(
+        r#"{{ if kindIs "string" .Release.Name }}{{ fail "name is still text" }}{{ end }}"#,
+        "{{ tpl .Values.program $ }}",
+        "program: \"\"\n",
+    )
+}
+
+fn child_program(program: &str) -> Value {
+    json!({"child": {"program": program, "global": {}}})
+}
+
+/// An earlier child runs a values-supplied `tpl` program against `$`: a program that renames the
+/// release reaches the parent's read, so the name is unknown there (receipt
+/// `transfer/receipts-lanec3/release-tpl-opaque`, `renames` exit 0).
+#[test]
+fn an_opaque_child_program_leaves_the_release_name_unknown() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &release_tpl_schema()?,
+        &[(
+            "renames",
+            child_program(r#"{{ $_ := set .Release "Name" 7 }}"#),
+        )],
+        true,
+    )
+}
+
+/// An action-free program writes nothing, so the parent still sees the validated name and fails
+/// (same receipt, `action-free` exit 1).
+#[test]
+#[ignore = "lane C step 3: chart instances share one Release object in Helm file order (step 5 shared heap)"]
+fn an_action_free_child_program_keeps_the_release_name() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &release_tpl_schema()?,
+        &[("action-free", child_program(""))],
+        false,
+    )
+}
+
+/// The longhorn shape: a raw `.Release.Namespace` line before an image whose registry is a
+/// coalesced value printed into a plain scalar. The initial namespace is an installable RFC 1123
+/// label (ADR 0072), so it keeps the mapping and the image verdicts follow. `prefix` precedes
+/// the `ConfigMap` (receipts `transfer/receipts-lanec3/namespace-{raw,override,write}`, Helm 4.2.3
+/// under 1- and 63-byte namespaces).
+fn namespace_image_schema(prefix: &str, namespace: &str) -> eyre::Result<Value> {
+    let template = formatdoc! {r"
+        {prefix}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: x
+          namespace: {namespace}
+        data:
+          image: {{{{ with (coalesce .Values.global.imageRegistry .Values.image.registry) }}}}{{{{ . }}}}/{{{{ end }}}}{{{{ .Values.image.repository }}}}:{{{{ .Values.image.tag }}}}
+    "};
+    law_schema(&[
+        ("Chart.yaml", CHART),
+        (
+            "values.yaml",
+            indoc! {r#"
+                global:
+                  imageRegistry: ""
+                namespaceOverride: ""
+                ns: ""
+                image:
+                  registry: ""
+                  repository: longhornio/manager
+                  tag: v1
+            "#},
+        ),
+        ("templates/d.yaml", &template),
+    ])
+}
+
+fn namespace_document(registry: Value, extra: &Value) -> eyre::Result<Value> {
+    let mut document = json!({
+        "global": {"imageRegistry": null},
+        "namespaceOverride": "",
+        "ns": "",
+        "image": {"registry": "", "repository": "longhornio/manager", "tag": "v1"},
+    });
+    document["global"]["imageRegistry"] = registry;
+    let fields = document
+        .as_object_mut()
+        .ok_or_eyre("a values document is a mapping")?;
+    for (key, value) in extra.as_object().ok_or_eyre("extra fields are a mapping")? {
+        fields.insert(key.clone(), value.clone());
+    }
+    Ok(document)
+}
+
+#[test]
+fn a_raw_release_namespace_keeps_the_image_verdicts() -> eyre::Result<()> {
+    let schema = namespace_image_schema("", "{{ .Release.Namespace }}")?;
+    let none = json!({});
+    assert_helm_verdicts(
+        &schema,
+        &[("string", namespace_document(json!("reg.example"), &none)?)],
+        true,
+    )
+}
+
+/// The installable namespace never opens a flow token, so a list registry after it still fails.
+#[test]
+#[ignore = "waiting for step 5b: needs the initial Release fields once per render"]
+fn an_initial_release_namespace_keeps_the_image_rejections() -> eyre::Result<()> {
+    let none = json!({});
+    for namespace in [
+        "{{ .Release.Namespace }}",
+        "{{ default .Release.Namespace .Values.namespaceOverride }}",
+    ] {
+        let schema = namespace_image_schema("", namespace)?;
+        assert_helm_verdicts(
+            &schema,
+            &[("list", namespace_document(json!([{}]), &none)?)],
+            false,
+        )?;
+    }
+    Ok(())
+}
+
+/// A truthy override prints values text instead, which keeps its own input semantics.
+#[test]
+fn a_namespace_override_keeps_the_image_verdicts() -> eyre::Result<()> {
+    let schema = namespace_image_schema(
+        "",
+        "{{ default .Release.Namespace .Values.namespaceOverride }}",
+    )?;
+    let none = json!({});
+    let team = json!({"namespaceOverride": "team-a"});
+    // A truthy override may change the YAML layout (receipt `namespace-override-layout`).
+    let layout = json!({"namespaceOverride": "x\n  extra: y"});
+    assert_helm_verdicts(
+        &schema,
+        &[("list override", namespace_document(json!([{}]), &team)?)],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("string", namespace_document(json!("reg.example"), &none)?),
+            (
+                "string override",
+                namespace_document(json!("reg.example"), &team)?,
+            ),
+            (
+                "string layout",
+                namespace_document(json!("reg.example"), &layout)?,
+            ),
+        ],
+        true,
+    )
+}
+
+/// A write before the read replaces the initial namespace with values text.
+#[test]
+fn a_written_release_namespace_keeps_the_image_verdicts() -> eyre::Result<()> {
+    let schema = namespace_image_schema(
+        r#"{{- $_ := set .Release "Namespace" .Values.ns }}"#,
+        "{{ .Release.Namespace }}",
+    )?;
+    let team = json!({"ns": "team-a"});
+    let colon = json!({"ns": "a: b"});
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("list", namespace_document(json!([{}]), &team)?),
+            (
+                "string colon",
+                namespace_document(json!("reg.example"), &colon)?,
+            ),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[("string", namespace_document(json!("reg.example"), &team)?)],
+        true,
+    )
+}
+
+/// A chart writes a member of the one Release map; the name it set before is still read after it
+/// (receipt `transfer/receipts-lanec3/release-own-write-literal-seeded`).
+#[test]
+#[ignore = "waiting for step 5b: a helper's writes to the entry Release map (unknown fields) do not yet keep a seeded name precise"]
+fn a_chart_write_to_another_release_member_keeps_the_name() -> eyre::Result<()> {
+    let schema = spliced_labels_schema(
+        "commonLabels: {}\n",
+        indoc! {r#"
+            {{- $_ := set .Release "Name" "law" }}
+            {{- $_ := set .Release "temp_vars" dict }}
+            {{- if not (index .Release "temp_vars") }}{{ $_ := set .Release "temp_vars" dict }}{{ end }}
+            {{- if not (index .Release.temp_vars "password") }}{{ $_ := set .Release.temp_vars "password" "generated" }}{{ end }}
+            secret: {{ index .Release.temp_vars "password" }}
+            instance: {{ .Release.Name | quote }}"#},
+    )?;
+    assert_labels_splice_verdicts(&schema, &json!({}))
+}
+
+/// jira's exact shape keys the member by a text built from the name (receipt
+/// `transfer/receipts-lanec3/release-own-write`).
+#[test]
+#[ignore = "a read through a computed map key after a write through the same key is unknown (map key identity, not Release)"]
+fn a_chart_write_through_a_computed_release_key_keeps_the_name() -> eyre::Result<()> {
+    let schema = spliced_labels_schema(
+        "commonLabels: {}\n",
+        indoc! {r#"
+            {{- if not (index .Release "temp_vars") }}{{ $_ := set .Release "temp_vars" dict }}{{ end }}
+            {{- $key := printf "%s_%s" .Release.Name "password" }}
+            {{- if not (index .Release.temp_vars $key) }}{{ $_ := set .Release.temp_vars $key "generated" }}{{ end }}
+            secret: {{ index .Release.temp_vars $key }}
+            instance: {{ .Release.Name | quote }}"#},
+    )?;
+    assert_labels_splice_verdicts(&schema, &json!({}))
+}
+
+/// A chart's own write to the name reaches its later read (receipt
+/// `transfer/receipts-lanec3/release-name-write`).
+#[test]
+fn a_chart_write_to_the_release_name_reaches_its_read() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "name: x\n"),
+        (
+            "templates/cm.yaml",
+            &[
+                r#"{{- $_ := set .Release "Name" .Values.name }}{{ $_ := upper .Release.Name }}"#,
+                "\n",
+                CONFIG_MAP,
+            ]
+            .concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(&schema, &[("integer", json!({"name": 7}))], false)?;
+    assert_helm_verdicts(&schema, &[("string", json!({"name": "text"}))], true)
+}
+
+/// The datadog fullname helper: `printf "%s-%s"` of the name and the chart name (or an override),
+/// truncated and trimmed as a whole, in double quotes and plain. Without an override the text is at
+/// most 53 + 1 + 3 bytes and ends in the chart name's last letter, so both edits are identities
+/// (receipt `transfer/receipts-lanec3/release-fullname`).
+fn release_fullname_schema() -> eyre::Result<Value> {
+    law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "commonLabels: {}\nnameOverride: \"\"\n"),
+        (
+            "templates/_helpers.tpl",
+            indoc! {r#"
+                {{- define "law.fullname" -}}
+                {{- $name := default .Chart.Name .Values.nameOverride -}}
+                {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+                {{- end -}}
+                {{- define "law.labels" -}}
+                helm.sh/chart: law
+                app: "{{ include "law.fullname" . }}"
+                name: {{ include "law.fullname" . }}
+                {{- if .Values.commonLabels }}
+                {{ toYaml .Values.commonLabels }}
+                {{- end }}
+                {{- end -}}
+            "#},
+        ),
+        (
+            "templates/cm.yaml",
+            indoc! {r#"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: x
+                  labels:
+                {{ include "law.labels" . | indent 4 }}
+            "#},
+        ),
+    ])
+}
+
+#[test]
+#[ignore = "waiting for step 5b: needs the initial Release fields once per render"]
+fn a_composed_fullname_without_override_keeps_the_splice_verdicts() -> eyre::Result<()> {
+    assert_labels_splice_verdicts(&release_fullname_schema()?, &json!({"nameOverride": ""}))
+}
+
+/// An override is values text of any length: the edits are not identities there, and a labels
+/// map still renders.
+#[test]
+fn a_composed_fullname_with_override_accepts_a_labels_map() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &release_fullname_schema()?,
+        &[(
+            "labels override",
+            json!({"nameOverride": "custom", "commonLabels": {"team": "dev"}}),
+        )],
+        true,
+    )
+}
+
+/// `trimSuffix` applies to the whole printed text, never to one part: `a-` followed by `b` is
+/// `a-b`, so the comparison with `ab` never fails (receipt `transfer/receipts-lanec3/cross-part-trim`).
+#[test]
+fn a_whole_text_trim_does_not_apply_to_one_part() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "b: \"\"\n"),
+        (
+            "templates/cm.yaml",
+            &[
+                r#"{{- if eq (printf "a-%s" .Values.b | trimSuffix "-") "ab" }}{{ fail "joined across parts" }}{{ end }}"#,
+                "\n",
+                CONFIG_MAP,
+            ]
+            .concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("b", json!({"b": "b"})),
+            ("empty", json!({"b": ""})),
+            ("dash", json!({"b": "-"})),
+            ("b dash", json!({"b": "b-"})),
+        ],
+        true,
+    )
+}
+
+/// An earlier `tpl` of values text in the same chart may rename the release the chart named first;
+/// the image line that renders only for a text name is rejected exactly when the program is
+/// action-free (receipt `transfer/receipts-lanec3/tpl-same-chart-image-seeded`).
+#[test]
+#[ignore = "waiting for read-identity-preserving effects (ADR 0072 §5)"]
+fn a_same_chart_program_keeps_the_image_only_when_action_free() -> eyre::Result<()> {
+    let schema = image_schema(
+        "{{- $_ := set .Release \"Name\" \"law\" }}\n{{- $_ := tpl (toYaml .Values.x) $ }}\n",
+        "  {{- if kindIs \"string\" .Release.Name }}\n",
+        "  {{- end }}\n",
+    )?;
+    let renames = r#"{{ $_ := set .Release "Name" 7 }}"#;
+    let document = |registry: Value, x: Value| image_document(registry, &json!({"x": x}));
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("action-free", document(json!([{}]), json!("plain"))?),
+            (
+                "action-free map",
+                document(json!([{}]), json!({"a": ["plain"], "b": {}}))?,
+            ),
+            (
+                "brace space",
+                document(json!([{}]), json!("{ {not an action}"))?,
+            ),
+        ],
+        false,
+    )?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("renames", document(json!([{}]), json!(renames))?),
+            (
+                "renames nested",
+                document(json!([{}]), json!({"a": [renames]}))?,
+            ),
+            ("string", document(json!("reg.example"), json!("plain"))?),
+        ],
+        true,
+    )
+}
+
+/// A choice whose only text arm lies beyond the layout's search bound still lays out as a choice
+/// (or widens), never as one scalar token: `kz: v` is a mapping entry (receipt
+/// `transfer/receipts-lanec3/deep-text-choice`, 70 nested arms).
+#[test]
+#[ignore = "a frozen choice whose arm is YAML text is one layout hole, so `kz: v` reads as one plain scalar (also on the line)"]
+fn a_deep_text_arm_is_not_read_as_a_scalar() -> eyre::Result<()> {
+    let arms = 70;
+    let mut values = String::from("k: \"\"\n");
+    let mut template = String::from(indoc! {r#"
+        {{- define "law.text" -}}
+        kz: v
+        {{- end -}}
+        {{- $v := include "law.text" . }}
+    "#});
+    for arm in 1..=arms {
+        let keyword = if arm == 1 { "if" } else { "else if" };
+        writeln!(values, "s{arm}: \"\"")?;
+        writeln!(
+            template,
+            r#"{{{{- {keyword} eq .Values.k "{arm}" }}}}{{{{ $v = .Values.s{arm} }}}}"#
+        )?;
+    }
+    template.push_str(indoc! {"
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: x
+        data:
+          {{ $v }}
+    "});
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", &values),
+        ("templates/cm.yaml", &template),
+    ])?;
+    assert_helm_verdicts(&schema, &[("text arm", json!({"k": "none"}))], true)
+}
+
+fn release_alias_schema() -> eyre::Result<Value> {
+    release_graph_schema(
+        r#"{{ $_ := set .Values.child.r "Service" "changed" }}{{ if eq .Release.Service "Helm" }}{{ fail "release not shared" }}{{ end }}"#,
+        r#"{{ if .Values.export }}{{ $_ := set .Values "r" .Release }}{{ end }}"#,
+        "r: {}\nexport: true\n",
+    )
+}
+
+fn child_export(export: bool) -> Value {
+    json!({"child": {"r": {}, "export": export, "global": {}}})
+}
+
+/// An earlier child exports an alias of the one Release map into its values without writing
+/// the map; the parent writes through the alias and reads the change (Astra's counterexample to a
+/// per-instance hand-off; receipt `transfer/receipts-lanec3/release-alias-export`, exit 0).
+#[test]
+fn a_release_alias_exported_by_a_child_reaches_the_parent() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &release_alias_schema()?,
+        &[("export", child_export(true))],
+        true,
+    )
+}
+
+/// Without the alias the parent still reads Helm's service and fails (same receipt, exit 1).
+#[test]
+#[ignore = "lane C step 3: chart instances share one Release object in Helm file order (step 5 shared heap)"]
+fn without_an_exported_alias_the_parent_reads_the_initial_service() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &release_alias_schema()?,
+        &[("no export", child_export(false))],
+        false,
+    )
+}
+
+/// The longhorn image line: the registry is the first truthy of the values registry, a helper's
+/// text and a component registry, printed under `with`. A list registry is chosen and prints as
+/// `[map[]]/`, which Helm's YAML parse rejects (receipt
+/// `transfer/receipts-lanec3/coalesce-helper-text`); printed without `with` the line is rejected.
+#[test]
+#[ignore = "the `with` test over a coalesce with a helper-text operand is partial, and layout choices drop partial guards"]
+fn a_coalesced_list_behind_a_helper_text_operand_is_rejected() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        (
+            "values.yaml",
+            "global:\n  imageRegistry: \"\"\nprivate: \"\"\nimage:\n  registry: \"\"\n",
+        ),
+        (
+            "templates/_helpers.tpl",
+            indoc! {r#"
+                {{- define "law.url" -}}
+                {{- if .Values.private -}}
+                {{- .Values.private -}}
+                {{- end -}}
+                {{- end -}}
+            "#},
+        ),
+        (
+            "templates/d.yaml",
+            indoc! {r#"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: x
+                data:
+                  image: {{ with (coalesce .Values.global.imageRegistry (include "law.url" .) .Values.image.registry) }}{{ . }}/{{ end }}x
+            "#},
+        ),
+    ])?;
+    let document = |registry: Value| json!({"global": {"imageRegistry": registry}, "private": "", "image": {"registry": ""}});
+    assert_helm_verdicts(&schema, &[("list", document(json!([{}])))], false)?;
+    assert_helm_verdicts(&schema, &[("string", document(json!("reg.example")))], true)
+}
+
+const INITIAL_SERVICE_FAILS: &str =
+    "{{ if eq .Release.Service \"Helm\" }}{{ fail \"initial service\" }}{{ end }}\n";
+
+/// Helm executes every non-partial template, `templates/z.tpl` included, even when it emits
+/// nothing; it runs before `templates/a.yaml`, so its write reaches the read (receipt
+/// `transfer/receipts-lanec3/unscheduled-tpl`, exit 0).
+#[test]
+fn an_unscheduled_template_write_reaches_a_later_read() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "x: 1\n"),
+        (
+            "templates/z.tpl",
+            "{{- $_ := set .Release \"Service\" \"changed\" -}}\n",
+        ),
+        (
+            "templates/a.yaml",
+            &[INITIAL_SERVICE_FAILS, CONFIG_MAP].concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+}
+
+/// A test template runs first (deeper path) and its output is filtered only after rendering, so
+/// its write reaches the read even when tests are excluded (receipt
+/// `transfer/receipts-lanec3/unscheduled-test`, exit 0 with and without `--skip-tests`).
+#[test]
+fn an_excluded_test_template_write_reaches_a_later_read() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "x: 1\n"),
+        (
+            "templates/tests/t.yaml",
+            indoc! {r#"
+                {{- $_ := set .Release "Service" "changed" -}}
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                  name: t
+                  annotations:
+                    helm.sh/hook: test
+                spec:
+                  containers:
+                  - name: t
+                    image: busybox
+            "#},
+        ),
+        (
+            "templates/a.yaml",
+            &[INITIAL_SERVICE_FAILS, CONFIG_MAP].concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+}
+
+/// Helm parses only a library chart's partials: the packaged library's `_helpers.tpl` defines the
+/// helper that runs, not its `0.tpl`, so the write reaches the read through `$` and through
+/// `.Subcharts.lib` (receipt `transfer/receipts-lanec3/library-shadow`, both exit 0).
+#[test]
+fn a_library_helper_is_the_partial_helm_parses() -> eyre::Result<()> {
+    for packaged in [true, false] {
+        let schema = library_shadow_schema(packaged)?;
+        assert_helm_verdicts(
+            &schema,
+            &[
+                ("root", json!({"via": "root"})),
+                ("subcharts", json!({"via": "subcharts"})),
+            ],
+            true,
+        )?;
+    }
+    Ok(())
+}
+
+fn library_shadow_schema(packaged: bool) -> eyre::Result<Value> {
+    let library: &[(&str, &str)] = &[
+        (
+            "Chart.yaml",
+            "apiVersion: v2\nname: lib\nversion: 0.1.0\ntype: library\n",
+        ),
+        (
+            "templates/_helpers.tpl",
+            "{{- define \"lib.touch\" -}}{{- $_ := set .Release \"Service\" \"changed\" -}}{{- end -}}\n",
+        ),
+        (
+            "templates/0.tpl",
+            "{{- define \"lib.touch\" -}}{{- $_ := \"unchanged\" -}}{{- end -}}\n",
+        ),
+    ];
+    let template = [
+        r#"{{- if eq .Values.via "subcharts" }}{{ include "lib.touch" .Subcharts.lib }}{{ else }}{{ include "lib.touch" $ }}{{ end }}"#,
+        "\n",
+        INITIAL_SERVICE_FAILS,
+        CONFIG_MAP,
+    ]
+    .concat();
+    let mut files = vec![
+        (
+            "Chart.yaml".to_owned(),
+            indoc! {"
+                apiVersion: v2
+                name: law
+                version: 0.1.0
+                dependencies:
+                  - name: lib
+                    version: 0.1.0
+            "}
+            .to_owned(),
+        ),
+        ("values.yaml".to_owned(), "via: root\n".to_owned()),
+        ("templates/a.yaml".to_owned(), template),
+    ];
+    let archived: Vec<_> = library
+        .iter()
+        .map(|(name, source)| (format!("lib/{name}"), *source))
+        .collect();
+    if !packaged {
+        files.extend(
+            library
+                .iter()
+                .map(|(name, source)| (format!("charts/lib/{name}"), (*source).to_owned())),
+        );
+    }
+    let files: Vec<_> = files
+        .iter()
+        .map(|(path, source)| (path.as_str(), source.as_str()))
+        .collect();
+    let archived: Vec<_> = archived
+        .iter()
+        .map(|(path, source)| (path.as_str(), *source))
+        .collect();
+    if packaged {
+        law_schema_with_archives(&files, &[("charts/lib-0.1.0.tgz", &archived)])
+    } else {
+        law_schema(&files)
+    }
+}
+
+fn disabled_writer_schema() -> eyre::Result<Value> {
+    let child: &[(&str, &str)] = &[
+        (
+            "child/Chart.yaml",
+            "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+        ),
+        ("child/values.yaml", "{}\n"),
+        (
+            "child/templates/c.yaml",
+            "{{- $_ := set .Release \"Service\" \"changed\" -}}\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: child\n",
+        ),
+    ];
+    law_schema_with_archives(
+        &[
+            (
+                "Chart.yaml",
+                indoc! {"
+                    apiVersion: v2
+                    name: law
+                    version: 0.1.0
+                    dependencies:
+                      - name: child
+                        version: 0.1.0
+                        condition: child.enabled
+                "},
+            ),
+            ("values.yaml", "child:\n  enabled: false\n"),
+            (
+                "templates/a.yaml",
+                &[INITIAL_SERVICE_FAILS, CONFIG_MAP].concat(),
+            ),
+        ],
+        &[("charts/child-0.1.0.tgz", child)],
+    )
+}
+
+/// A conditionally disabled packaged dependency counts as a chart instance: when enabled, its
+/// earlier write reaches the parent's read (receipt `transfer/receipts-lanec3/disabled-tgz-writer`,
+/// enabled exit 0).
+#[test]
+fn an_enabled_packaged_writer_reaches_the_parent_read() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &disabled_writer_schema()?,
+        &[("enabled", json!({"child": {"enabled": true, "global": {}}}))],
+        true,
+    )
+}
+
+/// Disabled, the parent alone renders and reads the initial service (same receipt, exit 1).
+#[test]
+#[ignore = "lane C: every discovered instance counts, so a disabled dependency keeps Release shared (sound, imprecise)"]
+fn a_disabled_packaged_writer_leaves_the_initial_service() -> eyre::Result<()> {
+    assert_helm_verdicts(
+        &disabled_writer_schema()?,
+        &[(
+            "disabled",
+            json!({"child": {"enabled": false, "global": {}}}),
+        )],
+        false,
+    )
+}
+
+/// `trimPrefix` edits the whole text: an affix crossing the selected first part `%!` removes what
+/// would otherwise be an invalid plain prefix (receipt `transfer/receipts-lanec3/trim-prefix-cross`,
+/// both exit 0).
+#[test]
+fn a_whole_text_trim_prefix_crosses_the_first_part() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "c: false\n"),
+        (
+            "templates/d.yaml",
+            &[
+                CONFIG_MAP,
+                "data:\n",
+                r#"  v: {{ printf "%s%s" (ternary "%!" "a" .Values.c) "x-rest" | trimPrefix "%!x" }}"#,
+                "\n",
+            ]
+            .concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("selected", json!({"c": true})),
+            ("other", json!({"c": false})),
+        ],
+        true,
+    )
+}
+
+/// Sprig's `trunc` slices bytes: `trunc -2` keeps the last two bytes of `abé`, and `trunc 0`
+/// empties a nonempty text (receipt `transfer/receipts-lanec3/trunc-bytes`, exit 0).
+#[test]
+fn truncation_follows_byte_widths() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "x: 1\n"),
+        (
+            "templates/d.yaml",
+            &[
+                r#"{{ if ne ("abé" | trunc -2) "é" }}{{ fail "negative trunc keeps the last two bytes" }}{{ end }}"#,
+                r#"{{ if ne (printf "%s-" .Release.Name | trunc 0) "" }}{{ fail "trunc 0 empties a nonempty text" }}{{ end }}"#,
+                "\n",
+                CONFIG_MAP,
+                "data:\n",
+                r#"  a: "{{ "abé" | trunc -2 }}""#,
+                "\n",
+                r#"  b: "{{ printf "%s-" .Release.Name | trunc 0 }}""#,
+                "\n",
+            ]
+            .concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+}
+
+/// Helm parses every template, test hooks included, and the shallower `templates/tests/_touch.tpl`
+/// redefines the helper after `templates/deep/nested/_touch.tpl`; its write reaches the read even
+/// when tests are excluded (receipt `transfer/receipts-lanec3/test-partial-shadow`, exit 0 with and
+/// without `--skip-tests`).
+#[test]
+fn an_excluded_test_partial_defines_the_helper_helm_runs() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "x: 1\n"),
+        (
+            "templates/deep/nested/_touch.tpl",
+            "{{- define \"touch\" -}}{{- end -}}\n",
+        ),
+        (
+            "templates/tests/_touch.tpl",
+            "{{- define \"touch\" -}}{{- $_ := set .Release \"Service\" \"changed\" -}}{{- end -}}\n",
+        ),
+        (
+            "templates/a.yaml",
+            &[
+                "{{- include \"touch\" . }}\n",
+                INITIAL_SERVICE_FAILS,
+                CONFIG_MAP,
+            ]
+            .concat(),
+        ),
+    ])?;
+    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+}
+
+/// A library partial whose name is not UTF-8 still defines the helper Helm runs: Helm parses
+/// `templates/_touch-\xff.tpl` after the deeper no-op, so its write reaches the read (receipt
+/// `transfer/receipts-lanec3/library-bytes-partial`, exit 0).
+#[test]
+fn a_library_partial_with_a_byte_name_keeps_release_shared() -> eyre::Result<()> {
+    let library: ArchiveEntries<'_> = vec![
+        (
+            b"lib/Chart.yaml",
+            "apiVersion: v2\nname: lib\nversion: 0.1.0\ntype: library\n",
+        ),
+        (
+            b"lib/templates/deep/nested/_touch.tpl",
+            "{{- define \"lib.touch\" -}}{{- end -}}\n",
+        ),
+        (
+            b"lib/templates/_touch-\xff.tpl",
+            "{{- define \"lib.touch\" -}}{{- $_ := set .Release \"Service\" \"changed\" -}}{{- end -}}\n",
+        ),
+    ];
+    let schema = law_schema_with_byte_archives(
+        &[
+            (
+                "Chart.yaml",
+                indoc! {"
+                    apiVersion: v2
+                    name: law
+                    version: 0.1.0
+                    dependencies:
+                      - name: lib
+                        version: 0.1.0
+                "},
+            ),
+            ("values.yaml", "x: 1\n"),
+            (
+                "templates/a.yaml",
+                &[
+                    "{{- include \"lib.touch\" . }}\n",
+                    INITIAL_SERVICE_FAILS,
+                    CONFIG_MAP,
+                ]
+                .concat(),
+            ),
+        ],
+        &[("charts/lib-0.1.0.tgz", library)],
+    )?;
+    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+}
+
+/// The acceptance controls of the release-name peer laws hold without the initial Release: a
+/// labels map and falsy values render whatever the name is.
+#[test]
+fn release_name_peers_keep_the_splice_acceptances() -> eyre::Result<()> {
+    for entries in [
+        "helm.sh/chart: law\ninstance: {{ .Release.Name | quote }}",
+        "helm.sh/chart: law\nname: {{ .Release.Name | trunc 63 | trimSuffix \"-\" }}",
+        "helm.sh/chart: law\nname: \"{{ printf \"%s-%s\" .Release.Name .Chart.Name | trunc 63 | trimSuffix \"-\" }}\"",
+    ] {
+        let schema = spliced_labels_schema("commonLabels: {}\n", entries)?;
+        assert_labels_splice_acceptances(&schema, &json!({}))?;
+    }
+    assert_labels_splice_acceptances(&release_fullname_schema()?, &json!({"nameOverride": ""}))
+}
+
+/// `trunc 3` splits `é` in `{{é`: `toYamlPretty` spells the invalid string `!!binary e3vD`, which
+/// erases the opener, while `toYaml` encodes through JSON and keeps it (receipt
+/// `transfer/receipts-lanec3/split-rune-yaml`: `pretty-split` and `plain-none` exit 0,
+/// `plain-split` exit 1).
+#[test]
+#[ignore = "waiting for read-identity-preserving effects (ADR 0072 §5)"]
+fn a_split_rune_keeps_an_opener_only_through_to_yaml() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "code: abc\nencoder: pretty\n"),
+        (
+            "templates/c.yaml",
+            indoc! {r#"
+                {{- if eq .Values.encoder "pretty" }}
+                {{- if contains "{{" (toYamlPretty (trunc 3 .Values.code)) }}{{ fail "pretty opener" }}{{ end }}
+                {{- else }}
+                {{- if contains "{{" (toYaml (trunc 3 .Values.code)) }}{{ fail "plain opener" }}{{ end }}
+                {{- end }}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: x
+            "#},
+        ),
+    ])?;
+    assert_helm_verdicts(
+        &schema,
+        &[
+            ("pretty-split", json!({"code": "{{é", "encoder": "pretty"})),
+            ("plain-none", json!({"code": "abc", "encoder": "plain"})),
+        ],
+        true,
+    )
+}
+
+/// The `toYaml` control of [`a_split_rune_keeps_an_opener_only_through_to_yaml`]: the opener a
+/// truncated input keeps through JSON encoding fails the render (same receipt, `plain-split`).
+#[test]
+#[ignore = "waiting for read-identity-preserving effects (ADR 0072 §5)"]
+fn a_split_rune_opener_through_to_yaml_fails_the_render() -> eyre::Result<()> {
+    let schema = law_schema(&[
+        ("Chart.yaml", CHART),
+        ("values.yaml", "code: abc\n"),
+        (
+            "templates/c.yaml",
+            indoc! {r#"
+                {{- if contains "{{" (toYaml (trunc 3 .Values.code)) }}{{ fail "plain opener" }}{{ end }}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: x
+            "#},
+        ),
+    ])?;
+    assert_helm_verdicts(&schema, &[("plain-split", json!({"code": "{{é"}))], false)
 }

@@ -1630,8 +1630,53 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
             lean_accepts: false,
             rationale: "the middle-point lean contract retains dependency-local provider typing",
         },
+        SemanticControl {
+            name: "temporal replicaCount with inert web annotations",
+            category: ControlCategory::RetainedTooth,
+            instance: ProbeInstance::SparseOverride(json!({
+                "temporal": {
+                    "server": { "replicaCount": "three" },
+                    "web": { "service": { "annotations": { "example.com/probe": "inert" } } },
+                }
+            })),
+            transport: Transport::ValuesFileJson,
+            contract: ContractVerdict::Reject("Deployment replicas is not an integer"),
+            lean_accepts: false,
+            rationale: "Helm 4.2.3 renders string replicas in all four server Deployments",
+        },
     ])?;
     Ok(())
+}
+
+#[test]
+#[ignore = "line false rejection: the declared default asserts before an earlier tpl writer; waiting for read-identity-preserving effects (ADR 0072 §5)"]
+fn temporal_wrapper_accepts_replica_count_overwritten_by_web_annotation() -> eyre::Result<()> {
+    let _guard = test_util::builder().with_tracing(false).build()?;
+    let chart = "schema-emission-temporal-wrapper";
+    let defaults = read_coalesced_defaults(chart)?;
+    let (full, lean) = generate_profile_schemas(chart)?;
+    let profiles = ProfileSchemas::compile(&full, &lean, defaults)?;
+
+    profiles.assert_controls(&[SemanticControl {
+        name: "temporal replicaCount overwritten by web annotation tpl",
+        category: ControlCategory::PositiveControl,
+        instance: ProbeInstance::SparseOverride(json!({
+            "temporal": {
+                "server": { "replicaCount": "three" },
+                "web": {
+                    "service": {
+                        "annotations": {
+                            "example.com/probe": r#"{{- $_ := set .Values.server "replicaCount" 3 -}}inert"#,
+                        },
+                    },
+                },
+            }
+        })),
+        transport: Transport::ValuesFileJson,
+        contract: ContractVerdict::Accept,
+        lean_accepts: true,
+        rationale: "Helm 4.2.3 renders integer replicas in all four server Deployments",
+    }])
 }
 
 #[test]

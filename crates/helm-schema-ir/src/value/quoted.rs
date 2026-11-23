@@ -17,6 +17,8 @@ pub(super) enum LexicalState {
     Directive,
     DirectiveInvalid,
     FlowEmptyStart,
+    /// A word inside the one flow sequence a plain start opened (`[` at the start of a scalar).
+    FlowSequenceWord,
     FlowEnd,
     Double,
     Single,
@@ -57,9 +59,10 @@ impl LexicalState {
         use LexicalState::{
             BlockInvalid, Closed, ClosedCollection, CollectionInvalid, Directive, DirectiveInvalid,
             Double, Escape, FlowEmptyStart, FlowEnd, FlowPlain, FlowPlainColon, FlowPlainDash,
-            FlowPlainDashes, FlowPlainStart, FoldedDouble, Hex1, Hex2, Hex3, Hex4, Invalid, Plain,
-            PlainColon, PlainDash, PlainDashes, PlainStart, Separated, Single, SingleEnd,
-            Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7, Unicode8,
+            FlowPlainDashes, FlowPlainStart, FlowSequenceWord, FoldedDouble, Hex1, Hex2, Hex3,
+            Hex4, Invalid, Plain, PlainColon, PlainDash, PlainDashes, PlainStart, Separated,
+            Single, SingleEnd, Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7,
+            Unicode8,
         };
         if self.is_absorbing() {
             return Some(self);
@@ -83,7 +86,7 @@ impl LexicalState {
         Some(match self {
             PlainStart if character == ' ' => PlainStart,
             PlainStart if character == '[' => FlowEmptyStart,
-            FlowEmptyStart if character == ']' => FlowEnd,
+            FlowEmptyStart | FlowSequenceWord => return self.flow_sequence_step(character),
             PlainStart if character == '%' => Directive,
             Directive if character == '!' => DirectiveInvalid,
             PlainStart if character == '-' => PlainDash,
@@ -102,9 +105,10 @@ impl LexicalState {
                 Plain
             }
             // Flow plain states never reach here: they delegate to their block twins above.
-            FlowEmptyStart | Directive | PlainStart | PlainDash | PlainDashes | Plain
-            | PlainColon | FlowPlainStart | FlowPlain | FlowPlainColon | FlowPlainDash
-            | FlowPlainDashes => return None,
+            Directive | PlainStart | PlainDash | PlainDashes | Plain | PlainColon
+            | FlowPlainStart | FlowPlain | FlowPlainColon | FlowPlainDash | FlowPlainDashes => {
+                return None;
+            }
             Double => match character {
                 '"' => Closed,
                 '\\' => Escape,
@@ -147,6 +151,22 @@ impl LexicalState {
             Surrogate3 if matches!(character, '0'..='7') => Hex2,
             Unicode5Max | Unicode6 | Unicode7 | Unicode8 | Surrogate3 => Invalid,
             BlockInvalid | CollectionInvalid | DirectiveInvalid | Invalid => self,
+        })
+    }
+
+    /// A flow sequence opened at a plain start: entries are plain words separated by spaces until
+    /// its closing bracket; a collection opener or closer right after a word is not a separator,
+    /// so the decoder fails there.
+    fn flow_sequence_step(self, character: char) -> Option<Self> {
+        let word = |extra: &str| character.is_ascii_alphanumeric() || extra.contains(character);
+        Some(match self {
+            Self::FlowEmptyStart if character == ' ' => Self::FlowEmptyStart,
+            Self::FlowEmptyStart | Self::FlowSequenceWord if character == ']' => Self::FlowEnd,
+            Self::FlowEmptyStart if word("_./+") => Self::FlowSequenceWord,
+            Self::FlowSequenceWord if word("_./+-") => Self::FlowSequenceWord,
+            Self::FlowSequenceWord if character == ' ' => Self::FlowEmptyStart,
+            Self::FlowSequenceWord if "[{}".contains(character) => Self::Invalid,
+            _ => return None,
         })
     }
 
@@ -205,6 +225,7 @@ impl LexicalState {
             | Self::Invalid => false,
             Self::Double
             | Self::FlowEmptyStart
+            | Self::FlowSequenceWord
             | Self::FoldedDouble
             | Self::Single
             | Self::Escape
@@ -495,6 +516,10 @@ fn scalar_boundary(state: LexicalState) -> Option<LexicalState> {
         | LexicalState::FlowPlainDash
         | LexicalState::FlowPlain
         | LexicalState::FlowPlainColon => Some(LexicalState::FlowPlain),
+        // Numbers print as one word, which a flow entry continues or starts (`-1` included).
+        LexicalState::FlowEmptyStart | LexicalState::FlowSequenceWord => {
+            Some(LexicalState::FlowSequenceWord)
+        }
         LexicalState::Double | LexicalState::FoldedDouble => Some(LexicalState::Double),
         LexicalState::Single => Some(LexicalState::Single),
         LexicalState::SingleEnd | LexicalState::Closed | LexicalState::Separated => {
@@ -511,7 +536,6 @@ fn scalar_boundary(state: LexicalState) -> Option<LexicalState> {
         LexicalState::PlainDashes
         | LexicalState::FlowPlainDashes
         | LexicalState::Escape
-        | LexicalState::FlowEmptyStart
         | LexicalState::Directive
         | LexicalState::Hex1
         | LexicalState::Hex2
@@ -597,7 +621,7 @@ fn members(state: LexicalState, domain: Domain, depth: usize, suffixes: &[&str])
     }
     if depth > 0 {
         let nested = if domain == Domain::OrderedMember {
-            &[Domain::OrderedArray][..]
+            &[Domain::OrderedArray, Domain::Map][..]
         } else {
             &[Domain::Array, Domain::Map][..]
         };
@@ -620,20 +644,22 @@ fn collection(start: LexicalState, domain: Domain, depth: usize, suffixes: &[&st
         Domain::Array | Domain::OrderedArray => false,
         Domain::Member | Domain::OrderedMember => return Patterns::new(),
     };
-    if !mapping && start == LexicalState::PlainStart {
-        return after(LexicalState::FlowEnd, suffixes)
-            .map(|end| {
-                BTreeMap::from([(
-                    end,
-                    ValuePattern::Array {
-                        prefix: Vec::new(),
-                        items: Some(Box::new(ValuePattern::String {
-                            pattern: "^[A-Za-z0-9_./+-]*$".to_owned(),
-                        })),
-                    },
-                )])
-            })
-            .unwrap_or_default();
+    let mut result = Patterns::new();
+    if !mapping
+        && start == LexicalState::PlainStart
+        && let Some(end) = after(LexicalState::FlowEnd, suffixes)
+    {
+        // A printed array opens a flow sequence whose space-separated words read as entries:
+        // words of this alphabet close it only at the final bracket, whatever their number.
+        result.insert(
+            end,
+            ValuePattern::Array {
+                prefix: Vec::new(),
+                items: Some(Box::new(ValuePattern::String {
+                    pattern: "^[A-Za-z0-9_./+-]*$".to_owned(),
+                })),
+            },
+        );
     }
     let Some(state) = (if mapping { "map[" } else { "[" })
         .chars()
@@ -656,19 +682,18 @@ fn collection(start: LexicalState, domain: Domain, depth: usize, suffixes: &[&st
     }
     let closing: Vec<_> = suffixes.iter().map(|suffix| format!("]{suffix}")).collect();
     let last: Vec<_> = closing.iter().map(String::as_str).collect();
-    let mut result = Patterns::new();
     if !mapping && let Some(end) = after(state, &last) {
-        result.insert(
-            end,
-            ValuePattern::Array {
-                prefix: Vec::new(),
-                items: None,
-            },
-        );
+        result.entry(end).or_insert(ValuePattern::Array {
+            prefix: Vec::new(),
+            items: None,
+        });
     }
     if !matches!(
         state,
-        LexicalState::Single | LexicalState::Double | LexicalState::Plain
+        LexicalState::Single
+            | LexicalState::Double
+            | LexicalState::Plain
+            | LexicalState::FlowEmptyStart
     ) {
         return result;
     }
@@ -856,22 +881,41 @@ pub(super) fn serialized_input(
 pub(super) fn mapped_character(character: char, transforms: &[TextTransform]) -> Option<String> {
     let mut text = character.to_string();
     for transform in transforms {
-        match transform {
-            TextTransform::Upper | TextTransform::Lower => {}
-            TextTransform::Replace { from, to: _ } if from.chars().count() == 1 => {}
-            TextTransform::Replace { from: _, to: _ }
-            | TextTransform::Truncate(_)
-            | TextTransform::TrimPrefix(_)
-            | TextTransform::TrimSuffix(_)
-            | TextTransform::Cut(_)
-            | TextTransform::RegexReplace {
-                pattern: _,
-                replacement: _,
-            } => return None,
+        if !transform.maps_characters() {
+            return None;
         }
         text = transform.apply(&text, 4096)?;
     }
     Some(text)
+}
+
+/// The end state of a whole string drawn from a full-match language, printed after character
+/// edits. It is certified only when every word reaches the same end; any other edit certifies
+/// nothing (a whole-text edit that keeps every word was already elided where it ran).
+pub(super) fn domain(start: LexicalState, pattern: &str, transforms: &[TextTransform]) -> States {
+    if start.is_absorbing() {
+        return States::from([(start, Predicate::True)]);
+    }
+    if !transforms.iter().all(TextTransform::maps_characters) {
+        return States::new();
+    }
+    let ends = helm_schema_core::pattern_end_states(
+        pattern,
+        start,
+        |state, character| {
+            mapped_character(character, transforms)?
+                .chars()
+                .try_fold(*state, LexicalState::step)
+        },
+        4096,
+    );
+    let Some(ends) = ends else {
+        return States::new();
+    };
+    match Vec::from_iter(ends).as_slice() {
+        [Some(end)] => States::from([(*end, Predicate::True)]),
+        _ => States::new(),
+    }
 }
 
 pub(super) fn transformed_input(

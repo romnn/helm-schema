@@ -46,12 +46,7 @@ pub const SECOND_RENDER_NAMESPACE: &str =
 /// Whether text belongs to the namespace language covered by the oracle.
 #[must_use]
 pub fn is_oracle_namespace(namespace: &str) -> bool {
-    let bytes = namespace.as_bytes();
-    let alphanumeric = |byte: &u8| byte.is_ascii_lowercase() || byte.is_ascii_digit();
-    (1..=63).contains(&bytes.len())
-        && bytes.first().is_some_and(alphanumeric)
-        && bytes.last().is_some_and(alphanumeric)
-        && bytes.iter().all(|byte| alphanumeric(byte) || *byte == b'-')
+    helm_schema_core::is_release_namespace(namespace)
 }
 
 /// A defaults or context Kubernetes control the oracle cannot use: its

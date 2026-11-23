@@ -81,6 +81,7 @@ fn expected_schema() -> Value {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {"declared-types": "annotate", "root": "closed"},
             "modifiers": {
                 "overrides": {

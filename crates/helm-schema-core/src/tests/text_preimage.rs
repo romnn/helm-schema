@@ -2,7 +2,9 @@ use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-use super::TextPreimage;
+use std::collections::BTreeSet;
+
+use super::{TextPreimage, pattern_end_states};
 
 #[test]
 fn literal_boundaries_and_expanding_characters_compose() -> eyre::Result<()> {
@@ -132,4 +134,28 @@ fn finite_preimages_and_reference_siblings_preserve_schema_algebra() {
         "$ref": "#/definitions/anything", "type": "integer", "pattern": "^never$",
         "definitions": {"anything": {}}
     })), want: serde_json::json!({}));
+}
+
+/// The product reports every end the caller's automaton reaches on some word, and an unknown
+/// end for words with no transition or with non-ASCII bytes.
+#[test]
+fn pattern_end_states_cover_every_word() -> eyre::Result<()> {
+    let parity = |count: &u8, character: char| (character == 'a').then_some((count + 1) % 2);
+    sim_assert_eq!(
+        have: pattern_end_states("a{2}|a{4}", 0, parity, 64),
+        want: Some(BTreeSet::from([Some(0)])),
+    );
+    sim_assert_eq!(
+        have: pattern_end_states("a{1,2}", 0, parity, 64),
+        want: Some(BTreeSet::from([Some(0), Some(1)])),
+    );
+    sim_assert_eq!(
+        have: pattern_end_states("ab", 0, parity, 64),
+        want: Some(BTreeSet::from([None])),
+    );
+    let ends = pattern_end_states(r"[\s\S]", 0, |_: &u8, _| Some(0), 64)
+        .ok_or_eyre("a one-byte language is bounded")?;
+    sim_assert_eq!(have: ends, want: BTreeSet::from([Some(0), None]));
+    sim_assert_eq!(have: pattern_end_states("a*", 0_u8, |count, _| count.checked_add(1), 8), want: None);
+    Ok(())
 }

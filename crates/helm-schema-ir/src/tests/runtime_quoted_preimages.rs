@@ -207,3 +207,37 @@ fn serialized_numbers_cross_the_two_dash_boundary_like_formatted_ones() {
         );
     }
 }
+
+/// A string domain certifies an end only when every word reaches it, after character edits only;
+/// whole-text edits are elided where they run when they keep every word, so the reader certifies
+/// nothing for them.
+#[test]
+fn string_domains_certify_only_an_end_every_word_reaches() {
+    const NAME: &str = r"[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
+    let certified = |end| States::from([(end, Predicate::True)]);
+    for (start, end) in [
+        (LexicalState::PlainStart, LexicalState::Plain),
+        (LexicalState::Double, LexicalState::Double),
+        (LexicalState::Single, LexicalState::Single),
+    ] {
+        sim_assert_eq!(have: domain(start, NAME, &[]), want: certified(end), "{start:?}");
+    }
+    let descriptor = "^(?:float64|int64)$";
+    sim_assert_eq!(
+        have: domain(LexicalState::PlainStart, descriptor, &[TextTransform::Upper]),
+        want: certified(LexicalState::Plain),
+    );
+    for (pattern, transforms) in [
+        // `float64` stays plain, `[]x` is a flow sequence followed by text.
+        (r"^(?:float64|\[\]x)$", Vec::new()),
+        (r"[\s\S]*", Vec::new()),
+        (NAME, vec![TextTransform::Truncate(63)]),
+        (NAME, vec![TextTransform::TrimSuffix("-".to_owned())]),
+    ] {
+        sim_assert_eq!(
+            have: domain(LexicalState::PlainStart, pattern, &transforms),
+            want: States::new(),
+            "{pattern} {transforms:?}"
+        );
+    }
+}

@@ -2717,6 +2717,8 @@ impl<'a> LexicalTransfers<'a> {
             initial
         } else if let Some(helm_schema_core::GuardValue::String(text)) = value.literal() {
             quoted::literal(initial, text, memo)
+        } else if let Some(states) = domain_states(value, state, &[]) {
+            states
         } else if let Some(derivation) = value.value.operation_preimage() {
             self.derived(derivation, state, memo)
         } else if let Some(path) = value.identity() {
@@ -2882,13 +2884,18 @@ impl<'a> LexicalTransfers<'a> {
             return proved;
         }
         if let Some(text) = value.exact_text() {
-            let transformed = quoted::mapped_text(&text, transforms);
+            let transformed = transforms
+                .iter()
+                .try_fold(text, |text, transform| transform.apply(&text, 4096));
             return transformed.map_or_else(States::new, |text| {
                 quoted::literal(BTreeMap::from([(state, Predicate::True)]), &text, memo)
             });
         }
         if let Some(path) = value.identity() {
             return quoted::transformed_input(state, path, transforms, memo);
+        }
+        if let Some(states) = domain_states(value, state, transforms) {
+            return states;
         }
         if let Some(derivation) = value.value.operation_preimage() {
             if let super::relationship::ValueOperation::Text(transform) = &derivation.operation {
@@ -3280,6 +3287,12 @@ impl<'a> LexicalTransfers<'a> {
         transforms: &[super::relationship::TextTransform],
         memo: &PredicateMemo,
     ) -> States {
+        if !transforms
+            .iter()
+            .all(super::relationship::TextTransform::maps_characters)
+        {
+            return self.leading_buffer(buffer, state, transforms, memo);
+        }
         let key = BufferContext {
             graph: Rc::as_ptr(buffer),
             state,
@@ -3308,6 +3321,67 @@ impl<'a> LexicalTransfers<'a> {
         states
     }
 
+    /// A whole-text edit (`trunc`, a trim) of a buffer: the whole text starts with the buffer's
+    /// first part, so an invalid edited prefix of that unfinished part proves the token invalid;
+    /// nothing else is certified, and later parts are not read.
+    fn leading_buffer(
+        &mut self,
+        buffer: &TextBuffer,
+        state: LexicalState,
+        transforms: &[super::relationship::TextTransform],
+        memo: &PredicateMemo,
+    ) -> States {
+        let Some(rest) = self.remaining.checked_sub(1) else {
+            return States::new();
+        };
+        self.remaining = rest;
+        let Some(node) = buffer.parts.iter().next() else {
+            return States::new();
+        };
+        let mut states = match node.content() {
+            TextPart::Bytes(text) => quoted::literal(
+                BTreeMap::from([(state, Predicate::True)]),
+                &super::text_actions::leading_literal_prefix(text, transforms),
+                memo,
+            ),
+            TextPart::Frozen(value) => self.leading_invalid(value, state, transforms, memo),
+            TextPart::Select { decision, yes, no } => {
+                let branches =
+                    [yes, no].map(|branch| self.leading_buffer(branch, state, transforms, memo));
+                Self::choice(decision, branches, memo)
+            }
+            TextPart::Unknown(_) => States::new(),
+        };
+        states.retain(|state, _| state.is_absorbing());
+        states
+    }
+
+    /// The whole edited text starts with `value` and continues after it: the edited prefix of an
+    /// unfinished text can prove the token invalid, and nothing else is certified.
+    fn leading_invalid(
+        &mut self,
+        value: &FrozenValue,
+        state: LexicalState,
+        transforms: &[super::relationship::TextTransform],
+        memo: &PredicateMemo,
+    ) -> States {
+        if let ValueNode::Select { decision, yes, no } = value.value.node.as_ref() {
+            let Some(rest) = self.remaining.checked_sub(1) else {
+                return States::new();
+            };
+            self.remaining = rest;
+            let branches = [yes, no].map(|branch| {
+                let branch = FrozenValue::at(Rc::clone(&value.heap), branch.clone());
+                self.leading_invalid(&branch, state, transforms, memo)
+            });
+            return Self::choice(decision, branches, memo);
+        }
+        let prefix = super::text_actions::leading_prefix(value, transforms, &mut self.remaining);
+        let mut states = quoted::literal(BTreeMap::from([(state, Predicate::True)]), &prefix, memo);
+        states.retain(|state, _| state.is_absorbing());
+        states
+    }
+
     fn part(
         &mut self,
         part: &TextPart,
@@ -3322,8 +3396,15 @@ impl<'a> LexicalTransfers<'a> {
             TextPart::Frozen(value) => {
                 if transforms.is_empty() {
                     self.value(value, state, memo)
-                } else {
+                } else if transforms
+                    .iter()
+                    .all(super::relationship::TextTransform::maps_characters)
+                {
                     self.transformed(value, state, transforms, memo)
+                } else {
+                    // A whole-text edit applies to the whole buffer (`leading_buffer`), never to
+                    // one part alone.
+                    States::new()
                 }
             }
             TextPart::Bytes(text) => {
@@ -3342,6 +3423,31 @@ impl<'a> LexicalTransfers<'a> {
             }
         }
     }
+}
+
+/// The certified end of a value drawn from a string domain, or `None` when no end is certified.
+fn domain_states(
+    value: &FrozenValue,
+    state: LexicalState,
+    transforms: &[super::relationship::TextTransform],
+) -> Option<States> {
+    let ValueNode::Leaf(Leaf {
+        datum:
+            Datum::Scalar {
+                go_type: _,
+                content:
+                    Some(super::scalar_value::ScalarContent::StringDomain {
+                        pattern,
+                        min_bytes: _,
+                        max_bytes: _,
+                    }),
+            },
+        origin: _,
+    }) = value.value.node.as_ref()
+    else {
+        return None;
+    };
+    Some(quoted::domain(state, pattern, transforms)).filter(|states| !states.is_empty())
 }
 
 struct QuotedPrefix {

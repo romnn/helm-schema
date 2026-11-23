@@ -67,19 +67,26 @@ pub(super) enum TextTransform {
 }
 
 impl TextTransform {
-    pub(super) fn preimage(&self) -> Option<helm_schema_core::TextPreimage> {
+    /// Whether the edit maps each character independently of its neighbours, so it applies to a
+    /// text part by part.
+    pub(super) fn maps_characters(&self) -> bool {
         match self {
-            Self::Upper | Self::Lower => {}
-            Self::Replace { from, to: _ } if from.chars().count() == 1 => {}
+            Self::Upper | Self::Lower => true,
+            Self::Replace { from, to: _ } => from.chars().count() == 1,
             Self::Truncate(_)
             | Self::TrimPrefix(_)
             | Self::TrimSuffix(_)
-            | Self::Replace { from: _, to: _ }
             | Self::Cut(_)
             | Self::RegexReplace {
                 pattern: _,
                 replacement: _,
-            } => return None,
+            } => false,
+        }
+    }
+
+    pub(super) fn preimage(&self) -> Option<helm_schema_core::TextPreimage> {
+        if !self.maps_characters() {
+            return None;
         }
         let mut relation = helm_schema_core::TextPreimage::default();
         for byte in 0..=127 {

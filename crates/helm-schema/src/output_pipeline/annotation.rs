@@ -92,6 +92,14 @@ pub(crate) fn annotate_final_schema(
         "narrowing": narrowing,
         "modifiers": modifiers,
         "policy-fingerprint": fingerprint,
+        // The render environment the schema speaks for (ADR 0072), outside the policy fingerprint.
+        "assumptions": {
+            "release-namespace": {
+                "pattern": format!("^(?:{})$", helm_schema_core::RELEASE_NAMESPACE_PATTERN),
+                "min-bytes": helm_schema_core::RELEASE_NAMESPACE_MIN_BYTES,
+                "max-bytes": helm_schema_core::RELEASE_NAMESPACE_MAX_BYTES,
+            },
+        },
     });
 
     let mut object = match schema {

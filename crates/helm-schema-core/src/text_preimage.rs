@@ -1,7 +1,7 @@
 //! Bounded regular-language preimages of an explicit text relation.
 
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use regex_automata::{
@@ -325,6 +325,69 @@ fn pattern_automaton(pattern: &str) -> Option<dense::DFA<Vec<u32>>> {
         )
         .build(&format!(r"\A[\s\S]*(?:{pattern})[\s\S]*\z"))
         .ok()
+}
+
+/// The states a deterministic character automaton ends in on the words of a full-match pattern.
+///
+/// `step` reads one ASCII character; `None` from it, and any non-ASCII byte a word may contain,
+/// yields a `None` member: some word has no known end. The whole result is `None` when the
+/// pattern is not portable ASCII or the product exceeds `limit` states.
+#[must_use]
+#[tracing::instrument(skip_all)]
+pub fn pattern_end_states<S: Clone + Ord>(
+    pattern: &str,
+    start: S,
+    mut step: impl FnMut(&S, char) -> Option<S>,
+    limit: usize,
+) -> Option<BTreeSet<Option<S>>> {
+    if !crate::pattern_dialect::portable_ascii_pattern(pattern) {
+        return None;
+    }
+    let dfa = dense::Builder::new()
+        .syntax(
+            regex_automata::util::syntax::Config::new()
+                .unicode(false)
+                .utf8(false)
+                .crlf(true),
+        )
+        .configure(
+            dense::Config::new()
+                .dfa_size_limit(Some(1024 * 1024))
+                .determinize_size_limit(Some(4 * 1024 * 1024)),
+        )
+        .build(&format!(r"\A(?:{pattern})\z"))
+        .ok()?;
+    let initial = dfa
+        .start_state_forward(&Input::new(b"").anchored(Anchored::Yes))
+        .ok()?;
+    let mut seen = BTreeSet::from([(initial, Some(start.clone()))]);
+    let mut pending = vec![(initial, Some(start))];
+    let mut ends = BTreeSet::new();
+    while let Some((word, automaton)) = pending.pop() {
+        if dfa.is_quit_state(word) {
+            return None;
+        }
+        if dfa.is_match_state(dfa.next_eoi_state(word)) {
+            ends.insert(automaton.clone());
+        }
+        for byte in 0..=u8::MAX {
+            let next = dfa.next_state(word, byte);
+            if dfa.is_dead_state(next) {
+                continue;
+            }
+            let advanced = match &automaton {
+                Some(state) if byte.is_ascii() => step(state, char::from(byte)),
+                Some(_) | None => None,
+            };
+            if seen.insert((next, advanced.clone())) {
+                if seen.len() > limit {
+                    return None;
+                }
+                pending.push((next, advanced));
+            }
+        }
+    }
+    Some(ends)
 }
 
 /// A regular expression labelling one directed edge.

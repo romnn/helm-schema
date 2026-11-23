@@ -1,6 +1,6 @@
 use super::{
-    AbortReason, Datum, Field, Leaf, MapType, ObjectData, ObjectVersion, Remainder, State, Value,
-    ValueNode,
+    AbortReason, Datum, Field, Leaf, MapType, ObjectData, ObjectVersion, Remainder, State,
+    TextPart, Value, ValueNode,
 };
 use helm_schema_core::{GuardValue, ValuesPath};
 use std::collections::{BTreeMap, BTreeSet};
@@ -1387,11 +1387,298 @@ fn transfer_text_edit(input: TransferInput<'_>, state: &State) -> Value {
     };
     let frozen = state.heap.freeze(&input.last);
     let text = scalar_text(&input.last).and_then(|text| transform.apply(&text, 64 * 1024));
+    if text.is_none() && edit_keeps_every_spelling(&transform, &frozen.value) {
+        // The whole operand is the result: its own choices, parts and provenance stay intact.
+        return input.last.with_influences(input.influences);
+    }
     let value = text.map_or_else(
         || Value::scalar(super::ScalarType::String, None).with_influences(input.influences),
         |text| Value::string(&text),
     );
     value.derived(frozen, ValueOperation::Text(transform))
+}
+
+/// Whether a whole-text edit returns every possible spelling of `value` unchanged: Sprig's
+/// `trunc` slices bytes and keeps a text no longer than its width, and a trim keeps a text that
+/// cannot carry its affix.
+fn edit_keeps_every_spelling(
+    transform: &super::relationship::TextTransform,
+    value: &Value,
+) -> bool {
+    use super::relationship::TextTransform;
+    let mut budget = 256;
+    match transform {
+        TextTransform::Truncate(width) => usize::try_from(width.unsigned_abs())
+            .is_ok_and(|width| max_bytes(value, &mut budget).is_some_and(|bound| bound <= width)),
+        TextTransform::TrimPrefix(affix) => {
+            affix.is_empty() || lacks_affix(value, affix, TextEnd::Start, &mut budget)
+        }
+        TextTransform::TrimSuffix(affix) => {
+            affix.is_empty() || lacks_affix(value, affix, TextEnd::End, &mut budget)
+        }
+        TextTransform::Upper
+        | TextTransform::Lower
+        | TextTransform::Replace { from: _, to: _ }
+        | TextTransform::Cut(_)
+        | TextTransform::RegexReplace {
+            pattern: _,
+            replacement: _,
+        } => false,
+    }
+}
+
+/// An upper bound on the bytes of every spelling, or `None` when there is none.
+fn max_bytes(value: &Value, budget: &mut usize) -> Option<usize> {
+    *budget = budget.checked_sub(1)?;
+    if let Some(GuardValue::String(text)) = value.constant() {
+        return Some(text.len());
+    }
+    let datum = match value.node.as_ref() {
+        ValueNode::Select {
+            decision: _,
+            yes,
+            no,
+        } => return Some(max_bytes(yes, budget)?.max(max_bytes(no, budget)?)),
+        ValueNode::Leaf(Leaf { datum, origin: _ }) => datum,
+    };
+    match datum {
+        Datum::Scalar {
+            go_type: _,
+            content:
+                Some(super::scalar_value::ScalarContent::StringDomain {
+                    pattern: _,
+                    min_bytes: _,
+                    max_bytes,
+                }),
+        } => Some(*max_bytes),
+        Datum::Text(text) => match text.term() {
+            super::text::TextTerm::Resolved { term: _, literal } => Some(literal.to_string().len()),
+            super::text::TextTerm::Capture {
+                graph,
+                strip_marker: _,
+            } => buffer_max_bytes(graph, budget),
+            super::text::TextTerm::Encoded {
+                value: _,
+                alphabet: _,
+            }
+            | super::text::TextTerm::Quote { value: _ }
+            | super::text::TextTerm::Yaml {
+                value: _,
+                pretty: _,
+            }
+            | super::text::TextTerm::Json {
+                value: _,
+                pretty: _,
+                escape_html: _,
+                literal: _,
+            }
+            | super::text::TextTerm::Tpl {
+                source: _,
+                result: _,
+            }
+            | super::text::TextTerm::Indent {
+                value: _,
+                width: _,
+                newline: _,
+            } => None,
+        },
+        Datum::Scalar {
+            go_type: _,
+            content:
+                None
+                | Some(
+                    super::scalar_value::ScalarContent::Literal(_)
+                    | super::scalar_value::ScalarContent::Identity(_),
+                ),
+        }
+        | Datum::Map { view: _, target: _ }
+        | Datum::Sequence(_)
+        | Datum::Strings(_)
+        | Datum::Slot {
+            backing: _,
+            index: _,
+        }
+        | Datum::Unknown(_) => None,
+    }
+}
+
+/// The sum of the parts' bounds; stripping Helm's marker only shortens a text.
+fn buffer_max_bytes(buffer: &super::TextBuffer, budget: &mut usize) -> Option<usize> {
+    buffer.parts.iter().try_fold(0_usize, |total, node| {
+        *budget = budget.checked_sub(1)?;
+        let part = match node.content() {
+            TextPart::Bytes(text) => text.len(),
+            TextPart::Frozen(value) => max_bytes(&value.value, budget)?,
+            TextPart::Select {
+                decision: _,
+                yes,
+                no,
+            } => buffer_max_bytes(yes, budget)?.max(buffer_max_bytes(no, budget)?),
+            TextPart::Unknown(_) => return None,
+        };
+        total.checked_add(part)
+    })
+}
+
+#[derive(Clone, Copy)]
+enum TextEnd {
+    Start,
+    End,
+}
+
+/// Whether no spelling of `value` starts or ends with `affix`, decided on its first or last
+/// part. A part shorter than the affix leaves the neighbouring part undecided, so it decides
+/// nothing.
+fn lacks_affix(value: &Value, affix: &str, end: TextEnd, budget: &mut usize) -> bool {
+    let Some(rest) = budget.checked_sub(1) else {
+        return false;
+    };
+    *budget = rest;
+    if let Some(GuardValue::String(text)) = value.constant() {
+        return bytes_lack_affix(text, affix, end);
+    }
+    let datum = match value.node.as_ref() {
+        ValueNode::Select {
+            decision: _,
+            yes,
+            no,
+        } => {
+            return lacks_affix(yes, affix, end, budget) && lacks_affix(no, affix, end, budget);
+        }
+        ValueNode::Leaf(Leaf { datum, origin: _ }) => datum,
+    };
+    match datum {
+        Datum::Scalar {
+            go_type: _,
+            content:
+                Some(super::scalar_value::ScalarContent::StringDomain {
+                    pattern,
+                    min_bytes,
+                    max_bytes: _,
+                }),
+        } => *min_bytes >= affix.len() && domain_lacks_affix(pattern, affix, end),
+        Datum::Text(text) => match text.term() {
+            super::text::TextTerm::Resolved { term: _, literal } => {
+                bytes_lack_affix(&literal.to_string(), affix, end)
+            }
+            super::text::TextTerm::Capture {
+                graph,
+                strip_marker: false,
+            } => buffer_lacks_affix(graph, affix, end, budget),
+            super::text::TextTerm::Capture {
+                graph: _,
+                strip_marker: true,
+            }
+            | super::text::TextTerm::Encoded {
+                value: _,
+                alphabet: _,
+            }
+            | super::text::TextTerm::Quote { value: _ }
+            | super::text::TextTerm::Yaml {
+                value: _,
+                pretty: _,
+            }
+            | super::text::TextTerm::Json {
+                value: _,
+                pretty: _,
+                escape_html: _,
+                literal: _,
+            }
+            | super::text::TextTerm::Tpl {
+                source: _,
+                result: _,
+            }
+            | super::text::TextTerm::Indent {
+                value: _,
+                width: _,
+                newline: _,
+            } => false,
+        },
+        Datum::Scalar {
+            go_type: _,
+            content:
+                None
+                | Some(
+                    super::scalar_value::ScalarContent::Literal(_)
+                    | super::scalar_value::ScalarContent::Identity(_),
+                ),
+        }
+        | Datum::Map { view: _, target: _ }
+        | Datum::Sequence(_)
+        | Datum::Strings(_)
+        | Datum::Slot {
+            backing: _,
+            index: _,
+        }
+        | Datum::Unknown(_) => false,
+    }
+}
+
+fn buffer_lacks_affix(
+    buffer: &super::TextBuffer,
+    affix: &str,
+    end: TextEnd,
+    budget: &mut usize,
+) -> bool {
+    let Some(rest) = budget.checked_sub(1) else {
+        return false;
+    };
+    *budget = rest;
+    let part = match end {
+        TextEnd::Start => buffer.parts.iter().next(),
+        TextEnd::End => buffer.parts.iter().next_back(),
+    };
+    let Some(part) = part else {
+        return false;
+    };
+    match part.content() {
+        TextPart::Bytes(text) => bytes_lack_affix(text, affix, end),
+        TextPart::Frozen(value) => lacks_affix(&value.value, affix, end, budget),
+        TextPart::Select {
+            decision: _,
+            yes,
+            no,
+        } => {
+            buffer_lacks_affix(yes, affix, end, budget)
+                && buffer_lacks_affix(no, affix, end, budget)
+        }
+        TextPart::Unknown(_) => false,
+    }
+}
+
+fn bytes_lack_affix(text: &str, affix: &str, end: TextEnd) -> bool {
+    text.len() >= affix.len()
+        && match end {
+            TextEnd::Start => !text.starts_with(affix),
+            TextEnd::End => !text.ends_with(affix),
+        }
+}
+
+/// Whether no word of a full-match language starts or ends with `affix`.
+fn domain_lacks_affix(pattern: &str, affix: &str, end: TextEnd) -> bool {
+    let width = affix.chars().count();
+    // Each word's first or last `width` characters (words are ASCII here).
+    let ends = helm_schema_core::pattern_end_states(
+        pattern,
+        String::new(),
+        |seen, character| {
+            let mut seen = seen.clone();
+            match end {
+                TextEnd::End => seen.push(character),
+                TextEnd::Start if seen.len() < width => seen.push(character),
+                TextEnd::Start => {}
+            }
+            if seen.len() > width {
+                seen.remove(0);
+            }
+            Some(seen)
+        },
+        4096,
+    );
+    ends.is_some_and(|ends| {
+        ends.iter()
+            .all(|seen| seen.as_deref().is_some_and(|seen| seen != affix))
+    })
 }
 
 /// `semver VERSION`: a parsed `*semver.Version` whose accessor methods read as fields.

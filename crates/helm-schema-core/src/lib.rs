@@ -17,6 +17,7 @@ mod provenance;
 mod provider_origin;
 mod provider_schema_fragment;
 mod provider_schema_use;
+mod release_namespace;
 mod requirement_dag;
 mod requirement_guard;
 mod schema_provider;
@@ -57,6 +58,10 @@ pub use provider_schema_fragment::{
     ProviderSchemaFragment, ProviderSchemaSource, ProviderSourceFragment,
 };
 pub use provider_schema_use::ProviderSchemaUse;
+pub use release_namespace::{
+    RELEASE_NAMESPACE_MAX_BYTES, RELEASE_NAMESPACE_MIN_BYTES, RELEASE_NAMESPACE_PATTERN,
+    is_release_namespace,
+};
 pub use requirement_dag::{
     RequirementCondition, RequirementConditionBuilder, RequirementConditionNode,
     RequirementConditions,
@@ -65,7 +70,9 @@ pub use requirement_guard::{
     RequirementAtom, RequirementChoice, RequirementDecision, RequirementGuard, RequirementNode,
 };
 pub use schema_provider::ResourceSchemaOracle;
-pub use text_preimage::{RegularLanguage, RegularTransition, TextPreimage, regex_character_class};
+pub use text_preimage::{
+    RegularLanguage, RegularTransition, TextPreimage, pattern_end_states, regex_character_class,
+};
 pub use types::{KindBranch, PlainScalarPlacement, ResourceRef, ValueKind, YamlPath};
 pub use value_path::{
     Segment, ValuesPath, append_each_member_value_path, append_value_path, join_encoded_value_path,

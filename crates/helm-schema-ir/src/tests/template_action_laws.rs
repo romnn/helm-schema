@@ -395,6 +395,50 @@ fn release_reads_abstain_until_shared_unit_effects_are_imported() -> eyre::Resul
     Ok(())
 }
 
+/// A whole-text edit is elided only where it keeps every spelling of the whole operand: the
+/// validated name fits `trunc 63` and never ends in `-`, the name joined with `law` is at most 57
+/// bytes ending in `w`, but a 65-byte composition may be cut and a literal trailing `-` is trimmed.
+#[test]
+fn whole_text_edits_are_elided_only_when_they_keep_every_spelling() -> eyre::Result<()> {
+    for (expression, elided) in [
+        (r".Release.Name | trunc 63", true),
+        (r#".Release.Name | trimSuffix "-""#, true),
+        (r#".Release.Name | trimPrefix "-""#, true),
+        (
+            r#"printf "%s-%s" .Release.Name "law" | trunc 63 | trimSuffix "-""#,
+            true,
+        ),
+        (r".Release.Name | trunc 52", false),
+        // Sprig slices bytes from the end for a negative width: the identity needs |width| >= 53.
+        (r".Release.Name | trunc -53", true),
+        (r".Release.Name | trunc -52", false),
+        (r#"printf "%s" .Release.Name | trunc 0"#, false),
+        (r#".Release.Name | trimSuffix "a""#, false),
+        (
+            r#"printf "%s-%s" .Release.Name "abcdefghijk" | trunc 63"#,
+            false,
+        ),
+        (r#"printf "%s-" .Release.Name | trimSuffix "-""#, false),
+        (
+            r#"printf "%s%s" .Release.Name .Values.suffix | trimSuffix "-""#,
+            false,
+        ),
+    ] {
+        let db = IrAnalysisDb::new(&DefineIndex::new());
+        let execution = execute_initial_release(&format!("{{{{ {expression} }}}}"), &db);
+        let output = execution
+            .sites()
+            .last()
+            .ok_or_eyre("missing edit observation")?;
+        sim_assert_eq!(
+            have: output.value().value.operation_preimage().is_none(),
+            want: elided,
+            "{expression}"
+        );
+    }
+    Ok(())
+}
+
 fn execute_initial_release(source: &str, db: &IrAnalysisDb) -> crate::value::DocumentExecution {
     use crate::value::{DocumentExecution, Field, FileOutput, Remainder, State, Value};
     let mut state = State::new(Value::nil());

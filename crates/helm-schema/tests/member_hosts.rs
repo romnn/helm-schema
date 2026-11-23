@@ -89,6 +89,7 @@ const DIRECT_ACCESS_AND_POST_ACCESS_DEFAULT_ENCODED: &str = indoc! {r#"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -186,6 +187,7 @@ const DIRECT_ACCESS_AND_POST_ACCESS_DEFAULT_ENCODED: &str = indoc! {r#"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -321,6 +323,7 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -451,6 +454,7 @@ const BOUND_AND_GROUPED_RECEIVERS_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -552,6 +556,7 @@ const DICT_CONTEXT_HELPER_ENCODED: &str = indoc! {r#"
       "x-helm-schema-generated": true,
       "x-helm-schema-policy": {
         "annotation-format-version": 1,
+        "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
         "authoring": {
           "declared-types": "annotate",
           "root": "closed"
@@ -691,6 +696,7 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -826,6 +832,7 @@ const COALESCE_AND_DEFAULT_DICT_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -966,6 +973,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1072,6 +1080,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1178,6 +1187,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1284,6 +1294,7 @@ const WITH_IF_AND_NONEMPTY_GUARDS_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1437,6 +1448,7 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1585,6 +1597,7 @@ const INDEPENDENT_GATE_ENCODED: &str = indoc! {r##"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1687,6 +1700,7 @@ const LITERAL_TPL_AND_HELPER_EQUIVALENCE_ENCODED: &str = indoc! {r#"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1784,6 +1798,7 @@ const LITERAL_TPL_AND_HELPER_EQUIVALENCE_ENCODED: &str = indoc! {r#"
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
           "annotation-format-version": 1,
+          "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
           "authoring": {
             "declared-types": "annotate",
             "root": "closed"
@@ -1885,6 +1900,7 @@ const ARGO_CD_API_VERSION_OVERRIDES_MONITORING_ENCODED: &str = indoc! {r#"
       "x-helm-schema-generated": true,
       "x-helm-schema-policy": {
         "annotation-format-version": 1,
+        "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
         "authoring": {
           "declared-types": "annotate",
           "root": "closed"
@@ -1945,6 +1961,7 @@ const HAS_KEY_PROTECTS_ABSENCE_ONLY_ENCODED: &str = indoc! {r#"
   "x-helm-schema-generated": true,
   "x-helm-schema-policy": {
     "annotation-format-version": 1,
+    "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
     "authoring": {
       "declared-types": "annotate",
       "root": "closed"
@@ -2046,6 +2063,7 @@ const CILIUM_INDEX_IN_AND_ENCODED: &str = indoc! {r#"
   "x-helm-schema-generated": true,
   "x-helm-schema-policy": {
     "annotation-format-version": 1,
+    "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
     "authoring": {
       "declared-types": "annotate",
       "root": "closed"
@@ -2192,6 +2210,7 @@ const REDIS_AUTH_ACL_ENABLED_ENCODED: &str = indoc! {r#"
   "x-helm-schema-generated": true,
   "x-helm-schema-policy": {
     "annotation-format-version": 1,
+    "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
     "authoring": {
       "declared-types": "annotate",
       "root": "closed"
@@ -2338,6 +2357,7 @@ const MILVUS_NESTED_INCLUDE_ENCODED: &str = indoc! {r#"
   "x-helm-schema-generated": true,
   "x-helm-schema-policy": {
     "annotation-format-version": 1,
+    "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
     "authoring": {
       "declared-types": "annotate",
       "root": "closed"
@@ -2620,6 +2640,7 @@ fn direct_access_and_post_access_default() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -2685,6 +2706,7 @@ fn bound_and_grouped_receivers() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -2744,6 +2766,7 @@ fn dict_context_helper() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -2812,6 +2835,7 @@ fn coalesce_and_default_dict() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -2885,6 +2909,7 @@ fn with_if_and_nonempty_guards() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -2945,6 +2970,7 @@ fn independent_gate() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3034,6 +3060,7 @@ fn has_key_protects_absence_only() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3085,6 +3112,7 @@ fn index_requires_host_but_not_final_member() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3137,6 +3165,7 @@ fn map_range_member_hosts() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3206,6 +3235,7 @@ fn merge_preserves_unrelated_bound_member() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3259,6 +3289,7 @@ fn set_replacement_does_not_constrain_original() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3309,6 +3340,7 @@ fn literal_tpl_and_helper_equivalence() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3363,6 +3395,7 @@ fn literal_tpl_and_helper_equivalence() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3416,6 +3449,7 @@ fn redis_auth_acl_enabled() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3470,6 +3504,7 @@ fn argo_cd_api_version_overrides_monitoring() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3525,6 +3560,7 @@ fn cilium_index_in_and() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3579,6 +3615,7 @@ fn kps_range_member() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
@@ -3646,6 +3683,7 @@ fn milvus_nested_include() -> eyre::Result<()> {
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "assumptions": {"release-namespace": {"max-bytes": 63, "min-bytes": 1, "pattern": "^(?:[a-z0-9]([-a-z0-9]*[a-z0-9])?)$"}},
             "authoring": {
                 "declared-types": "annotate",
                 "root": "closed"
