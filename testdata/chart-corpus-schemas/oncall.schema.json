@@ -8582,25 +8582,25 @@
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@9"
-        },
-        {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@6"
         },
         {
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@5"
+        },
+        {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@9"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@2"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@8"
-        },
-        {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@5"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
@@ -8643,21 +8643,16 @@
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more/allOf/not/object+object@2": {
       "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1object"
-          }
-        },
-        {
           "additionalProperties": {
             "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
+              },
               {
                 "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
               }
             ]
           },
@@ -8665,6 +8660,11 @@
             "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1object"
+          }
         }
       ]
     },
@@ -8702,28 +8702,58 @@
       "type": "object"
     },
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
       "type": "string"
     },
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
       "type": "string"
     },
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more/string;pattern-x3a@2": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
     "constrains/alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@9"
+          "properties": {
+            "alertmanager": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1allOf~1not~1object+object"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "alertmanager"
+          ],
+          "type": "object"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@7"
         },
         {
           "properties": {
@@ -8753,40 +8783,10 @@
           "type": "object"
         },
         {
-          "properties": {
-            "alertmanager": {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "alertmanager"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@9"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@8"
-        },
-        {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name@5"
         },
         {
           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.create:t"
@@ -9305,19 +9305,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@6"
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@6"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
@@ -9367,25 +9370,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@5"
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@2"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object"
               }
             ]
           },
@@ -9423,37 +9423,27 @@
         {
           "additionalProperties": {
             "anyOf": [
+              false,
               {
                 "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
-              },
-              {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@4"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
           }
         }
       ]
@@ -9464,31 +9454,30 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@4"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@6"
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x20-x2d"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
@@ -9519,133 +9508,22 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x20-x2d@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@3"
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@5"
                         },
                         {
                           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
-                        }
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@2"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
-              },
-              {
-                "allOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@3"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@2"
-          }
-        }
-      ]
-    },
-    "constrains/alertmanager.serviceAccount.name/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
-              },
-              {
-                "allOf": [
-                  {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@2"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array"
                         }
                       ]
                     },
@@ -9672,22 +9550,22 @@
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@5"
                         },
                         {
                           "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
                         }
                       ]
                     },
@@ -9720,19 +9598,102 @@
         }
       ]
     },
-    "constrains/alertmanager.serviceAccount.name/allOf/not/object+object@5": {
+    "constrains/alertmanager.serviceAccount.name/allOf/not/object+object@4": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@3"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
+                    },
+                    "type": "object"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@2"
               },
               {
                 "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@2"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
               }
             ]
           },
@@ -9743,27 +9704,38 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@2"
           }
         }
       ]
     },
-    "constrains/alertmanager.serviceAccount.name/allOf/not/object+object@6": {
+    "constrains/alertmanager.serviceAccount.name/allOf/not/object+object@5": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
           }
         },
         {
           "additionalProperties": {
             "anyOf": [
-              false,
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
+              },
               {
                 "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
               },
               {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1array+not~1array@2"
+              },
+              {
                 "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object"
               }
             ]
           },
@@ -9778,17 +9750,45 @@
         }
       ]
     },
+    "constrains/alertmanager.serviceAccount.name/allOf/not/object+object@6": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "constrains/alertmanager.serviceAccount.name/array": {
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
@@ -9801,13 +9801,13 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
-          },
-          {
             "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
@@ -9833,16 +9833,16 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@4"
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
           }
         ]
       },
@@ -9877,13 +9877,13 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
-          },
-          {
             "$ref": "#/definitions/constrains~1alertmanager+alertmanager.serviceAccount+alertmanager.serviceAccount.create:t+2more~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1array"
           },
           {
             "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object"
@@ -9911,16 +9911,16 @@
       },
       "type": "object"
     },
+    "constrains/alertmanager.serviceAccount.name/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
     "constrains/alertmanager.serviceAccount.name/string;pattern-x20-x25": {
       "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/alertmanager.serviceAccount.name/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/alertmanager.serviceAccount.name/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/alertmanager.serviceAccount.name/string;pattern-x20-x5b": {
@@ -9928,7 +9928,7 @@
       "type": "string"
     },
     "constrains/alertmanager.serviceAccount.name/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/alertmanager.serviceAccount.name:t": {
@@ -9987,7 +9987,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2e"
+                  "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20"
                 }
               },
               "required": [
@@ -10041,7 +10041,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@3"
+                  "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@4"
                 }
               },
               "required": [
@@ -10095,7 +10095,7 @@
             "serviceAccount": {
               "properties": {
                 "name": {
-                  "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@4"
+                  "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@3"
                 }
               },
               "required": [
@@ -10274,7 +10274,7 @@
     "constrains/apiVersion@2": {
       "properties": {
         "apiVersion": {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20-x2e"
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1string;pattern-x20"
         }
       },
       "required": [
@@ -10296,7 +10296,7 @@
     "constrains/apiVersion@4": {
       "properties": {
         "apiVersion": {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@3"
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@4"
         }
       },
       "required": [
@@ -10329,7 +10329,7 @@
     "constrains/apiVersion@7": {
       "properties": {
         "apiVersion": {
-          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@4"
+          "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1allOf~1not~1object+object@3"
         }
       },
       "required": [
@@ -22081,16 +22081,13 @@
     "constrains/prometheus-node-exporter+prometheus-node-exporter.prometheus+4more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@7"
-        },
-        {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.enabled:t"
         },
         {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@4"
         },
         {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@3"
@@ -22099,10 +22096,13 @@
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@6"
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@2"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@4"
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@6"
         },
         {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@5"
@@ -22121,22 +22121,22 @@
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@2"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@4"
-        },
-        {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@6"
         },
         {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@3"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@7"
-        },
-        {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion:t"
         },
         {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@7"
         }
       ]
     },
@@ -22146,10 +22146,34 @@
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@5"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@2"
+          "properties": {
+            "prometheus-node-exporter": {
+              "properties": {
+                "prometheus": {
+                  "properties": {
+                    "monitor": {
+                      "$ref": "#/definitions/constrains~1apiVersion@5"
+                    }
+                  },
+                  "required": [
+                    "monitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "prometheus-node-exporter"
+          ],
+          "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@4"
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@2"
         },
         {
           "properties": {
@@ -22182,36 +22206,6 @@
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@3"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@7"
-        },
-        {
-          "properties": {
-            "prometheus-node-exporter": {
-              "properties": {
-                "prometheus": {
-                  "properties": {
-                    "monitor": {
-                      "$ref": "#/definitions/constrains~1apiVersion@5"
-                    }
-                  },
-                  "required": [
-                    "monitor"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "prometheus"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "prometheus-node-exporter"
-          ],
-          "type": "object"
-        },
-        {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion:t"
         },
         {
@@ -22228,17 +22222,17 @@
         },
         {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.monitor.apiVersion@7"
         }
       ]
     },
     "constrains/prometheus-node-exporter+prometheus-node-exporter.prometheus+4more@4": {
       "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@7"
-        },
         {
           "properties": {
             "prometheus-node-exporter": {
@@ -22285,6 +22279,9 @@
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion:t"
         },
         {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@4"
+        },
+        {
           "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@3"
         },
         {
@@ -22315,10 +22312,13 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@6"
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@2"
         },
         {
-          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@4"
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheus-node-exporter.prometheus.podMonitor.apiVersion@6"
         }
       ]
     },
@@ -22343,16 +22343,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name:t"
-            },
-            {
               "properties": {
                 "prometheus-node-exporter": {
                   "properties": {
                     "serviceAccount": {
                       "properties": {
                         "name": {
-                          "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                          "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
                           "type": "string"
                         }
                       },
@@ -22372,6 +22369,9 @@
                 "prometheus-node-exporter"
               ],
               "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name:t"
             }
           ]
         },
@@ -22382,61 +22382,6 @@
             },
             {
               "anyOf": [
-                {
-                  "properties": {
-                    "prometheus-node-exporter": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "name": {
-                              "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@2"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus-node-exporter"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "prometheus-node-exporter": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "name": {
-                              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus-node-exporter"
-                  ],
-                  "type": "object"
-                },
                 {
                   "properties": {
                     "prometheus-node-exporter": {
@@ -22503,6 +22448,61 @@
                               "enum": [
                                 false
                               ]
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "$ref": "#/definitions/constrains~1alertmanager.serviceAccount.name~1object@2"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+                              "type": "string"
                             }
                           },
                           "required": [

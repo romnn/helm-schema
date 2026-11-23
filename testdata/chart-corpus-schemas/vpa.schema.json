@@ -5390,7 +5390,7 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+            "$ref": "#/definitions/constrains~1serviceAccount.name@3"
           }
         },
         {
@@ -5457,7 +5457,7 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+            "$ref": "#/definitions/constrains~1serviceAccount.name@2"
           }
         },
         {
@@ -5467,7 +5467,7 @@
           "$ref": "#/definitions/constrains~1group-101"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.name@11"
@@ -5491,7 +5491,7 @@
           "$ref": "#/definitions/constrains~1group-101"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
         },
         {
           "$ref": "#/definitions/constrains~1group-9"
@@ -5502,7 +5502,7 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+            "$ref": "#/definitions/constrains~1serviceAccount.name@5"
           }
         },
         {
@@ -7005,7 +7005,7 @@
           "$ref": "#/definitions/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
         },
         {
           "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -7050,7 +7050,7 @@
           "$ref": "#/definitions/constrains~1updater.enabled:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
         },
         {
           "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -7082,10 +7082,10 @@
     "constrains/group-106": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
         }
       ]
     },
@@ -7401,7 +7401,7 @@
           "$ref": "#/definitions/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
         },
         {
           "$ref": "#/definitions/constrains~1group-106"
@@ -11289,9 +11289,6 @@
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@5"
-        },
-        {
           "properties": {
             "serviceAccount": {
               "properties": {
@@ -11309,25 +11306,28 @@
             "serviceAccount"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@5"
         }
       ]
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken+5more": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@6"
+        },
+        {
           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@4"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@3"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@6"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@3"
@@ -11389,21 +11389,16 @@
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken/allOf/not/object+object@2": {
       "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1object"
-          }
-        },
-        {
           "additionalProperties": {
             "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
+              },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
               }
             ]
           },
@@ -11411,6 +11406,11 @@
             "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1object"
+          }
         }
       ]
     },
@@ -11448,19 +11448,19 @@
       "type": "object"
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
       "type": "string"
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
       "type": "string"
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken/string;pattern-x3a@2": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken@2": {
@@ -11518,19 +11518,19 @@
     "constrains/serviceAccount+serviceAccount.automountServiceAccountToken@4": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@6"
+        },
+        {
           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@4"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@3"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken@6"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken@3"
@@ -11607,10 +11607,10 @@
     "constrains/serviceAccount+serviceAccount.name": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@8"
         }
       ]
     },
@@ -11630,7 +11630,7 @@
                   "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
                 }
               ]
             }
@@ -11678,20 +11678,13 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@6"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
                 },
                 {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@7"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
-                    }
-                  ]
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
                 }
               ]
             }
@@ -11705,13 +11698,20 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@3"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                    }
+                  ]
                 }
               ]
             }
@@ -11855,19 +11855,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@6"
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@6"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
@@ -11917,25 +11920,22 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@5"
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@2"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@4"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object"
               }
             ]
           },
@@ -11973,37 +11973,27 @@
         {
           "additionalProperties": {
             "anyOf": [
+              false,
               {
                 "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
-              },
-              {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@4"
               }
             ]
           },
           "propertyNames": {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
+              }
+            ]
           },
           "type": "object"
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
           }
         }
       ]
@@ -12014,31 +12004,30 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@4"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@6"
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
               }
             ]
           },
           "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
           },
           "type": "object"
         },
@@ -12069,133 +12058,22 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@3"
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@5"
                         },
                         {
                           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
-                        }
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@2"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
-              },
-              {
-                "allOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@3"
-          }
-        }
-      ]
-    },
-    "constrains/serviceAccount.automountServiceAccountToken/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
-              },
-              {
-                "allOf": [
-                  {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@2"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array"
                         }
                       ]
                     },
@@ -12222,22 +12100,22 @@
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@5"
                         },
                         {
                           "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@3"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
                         }
                       ]
                     },
@@ -12270,19 +12148,102 @@
         }
       ]
     },
-    "constrains/serviceAccount.automountServiceAccountToken/allOf/not/object+object@5": {
+    "constrains/serviceAccount.automountServiceAccountToken/allOf/not/object+object@4": {
       "allOf": [
         {
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
+                    },
+                    "type": "object"
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@2"
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@2"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
               }
             ]
           },
@@ -12293,27 +12254,38 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@3"
           }
         }
       ]
     },
-    "constrains/serviceAccount.automountServiceAccountToken/allOf/not/object+object@6": {
+    "constrains/serviceAccount.automountServiceAccountToken/allOf/not/object+object@5": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
           }
         },
         {
           "additionalProperties": {
             "anyOf": [
-              false,
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
+              },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
               },
               {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1array+not~1array@2"
+              },
+              {
                 "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object"
               }
             ]
           },
@@ -12328,17 +12300,45 @@
         }
       ]
     },
+    "constrains/serviceAccount.automountServiceAccountToken/allOf/not/object+object@6": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "constrains/serviceAccount.automountServiceAccountToken/array": {
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
@@ -12351,13 +12351,13 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
-          },
-          {
             "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
@@ -12383,13 +12383,13 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
-          },
-          {
             "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@2"
@@ -12405,16 +12405,16 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.automountServiceAccountToken~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@4"
+            "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x3a-x2d"
           }
         ]
       },
@@ -12461,16 +12461,16 @@
       },
       "type": "object"
     },
+    "constrains/serviceAccount.automountServiceAccountToken/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
     "constrains/serviceAccount.automountServiceAccountToken/string;pattern-x20-x25": {
       "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/serviceAccount.automountServiceAccountToken/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.automountServiceAccountToken/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/serviceAccount.automountServiceAccountToken/string;pattern-x20-x5b": {
@@ -12478,7 +12478,7 @@
       "type": "string"
     },
     "constrains/serviceAccount.automountServiceAccountToken/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/serviceAccount.automountServiceAccountToken=false": {
@@ -12549,7 +12549,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+              "pattern": "^(?:(?:[\\x20])*)$",
               "type": "string"
             }
           },
@@ -12645,7 +12645,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@3"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@4"
             }
           },
           "required": [
@@ -12664,7 +12664,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x25"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20"
             }
           },
           "required": [
@@ -12683,7 +12683,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2e"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x25"
             }
           },
           "required": [
@@ -12721,7 +12721,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@4"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@3"
             }
           },
           "required": [
@@ -12759,7 +12759,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "pattern": "^(?:(?:[\\x20])*)$",
+              "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
               "type": "string"
             }
           },
@@ -12779,7 +12779,7 @@
         "serviceAccount": {
           "properties": {
             "automountServiceAccountToken": {
-              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+              "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
               "type": "string"
             }
           },
@@ -12936,7 +12936,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x2e"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x5b"
             }
           },
           "required": [
@@ -12955,7 +12955,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20-x5b"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1string;pattern-x20"
             }
           },
           "required": [
@@ -12974,7 +12974,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@3"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@4"
             }
           },
           "required": [
@@ -13012,7 +13012,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@4"
+              "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1allOf~1not~1object+object@3"
             }
           },
           "required": [

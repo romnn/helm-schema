@@ -1784,16 +1784,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name:t"
-            },
-            {
               "properties": {
                 "prometheus-node-exporter": {
                   "properties": {
                     "serviceAccount": {
                       "properties": {
                         "name": {
-                          "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                          "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
                           "type": "string"
                         }
                       },
@@ -1813,6 +1810,9 @@
                 "prometheus-node-exporter"
               ],
               "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1prometheus-node-exporter.serviceAccount.name:t"
             }
           ]
         },
@@ -1948,87 +1948,6 @@
             {
               "anyOf": [
                 {
-                  "properties": {
-                    "prometheus-node-exporter": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "name": {
-                              "additionalProperties": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": {
-                                      "anyOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
-                                        }
-                                      ]
-                                    },
-                                    "propertyNames": {
-                                      "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
-                                    },
-                                    "type": "object"
-                                  },
-                                  {
-                                    "items": {
-                                      "anyOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d@2"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
-                                        }
-                                      ]
-                                    },
-                                    "type": "array"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
-                                  }
-                                ]
-                              },
-                              "propertyNames": {
-                                "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
-                              },
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus-node-exporter"
-                  ],
-                  "type": "object"
-                },
-                {
                   "allOf": [
                     {
                       "anyOf": [
@@ -2078,7 +1997,7 @@
                                         "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
                                       },
                                       {
-                                        "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+                                        "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
                                         "type": "string"
                                       }
                                     ]
@@ -2107,34 +2026,6 @@
                       "type": "object"
                     }
                   ]
-                },
-                {
-                  "properties": {
-                    "prometheus-node-exporter": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "name": {
-                              "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "name"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus-node-exporter"
-                  ],
-                  "type": "object"
                 },
                 {
                   "properties": {
@@ -2220,6 +2111,115 @@
                     "prometheus-node-exporter"
                   ],
                   "type": "object"
+                },
+                {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "additionalProperties": {
+                                "anyOf": [
+                                  {
+                                    "additionalProperties": {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
+                                        }
+                                      ]
+                                    },
+                                    "propertyNames": {
+                                      "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
+                                    },
+                                    "type": "object"
+                                  },
+                                  {
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object"
+                                        }
+                                      ]
+                                    },
+                                    "type": "array"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
+                                  }
+                                ]
+                              },
+                              "propertyNames": {
+                                "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d"
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "name": {
+                              "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
                 }
               ]
             },
@@ -2234,13 +2234,13 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object@2"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array@2"
           },
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object@2"
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x20-x2d@2"
@@ -2266,16 +2266,16 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object@2"
           },
           {
             "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1array@2"
           },
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1object@2"
+            "$ref": "#/definitions/constrains~1prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more~1string;pattern-x3a-x2d"
           }
         ]
       },
@@ -2301,15 +2301,15 @@
       "type": "object"
     },
     "constrains/prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
       "type": "string"
     },
     "constrains/prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/prometheus-node-exporter+prometheus-node-exporter.serviceAccount+5more/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null": {

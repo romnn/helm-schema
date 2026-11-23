@@ -8907,9 +8907,6 @@
     "constrains/community-operator+community-operator.database+1more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1community-operator.database+community-operator.database.namespace"
-        },
-        {
           "properties": {
             "community-operator": {
               "properties": {
@@ -8935,6 +8932,9 @@
             "community-operator"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1community-operator.database+community-operator.database.namespace"
         }
       ]
     },
@@ -8992,17 +8992,20 @@
       "type": "object"
     },
     "constrains/community-operator+community-operator.database+1more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+1more/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+5more": {
       "anyOf": [
         {
           "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1community-operator.database.namespace:t"
+            },
             {
               "properties": {
                 "community-operator": {
@@ -9021,9 +9024,6 @@
                 "community-operator"
               ],
               "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1community-operator.database.namespace:t"
             }
           ]
         },
@@ -9096,7 +9096,7 @@
                     "community-operator": {
                       "properties": {
                         "database": {
-                          "$ref": "#/definitions/constrains~1namespace=true"
+                          "$ref": "#/definitions/constrains~1namespace"
                         }
                       },
                       "required": [
@@ -9115,7 +9115,7 @@
                     "community-operator": {
                       "properties": {
                         "database": {
-                          "$ref": "#/definitions/constrains~1namespace"
+                          "$ref": "#/definitions/constrains~1namespace=true"
                         }
                       },
                       "required": [
@@ -9333,25 +9333,6 @@
             "community-operator": {
               "properties": {
                 "database": {
-                  "$ref": "#/definitions/constrains~1name@7"
-                }
-              },
-              "required": [
-                "database"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "database": {
                   "$ref": "#/definitions/constrains~1name=true"
                 }
               },
@@ -9371,7 +9352,7 @@
             "community-operator": {
               "properties": {
                 "database": {
-                  "$ref": "#/definitions/constrains~1name@6"
+                  "$ref": "#/definitions/constrains~1name@5"
                 }
               },
               "required": [
@@ -9410,6 +9391,25 @@
               "properties": {
                 "database": {
                   "$ref": "#/definitions/constrains~1name=false"
+                }
+              },
+              "required": [
+                "database"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "database": {
+                  "$ref": "#/definitions/constrains~1name@6"
                 }
               },
               "required": [
@@ -9520,6 +9520,9 @@
           "$ref": "#/definitions/constrains~1community-operator.database.name@2"
         },
         {
+          "$ref": "#/definitions/constrains~1community-operator.database.name@8"
+        },
+        {
           "$ref": "#/definitions/constrains~1community-operator.database.name@3"
         },
         {
@@ -9560,7 +9563,7 @@
                                 "database": {
                                   "properties": {
                                     "namespace": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x25"
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@3"
                                     }
                                   },
                                   "required": [
@@ -9581,10 +9584,65 @@
                           "type": "object"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator.database.namespace@4"
+                          "properties": {
+                            "community-operator": {
+                              "properties": {
+                                "database": {
+                                  "properties": {
+                                    "namespace": {
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20"
+                                    }
+                                  },
+                                  "required": [
+                                    "namespace"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "database"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "community-operator"
+                          ],
+                          "type": "object"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more"
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1community-operator.database+community-operator.database.namespace"
+                            },
+                            {
+                              "properties": {
+                                "community-operator": {
+                                  "properties": {
+                                    "database": {
+                                      "properties": {
+                                        "namespace": {
+                                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@2"
+                                        }
+                                      },
+                                      "required": [
+                                        "namespace"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "database"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "community-operator"
+                              ],
+                              "type": "object"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -9648,7 +9706,7 @@
                                 "database": {
                                   "properties": {
                                     "namespace": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2e"
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x25"
                                     }
                                   },
                                   "required": [
@@ -9669,65 +9727,10 @@
                           "type": "object"
                         },
                         {
-                          "properties": {
-                            "community-operator": {
-                              "properties": {
-                                "database": {
-                                  "properties": {
-                                    "namespace": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@2"
-                                    }
-                                  },
-                                  "required": [
-                                    "namespace"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "database"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "community-operator"
-                          ],
-                          "type": "object"
+                          "$ref": "#/definitions/constrains~1community-operator.database.namespace@4"
                         },
                         {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1community-operator.database+community-operator.database.namespace"
-                            },
-                            {
-                              "properties": {
-                                "community-operator": {
-                                  "properties": {
-                                    "database": {
-                                      "properties": {
-                                        "namespace": {
-                                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@4"
-                                        }
-                                      },
-                                      "required": [
-                                        "namespace"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "database"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "community-operator"
-                              ],
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more"
                         }
                       ]
                     }
@@ -9751,6 +9754,9 @@
                   "$ref": "#/definitions/constrains~1community-operator.database.name@2"
                 },
                 {
+                  "$ref": "#/definitions/constrains~1community-operator.database.name@8"
+                },
+                {
                   "$ref": "#/definitions/constrains~1community-operator.database.name@3"
                 },
                 {
@@ -9761,9 +9767,6 @@
                 },
                 {
                   "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1community-operator.database.name@8"
                 }
               ]
             },
@@ -9818,46 +9821,43 @@
               "type": "object"
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1community-operator.database.name@8"
         }
       ]
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/allOf/array+not/array": {
       "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
-          }
-        },
-        {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@3"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d@2"
               },
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1array+not~1array@2"
               }
             ]
           },
           "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+          }
         }
       ]
     },
@@ -9892,25 +9892,25 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
               },
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
-              },
-              {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
               },
               {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+              },
+              {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
               }
             ]
           },
@@ -9921,7 +9921,7 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
           }
         }
       ]
@@ -9932,10 +9932,81 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1object"
+          }
+        }
+      ]
+    },
+    "constrains/community-operator+community-operator.database+community-operator.database.name+8more/allOf/not/object+object@3": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1anyOf~1string;pattern-x20-x2d"
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
@@ -9946,7 +10017,7 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object"
                         },
                         {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
@@ -9955,16 +10026,16 @@
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1array+not~1array"
                         },
                         {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
                         }
                       ]
                     },
@@ -9979,49 +10050,6 @@
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
-              },
-              {
-                "allOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1array+not~1array"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1anyOf~1string;pattern-x20-x2d"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
               }
             ]
           },
@@ -10037,52 +10065,24 @@
         }
       ]
     },
-    "constrains/community-operator+community-operator.database+community-operator.database.name+8more/allOf/not/object+object@3": {
+    "constrains/community-operator+community-operator.database+community-operator.database.name+8more/allOf/not/object+object@4": {
       "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+          }
+        },
         {
           "additionalProperties": {
             "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
+              },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
-          }
-        }
-      ]
-    },
-    "constrains/community-operator+community-operator.database+community-operator.database.name+8more/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1object"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a"
               }
             ]
           },
@@ -10107,16 +10107,16 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
-          },
-          {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
           },
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
           }
         ]
       },
@@ -10126,13 +10126,13 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
           },
           {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
@@ -10158,7 +10158,7 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
           },
           {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array"
@@ -10180,16 +10180,16 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+          },
+          {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
           },
           {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
-          },
-          {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
           }
         ]
       },
@@ -10205,13 +10205,13 @@
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
-          },
-          {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
           }
         ]
       },
@@ -10236,20 +10236,20 @@
       },
       "type": "object"
     },
+    "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x20-x25": {
       "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x20-x5b": {
@@ -10257,11 +10257,11 @@
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name+8more/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.database+community-operator.database.name@2": {
@@ -10332,26 +10332,13 @@
           "$ref": "#/definitions/constrains~1community-operator.namespace@3"
         },
         {
-          "properties": {
-            "community-operator": {
-              "$ref": "#/definitions/constrains~1namespace@4"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1community-operator.namespace=true"
         },
         {
-          "properties": {
-            "community-operator": {
-              "$ref": "#/definitions/constrains~1namespace@3"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1community-operator.namespace"
+        },
+        {
+          "$ref": "#/definitions/constrains~1community-operator.namespace=false"
         },
         {
           "properties": {
@@ -10365,16 +10352,29 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1community-operator.namespace=true"
-        },
-        {
-          "$ref": "#/definitions/constrains~1community-operator.namespace"
-        },
-        {
-          "$ref": "#/definitions/constrains~1community-operator.namespace=false"
+          "properties": {
+            "community-operator": {
+              "$ref": "#/definitions/constrains~1namespace@4"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
         },
         {
           "$ref": "#/definitions/constrains~1community-operator.namespace@5"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "$ref": "#/definitions/constrains~1namespace@3"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
         },
         {
           "$ref": "#/definitions/constrains~1community-operator.namespace+community-operator.namespace=null"
@@ -10932,7 +10932,7 @@
                         "operator": {
                           "properties": {
                             "watchNamespace": {
-                              "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+                              "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
                             }
                           },
                           "required": [
@@ -11009,6 +11009,33 @@
                         "operator": {
                           "properties": {
                             "watchNamespace": {
+                              "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
+                            }
+                          },
+                          "required": [
+                            "watchNamespace"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "operator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "community-operator"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "community-operator": {
+                      "properties": {
+                        "operator": {
+                          "properties": {
+                            "watchNamespace": {
                               "enum": [
                                 false
                               ]
@@ -11038,7 +11065,7 @@
                         "operator": {
                           "properties": {
                             "watchNamespace": {
-                              "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
+                              "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
                             }
                           },
                           "required": [
@@ -11147,33 +11174,6 @@
                       "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.watchNamespace"
                     }
                   ]
-                },
-                {
-                  "properties": {
-                    "community-operator": {
-                      "properties": {
-                        "operator": {
-                          "properties": {
-                            "watchNamespace": {
-                              "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
-                            }
-                          },
-                          "required": [
-                            "watchNamespace"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "operator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "community-operator"
-                  ],
-                  "type": "object"
                 }
               ]
             },
@@ -11185,13 +11185,16 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace:t"
+            },
+            {
               "properties": {
                 "community-operator": {
                   "properties": {
                     "operator": {
                       "properties": {
                         "watchNamespace": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
                         }
                       },
                       "required": [
@@ -11212,9 +11215,6 @@
               "type": "object"
             },
             {
-              "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace:t"
-            },
-            {
               "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace='*'"
             }
           ]
@@ -11222,19 +11222,22 @@
       ]
     },
     "constrains/community-operator+community-operator.operator+6more/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "type": "string"
+    },
+    "constrains/community-operator+community-operator.operator+6more/string;pattern-x20@2": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+      "type": "string"
+    },
+    "constrains/community-operator+community-operator.operator+6more/string;pattern-x20@3": {
       "pattern": "^(?:(?:[\\x20])*)$",
-      "type": "string"
-    },
-    "constrains/community-operator+community-operator.operator+6more/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/community-operator+community-operator.operator+6more/string;pattern-x20-x2e@2": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
       "type": "string"
     },
     "constrains/community-operator+community-operator.operator+community-operator.operator.name": {
       "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.name"
+        },
         {
           "properties": {
             "community-operator": {
@@ -11253,9 +11256,6 @@
             "community-operator"
           ],
           "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.name"
         }
       ]
     },
@@ -11289,25 +11289,6 @@
                   ]
                 }
               ]
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "operator": {
-                  "$ref": "#/definitions/constrains~1name@6"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
             }
           },
           "required": [
@@ -11361,7 +11342,7 @@
             "community-operator": {
               "properties": {
                 "operator": {
-                  "$ref": "#/definitions/constrains~1name"
+                  "$ref": "#/definitions/constrains~1name@5"
                 }
               },
               "required": [
@@ -11381,6 +11362,25 @@
               "properties": {
                 "operator": {
                   "$ref": "#/definitions/constrains~1name@15"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "operator": {
+                  "$ref": "#/definitions/constrains~1name@6"
                 }
               },
               "required": [
@@ -11444,7 +11444,7 @@
             "community-operator": {
               "properties": {
                 "operator": {
-                  "$ref": "#/definitions/constrains~1name=false"
+                  "$ref": "#/definitions/constrains~1name"
                 }
               },
               "required": [
@@ -11463,7 +11463,7 @@
             "community-operator": {
               "properties": {
                 "operator": {
-                  "$ref": "#/definitions/constrains~1name@7"
+                  "$ref": "#/definitions/constrains~1name=false"
                 }
               },
               "required": [
@@ -11545,6 +11545,9 @@
           "$ref": "#/definitions/constrains~1community-operator.operator.name@8"
         },
         {
+          "$ref": "#/definitions/constrains~1community-operator.operator.name@7"
+        },
+        {
           "$ref": "#/definitions/constrains~1community-operator.operator.name@4"
         },
         {
@@ -11561,6 +11564,9 @@
                   "$ref": "#/definitions/constrains~1community-operator.operator.name@8"
                 },
                 {
+                  "$ref": "#/definitions/constrains~1community-operator.operator.name@7"
+                },
+                {
                   "$ref": "#/definitions/constrains~1community-operator.operator.name@4"
                 },
                 {
@@ -11571,9 +11577,6 @@
                 },
                 {
                   "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+community-operator.operator.name"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1community-operator.operator.name@7"
                 },
                 {
                   "$ref": "#/definitions/constrains~1community-operator.operator.name@3"
@@ -11598,6 +11601,108 @@
             },
             {
               "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "community-operator": {
+                              "properties": {
+                                "operator": {
+                                  "properties": {
+                                    "watchNamespace": {
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20"
+                                    }
+                                  },
+                                  "required": [
+                                    "watchNamespace"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "community-operator"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "community-operator": {
+                              "properties": {
+                                "operator": {
+                                  "properties": {
+                                    "watchNamespace": {
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@3"
+                                    }
+                                  },
+                                  "required": [
+                                    "watchNamespace"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "operator"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "community-operator"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.watchNamespace"
+                            },
+                            {
+                              "properties": {
+                                "community-operator": {
+                                  "properties": {
+                                    "operator": {
+                                      "properties": {
+                                        "watchNamespace": {
+                                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@2"
+                                        }
+                                      },
+                                      "required": [
+                                        "watchNamespace"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "operator"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "community-operator"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace='*'"
+                    }
+                  ]
+                },
                 {
                   "allOf": [
                     {
@@ -11651,112 +11756,13 @@
                       "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace:t"
                     },
                     {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "community-operator": {
-                              "properties": {
-                                "operator": {
-                                  "properties": {
-                                    "watchNamespace": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@2"
-                                    }
-                                  },
-                                  "required": [
-                                    "watchNamespace"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "community-operator"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.watchNamespace"
-                            },
-                            {
-                              "properties": {
-                                "community-operator": {
-                                  "properties": {
-                                    "operator": {
-                                      "properties": {
-                                        "watchNamespace": {
-                                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@4"
-                                        }
-                                      },
-                                      "required": [
-                                        "watchNamespace"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "operator"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "community-operator"
-                              ],
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        {
-                          "properties": {
-                            "community-operator": {
-                              "properties": {
-                                "operator": {
-                                  "properties": {
-                                    "watchNamespace": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2e"
-                                    }
-                                  },
-                                  "required": [
-                                    "watchNamespace"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "operator"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "community-operator"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace='*'"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace:t"
-                    },
-                    {
                       "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace='*'"
                     },
                     {
                       "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace@3"
+                        },
                         {
                           "properties": {
                             "community-operator": {
@@ -11783,9 +11789,6 @@
                             "community-operator"
                           ],
                           "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator.operator.watchNamespace@3"
                         },
                         {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+1more"
@@ -11817,9 +11820,6 @@
               ]
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1community-operator.operator.name@7"
         },
         {
           "$ref": "#/definitions/constrains~1community-operator.operator.name@3"
@@ -11860,6 +11860,9 @@
     "constrains/community-operator+community-operator.operator+community-operator.operator.name@2": {
       "allOf": [
         {
+          "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.name"
+        },
+        {
           "properties": {
             "community-operator": {
               "properties": {
@@ -11877,9 +11880,6 @@
             "community-operator"
           ],
           "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1community-operator.operator+community-operator.operator.name"
         }
       ]
     },
@@ -11988,7 +11988,7 @@
                 "resource": {
                   "properties": {
                     "version": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
                     }
                   },
                   "required": [
@@ -12044,6 +12044,33 @@
                 "resource": {
                   "properties": {
                     "version": {
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
+                    }
+                  },
+                  "required": [
+                    "version"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "resource"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "resource": {
+                  "properties": {
+                    "version": {
                       "enum": [
                         true
                       ]
@@ -12073,7 +12100,7 @@
                 "resource": {
                   "properties": {
                     "version": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
                     }
                   },
                   "required": [
@@ -12172,34 +12199,7 @@
                 "resource": {
                   "properties": {
                     "version": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
-                    }
-                  },
-                  "required": [
-                    "version"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "resource"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "resource": {
-                  "properties": {
-                    "version": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
                     }
                   },
                   "required": [
@@ -12323,33 +12323,6 @@
                 "resource": {
                   "properties": {
                     "members": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
-                    }
-                  },
-                  "required": [
-                    "members"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "resource"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "resource": {
-                  "properties": {
-                    "members": {
                       "enum": [
                         true
                       ]
@@ -12379,7 +12352,34 @@
                 "resource": {
                   "properties": {
                     "members": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
+                    }
+                  },
+                  "required": [
+                    "members"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "resource"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "resource": {
+                  "properties": {
+                    "members": {
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
                     }
                   },
                   "required": [
@@ -12480,7 +12480,7 @@
                 "resource": {
                   "properties": {
                     "members": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
                     }
                   },
                   "required": [
@@ -12507,7 +12507,7 @@
                 "resource": {
                   "properties": {
                     "members": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
                     }
                   },
                   "required": [
@@ -12701,6 +12701,9 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1community-operator.resource+community-operator.resource.name"
+            },
+            {
               "properties": {
                 "community-operator": {
                   "properties": {
@@ -12718,9 +12721,6 @@
                 "community-operator"
               ],
               "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1community-operator.resource+community-operator.resource.name"
             }
           ]
         },
@@ -12747,7 +12747,26 @@
             "community-operator": {
               "properties": {
                 "resource": {
-                  "$ref": "#/definitions/constrains~1name"
+                  "$ref": "#/definitions/constrains~1name@5"
+                }
+              },
+              "required": [
+                "resource"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "resource": {
+                  "$ref": "#/definitions/constrains~1name@6"
                 }
               },
               "required": [
@@ -12785,26 +12804,7 @@
             "community-operator": {
               "properties": {
                 "resource": {
-                  "$ref": "#/definitions/constrains~1name@7"
-                }
-              },
-              "required": [
-                "resource"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "resource": {
-                  "$ref": "#/definitions/constrains~1name@6"
+                  "$ref": "#/definitions/constrains~1name"
                 }
               },
               "required": [
@@ -12961,41 +12961,6 @@
                     "tls": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "tls"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "resource"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "resource": {
-                  "properties": {
-                    "tls": {
-                      "properties": {
-                        "enabled": {
                           "enum": [
                             false
                           ]
@@ -13134,6 +13099,41 @@
         {
           "properties": {
             "community-operator": {
+              "properties": {
+                "resource": {
+                  "properties": {
+                    "tls": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "resource"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
               "allOf": [
                 {
                   "type": "object"
@@ -13193,7 +13193,7 @@
                     "tls": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
                         }
                       },
                       "required": [
@@ -13228,7 +13228,7 @@
                     "tls": {
                       "properties": {
                         "enabled": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
                         }
                       },
                       "required": [
@@ -13283,7 +13283,7 @@
                     "tls": {
                       "properties": {
                         "caCertificateSecretRef": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
                         }
                       },
                       "required": [
@@ -13347,6 +13347,41 @@
         {
           "allOf": [
             {
+              "properties": {
+                "community-operator": {
+                  "properties": {
+                    "resource": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "caCertificateSecretRef": {
+                              "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1object"
+                            }
+                          },
+                          "required": [
+                            "caCertificateSecretRef"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "resource"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "community-operator"
+              ],
+              "type": "object"
+            },
+            {
               "anyOf": [
                 {
                   "properties": {
@@ -13388,41 +13423,6 @@
                   "$ref": "#/definitions/constrains~1community-operator.resource.tls.caCertificateSecretRef"
                 }
               ]
-            },
-            {
-              "properties": {
-                "community-operator": {
-                  "properties": {
-                    "resource": {
-                      "properties": {
-                        "tls": {
-                          "properties": {
-                            "caCertificateSecretRef": {
-                              "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1object"
-                            }
-                          },
-                          "required": [
-                            "caCertificateSecretRef"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "resource"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "community-operator"
-              ],
-              "type": "object"
             }
           ]
         },
@@ -13475,41 +13475,6 @@
                           "enum": [
                             false
                           ]
-                        }
-                      },
-                      "required": [
-                        "caCertificateSecretRef"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "tls"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "resource"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "community-operator"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "community-operator": {
-              "properties": {
-                "resource": {
-                  "properties": {
-                    "tls": {
-                      "properties": {
-                        "caCertificateSecretRef": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
                         }
                       },
                       "required": [
@@ -13632,7 +13597,7 @@
                     "tls": {
                       "properties": {
                         "caCertificateSecretRef": {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
                         }
                       },
                       "required": [
@@ -13695,6 +13660,41 @@
             "community-operator"
           ],
           "type": "object"
+        },
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "resource": {
+                  "properties": {
+                    "tls": {
+                      "properties": {
+                        "caCertificateSecretRef": {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
+                        }
+                      },
+                      "required": [
+                        "caCertificateSecretRef"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "resource"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -13718,7 +13718,7 @@
                             "certManager": {
                               "properties": {
                                 "certDuration": {
-                                  "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+                                  "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
                                 }
                               },
                               "required": [
@@ -13956,49 +13956,6 @@
                                 "certManager": {
                                   "properties": {
                                     "certDuration": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
-                                    }
-                                  },
-                                  "required": [
-                                    "certDuration"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "certManager"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "resource"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "community-operator"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "community-operator": {
-                      "properties": {
-                        "resource": {
-                          "properties": {
-                            "tls": {
-                              "properties": {
-                                "certManager": {
-                                  "properties": {
-                                    "certDuration": {
                                       "type": "number"
                                     }
                                   },
@@ -14045,6 +14002,49 @@
                                       "enum": [
                                         false
                                       ]
+                                    }
+                                  },
+                                  "required": [
+                                    "certDuration"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "certManager"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "resource"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "community-operator"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "community-operator": {
+                      "properties": {
+                        "resource": {
+                          "properties": {
+                            "tls": {
+                              "properties": {
+                                "certManager": {
+                                  "properties": {
+                                    "certDuration": {
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
                                     }
                                   },
                                   "required": [
@@ -14162,7 +14162,7 @@
                                 "certManager": {
                                   "properties": {
                                     "certDuration": {
-                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+                                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
                                     }
                                   },
                                   "required": [
@@ -14467,7 +14467,7 @@
         "community-operator": {
           "properties": {
             "database": {
-              "$ref": "#/definitions/constrains~1name@5"
+              "$ref": "#/definitions/constrains~1name@7"
             }
           },
           "required": [
@@ -14611,40 +14611,6 @@
     "constrains/community-operator.database.namespace/allOf/array+not/array": {
       "allOf": [
         {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
-          }
-        }
-      ]
-    },
-    "constrains/community-operator.database.namespace/allOf/array+not/array@2": {
-      "allOf": [
-        {
           "not": {
             "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
           }
@@ -14665,28 +14631,51 @@
         }
       ]
     },
-    "constrains/community-operator.database.namespace/allOf/not/object+object": {
+    "constrains/community-operator.database.namespace/allOf/array+not/array@2": {
       "allOf": [
         {
-          "additionalProperties": {
+          "not": {
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+          }
+        },
+        {
+          "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
               },
               {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/community-operator.database.namespace/allOf/not/object+object": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              false,
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+              },
+              {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
               }
             ]
           },
@@ -14701,7 +14690,7 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
           }
         }
       ]
@@ -14712,7 +14701,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
               },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array"
@@ -14726,22 +14715,22 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object@3"
                         },
                         {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
                         }
                       ]
                     },
@@ -14761,29 +14750,29 @@
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
                     }
                   },
                   {
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object@3"
                         },
                         {
                           "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@3"
+                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
                         }
                       ]
                     },
@@ -14820,18 +14809,29 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+            "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@2"
           }
         },
         {
           "additionalProperties": {
             "anyOf": [
-              false,
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1array@3"
+              },
               {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+1more~1null,boolean,number"
               },
               {
+                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1array+not~1array"
+              },
+              {
                 "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1community-operator.database.namespace~1allOf~1not~1object+object"
               }
             ]
           },
@@ -15123,7 +15123,7 @@
         "community-operator": {
           "properties": {
             "operator": {
-              "$ref": "#/definitions/constrains~1name@5"
+              "$ref": "#/definitions/constrains~1name@7"
             }
           },
           "required": [
@@ -16320,7 +16320,7 @@
                 "tls": {
                   "properties": {
                     "certificateKeySecretRef": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
                     }
                   },
                   "required": [
@@ -16355,7 +16355,7 @@
                 "tls": {
                   "properties": {
                     "certificateKeySecretRef": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
                     }
                   },
                   "required": [
@@ -16390,7 +16390,7 @@
                 "tls": {
                   "properties": {
                     "certificateKeySecretRef": {
-                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+                      "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
                     }
                   },
                   "required": [
@@ -18481,7 +18481,7 @@
             "input": {
               "properties": {
                 "tcp": {
-                  "$ref": "#/definitions/constrains~1service.name@4"
+                  "$ref": "#/definitions/constrains~1service.name@5"
                 }
               },
               "required": [
@@ -18508,7 +18508,7 @@
             "input": {
               "properties": {
                 "tcp": {
-                  "$ref": "#/definitions/constrains~1service.name@5"
+                  "$ref": "#/definitions/constrains~1service.name@4"
                 }
               },
               "required": [
@@ -19083,7 +19083,7 @@
             "input": {
               "properties": {
                 "udp": {
-                  "$ref": "#/definitions/constrains~1service.name@4"
+                  "$ref": "#/definitions/constrains~1service.name@5"
                 }
               },
               "required": [
@@ -19110,7 +19110,7 @@
             "input": {
               "properties": {
                 "udp": {
-                  "$ref": "#/definitions/constrains~1service.name@5"
+                  "$ref": "#/definitions/constrains~1service.name@4"
                 }
               },
               "required": [
@@ -22044,7 +22044,7 @@
     "constrains/name@11": {
       "properties": {
         "name": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
         }
       },
       "required": [
@@ -22055,7 +22055,7 @@
     "constrains/name@12": {
       "properties": {
         "name": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@2"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@3"
         }
       },
       "required": [
@@ -22131,7 +22131,7 @@
     "constrains/name@2": {
       "properties": {
         "name": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@4"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1allOf~1not~1object+object@2"
         }
       },
       "required": [
@@ -22164,7 +22164,7 @@
     "constrains/name@5": {
       "properties": {
         "name": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20-x2e"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
         }
       },
       "required": [
@@ -22175,7 +22175,7 @@
     "constrains/name@6": {
       "properties": {
         "name": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
         }
       },
       "required": [
@@ -22186,7 +22186,7 @@
     "constrains/name@7": {
       "properties": {
         "name": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.database+community-operator.database.name+8more~1string;pattern-x20"
         }
       },
       "required": [
@@ -22342,7 +22342,7 @@
     "constrains/namespace@3": {
       "properties": {
         "namespace": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e@2"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@2"
         }
       },
       "required": [
@@ -22353,7 +22353,7 @@
     "constrains/namespace@4": {
       "properties": {
         "namespace": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20-x2e"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
         }
       },
       "required": [
@@ -22364,7 +22364,7 @@
     "constrains/namespace@5": {
       "properties": {
         "namespace": {
-          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20"
+          "$ref": "#/definitions/constrains~1community-operator+community-operator.operator+6more~1string;pattern-x20@3"
         }
       },
       "required": [
@@ -23930,7 +23930,7 @@
     "constrains/service.name@3": {
       "properties": {
         "service": {
-          "$ref": "#/definitions/constrains~1name@5"
+          "$ref": "#/definitions/constrains~1name@7"
         }
       },
       "required": [
@@ -24129,19 +24129,19 @@
           "$ref": "#/definitions/constrains~1serviceAccount.name"
         },
         {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+        },
+        {
           "$ref": "#/definitions/constrains~1serviceAccount.name@5"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.name@4"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.name:t"
@@ -24153,6 +24153,15 @@
     },
     "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t@2": {
       "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+        },
         {
           "properties": {
             "serviceAccount": {
@@ -24168,9 +24177,6 @@
           "$ref": "#/definitions/constrains~1serviceAccount.name@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-        },
-        {
           "properties": {
             "serviceAccount": {
               "$ref": "#/definitions/constrains~1name@3"
@@ -24180,12 +24186,6 @@
             "serviceAccount"
           ],
           "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.name:t"
@@ -24273,7 +24273,7 @@
     "constrains/serviceAccount.name@2": {
       "properties": {
         "serviceAccount": {
-          "$ref": "#/definitions/constrains~1name@5"
+          "$ref": "#/definitions/constrains~1name@7"
         }
       },
       "required": [

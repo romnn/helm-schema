@@ -169,6 +169,55 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1esMajorVersion:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "imageTag": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/constrains~1extraInitContainers:t+extraVolumes:t"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1esJvmOptions:t"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esJvmOptions": {
+            "description": "processors.options: |\n-XX:ActiveProcessorCount=3",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -598,6 +647,81 @@
             ]
           },
           {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                      }
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "else": {
               "else": {
                 "else": {
@@ -761,81 +885,6 @@
             }
           },
           {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=true+10more"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=true+10more"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
             "not": {
               "properties": {
                 "tests": {}
@@ -849,55 +898,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1esMajorVersion:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "imageTag": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "$ref": "#/definitions/constrains~1extraInitContainers:t+extraVolumes:t"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1esJvmOptions:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esJvmOptions": {
-            "description": "processors.options: |\n-XX:ActiveProcessorCount=3",
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
     },
     {
       "if": {
@@ -1235,17 +1235,7 @@
                                 "type": "object"
                               },
                               {
-                                "properties": {
-                                  "fullnameOverride": {
-                                    "enum": [
-                                      null
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "fullnameOverride"
-                                ],
-                                "type": "object"
+                                "$ref": "#/definitions/constrains~1fullnameOverride=null"
                               },
                               {
                                 "allOf": [
@@ -1266,15 +1256,7 @@
                                 ]
                               },
                               {
-                                "properties": {
-                                  "fullnameOverride": {
-                                    "type": "null"
-                                  }
-                                },
-                                "required": [
-                                  "fullnameOverride"
-                                ],
-                                "type": "object"
+                                "$ref": "#/definitions/constrains~1fullnameOverride@3"
                               },
                               {
                                 "$ref": "#/definitions/constrains~1fullnameOverride=true"
@@ -1283,7 +1265,7 @@
                                 "$ref": "#/definitions/constrains~1fullnameOverride=false"
                               },
                               {
-                                "$ref": "#/definitions/constrains~1fullnameOverride@3"
+                                "$ref": "#/definitions/constrains~1fullnameOverride@4"
                               },
                               {
                                 "properties": {
@@ -1385,7 +1367,7 @@
                                     "$ref": "#/definitions/constrains~1nameOverride:t@2"
                                   },
                                   {
-                                    "$ref": "#/definitions/constrains~1nodeGroup@7"
+                                    "$ref": "#/definitions/constrains~1nodeGroup@9"
                                   }
                                 ]
                               },
@@ -1398,7 +1380,7 @@
                                     "$ref": "#/definitions/constrains~1nameOverride:t"
                                   },
                                   {
-                                    "$ref": "#/definitions/constrains~1nodeGroup@7"
+                                    "$ref": "#/definitions/constrains~1nodeGroup@9"
                                   }
                                 ]
                               }
@@ -2138,6 +2120,9 @@
     "constrains/clusterName": {
       "allOf": [
         {
+          "$ref": "#/definitions/constrains~1clusterName@2"
+        },
+        {
           "properties": {
             "clusterName": {
               "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object"
@@ -2147,24 +2132,13 @@
             "clusterName"
           ],
           "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1clusterName@2"
         }
       ]
     },
     "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true": {
       "anyOf": [
         {
-          "properties": {
-            "clusterName": {
-              "type": "null"
-            }
-          },
-          "required": [
-            "clusterName"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1clusterName@5"
         },
         {
           "properties": {
@@ -2181,7 +2155,7 @@
           "$ref": "#/definitions/constrains~1clusterName@3"
         },
         {
-          "$ref": "#/definitions/constrains~1clusterName@5"
+          "$ref": "#/definitions/constrains~1clusterName@6"
         },
         {
           "allOf": [
@@ -2227,20 +2201,1120 @@
           "type": "object"
         },
         {
-          "properties": {
-            "clusterName": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "clusterName"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1clusterName=null"
         },
         {
           "$ref": "#/definitions/constrains~1clusterName=true"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag+imageTag=false+imageTag=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1imagePullPolicy"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@3"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "nameOverride": {
+                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@2"
+                                }
+                              },
+                              "required": [
+                                "nameOverride"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@4"
+                        },
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x25"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@4"
+                        },
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b@2"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@22"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@11"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@22"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@18"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@6"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@20"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@11"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@20"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@18"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@6"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "clusterName": {
+                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@2"
+                                }
+                              },
+                              "required": [
+                                "clusterName"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1clusterName@2"
+                            }
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@3"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x25"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName"
+                        },
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b@2"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@18"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@7"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@17"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@7"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@10"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@17"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@16"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@12"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@18"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@6"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@16"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@12"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@11"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1array"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1array"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/allOf/array+not/array": {
+      "allOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1object@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1array@2"
+          }
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/allOf/array+not/array@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1array@3"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/allOf/not/object+object": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1object@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1array+not~1array@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1object@3"
+          }
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/allOf/not/object+object@2": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1object@4"
+          }
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/allOf/not/object+object@3": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1clusterName~1object@2"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x3a"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1string;pattern-x20-x2d"
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1object@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1array"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "allOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1array+not~1array"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1clusterName~1array"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1object"
+          }
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/allOf/not/object+object@4": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1object@5"
+          }
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x3a"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1string;pattern-x20-x2d"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/anyOf/string;pattern-x20-x2d": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/array": {
+      "items": {
+        "pattern": "^[A-Za-z0-9_./+-]*$",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/string;pattern-x20-x25": {
+      "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/string;pattern-x20-x2d": {
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/string;pattern-x20-x5b": {
+      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*)$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/string;pattern-x20-x5b@2": {
+      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+19more/string;pattern-x3a": {
+      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "type": "string"
+    },
+    "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "properties": {
+                "nodeGroup": {
+                  "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "nodeGroup"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@8"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@18"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@5"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@24"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@19"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@8"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@13"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@24"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@19"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "nodeGroup": {
+                  "pattern": "^(?:(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "nodeGroup"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "nodeGroup": {
+                  "pattern": "^(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "nodeGroup"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@8"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@18"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@5"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@21"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=false"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@8"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@13"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@21"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=false"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@23"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@5"
+                },
+                {
+                  "properties": {
+                    "nodeGroup": {
+                      "pattern": "^(?:)$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "nodeGroup"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup=null"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@18"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@13"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup@4"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -2576,770 +3650,6 @@
       "pattern": "^(?:(?:(?:(?:[\\x09\\x20-\\x21\\x23-\\x3b\\x3d-\\x5b\\x5d-\\x7e]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])|(?:[\\x5c]|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])(?:[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x5c])*(?:(?:[\\x09\\x20\\x22\\x27\\x30\\x4c\\x4e\\x50\\x5c\\x5f\\x61-\\x62\\x65-\\x66\\x6e\\x72\\x74\\x76]|(?:(?:[\\x78]|(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x44\\x64][\\x30-\\x37])|(?:(?:[\\x75]|[\\x55][\\x30][\\x30][\\x30][\\x30])[\\x30-\\x39\\x41-\\x43\\x45-\\x46\\x61-\\x63\\x65-\\x66]|(?:[\\x55][\\x30][\\x30][\\x31][\\x30]|[\\x55][\\x30][\\x30][\\x30][\\x31-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66])[\\x30-\\x39\\x41-\\x46\\x61-\\x66][\\x30-\\x39\\x41-\\x46\\x61-\\x66])|[\\x0a\\x85 - ](?:[\\x09-\\x0a\\x20\\x85 - ])*[\\x21\\x23-\\x2c\\x2f-\\x3b\\x3d-\\x5b\\x5d-\\x7e])))*)$",
       "type": "string"
     },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag+imageTag=false+imageTag=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1imagePullPolicy"
-            },
-            {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag"
-            },
-            {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@4"
-                        },
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x25"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1array"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x5b"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x5b"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1array"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2e"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1clusterName@2"
-                            },
-                            {
-                              "properties": {
-                                "clusterName": {
-                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@4"
-                                }
-                              },
-                              "required": [
-                                "clusterName"
-                              ],
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@2"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName"
-                        },
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x5b@2"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x5b@2"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2e"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@2"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "nameOverride": {
-                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@4"
-                                }
-                              },
-                              "required": [
-                                "nameOverride"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x25"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "nodeGroup": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@4"
-                            }
-                          },
-                          "required": [
-                            "nodeGroup"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@10"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@8"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@2"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@10"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@8"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@13"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@3"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@11"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@13"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@5"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@11"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@2"
-                        },
-                        {
-                          "properties": {
-                            "nodeGroup": {
-                              "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object"
-                            }
-                          },
-                          "required": [
-                            "nodeGroup"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/allOf/array+not/array": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1array@2"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1object@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1array+not~1array@2"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/allOf/array+not/array@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1array@3"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/allOf/not/object+object": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1object@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1array+not~1array@2"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1object@3"
-          }
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/allOf/not/object+object@2": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1object@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1array"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "allOf": [
-                  {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1array+not~1array"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
-                        }
-                      ]
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1clusterName~1array"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
-              },
-              {
-                "allOf": [
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1array+not~1array"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x3a"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1anyOf~1string;pattern-x20-x2d"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1clusterName~1object@2"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1object"
-          }
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/allOf/not/object+object@3": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1object@5"
-          }
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1object@4"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x3a"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/anyOf/string;pattern-x20-x2d": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
-        },
-        {
-          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/array": {
-      "items": {
-        "pattern": "^[A-Za-z0-9_./+-]*$",
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/string;pattern-x20-x25": {
-      "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/string;pattern-x20-x5b": {
-      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*)$",
-      "type": "string"
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/string;pattern-x20-x5b@2": {
-      "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-      "type": "string"
-    },
     "constrains/clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more": {
       "anyOf": [
         {
@@ -3350,7 +3660,13 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1clusterName@5"
+                  "$ref": "#/definitions/constrains~1clusterName@6"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clusterName=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clusterName=true"
                 },
                 {
                   "properties": {
@@ -3364,24 +3680,10 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1clusterName=false"
-                },
-                {
-                  "properties": {
-                    "clusterName": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20-x2e"
-                    }
-                  },
-                  "required": [
-                    "clusterName"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clusterName=true"
-                },
-                {
                   "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName@2"
+                    },
                     {
                       "properties": {
                         "clusterName": {
@@ -3392,11 +3694,19 @@
                         "clusterName"
                       ],
                       "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName@2"
                     }
                   ]
+                },
+                {
+                  "properties": {
+                    "clusterName": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20"
+                    }
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
                 }
               ]
             }
@@ -3409,7 +3719,7 @@
                 {
                   "properties": {
                     "clusterName": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20-x2e@2"
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
                     }
                   },
                   "required": [
@@ -3427,7 +3737,7 @@
                 {
                   "properties": {
                     "nameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20-x2e@2"
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
                     }
                   },
                   "required": [
@@ -3450,7 +3760,18 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1nameOverride@5"
+                  "$ref": "#/definitions/constrains~1nameOverride@6"
+                },
+                {
+                  "properties": {
+                    "nameOverride": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20"
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
                 },
                 {
                   "$ref": "#/definitions/constrains~1nameOverride=true"
@@ -3461,7 +3782,7 @@
                 {
                   "properties": {
                     "nameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20-x2e"
+                      "$ref": "#/definitions/constrains~1clusterName~1object"
                     }
                   },
                   "required": [
@@ -3486,17 +3807,6 @@
                       "$ref": "#/definitions/constrains~1nameOverride@2"
                     }
                   ]
-                },
-                {
-                  "properties": {
-                    "nameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName~1object"
-                    }
-                  },
-                  "required": [
-                    "nameOverride"
-                  ],
-                  "type": "object"
                 }
               ]
             }
@@ -3504,110 +3814,62 @@
         }
       ]
     },
-    "constrains/clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more/string;pattern-x20-x2e": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+    "constrains/clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more/string;pattern-x20": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
-    "constrains/clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more/string;pattern-x20-x2e@2": {
-      "pattern": "^(?:(?:[\\x20])*[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
+    "constrains/clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more/string;pattern-x20@2": {
+      "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
       "type": "string"
     },
-    "constrains/clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more": {
+    "constrains/clusterName+clusterName=null+nameOverride:t": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "properties": {
-                "nodeGroup": {
-                  "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*)$",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "nodeGroup"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1clusterName@5"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup@13"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "nodeGroup": {
-                      "$ref": "#/definitions/constrains~1clusterName~1object@4"
-                    }
-                  },
-                  "required": [
-                    "nodeGroup"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1group-3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup@2"
-                }
-              ]
+          "$ref": "#/definitions/constrains~1clusterName@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
             }
-          ]
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/clusterName+nameOverride:t": {
+      "anyOf": [
+        {
+          "properties": {
+            "clusterName": {
+              "pattern": "^(?:(?:[\\x20])*[\\x2d])$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         }
       ]
     },
     "constrains/clusterName/allOf/array+not/array": {
-      "allOf": [
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1object@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1array@2"
-          }
-        }
-      ]
-    },
-    "constrains/clusterName/allOf/array+not/array@2": {
       "allOf": [
         {
           "not": {
@@ -3623,6 +3885,40 @@
               },
               {
                 "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/clusterName/allOf/array+not/array@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1clusterName~1array@2"
+          }
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1object@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1array@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@2"
               }
             ]
           },
@@ -3661,23 +3957,12 @@
         {
           "additionalProperties": {
             "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array@2"
-              },
+              false,
               {
                 "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
               },
               {
-                "$ref": "#/definitions/constrains~1clusterName~1array@3"
-              },
-              {
                 "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName~1object@5"
               }
             ]
           },
@@ -3688,7 +3973,7 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1object@3"
+            "$ref": "#/definitions/constrains~1clusterName~1object@5"
           }
         }
       ]
@@ -3713,22 +3998,22 @@
                     "items": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@4"
                         },
                         {
                           "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
+                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
                         }
                       ]
                     },
@@ -3755,22 +4040,22 @@
                     "additionalProperties": {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@4"
                         },
                         {
                           "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
+                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array"
+                          "$ref": "#/definitions/constrains~1clusterName~1array@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName~1object@3"
                         }
                       ]
                     },
@@ -3799,18 +4084,29 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1clusterName~1object@5"
+            "$ref": "#/definitions/constrains~1clusterName~1object@3"
           }
         },
         {
           "additionalProperties": {
             "anyOf": [
-              false,
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1object@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1array@3"
+              },
               {
                 "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
               },
               {
+                "$ref": "#/definitions/constrains~1clusterName~1allOf~1array+not~1array"
+              },
+              {
                 "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@2"
               }
             ]
           },
@@ -3832,13 +4128,13 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1clusterName~1array@2"
-          },
-          {
             "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1clusterName~1array@2"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1object@3"
@@ -3851,13 +4147,13 @@
       "items": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1clusterName~1object@5"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1clusterName~1object@5"
+            "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
@@ -3912,13 +4208,13 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1clusterName~1array@2"
-          },
-          {
             "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1clusterName~1array@2"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1object@3"
@@ -3934,16 +4230,16 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
+            "$ref": "#/definitions/constrains~1clusterName~1object@5"
           },
           {
             "$ref": "#/definitions/constrains~1clusterName~1array@3"
           },
           {
-            "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
+            "$ref": "#/definitions/constrains~1clusterName~1null,boolean,number"
           },
           {
-            "$ref": "#/definitions/constrains~1clusterName~1object@5"
+            "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x3a-x2d"
           }
         ]
       },
@@ -3985,19 +4281,19 @@
       "type": "object"
     },
     "constrains/clusterName/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
       "type": "string"
     },
     "constrains/clusterName/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/clusterName/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
+      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
       "type": "string"
     },
     "constrains/clusterName/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
       "type": "string"
     },
     "constrains/clusterName=false": {
@@ -4005,6 +4301,19 @@
         "clusterName": {
           "enum": [
             false
+          ]
+        }
+      },
+      "required": [
+        "clusterName"
+      ],
+      "type": "object"
+    },
+    "constrains/clusterName=null": {
+      "properties": {
+        "clusterName": {
+          "enum": [
+            null
           ]
         }
       },
@@ -4068,6 +4377,17 @@
       "type": "object"
     },
     "constrains/clusterName@5": {
+      "properties": {
+        "clusterName": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "clusterName"
+      ],
+      "type": "object"
+    },
+    "constrains/clusterName@6": {
       "properties": {
         "clusterName": {
           "type": "number"
@@ -4237,76 +4557,12 @@
         }
       ]
     },
-    "constrains/fullnameOverride+fullnameOverride=false+fullnameOverride=true": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride=true"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride=false"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/constrains~1clusterName~1object"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20-x2e"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-        },
-        {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20-x2e@2"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "fullnameOverride": {
-                  "$ref": "#/definitions/constrains~1clusterName~1object@4"
-                }
-              },
-              "required": [
-                "fullnameOverride"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride=false+fullnameOverride=true+10more": {
+    "constrains/fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more": {
       "anyOf": [
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=true"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more"
             },
             {
               "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag"
@@ -4319,7 +4575,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=true"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more"
             },
             {
               "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag+imageTag=false+imageTag=null+1more"
@@ -4339,7 +4595,7 @@
                 {
                   "properties": {
                     "fullnameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@2"
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20"
                     }
                   },
                   "required": [
@@ -4350,13 +4606,93 @@
                 {
                   "properties": {
                     "fullnameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x25"
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x25"
                     }
                   },
                   "required": [
                     "fullnameOverride"
                   ],
                   "type": "object"
+                },
+                {
+                  "properties": {
+                    "fullnameOverride": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@3"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "fullnameOverride": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b@2"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "fullnameOverride": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "fullnameOverride": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1array"
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "fullnameOverride": {
+                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@2"
+                        }
+                      },
+                      "required": [
+                        "fullnameOverride"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride"
+                    },
+                    {
+                      "properties": {
+                        "fullnameOverride": {
+                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object"
+                        }
+                      },
+                      "required": [
+                        "fullnameOverride"
+                      ],
+                      "type": "object"
+                    }
+                  ]
                 },
                 {
                   "properties": {
@@ -4368,86 +4704,6 @@
                     "fullnameOverride"
                   ],
                   "type": "object"
-                },
-                {
-                  "properties": {
-                    "fullnameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2e"
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "fullnameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x5b@2"
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "fullnameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x5b"
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "fullnameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1array"
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "allOf": [
-                    {
-                      "properties": {
-                        "fullnameOverride": {
-                          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@4"
-                        }
-                      },
-                      "required": [
-                        "fullnameOverride"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "properties": {
-                        "fullnameOverride": {
-                          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object"
-                        }
-                      },
-                      "required": [
-                        "fullnameOverride"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride"
-                    }
-                  ]
                 }
               ]
             },
@@ -4455,6 +4711,103 @@
               "$ref": "#/definitions/constrains~1healthNameOverride:t"
             }
           ]
+        }
+      ]
+    },
+    "constrains/fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more": {
+      "anyOf": [
+        {
+          "properties": {
+            "fullnameOverride": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride=false"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@4"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/definitions/constrains~1clusterName~1object"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
+              "properties": {
+                "fullnameOverride": {
+                  "$ref": "#/definitions/constrains~1clusterName~1object@4"
+                }
+              },
+              "required": [
+                "fullnameOverride"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "properties": {
+            "fullnameOverride": {
+              "pattern": "^(?:(?:[\\x20])*[\\x2d])$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -4479,6 +4832,19 @@
         "fullnameOverride": {
           "enum": [
             false
+          ]
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride=null": {
+      "properties": {
+        "fullnameOverride": {
+          "enum": [
+            null
           ]
         }
       },
@@ -4514,6 +4880,17 @@
     "constrains/fullnameOverride@3": {
       "properties": {
         "fullnameOverride": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/fullnameOverride@4": {
+      "properties": {
+        "fullnameOverride": {
           "type": "number"
         }
       },
@@ -4525,21 +4902,8 @@
     "constrains/group-0": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@2"
+          "$ref": "#/definitions/constrains~1nodeGroup~1allOf~1array+not~1array@2"
         },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@8"
-        }
-      ]
-    },
-    "constrains/group-1": {
-      "anyOf": [
         {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@10"
         },
@@ -4548,10 +4912,16 @@
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@12"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@4"
         }
       ]
     },
-    "constrains/group-2": {
+    "constrains/group-1": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag~1allOf~1array+not~1array"
@@ -4582,7 +4952,7 @@
         }
       ]
     },
-    "constrains/group-3": {
+    "constrains/group-2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1nodeGroup=false"
@@ -4594,22 +4964,22 @@
           "$ref": "#/definitions/constrains~1nodeGroup=true"
         },
         {
+          "$ref": "#/definitions/constrains~1nodeGroup@23"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@24"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@5"
+        },
+        {
           "$ref": "#/definitions/constrains~1nodeGroup@14"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup@15"
         },
         {
-          "$ref": "#/definitions/constrains~1nodeGroup@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup@12"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup@6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup@9"
+          "$ref": "#/definitions/constrains~1nodeGroup@8"
         }
       ]
     },
@@ -6801,7 +7171,7 @@
     "constrains/image+image=false+image=null+image=true+imageTag/anyOf/allOf/array+not/array+array+string;pattern-x09-x": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-2"
+          "$ref": "#/definitions/constrains~1group-1"
         },
         {
           "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag~1string;pattern-x09-x@6"
@@ -6811,7 +7181,7 @@
     "constrains/image+image=false+image=null+image=true+imageTag/anyOf/allOf/array+not/array+array+string;pattern-x09-x@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-2"
+          "$ref": "#/definitions/constrains~1group-1"
         },
         {
           "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag~1string;pattern-x09-x@7"
@@ -8293,6 +8663,53 @@
         }
       ]
     },
+    "constrains/nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "pattern": "^(?:(?:[\\x20])*[\\x2d])$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/nameOverride+nameOverride:t+nameOverride=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride=null"
+        },
+        {
+          "properties": {
+            "nameOverride": {
+              "pattern": "^(?:(?:[\\x20])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
+        }
+      ]
+    },
     "constrains/nameOverride+nameOverride=false+nameOverride=null+nameOverride=true": {
       "anyOf": [
         {
@@ -8317,7 +8734,7 @@
           "$ref": "#/definitions/constrains~1nameOverride@3"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride@5"
+          "$ref": "#/definitions/constrains~1nameOverride@6"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride=true"
@@ -8348,17 +8765,7 @@
           "$ref": "#/definitions/constrains~1nameOverride=false"
         },
         {
-          "properties": {
-            "nameOverride": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1nameOverride=null"
         },
         {
           "properties": {
@@ -8372,15 +8779,7 @@
           "type": "object"
         },
         {
-          "properties": {
-            "nameOverride": {
-              "type": "null"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1nameOverride@5"
         }
       ]
     },
@@ -8405,6 +8804,19 @@
         "nameOverride": {
           "enum": [
             false
+          ]
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride=null": {
+      "properties": {
+        "nameOverride": {
+          "enum": [
+            null
           ]
         }
       },
@@ -8470,6 +8882,17 @@
     "constrains/nameOverride@5": {
       "properties": {
         "nameOverride": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@6": {
+      "properties": {
+        "nameOverride": {
           "type": "number"
         }
       },
@@ -8479,9 +8902,17 @@
       "type": "object"
     },
     "constrains/nodeGroup": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nodeGroup@16"
-      }
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@10"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@4"
+        }
+      ]
     },
     "constrains/nodeGroup+nodeGroup=false+nodeGroup=null+nodeGroup=true": {
       "anyOf": [
@@ -8497,7 +8928,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1nodeGroup@14"
+          "$ref": "#/definitions/constrains~1nodeGroup@23"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup=true"
@@ -8518,17 +8949,17 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1nodeGroup@13"
+                  "$ref": "#/definitions/constrains~1nodeGroup@18"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1nodeGroup@3"
+                  "$ref": "#/definitions/constrains~1nodeGroup@5"
                 }
               ]
             }
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1nodeGroup@3"
+          "$ref": "#/definitions/constrains~1nodeGroup@5"
         },
         {
           "properties": {
@@ -8542,7 +8973,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1nodeGroup@15"
+          "$ref": "#/definitions/constrains~1nodeGroup@24"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup=null"
@@ -8571,14 +9002,14 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1nodeGroup"
+          "$ref": "#/definitions/constrains~1nodeGroup@3"
         }
       ]
     },
     "constrains/nodeGroup+nodeGroup=null@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nodeGroup@3"
+          "$ref": "#/definitions/constrains~1nodeGroup@5"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup=null"
@@ -8587,11 +9018,6 @@
     },
     "constrains/nodeGroup/allOf/array+not/array": {
       "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1nodeGroup~1array@13"
-          }
-        },
         {
           "items": {
             "anyOf": [
@@ -8602,6 +9028,11 @@
             ]
           },
           "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1nodeGroup~1array@13"
+          }
         }
       ]
     },
@@ -8616,7 +9047,7 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
               },
               {
                 "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
@@ -8637,13 +9068,13 @@
     "constrains/nodeGroup/anyOf/allOf/array+not/array+array+string;pattern-x20-x2d": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nodeGroup~1allOf~1array+not~1array@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-1"
-        },
-        {
           "$ref": "#/definitions/constrains~1group-0"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@8"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@9"
@@ -8656,63 +9087,63 @@
     "constrains/nodeGroup/anyOf/allOf/array+not/array+array+string;pattern-x20-x2d@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nodeGroup~1allOf~1array+not~1array@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-1"
-        },
-        {
           "$ref": "#/definitions/constrains~1group-0"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@8"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@9"
         },
         {
-          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
         }
       ]
     },
     "constrains/nodeGroup/anyOf/array+string;pattern-x20-x2d": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@5"
-        },
-        {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@3"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@13"
         },
         {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@5"
+        },
+        {
           "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array"
         }
       ]
     },
     "constrains/nodeGroup/anyOf/array+string;pattern-x20-x2d@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nodeGroup~1array@5"
-        },
-        {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@3"
         },
         {
           "$ref": "#/definitions/constrains~1nodeGroup~1array@13"
         },
         {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array@5"
+        },
+        {
           "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup~1array"
         }
       ]
     },
@@ -8817,7 +9248,7 @@
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
             }
           ]
         }
@@ -8853,7 +9284,7 @@
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
             }
           ]
         }
@@ -8883,7 +9314,7 @@
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
             }
           ]
         }
@@ -8907,7 +9338,7 @@
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
             }
           ]
         }
@@ -8940,7 +9371,7 @@
       "type": "array"
     },
     "constrains/nodeGroup/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*(?:|[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*(?:|[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
       "type": "string"
     },
     "constrains/nodeGroup=false": {
@@ -8985,26 +9416,77 @@
     "constrains/nodeGroup@10": {
       "properties": {
         "nodeGroup": {
+          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@11": {
+      "properties": {
+        "nodeGroup": {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@2"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@12": {
+      "properties": {
+        "nodeGroup": {
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x2d"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@13": {
+      "properties": {
+        "nodeGroup": {
+          "$ref": "#/definitions/constrains~1clusterName~1object@4"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@14": {
+      "properties": {
+        "nodeGroup": {
+          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@15": {
+      "properties": {
+        "nodeGroup": {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1nodeGroup~1allOf~1array+not~1array@2"
-            },
-            {
-              "additionalItems": true,
+              "additionalItems": false,
               "items": [
                 {
                   "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
-                },
-                true
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
+                }
               ],
-              "minItems": 4,
+              "minItems": 2,
               "type": "array"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nodeGroup~1array@13"
             },
             {
               "additionalItems": false,
@@ -9016,7 +9498,7 @@
                   "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
                 }
               ],
               "minItems": 3,
@@ -9026,37 +9508,13 @@
               "additionalItems": false,
               "items": [
                 {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
                 }
               ],
               "minItems": 1,
               "type": "array"
             },
             {
-              "additionalItems": true,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
-                },
-                true
-              ],
-              "minItems": 2,
-              "type": "array"
-            },
-            {
-              "additionalItems": false,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
-                }
-              ],
-              "minItems": 2,
-              "type": "array"
-            },
-            {
               "additionalItems": false,
               "items": [
                 {
@@ -9069,12 +9527,24 @@
                   "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
                 }
               ],
               "minItems": 4,
               "type": "array"
-            },
+            }
+          ]
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@16": {
+      "properties": {
+        "nodeGroup": {
+          "anyOf": [
             {
               "additionalItems": true,
               "items": [
@@ -9096,6 +9566,71 @@
               "type": "array"
             },
             {
+              "additionalItems": false,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                }
+              ],
+              "minItems": 2,
+              "type": "array"
+            },
+            {
+              "additionalItems": false,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                }
+              ],
+              "minItems": 4,
+              "type": "array"
+            },
+            {
+              "additionalItems": true,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
+                },
+                true
+              ],
+              "minItems": 4,
+              "type": "array"
+            },
+            {
+              "additionalItems": false,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                }
+              ],
+              "minItems": 3,
+              "type": "array"
+            },
+            {
               "additionalItems": true,
               "items": [
                 {
@@ -9108,6 +9643,30 @@
               ],
               "minItems": 3,
               "type": "array"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nodeGroup~1allOf~1array+not~1array@2"
+            },
+            {
+              "additionalItems": false,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                }
+              ],
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "additionalItems": true,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
+                },
+                true
+              ],
+              "minItems": 2,
+              "type": "array"
             }
           ]
         }
@@ -9117,10 +9676,74 @@
       ],
       "type": "object"
     },
-    "constrains/nodeGroup@11": {
+    "constrains/nodeGroup@17": {
       "properties": {
         "nodeGroup": {
           "anyOf": [
+            {
+              "additionalItems": true,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
+                },
+                true
+              ],
+              "minItems": 5,
+              "type": "array"
+            },
+            {
+              "additionalItems": false,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
+                }
+              ],
+              "minItems": 2,
+              "type": "array"
+            },
+            {
+              "additionalItems": true,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
+                },
+                true
+              ],
+              "minItems": 4,
+              "type": "array"
+            },
+            {
+              "additionalItems": true,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
+                },
+                true
+              ],
+              "minItems": 3,
+              "type": "array"
+            },
             {
               "additionalItems": false,
               "items": [
@@ -9154,6 +9777,17 @@
                 }
               ],
               "minItems": 3,
+              "type": "array"
+            },
+            {
+              "additionalItems": true,
+              "items": [
+                {
+                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
+                },
+                true
+              ],
+              "minItems": 2,
               "type": "array"
             },
             {
@@ -9168,81 +9802,6 @@
               ],
               "minItems": 1,
               "type": "array"
-            },
-            {
-              "additionalItems": true,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
-                },
-                true
-              ],
-              "minItems": 4,
-              "type": "array"
-            },
-            {
-              "additionalItems": true,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
-                },
-                true
-              ],
-              "minItems": 2,
-              "type": "array"
-            },
-            {
-              "additionalItems": false,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
-                }
-              ],
-              "minItems": 2,
-              "type": "array"
-            },
-            {
-              "additionalItems": true,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
-                },
-                true
-              ],
-              "minItems": 3,
-              "type": "array"
-            },
-            {
-              "additionalItems": true,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1allOf~1array+not~1array"
-                },
-                true
-              ],
-              "minItems": 5,
-              "type": "array"
             }
           ]
         }
@@ -9252,80 +9811,7 @@
       ],
       "type": "object"
     },
-    "constrains/nodeGroup@12": {
-      "properties": {
-        "nodeGroup": {
-          "anyOf": [
-            {
-              "additionalItems": false,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
-                }
-              ],
-              "minItems": 3,
-              "type": "array"
-            },
-            {
-              "additionalItems": false,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
-                }
-              ],
-              "minItems": 4,
-              "type": "array"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nodeGroup~1array@13"
-            },
-            {
-              "additionalItems": false,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
-                }
-              ],
-              "minItems": 2,
-              "type": "array"
-            },
-            {
-              "additionalItems": false,
-              "items": [
-                {
-                  "$ref": "#/definitions/constrains~1nodeGroup~1anyOf~1array+string;pattern-x20-x2d"
-                }
-              ],
-              "minItems": 1,
-              "type": "array"
-            }
-          ]
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
-    },
-    "constrains/nodeGroup@13": {
+    "constrains/nodeGroup@18": {
       "properties": {
         "nodeGroup": {
           "maxItems": 1,
@@ -9337,7 +9823,68 @@
       ],
       "type": "object"
     },
-    "constrains/nodeGroup@14": {
+    "constrains/nodeGroup@19": {
+      "properties": {
+        "nodeGroup": {
+          "pattern": "^(?:(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@18"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nodeGroup@7"
+        }
+      ]
+    },
+    "constrains/nodeGroup@20": {
+      "properties": {
+        "nodeGroup": {
+          "pattern": "^(?:(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@21": {
+      "properties": {
+        "nodeGroup": {
+          "pattern": "^(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@22": {
+      "properties": {
+        "nodeGroup": {
+          "pattern": "^(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeGroup"
+      ],
+      "type": "object"
+    },
+    "constrains/nodeGroup@23": {
       "properties": {
         "nodeGroup": {
           "type": "null"
@@ -9348,7 +9895,7 @@
       ],
       "type": "object"
     },
-    "constrains/nodeGroup@15": {
+    "constrains/nodeGroup@24": {
       "properties": {
         "nodeGroup": {
           "type": "number"
@@ -9359,7 +9906,7 @@
       ],
       "type": "object"
     },
-    "constrains/nodeGroup@16": {
+    "constrains/nodeGroup@25": {
       "properties": {
         "nodeGroup": {
           "type": "string"
@@ -9370,19 +9917,24 @@
       ],
       "type": "object"
     },
-    "constrains/nodeGroup@2": {
+    "constrains/nodeGroup@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nodeGroup@25"
+      }
+    },
+    "constrains/nodeGroup@4": {
       "not": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1nodeGroup@13"
+            "$ref": "#/definitions/constrains~1nodeGroup@18"
           },
           {
-            "$ref": "#/definitions/constrains~1nodeGroup@3"
+            "$ref": "#/definitions/constrains~1nodeGroup@5"
           }
         ]
       }
     },
-    "constrains/nodeGroup@3": {
+    "constrains/nodeGroup@5": {
       "not": {
         "properties": {
           "nodeGroup": {}
@@ -9393,32 +9945,10 @@
         "type": "object"
       }
     },
-    "constrains/nodeGroup@4": {
-      "properties": {
-        "nodeGroup": {
-          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1allOf~1not~1object+object@2"
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
-    },
-    "constrains/nodeGroup@5": {
-      "properties": {
-        "nodeGroup": {
-          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@3"
-        }
-      },
-      "required": [
-        "nodeGroup"
-      ],
-      "type": "object"
-    },
     "constrains/nodeGroup@6": {
       "properties": {
         "nodeGroup": {
-          "$ref": "#/definitions/constrains~1clusterName~1object"
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@3"
         }
       },
       "required": [
@@ -9429,7 +9959,7 @@
     "constrains/nodeGroup@7": {
       "properties": {
         "nodeGroup": {
-          "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true~1string;pattern-x09-x"
+          "$ref": "#/definitions/constrains~1clusterName~1allOf~1not~1object+object@3"
         }
       },
       "required": [
@@ -9440,7 +9970,7 @@
     "constrains/nodeGroup@8": {
       "properties": {
         "nodeGroup": {
-          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+healthNameOverride:t+image+16more~1string;pattern-x20-x2d"
+          "$ref": "#/definitions/constrains~1clusterName~1object"
         }
       },
       "required": [
@@ -9451,7 +9981,7 @@
     "constrains/nodeGroup@9": {
       "properties": {
         "nodeGroup": {
-          "$ref": "#/definitions/constrains~1clusterName~1string;pattern-x20-x2d@2"
+          "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true~1string;pattern-x09-x"
         }
       },
       "required": [
@@ -9687,7 +10217,7 @@
         "$ref": "#/definitions/constrains~1antiAffinity@2"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1nodeGroup"
+        "$ref": "#/definitions/constrains~1nodeGroup@3"
       }
     },
     "when/nodeGroup+nodeGroup=null/then/podSecurityPolicy+podSecurityPolicy.name+podSecurityPolicy.name=null/else/nodeGroup": {
@@ -9699,7 +10229,7 @@
           "$ref": "#/definitions/constrains~1podSecurityPolicy.name+podSecurityPolicy.name=null"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1nodeGroup"
+          "$ref": "#/definitions/constrains~1nodeGroup@3"
         }
       },
       "if": {
@@ -9712,7 +10242,7 @@
     "when/nodeGroup/then/podSecurityPolicy.name/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1nodeGroup@16"
+        "$ref": "#/definitions/constrains~1nodeGroup@25"
       },
       "then": {
         "$ref": "#/definitions/constrains~1podSecurityPolicy.name"
