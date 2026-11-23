@@ -22,6 +22,15 @@ pub enum CliError {
     #[error("yaml error: {0}")]
     Yaml(#[from] serde_yaml::Error),
 
+    /// Chart YAML was rejected by the pinned input decoder.
+    #[error("{path}: {message}")]
+    ChartDecode {
+        /// Chart member being decoded.
+        path: String,
+        /// Pinned decoder or metadata-validation diagnostic.
+        message: String,
+    },
+
     /// Values declarations use keys whose spelling Helm normalizes ambiguously.
     #[error(
         "unquoted YAML 1.1 Boolean-alias keys are not supported in chart declarations:\n{details}"

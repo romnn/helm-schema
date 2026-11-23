@@ -848,7 +848,7 @@ fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
 #[test]
 fn layered_descriptions_reuse_the_values_sources_checked_for_boolean_keys() -> eyre::Result<()> {
     let root = vfs::VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     let charts = discover_chart_contexts(&root)?;
     let scratch = ScratchDir::new("layered-values")?;
     let path = scratch.path().join("override.yaml");

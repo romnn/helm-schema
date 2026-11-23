@@ -31,4 +31,5 @@ pub struct ChartContext {
 pub struct ChartDependencyActivation {
     pub condition_paths: Vec<String>,
     pub tag_paths: Vec<String>,
+    pub(crate) legacy: bool,
 }

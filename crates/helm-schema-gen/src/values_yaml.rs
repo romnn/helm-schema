@@ -270,9 +270,17 @@ fn lookup_values_yaml_path_info(
         return None;
     }
 
-    let schema = merge_schema_list(values.iter().copied().map(schema_from_yaml_value).collect());
+    // A matching value with differing collision winners withholds the declaration-based type:
+    // merging its open schema into a known sibling's would restore the sibling's restriction.
+    let unknown = values.iter().any(|value| has_unknown(value));
+    let schema = if unknown {
+        empty_schema()
+    } else {
+        merge_schema_list(values.iter().copied().map(schema_from_yaml_value).collect())
+    };
     let declared_defaults = values
         .iter()
+        .filter(|_| !unknown)
         .filter_map(|value| serde_json::to_value(value).ok())
         .collect();
     let is_explicit_null = matches!(values.as_slice(), [YamlValue::Null]);
@@ -315,6 +323,9 @@ pub(crate) fn yaml_value_at_values_path<'a>(
 ) -> Option<&'a YamlValue> {
     let mut current = doc;
     for segment in value_path.segments() {
+        if matches!(current, YamlValue::Tagged(_)) {
+            return Some(current);
+        }
         let segment = segment.literal().unwrap_or("*");
         let YamlValue::Mapping(mapping) = current else {
             return None;
@@ -322,6 +333,60 @@ pub(crate) fn yaml_value_at_values_path<'a>(
         current = mapping.get(YamlValue::String(segment.to_owned()))?;
     }
     Some(current)
+}
+
+pub(crate) fn has_unknown(doc: &YamlValue) -> bool {
+    match doc {
+        YamlValue::Tagged(_) => true,
+        YamlValue::Sequence(values) => values.iter().any(has_unknown),
+        YamlValue::Mapping(values) => values.values().any(has_unknown),
+        _ => false,
+    }
+}
+
+/// The members whose collision winners differ, as literal key paths. A sequence or a
+/// non-string key holding one is recorded whole.
+pub(crate) fn unknown_paths(
+    doc: &YamlValue,
+    path: &mut Vec<String>,
+    out: &mut BTreeSet<Vec<String>>,
+) {
+    match doc {
+        YamlValue::Mapping(members) => {
+            for (key, value) in members {
+                let Some(key) = key.as_str() else {
+                    if has_unknown(value) {
+                        out.insert(path.clone());
+                    }
+                    continue;
+                };
+                path.push(key.to_owned());
+                unknown_paths(value, path, out);
+                path.pop();
+            }
+        }
+        _ if has_unknown(doc) => {
+            out.insert(path.clone());
+        }
+        _ => {}
+    }
+}
+
+pub(crate) fn known_json_projection(doc: &YamlValue) -> Option<Value> {
+    serde_json::to_value(known_projection(doc)?).ok()
+}
+
+fn known_projection(doc: &YamlValue) -> Option<YamlValue> {
+    match doc {
+        YamlValue::Tagged(_) => None,
+        YamlValue::Mapping(map) => Some(YamlValue::Mapping(
+            map.iter()
+                .filter_map(|(key, value)| Some((key.clone(), known_projection(value)?)))
+                .collect(),
+        )),
+        YamlValue::Sequence(_) if has_unknown(doc) => None,
+        _ => Some(doc.clone()),
+    }
 }
 
 pub(crate) fn remove_values_paths(doc: &mut YamlValue, paths: &BTreeSet<String>) {
@@ -367,6 +432,8 @@ fn lookup_values_yaml_values<'a>(
             let next = map.get(&key)?;
             lookup_values_yaml_values(next, tail)
         }
+        // Every path below an unknown value may exist in some winner.
+        YamlValue::Tagged(_) => Some(vec![doc]),
         YamlValue::Sequence(sequence) if head == "*" => {
             let mut out: Vec<&'a YamlValue> = Vec::new();
             for item in sequence {
@@ -496,7 +563,9 @@ pub(crate) fn schema_node_from_yaml_value_with_skips(
         }
         YamlValue::String(_) => Some(SchemaNode::type_named("string")),
         YamlValue::Sequence(sequence) => {
-            let items = if sequence.is_empty() {
+            // An unknown item stands for collision winners of different types, and an
+            // empty item schema would vanish in the merge below, so the items stay open.
+            let items = if sequence.is_empty() || sequence.iter().any(has_unknown) {
                 empty_schema()
             } else {
                 merge_schema_list(

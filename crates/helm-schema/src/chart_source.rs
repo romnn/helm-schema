@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use vfs::VfsPath;
 
-use crate::chart::{Directory, LoadedChart, SourcePath};
+use crate::chart::{Directory, LoadedChart, LoadedEntries, SourcePath};
 use crate::error::{CliError, EngineResult};
 use crate::load_budget::LoadBudget;
 
@@ -15,7 +15,7 @@ pub struct RootChartSource(Source);
 #[derive(Debug, Clone)]
 enum Source {
     Directory(Arc<Directory>),
-    Archive(LoadedChart),
+    Archive(Arc<LoadedEntries>),
 }
 
 impl From<VfsPath> for RootChartSource {
@@ -46,10 +46,9 @@ impl RootChartSource {
             )))));
         }
         if metadata.is_file() {
-            return Ok(Self(Source::Archive(LoadedChart::read_archive(
+            return Ok(Self(Source::Archive(LoadedEntries::capture_archive(
                 File::open(path)?,
                 SourcePath::Native(path.to_path_buf()),
-                true,
             )?)));
         }
         Err(CliError::CliValidation(format!(
@@ -85,14 +84,16 @@ impl RootChartSource {
     pub(crate) fn load(&self, include_tests: bool) -> EngineResult<LoadedChart> {
         match &self.0 {
             Source::Directory(dir) => LoadedChart::read_directory(dir.for_session(), include_tests),
-            Source::Archive(chart) => Ok(chart.analysis_view(include_tests)),
+            Source::Archive(entries) => {
+                LoadedChart::finish_archive(Arc::clone(entries), include_tests)
+            }
         }
     }
 
     pub(crate) fn logical_path(&self) -> &str {
         match &self.0 {
             Source::Directory(dir) => dir.path(),
-            Source::Archive(chart) => chart.path.as_str(),
+            Source::Archive(_) => "",
         }
     }
 }

@@ -109,6 +109,36 @@ fn judge(
     polarity: ConditionPolarity,
     dependencies: &Dependencies<'_>,
 ) -> eyre::Result<(Option<Value>, Vec<LintWithdrawal>)> {
+    let known = BTreeSet::new();
+    let constraint = Constraint {
+        anchor,
+        guards,
+        then_schema,
+        polarity,
+    };
+    judge_beside(root, coalesced, constraint, dependencies, &known)
+}
+
+struct Constraint<'a> {
+    anchor: &'a [&'a str],
+    guards: &'a [ConditionalGuard],
+    then_schema: Value,
+    polarity: ConditionPolarity,
+}
+
+/// [`judge`] with members whose collision winners differ in the lint documents.
+fn judge_beside(
+    root: &Value,
+    coalesced: &Value,
+    Constraint {
+        anchor,
+        guards,
+        then_schema,
+        polarity,
+    }: Constraint<'_>,
+    dependencies: &Dependencies<'_>,
+    unknown: &BTreeSet<Vec<String>>,
+) -> eyre::Result<(Option<Value>, Vec<LintWithdrawal>)> {
     let definitions = BTreeMap::new();
     let anchor = anchor
         .iter()
@@ -129,7 +159,8 @@ fn judge(
         absence,
         polarity,
     ));
-    let mut gate = UncoalescedRootGate::new(Some(root), coalesced, &definitions);
+    let mut gate =
+        UncoalescedRootGate::new(Some(root), coalesced, &definitions).with_unknown(unknown);
     let kept = gate.lint_safe_then(
         &anchor,
         &helm_schema_core::GuardConjunction::from(guards.to_vec()),
@@ -159,6 +190,41 @@ fn judge(
         })
     });
     Ok((document, gate.into_relaxed()))
+}
+
+/// `paths.true` holds differing collision winners, so the known part of the physical lint
+/// document omits it. A constraint that types it and requires a sibling that document lacks
+/// fails lint under every winner. Lint acceptance is undecidable there, so the gate withdraws it.
+#[test]
+fn a_constraint_overlapping_an_unknown_member_is_withdrawn() -> eyre::Result<()> {
+    let unknown = BTreeSet::from([vec!["paths".to_owned(), "true".to_owned()]]);
+    let (document, _) = judge_beside(
+        &json!({ "paths": {} }),
+        &json!({ "paths": { "sibling": "x" } }),
+        Constraint {
+            anchor: &["paths"],
+            guards: &[],
+            then_schema: json!({
+                "properties": { "true": { "type": "string" } },
+                "required": ["sibling"],
+            }),
+            polarity: ConditionPolarity::Narrow,
+        },
+        &NO_DEPENDENCIES,
+        &unknown,
+    )?;
+    let validator = document
+        .as_ref()
+        .map(jsonschema::validator_for)
+        .transpose()?;
+    for winner in [json!("a"), json!(7)] {
+        let lint = json!({ "paths": { "true": winner } });
+        let accepts = validator
+            .as_ref()
+            .is_none_or(|validator| validator.is_valid(&lint));
+        sim_assert_eq!(have: accepts, want: true, "{winner}");
+    }
+    Ok(())
 }
 
 /// Root `kid: {}`, dependency default `kid.p: true`: every override that

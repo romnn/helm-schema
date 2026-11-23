@@ -23,6 +23,9 @@ use crate::lint_validators::{ConstraintValidator, LintValidators};
 use crate::schema_node::SchemaNode;
 use crate::terminal_conditions::{ProofGuardRole, RequirementPartition, partition_requirement};
 
+/// No unknown members: every constraint is judged on the lint documents.
+static KNOWN: BTreeSet<Vec<String>> = BTreeSet::new();
+
 /// How a constraint encodes its guards, so the lint projection is encoded
 /// alike.
 #[derive(Clone, Copy)]
@@ -260,6 +263,9 @@ pub(crate) struct LintRequirement {
 /// judging only the default documents cannot establish its render-time guard.
 pub(crate) struct UncoalescedRootGate<'a> {
     uncoalesced_root: Option<&'a Value>,
+    /// Members whose collision winners differ in either lint document. The gate withdraws a
+    /// constraint whose guards or target overlap one.
+    unknown: &'a BTreeSet<Vec<String>>,
     lint_floor: Option<(Rc<Value>, YamlValue)>,
     coalesced_defaults: &'a Value,
     relaxed: Vec<LintWithdrawal>,
@@ -298,6 +304,7 @@ impl<'a> UncoalescedRootGate<'a> {
         }
         Self {
             uncoalesced_root,
+            unknown: &KNOWN,
             lint_floor,
             coalesced_defaults,
             relaxed: Vec::new(),
@@ -306,6 +313,12 @@ impl<'a> UncoalescedRootGate<'a> {
             floor_prefixes: RefCell::new(BTreeMap::new()),
             floor_overrides: RefCell::default(),
         }
+    }
+
+    /// Withdraws constraints whose guards or target overlap these unknown members.
+    pub(crate) fn with_unknown(mut self, unknown: &'a BTreeSet<Vec<String>>) -> Self {
+        self.unknown = unknown;
+        self
     }
 
     pub(crate) fn reserve_condition_names(&self, schema: &Value) {
@@ -458,6 +471,10 @@ impl<'a> UncoalescedRootGate<'a> {
         if self.uncoalesced_root.is_none() {
             return Some(then_value);
         }
+        if self.overlaps_unknown(ancestor_segments, guard_row, &then_value) {
+            self.withdraw_overlap(ancestor_segments);
+            return None;
+        }
         self.lint_safe_constraint(
             ancestor_segments,
             guard_row,
@@ -481,6 +498,10 @@ impl<'a> UncoalescedRootGate<'a> {
         if self.uncoalesced_root.is_none() {
             return Some(then_value);
         }
+        if self.overlaps_unknown(ancestor_segments, guard_row, &then_value) {
+            self.withdraw_overlap(ancestor_segments);
+            return None;
+        }
         self.lint_safe_constraint(
             ancestor_segments,
             guard_row,
@@ -497,6 +518,9 @@ impl<'a> UncoalescedRootGate<'a> {
         let Some((floor, _)) = self.lint_floor.as_ref() else {
             return LintGuardPaths::default();
         };
+        if self.guard_overlaps_unknown(guard) {
+            return LintGuardPaths::default();
+        }
         let mut paths = LintGuardPaths::default();
         for path in guard.value_paths().iter().filter_map(ValuesPath::parent) {
             let segments = path.segments().collect::<Vec<_>>();
@@ -525,6 +549,10 @@ impl<'a> UncoalescedRootGate<'a> {
         then_value: Value,
         encoding: GuardEncoding<'_>,
     ) -> Vec<LintRequirement> {
+        if self.uncoalesced_root.is_some() && self.overlaps_unknown(ancestor, guards, &then_value) {
+            self.withdraw_overlap(ancestor);
+            return Vec::new();
+        }
         let Some((raw, (floor, floor_yaml))) = self.uncoalesced_root.zip(self.lint_floor.as_ref())
         else {
             return vec![LintRequirement {
@@ -862,6 +890,56 @@ impl<'a> UncoalescedRootGate<'a> {
             raw_uncompiled: false,
             projection_uncompiled: false,
         }
+    }
+
+    /// Whether a constraint's guards or target lie on an unknown member's path. Lint
+    /// acceptance there is undecidable, so the gate withdraws the constraint. A `false` target
+    /// rejects every instance and reads no member.
+    fn overlaps_unknown(
+        &self,
+        ancestor_segments: &[String],
+        guards: &GuardConjunction,
+        then_value: &Value,
+    ) -> bool {
+        let target = ancestor_segments.iter().map(|segment| {
+            Segment::from_encoded_component(segment)
+                .literal()
+                .map(str::to_owned)
+        });
+        guards
+            .iter()
+            .any(|guard| self.guard_overlaps_unknown(guard))
+            || (*then_value != Value::Bool(false)
+                && self
+                    .unknown
+                    .iter()
+                    .any(|unknown| on_path(target.clone(), unknown)))
+    }
+
+    fn guard_overlaps_unknown(&self, guard: &ConditionalGuard) -> bool {
+        !self.unknown.is_empty()
+            && guard.value_paths().iter().any(|path| {
+                self.unknown.iter().any(|unknown| {
+                    on_path(
+                        path.segments()
+                            .map(|segment| segment.literal().map(str::to_owned)),
+                        unknown,
+                    )
+                })
+            })
+    }
+
+    fn withdraw_overlap(&mut self, ancestor_segments: &[String]) {
+        self.relaxed.push(LintWithdrawal {
+            anchor: ValuesPath::from_segments(
+                ancestor_segments
+                    .iter()
+                    .map(|segment| Segment::from_encoded_component(segment)),
+            ),
+            document: LintDocument::Root,
+            deciding_paths: Vec::new(),
+            outcome: LintOutcome::Withdrawn,
+        });
     }
 
     fn lint_safe_constraint(
@@ -1876,4 +1954,12 @@ fn collect_anchored_instances<'v>(
             }
         }
     }
+}
+
+/// Whether a constraint path, whose `None` segments match any member, and a literal document
+/// path lie on one root-to-leaf line.
+fn on_path(pattern: impl Iterator<Item = Option<String>>, path: &[String]) -> bool {
+    pattern
+        .zip(path)
+        .all(|(segment, key)| segment.is_none_or(|segment| segment == *key))
 }

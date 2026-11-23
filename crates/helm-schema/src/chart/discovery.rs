@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde::Deserialize;
+use helm_schema_goyaml::is_authored;
+use serde_yaml::Value;
 use tracing::instrument;
 
 use super::LoadedChart;
@@ -8,45 +9,6 @@ use super::paths::scope_values_path;
 use super::types::{ChartContext, ChartDependencyActivation};
 use crate::chart_source::RootChartSource;
 use crate::error::{CliError, EngineResult};
-
-#[derive(Debug, Deserialize)]
-struct ChartYaml {
-    name: Option<String>,
-
-    version: Option<String>,
-
-    #[serde(rename = "apiVersion")]
-    api_version: Option<String>,
-
-    #[serde(rename = "appVersion")]
-    app_version: Option<String>,
-
-    description: Option<String>,
-
-    home: Option<String>,
-
-    icon: Option<String>,
-
-    #[serde(rename = "type")]
-    chart_type: Option<String>,
-
-    annotations: Option<BTreeMap<String, String>>,
-
-    dependencies: Option<Vec<ChartDependency>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ChartDependency {
-    name: String,
-    alias: Option<String>,
-    condition: Option<String>,
-    tags: Option<Vec<String>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct RequirementsYaml {
-    dependencies: Option<Vec<ChartDependency>>,
-}
 
 #[derive(Debug, Clone)]
 struct DependencyMetadata {
@@ -56,35 +18,25 @@ struct DependencyMetadata {
 
 struct InstalledChart {
     files: LoadedChart,
-    name: String,
-    metadata: ChartYaml,
     children: Vec<InstalledChart>,
 }
 
 impl InstalledChart {
-    fn read(mut files: LoadedChart, is_root: bool) -> EngineResult<Self> {
-        let metadata = read_chart_yaml(&files)?;
-        files.set_api_version(metadata.api_version.as_deref());
-        let name = metadata
-            .name
-            .clone()
-            .unwrap_or_else(|| files.filename().to_string());
-        if name.is_empty() && metadata.name.is_none() && !is_root {
-            return Err(CliError::SubchartNameMissing {
-                path: files.path.clone(),
-            });
-        }
+    fn read(files: LoadedChart) -> EngineResult<Self> {
+        reject_duplicate_dependency_values_keys(files.metadata(), files.manifest()?.path.clone())?;
         Ok(Self {
             files,
-            name,
-            metadata,
             children: Vec::new(),
         })
     }
 
+    fn name(&self) -> &str {
+        text(self.files.metadata(), "name")
+    }
+
     fn load_children(&mut self) -> EngineResult<()> {
         self.files.visit_vendored_charts(|child| {
-            self.children.push(Self::read(child, false)?);
+            self.children.push(Self::read(child)?);
             Ok(())
         })?;
         reject_duplicate_installed_dependency_names(
@@ -103,10 +55,10 @@ pub(crate) fn discover_chart_contexts(
     source: &RootChartSource,
     include_tests: bool,
 ) -> EngineResult<Vec<ChartContext>> {
-    let mut root = InstalledChart::read(source.load(include_tests)?, true)?;
+    let mut root = InstalledChart::read(source.load(include_tests)?)?;
     root.load_children()?;
     let mut out = Vec::new();
-    discover_chart_contexts_inner(&root, &root.name, &[], &[], false, &mut out);
+    discover_chart_contexts_inner(&root, root.name(), &[], &[], false, &mut out);
     Ok(out)
 }
 
@@ -118,12 +70,9 @@ fn discover_chart_contexts_inner(
     listed_dependency: bool,
     out: &mut Vec<ChartContext>,
 ) {
-    let chart_yaml = &chart.metadata;
-    let is_library = chart_yaml
-        .chart_type
-        .as_deref()
-        .is_some_and(|chart_type| chart_type.eq_ignore_ascii_case("library"));
-    let mut static_root_strings = chart_static_root_strings(chart_yaml);
+    let metadata = chart.files.metadata();
+    let is_library = text(metadata, "type") == "library";
+    let mut static_root_strings = chart_static_root_strings(metadata);
     // `.Template.BasePath` is per chart, not per file: Helm reports the
     // executing chart's own `templates` directory for every file it owns,
     // whatever subdirectory that file lives in. Binding it here lets the
@@ -144,13 +93,14 @@ fn discover_chart_contexts_inner(
         listed_dependency,
     });
 
-    let dependency_metadata_by_name = dependency_metadata_map(chart_yaml, parent_prefix);
+    let dependency_metadata_by_name = dependency_metadata_map(metadata, parent_prefix);
 
     for child in &chart.children {
-        let listed = dependency_metadata_by_name.get(&child.name);
+        let name = child.name();
+        let listed = dependency_metadata_by_name.get(name);
         let dependency_metadata = listed.cloned().unwrap_or_else(|| {
             vec![DependencyMetadata {
-                values_key: child.name.clone(),
+                values_key: name.to_owned(),
                 activation: ChartDependencyActivation::default(),
             }]
         });
@@ -184,78 +134,98 @@ fn discover_chart_contexts_inner(
     }
 }
 
-fn chart_static_root_strings(chart: &ChartYaml) -> BTreeMap<Vec<String>, String> {
+/// A Go string field of the decoded metadata, with the zero value for an absent or null one.
+fn text<'a>(metadata: &'a Value, name: &str) -> &'a str {
+    metadata
+        .get(name)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+}
+
+fn chart_static_root_strings(metadata: &Value) -> BTreeMap<Vec<String>, String> {
     let mut strings = BTreeMap::new();
-    for (field, value) in [
-        ("Name", chart.name.as_ref()),
-        ("Version", chart.version.as_ref()),
-        ("APIVersion", chart.api_version.as_ref()),
-        ("AppVersion", chart.app_version.as_ref()),
-        ("Description", chart.description.as_ref()),
-        ("Home", chart.home.as_ref()),
-        ("Icon", chart.icon.as_ref()),
-        ("Type", chart.chart_type.as_ref()),
+    for (field, key) in [
+        ("Name", "name"),
+        ("Version", "version"),
+        ("APIVersion", "apiVersion"),
+        ("AppVersion", "appVersion"),
+        ("Description", "description"),
+        ("Home", "home"),
+        ("Icon", "icon"),
+        ("Type", "type"),
     ] {
         // Helm reads these through `chart.Metadata`'s Go `string` fields, so
         // an absent key renders as the zero value `""` and still satisfies
         // `typeIs "string"`. Dropping it would make the read unresolved.
         strings.insert(
-            vec!["Chart".to_string(), field.to_string()],
-            value.cloned().unwrap_or_default(),
+            vec!["Chart".into(), field.into()],
+            text(metadata, key).into(),
         );
     }
-    for (key, value) in chart.annotations.as_ref().into_iter().flatten() {
-        strings.insert(
-            vec!["Chart".to_string(), "Annotations".to_string(), key.clone()],
-            value.clone(),
-        );
+    if let Some(annotations) = metadata.get("annotations").and_then(Value::as_mapping) {
+        for (key, value) in annotations {
+            if let (Some(key), Some(value)) = (key.as_str(), value.as_str()) {
+                strings.insert(
+                    vec!["Chart".into(), "Annotations".into(), key.into()],
+                    value.into(),
+                );
+            }
+        }
     }
     strings
 }
 
+fn dependency_key(dependency: &Value) -> (&str, &str) {
+    let name = text(dependency, "name");
+    let alias = text(dependency, "alias");
+    (name, if alias.is_empty() { name } else { alias })
+}
+
+fn declarations(metadata: &Value) -> impl Iterator<Item = &Value> {
+    metadata
+        .get("dependencies")
+        .and_then(Value::as_sequence)
+        .into_iter()
+        .flatten()
+}
+
 fn dependency_metadata_map(
-    chart_yaml: &ChartYaml,
+    metadata: &Value,
     parent_prefix: &[String],
 ) -> BTreeMap<String, Vec<DependencyMetadata>> {
-    let mut out = BTreeMap::new();
-    let deps = chart_yaml.dependencies.as_deref().unwrap_or_default();
-
-    for dependency in deps {
-        let values_key = dependency
-            .alias
-            .clone()
-            .unwrap_or_else(|| dependency.name.clone());
-        out.entry(dependency.name.clone())
-            .or_insert_with(Vec::new)
+    let mut out = BTreeMap::<_, Vec<_>>::new();
+    for dependency in declarations(metadata) {
+        let (name, values_key) = dependency_key(dependency);
+        let tags = dependency
+            .get("tags")
+            .and_then(Value::as_sequence)
+            .into_iter()
+            .flatten();
+        // The legacy reader recognized only exact, directly spelled identities and controls.
+        let legacy = dependency.get("name").is_some_and(is_authored)
+            && ["alias", "condition"]
+                .into_iter()
+                .all(|field| dependency.get(field).is_none_or(authored_or_empty))
+            && tags.clone().all(authored_or_empty);
+        out.entry(name.to_owned())
+            .or_default()
             .push(DependencyMetadata {
-                values_key,
-                activation: dependency_activation(dependency, parent_prefix),
+                values_key: values_key.to_owned(),
+                activation: ChartDependencyActivation {
+                    condition_paths: dependency_condition_paths(
+                        text(dependency, "condition"),
+                        parent_prefix,
+                    ),
+                    tag_paths: dependency_tag_paths(tags.filter_map(Value::as_str)),
+                    legacy,
+                },
             });
     }
-
     out
 }
 
-fn dependency_activation(
-    dependency: &ChartDependency,
-    parent_prefix: &[String],
-) -> ChartDependencyActivation {
-    let condition_paths = dependency
-        .condition
-        .as_deref()
-        .map(|condition| dependency_condition_paths(condition, parent_prefix))
-        .unwrap_or_default();
-
-    let tag_paths = dependency
-        .tags
-        .as_deref()
-        .map(dependency_tag_paths)
-        .unwrap_or_default();
-
-    ChartDependencyActivation {
-        condition_paths,
-        tag_paths,
-    }
+fn authored_or_empty(value: &Value) -> bool {
+    value.is_null() || value.as_str() == Some("") || is_authored(value)
 }
 
 fn dependency_condition_paths(condition: &str, parent_prefix: &[String]) -> Vec<String> {
@@ -274,9 +244,8 @@ fn dependency_condition_paths(condition: &str, parent_prefix: &[String]) -> Vec<
     paths
 }
 
-fn dependency_tag_paths(tags: &[String]) -> Vec<String> {
-    tags.iter()
-        .map(|tag| tag.trim())
+fn dependency_tag_paths<'a>(tags: impl Iterator<Item = &'a str>) -> Vec<String> {
+    tags.map(str::trim)
         .filter(|tag| !tag.is_empty())
         .map(|tag| format!("tags.{tag}"))
         .collect::<BTreeSet<_>>()
@@ -292,35 +261,13 @@ fn scope_chart_yaml_value_path(path: &str, prefix: &[String]) -> String {
     scope_values_path(path, prefix)
 }
 
-fn read_chart_yaml(chart: &LoadedChart) -> EngineResult<ChartYaml> {
-    let manifest = chart.manifest()?;
-    let mut metadata: ChartYaml = serde_yaml::from_str(manifest.yaml_text()?)?;
-    let mut dependency_source = manifest.path.clone();
-    if metadata.dependencies.is_none()
-        && let Some(requirements) = chart.file("requirements.yaml")
-    {
-        let yaml: RequirementsYaml = serde_yaml::from_str(requirements.yaml_text()?)?;
-        metadata.dependencies = yaml.dependencies;
-        dependency_source = requirements.path.clone();
-    }
-    reject_duplicate_dependency_values_keys(
-        metadata.dependencies.as_deref().unwrap_or_default(),
-        dependency_source,
-    )?;
-    Ok(metadata)
-}
-
-fn reject_duplicate_dependency_values_keys(
-    dependencies: &[ChartDependency],
-    path: String,
-) -> EngineResult<()> {
-    let mut declarations_by_values_key = BTreeMap::new();
-    for dependency in dependencies {
-        let values_key = dependency.alias.as_deref().unwrap_or(&dependency.name);
+fn reject_duplicate_dependency_values_keys(metadata: &Value, path: String) -> EngineResult<()> {
+    let mut declarations_by_values_key = BTreeMap::<_, Vec<_>>::new();
+    for (name, key) in declarations(metadata).map(dependency_key) {
         declarations_by_values_key
-            .entry(values_key)
-            .or_insert_with(Vec::new)
-            .push(dependency.name.as_str());
+            .entry(key)
+            .or_default()
+            .push(name);
     }
     let details = declarations_by_values_key
         .into_iter()
@@ -351,7 +298,7 @@ fn reject_duplicate_installed_dependency_names(
     let mut entries_by_name = BTreeMap::new();
     for chart in installed_charts {
         entries_by_name
-            .entry(&chart.name)
+            .entry(chart.name())
             .or_insert_with(Vec::new)
             .push(chart.files.path.as_str());
     }

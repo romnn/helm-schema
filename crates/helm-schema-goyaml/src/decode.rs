@@ -37,6 +37,8 @@ pub struct Entry {
     pub key: Value,
     /// The decoded value.
     pub value: Value,
+    /// Whether the key and value were supplied directly, without alias or merge expansion.
+    pub authored: bool,
 }
 
 impl Value {
@@ -66,7 +68,13 @@ impl Value {
             Self::Mapping(entries) => {
                 let mut entries: Vec<_> = entries
                     .iter()
-                    .map(|Entry { key, value }| vec![key.tagged(), value.tagged()])
+                    .map(
+                        |Entry {
+                             key,
+                             value,
+                             authored: _,
+                         }| vec![key.tagged(), value.tagged()],
+                    )
                     .collect();
                 entries.sort_by_cached_key(|entry| {
                     serde_json::Value::Array(entry.clone()).to_string()
@@ -186,6 +194,7 @@ struct Decoder {
     aliases: Vec<usize>,
     decode_count: u64,
     alias_count: u64,
+    merging: bool,
 }
 
 impl Decoder {
@@ -246,8 +255,10 @@ impl Decoder {
     ) -> Result<(), Error> {
         let (pairs, _) = children.as_chunks::<2>();
         for [key_id, value_id] in pairs {
-            if tree.nodes.get(*key_id).is_some_and(|node| matches!(&node.kind,
-                NodeKind::Scalar { tag, value, implicit } if value == "<<" && (*implicit || tag == "tag:yaml.org,2002:merge"))) {
+            if tree.nodes.get(*key_id).is_some_and(|node| {
+                matches!(&node.kind,
+                NodeKind::Scalar { tag, value, implicit } if is_merge_key(value, tag, *implicit))
+            }) {
                 self.merge(tree, *value_id, entries)?;
                 continue;
             }
@@ -256,7 +267,32 @@ impl Decoder {
                 return Err(decode_error("invalid map key"));
             }
             let value = self.node(tree, *value_id)?;
-            set_entry(entries, key, value);
+            let authored = !self.merging
+                && self.aliases.is_empty()
+                && tree
+                    .nodes
+                    .get(*key_id)
+                    .is_some_and(|node| matches!(node.kind, NodeKind::Scalar { .. }))
+                && tree
+                    .nodes
+                    .get(*value_id)
+                    .is_some_and(|node| match &node.kind {
+                        NodeKind::Alias { .. } => false,
+                        NodeKind::Sequence(items) => items.iter().all(|id| {
+                            tree.nodes
+                                .get(*id)
+                                .is_some_and(|item| !matches!(item.kind, NodeKind::Alias { .. }))
+                        }),
+                        NodeKind::Scalar { .. } | NodeKind::Mapping(_) => true,
+                    });
+            set_entry(
+                entries,
+                Entry {
+                    key,
+                    value,
+                    authored,
+                },
+            );
         }
         Ok(())
     }
@@ -269,13 +305,16 @@ impl Decoder {
             .ok_or_else(|| decode_error("missing merge node"))?;
         match &node.kind {
             NodeKind::Mapping(_) | NodeKind::Alias { .. } => {
-                let Value::Mapping(merged) = self.node(tree, id)? else {
+                let was_merging = std::mem::replace(&mut self.merging, true);
+                let merged = self.node(tree, id);
+                self.merging = was_merging;
+                let Value::Mapping(merged) = merged? else {
                     return Err(decode_error(
                         "map merge requires map or sequence of maps as the value",
                     ));
                 };
-                for Entry { key, value } in merged {
-                    set_entry(entries, key, value);
+                for entry in merged {
+                    set_entry(entries, entry);
                 }
                 Ok(())
             }
@@ -313,24 +352,31 @@ fn allowed_alias_ratio(count: u64) -> f64 {
 }
 
 /// Assigns a Go map entry, preserving type identity and IEEE key equality (`decode.go:675-682`).
-fn set_entry(entries: &mut Vec<Entry>, key: Value, value: Value) {
-    let existing = entries.iter_mut().find(|entry| match (&entry.key, &key) {
-        (Value::Float(left), Value::Float(right)) => {
-            #[expect(
-                clippy::float_cmp,
-                reason = "Go map keys use exact IEEE equality, including NaN and signed zero"
-            )]
-            let equal = f64::from_bits(*left) == f64::from_bits(*right);
-            equal
-        }
-        (left, right) => left == right,
-    });
+fn set_entry(entries: &mut Vec<Entry>, incoming: Entry) {
+    let existing = entries
+        .iter_mut()
+        .find(|entry| match (&entry.key, &incoming.key) {
+            (Value::Float(left), Value::Float(right)) => {
+                #[expect(
+                    clippy::float_cmp,
+                    reason = "Go map keys use exact IEEE equality, including NaN and signed zero"
+                )]
+                let equal = f64::from_bits(*left) == f64::from_bits(*right);
+                equal
+            }
+            (left, right) => left == right,
+        });
     if let Some(entry) = existing {
-        entry.key = key;
-        entry.value = value;
+        *entry = incoming;
     } else {
-        entries.push(Entry { key, value });
+        entries.push(incoming);
     }
+}
+
+/// Whether Go treats a scalar mapping key as a YAML merge.
+#[must_use]
+pub fn is_merge_key(value: &str, tag: &str, implicit: bool) -> bool {
+    value == "<<" && (implicit || tag == "tag:yaml.org,2002:merge")
 }
 
 /// Decodes the first document's event stream (`decode.go:170-178,333-377`).
@@ -367,31 +413,23 @@ pub enum Target {
     Head,
 }
 
-#[derive(Clone, Copy)]
-enum JsonType {
-    Any,
-    Head,
-    Metadata,
-    Annotations,
-    String,
-}
-
 /// Converts generic YAML to sigs' JSON target (`yaml.go:181-365`).
 ///
 /// For distinct YAML keys that coerce to the same JSON key, Go chooses an unspecified
 /// map iteration order.
-/// This concrete conversion uses entry order, one of Go's permitted outcomes.
+/// This concrete conversion keeps the last YAML entry, one of Go's permitted outcomes,
+/// and fails whenever any candidate fails to marshal.
 ///
 /// # Errors
 ///
 /// Returns unsupported JSON keys, nonfinite numbers or incompatible target types.
 pub fn to_json(value: &Value, target: Target) -> Result<serde_json::Value, Error> {
     let shape = if target == Target::Head {
-        JsonType::Head
+        Shape::Head
     } else {
-        JsonType::Any
+        Shape::Any
     };
-    let json = json_value(value, shape)?;
+    let json = convert(value, shape)?.concrete()?;
     match target {
         Target::Generic => Ok(json),
         Target::Map if json.is_null() || json.is_object() => Ok(json),
@@ -401,71 +439,285 @@ pub fn to_json(value: &Value, target: Target) -> Result<serde_json::Value, Error
     }
 }
 
-/// Selects the reflected destination field without changing its JSON key (`yaml.go:253-297`).
-fn field_type(target: JsonType, key: &str) -> JsonType {
-    match target {
-        JsonType::Head if equal_fold_ascii(key, "kind") || equal_fold_ascii(key, "apiVersion") => {
-            JsonType::String
+/// The Go destination type that steers sigs' conversion and `encoding/json`'s assignment.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Shape {
+    /// `interface{}`.
+    Any,
+    /// `map[string]interface{}`, Helm's values target.
+    Values,
+    /// `string`.
+    Text,
+    /// `bool`.
+    Bool,
+    /// `[]string`.
+    Texts,
+    /// `[]interface{}`.
+    List,
+    /// `map[string]string`.
+    TextMap,
+    /// `chart.Metadata` (`pkg/chart/v2/metadata.go:30-82`).
+    Chart,
+    /// `[]*chart.Dependency`.
+    Dependencies,
+    /// `chart.Dependency` (`pkg/chart/v2/dependency.go:26-58`).
+    Dependency,
+    /// `[]*chart.Maintainer`.
+    Maintainers,
+    /// `chart.Maintainer`.
+    Maintainer,
+    /// `releaseutil.SimpleHead` (`pkg/release/v1/util/manifest_sorter.go:37-45`).
+    Head,
+    /// `SimpleHead.Metadata`.
+    HeadMetadata,
+}
+
+impl Shape {
+    /// JSON field names and types of a struct destination, in Go field order.
+    pub(crate) fn fields(self) -> &'static [(&'static str, Self)] {
+        use Shape::{Bool, Dependencies, HeadMetadata, List, Maintainers, Text, TextMap, Texts};
+        match self {
+            Self::Chart => &[
+                ("name", Text),
+                ("home", Text),
+                ("sources", Texts),
+                ("version", Text),
+                ("description", Text),
+                ("keywords", Texts),
+                ("maintainers", Maintainers),
+                ("icon", Text),
+                ("apiVersion", Text),
+                ("condition", Text),
+                ("tags", Text),
+                ("appVersion", Text),
+                ("deprecated", Bool),
+                ("annotations", TextMap),
+                ("kubeVersion", Text),
+                ("dependencies", Dependencies),
+                ("type", Text),
+            ],
+            Self::Dependency => &[
+                ("name", Text),
+                ("version", Text),
+                ("repository", Text),
+                ("condition", Text),
+                ("tags", Texts),
+                ("enabled", Bool),
+                ("import-values", List),
+                ("alias", Text),
+            ],
+            Self::Maintainer => &[("name", Text), ("email", Text), ("url", Text)],
+            Self::Head => &[
+                ("apiVersion", Text),
+                ("kind", Text),
+                ("metadata", HeadMetadata),
+            ],
+            Self::HeadMetadata => &[("name", Text), ("annotations", TextMap)],
+            Self::Any
+            | Self::Values
+            | Self::Text
+            | Self::Bool
+            | Self::Texts
+            | Self::List
+            | Self::TextMap
+            | Self::Dependencies
+            | Self::Maintainers => &[],
         }
-        JsonType::Head if equal_fold_ascii(key, "metadata") => JsonType::Metadata,
-        JsonType::Metadata if equal_fold_ascii(key, "name") => JsonType::String,
-        JsonType::Metadata if equal_fold_ascii(key, "annotations") => JsonType::Annotations,
-        JsonType::Annotations => JsonType::String,
-        JsonType::Any | JsonType::Head | JsonType::Metadata | JsonType::String => JsonType::Any,
+    }
+
+    /// The struct field a JSON key decodes into: exact name first, then Go's simple
+    /// fold (`encoding/json/decode.go:690-707`, `sigs.k8s.io/yaml/yaml.go:258-276`).
+    pub(crate) fn field(self, key: &str) -> Option<(&'static str, Self)> {
+        let fields = self.fields();
+        fields
+            .iter()
+            .find(|(name, _)| *name == key)
+            .or_else(|| fields.iter().find(|(name, _)| equal_fold_ascii(key, name)))
+            .copied()
+    }
+
+    /// Whether a JSON object decodes into this destination.
+    pub(crate) fn is_object(self) -> bool {
+        matches!(self, Self::Any | Self::Values | Self::TextMap) || !self.fields().is_empty()
+    }
+
+    /// The destination of one member of a JSON object.
+    fn member(self, key: &str) -> Self {
+        match self {
+            Self::Values => Self::Any,
+            Self::TextMap => Self::Text,
+            _ => self.field(key).map_or(Self::Any, |(_, field)| field),
+        }
+    }
+
+    /// The destination of one element of a JSON array.
+    pub(crate) fn element(self) -> Self {
+        match self {
+            Self::Texts => Self::Text,
+            Self::Dependencies => Self::Dependency,
+            Self::Maintainers => Self::Maintainer,
+            _ => Self::Any,
+        }
     }
 }
 
-/// Converts every key and child before JSON decoding (`sigs.k8s.io/yaml/yaml.go:205-365`).
-fn json_value(value: &Value, target: JsonType) -> Result<serde_json::Value, Error> {
-    if matches!(target, JsonType::String) {
-        let text = match value {
-            Value::Int(value) => Some(value.to_string()),
-            Value::Uint(value) => Some(value.to_string()),
-            Value::Float(bits) => Some(go_float(f64::from_bits(*bits), true)),
-            Value::Bool(value) => Some(value.to_string()),
-            Value::Null
-            | Value::String(_)
-            | Value::RawString(_)
-            | Value::Sequence(_)
-            | Value::Mapping(_) => None,
-        };
-        if let Some(text) = text {
-            return Ok(serde_json::Value::String(text));
+/// sigs' JSON-able object before `json.Marshal`, with numbers still in their YAML types.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Json {
+    Null,
+    Bool(bool),
+    Int(i64),
+    Uint(u64),
+    /// IEEE-754 bits; a surviving nonfinite value fails marshaling.
+    Float(u64),
+    /// A YAML string.
+    String(String),
+    /// A number or Boolean sigs converted for a string destination.
+    Coerced(String),
+    Array(Vec<Json>),
+    /// Members in marshaled order, sorted by their raw key bytes.
+    Object(Vec<Member>),
+}
+
+/// One converted map key and every YAML entry that converted to it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Member {
+    pub(crate) raw: Vec<u8>,
+    /// Distinct Go keys, such as `1` and `"1"`, compete in Go's unspecified map iteration
+    /// order (`sigs.k8s.io/yaml/yaml.go:204-300`); each one is a possible winner.
+    pub(crate) candidates: Vec<Candidate>,
+}
+
+/// One possible winner of a converted key.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Candidate {
+    pub(crate) value: Json,
+    /// Whether the entry was spelled directly, without alias or merge expansion.
+    pub(crate) direct: bool,
+}
+
+/// Converts every YAML entry for its destination, as sigs' `convertToJSONableObject` does
+/// (`sigs.k8s.io/yaml/yaml.go:181-365`).
+///
+/// Every candidate converts, including ignored fields and collision losers, so a key
+/// conversion failure anywhere fails the document before a winner is chosen.
+///
+/// # Errors
+///
+/// Returns an unsupported map key.
+pub(crate) fn convert(value: &Value, shape: Shape) -> Result<Json, Error> {
+    Ok(match value {
+        Value::Null => Json::Null,
+        Value::Bool(value) if shape == Shape::Text => Json::Coerced(value.to_string()),
+        Value::Int(value) if shape == Shape::Text => Json::Coerced(value.to_string()),
+        Value::Uint(value) if shape == Shape::Text => Json::Coerced(value.to_string()),
+        Value::Float(bits) if shape == Shape::Text => {
+            Json::Coerced(go_float(f64::from_bits(*bits), true))
+        }
+        Value::Bool(value) => Json::Bool(*value),
+        Value::Int(value) => Json::Int(*value),
+        Value::Uint(value) => Json::Uint(*value),
+        Value::Float(bits) => Json::Float(*bits),
+        Value::String(value) => Json::String(value.clone()),
+        Value::RawString(value) => Json::String(go_json_string(value)),
+        Value::Sequence(items) => Json::Array(
+            items
+                .iter()
+                .map(|item| convert(item, shape.element()))
+                .collect::<Result<_, _>>()?,
+        ),
+        Value::Mapping(entries) => {
+            let mut members = BTreeMap::<_, Vec<_>>::new();
+            for Entry {
+                key,
+                value,
+                authored,
+            } in entries
+            {
+                let raw = json_key(key)?;
+                let value = convert(value, shape.member(&go_json_string(&raw)))?;
+                members.entry(raw).or_default().push(Candidate {
+                    value,
+                    direct: *authored,
+                });
+            }
+            Json::Object(
+                members
+                    .into_iter()
+                    .map(|(raw, candidates)| Member { raw, candidates })
+                    .collect(),
+            )
+        }
+    })
+}
+
+impl Json {
+    /// Succeeds when some choice of collision winners marshals (`encoding/json/encode.go:575-585`).
+    ///
+    /// # Errors
+    ///
+    /// Returns the first nonfinite number that every outcome keeps.
+    pub(crate) fn marshal(&self) -> Result<(), Error> {
+        match self {
+            Self::Float(bits) if !f64::from_bits(*bits).is_finite() => Err(json_error(format!(
+                "unsupported value: {}",
+                go_float(f64::from_bits(*bits), false)
+            ))),
+            Self::Array(items) => items.iter().try_for_each(Self::marshal),
+            Self::Object(members) => {
+                members
+                    .iter()
+                    .try_for_each(|Member { raw: _, candidates }| {
+                        let mut failure = None;
+                        for Candidate { value, direct: _ } in candidates {
+                            match value.marshal() {
+                                Ok(()) => return Ok(()),
+                                Err(error) => {
+                                    failure.get_or_insert(error);
+                                }
+                            }
+                        }
+                        failure.map_or(Ok(()), Err)
+                    })
+            }
+            Self::Null
+            | Self::Bool(_)
+            | Self::Int(_)
+            | Self::Uint(_)
+            | Self::Float(_)
+            | Self::String(_)
+            | Self::Coerced(_) => Ok(()),
         }
     }
-    match value {
-        Value::Null => Ok(serde_json::Value::Null),
-        Value::Bool(value) => Ok(json!(*value)),
-        Value::Int(value) => Ok(json!(go_signed_float(*value))),
-        Value::Uint(value) => Ok(json!(go_unsigned_float(*value))),
-        Value::Float(bits) => {
-            let value = f64::from_bits(*bits);
-            if value.is_finite() {
-                Ok(json!(value))
-            } else {
-                Err(json_error("unsupported value"))
+
+    /// One concrete outcome: the last YAML entry wins each converted key, and every
+    /// candidate must marshal.
+    fn concrete(&self) -> Result<serde_json::Value, Error> {
+        Ok(match self {
+            Self::Null => serde_json::Value::Null,
+            Self::Bool(value) => json!(*value),
+            Self::Int(value) => json!(go_signed_float(*value)),
+            Self::Uint(value) => json!(go_unsigned_float(*value)),
+            Self::Float(bits) => {
+                self.marshal()?;
+                json!(f64::from_bits(*bits))
             }
-        }
-        Value::String(value) => Ok(json!(value)),
-        Value::RawString(value) => Ok(json!(go_json_string(value))),
-        Value::Sequence(items) => items
-            .iter()
-            .map(|value| json_value(value, JsonType::Any))
-            .collect::<Result<Vec<_>, _>>()
-            .map(serde_json::Value::Array),
-        Value::Mapping(entries) => {
-            let mut raw_map = BTreeMap::new();
-            for Entry { key, value } in entries {
-                let key = json_key(key)?;
-                let converted = json_value(value, field_type(target, &go_json_string(&key)))?;
-                raw_map.insert(key, converted);
+            Self::String(value) | Self::Coerced(value) => json!(value),
+            Self::Array(items) => serde_json::Value::Array(
+                items.iter().map(Self::concrete).collect::<Result<_, _>>()?,
+            ),
+            Self::Object(members) => {
+                let mut object = serde_json::Map::new();
+                for Member { raw, candidates } in members {
+                    let mut winner = serde_json::Value::Null;
+                    for Candidate { value, direct: _ } in candidates {
+                        winner = value.concrete()?;
+                    }
+                    object.insert(go_json_string(raw), winner);
+                }
+                serde_json::Value::Object(object)
             }
-            let mut json = serde_json::Map::new();
-            for (key, value) in raw_map {
-                json.insert(go_json_string(&key), value);
-            }
-            Ok(serde_json::Value::Object(json))
-        }
+        })
     }
 }
 
@@ -497,10 +749,16 @@ pub fn has_json_key_collisions(value: &Value) -> bool {
     match value {
         Value::Mapping(entries) => {
             let mut keys = BTreeSet::new();
-            entries.iter().any(|Entry { key, value }| {
-                json_key(key).is_ok_and(|key| !keys.insert(go_json_string(&key)))
-                    || has_json_key_collisions(value)
-            })
+            entries.iter().any(
+                |Entry {
+                     key,
+                     value,
+                     authored: _,
+                 }| {
+                    json_key(key).is_ok_and(|key| !keys.insert(go_json_string(&key)))
+                        || has_json_key_collisions(value)
+                },
+            )
         }
         Value::Sequence(items) => items.iter().any(has_json_key_collisions),
         Value::Null
@@ -514,7 +772,7 @@ pub fn has_json_key_collisions(value: &Value) -> bool {
 }
 
 /// Replaces each invalid byte separately, as `encoding/json/encode.go:1019-1048` does.
-fn go_json_string(input: &[u8]) -> String {
+pub(crate) fn go_json_string(input: &[u8]) -> String {
     let mut output = String::new();
     let mut remaining = input;
     while !remaining.is_empty() {
@@ -655,7 +913,7 @@ fn decode_metadata(value: &serde_json::Value, metadata: &mut Metadata) -> Result
     Ok(())
 }
 
-fn json_error(message: impl Into<String>) -> Error {
+pub(crate) fn json_error(message: impl Into<String>) -> Error {
     Error {
         kind: ErrorKind::Json,
         line: 0,

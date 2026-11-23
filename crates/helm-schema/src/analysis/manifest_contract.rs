@@ -227,6 +227,9 @@ fn helm_level_enabled_guard_sets(activation: &chart::ChartDependencyActivation) 
 }
 
 fn level_activation_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
+    if !activation.legacy {
+        return helm_level_enabled_guard_sets(activation);
+    }
     let condition_paths = normalized_ordered_paths(&activation.condition_paths);
     let tag_paths = normalized_sorted_paths(&activation.tag_paths);
 

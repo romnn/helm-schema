@@ -107,6 +107,31 @@ fn packaged_chart_preserves_final_override_bytes() -> eyre::Result<()> {
     Ok(())
 }
 
+#[test]
+fn review_config_only_reads_packaged_config_before_validating_metadata() -> eyre::Result<()> {
+    let temp = ScratchDir::new("packaged-config-with-invalid-manifest")?;
+    let chart = temp.path().join("chart");
+    write_chart(&chart, Some(TEMPORAL_CONFIG))?;
+    std::fs::write(chart.join("Chart.yaml"), "description: []")?;
+    let archive = temp.path().join("invalid-archive-manifest.tgz");
+    package_chart(&chart, &archive)?;
+
+    let directory = print_effective(&chart)?;
+    let packaged = print_effective(&archive)?;
+    for output in [&directory, &packaged] {
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    sim_assert_eq!(have: yaml(&packaged)?.pointer("/profile/value").and_then(Value::as_str), want: Some("lean"));
+    let analysis = generate(&archive)?;
+    assert!(!analysis.status.success());
+    assert!(String::from_utf8_lossy(&analysis.stderr).contains("Chart.yaml"));
+    Ok(())
+}
+
 fn yaml(output: &Output) -> eyre::Result<Value> {
     serde_yaml::from_slice(&output.stdout).wrap_err("parse effective config YAML")
 }

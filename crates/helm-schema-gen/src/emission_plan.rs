@@ -24,6 +24,7 @@ use crate::provider_definitions::{
 };
 use crate::schema_tree::{SchemaDocument, draft07_root_document};
 use crate::uncoalesced_root::UncoalescedRootGate;
+use crate::values_yaml::{known_json_projection, unknown_paths};
 use crate::{AuthoringPolicy, ValuesSchemaInput};
 
 pub(crate) struct LoweredEmissionPlan<'signals> {
@@ -56,6 +57,8 @@ pub(crate) struct RootValuesDocuments {
     coalesced_defaults: Value,
     /// The root `values.yaml` as written, when the caller supplied it.
     uncoalesced_root: Option<Value>,
+    /// Members of either lint document whose collision winners differ.
+    lint_unknown: BTreeSet<Vec<String>>,
     input_defaults: YamlValue,
     runtime_defaults: YamlValue,
     dependency_refill: YamlValue,
@@ -82,12 +85,11 @@ impl RootValuesDocuments {
         predicate_memo: &helm_schema_core::PredicateMemo,
     ) -> Self {
         let contract_schema_signals = input.contract_schema_signals;
-        let mut composed = input
-            .values_documents
-            .map_or(YamlValue::Null, |documents| documents.composed.clone());
+        let values = input.values_documents;
+        let mut composed = values.map_or(YamlValue::Null, |docs| docs.composed.clone());
         // Taken before render-time default merges: Helm validates, and
         // `helm lint` compares against, the coalesced values alone.
-        let mut coalesced_defaults = serde_json::to_value(&composed).unwrap_or(Value::Null);
+        let mut coalesced_defaults = known_json_projection(&composed).unwrap_or_default();
         drop_null_members(&mut coalesced_defaults);
         crate::values_yaml::apply_values_default_sources(
             &mut composed,
@@ -115,9 +117,8 @@ impl RootValuesDocuments {
             &composed,
             contract_schema_signals.values_default_sources(),
         );
-        let mut dependency_refill = input.values_documents.map_or(YamlValue::Null, |documents| {
-            documents.dependency_refill.clone()
-        });
+        let mut dependency_refill =
+            values.map_or(YamlValue::Null, |docs| docs.dependency_refill.clone());
         crate::values_yaml::copy_values_default_sources(
             &mut dependency_refill,
             &composed,
@@ -130,14 +131,19 @@ impl RootValuesDocuments {
             &dependency_refill,
             predicate_memo,
         );
-        let uncoalesced_root = input
-            .values_documents
-            .and_then(|documents| documents.uncoalesced_root.as_ref())
-            .and_then(|document| serde_json::to_value(document).ok());
+        // Unknown members stay local: the lint gate judges every constraint that does not
+        // examine one of them against the known part of each document.
+        let uncoalesced = values.and_then(|docs| docs.uncoalesced_root.as_ref());
+        let mut lint_unknown = BTreeSet::new();
+        for document in uncoalesced.into_iter().chain([&composed]) {
+            unknown_paths(document, &mut Vec::new(), &mut lint_unknown);
+        }
+        let uncoalesced_root = uncoalesced.and_then(known_json_projection);
         Self {
             composed,
             coalesced_defaults,
             uncoalesced_root,
+            lint_unknown,
             input_defaults,
             runtime_defaults,
             dependency_refill,
@@ -539,7 +545,8 @@ impl<'signals> LoweredEmissionPlan<'signals> {
             self.documents.uncoalesced_root.as_ref(),
             &self.documents.coalesced_defaults,
             &provider_definitions,
-        );
+        )
+        .with_unknown(&self.documents.lint_unknown);
         uncoalesced_root_gate.reserve_condition_names(&document.clone().into_value());
         for conditional in &selected_conditionals {
             uncoalesced_root_gate.reserve_condition_names(&conditional.schema.clone().into_value());
@@ -656,7 +663,7 @@ impl<'signals> LoweredEmissionPlan<'signals> {
             definition_origins,
         } = projected;
         let mut schema = document.into_value();
-        if let Ok(declared_defaults) = serde_json::to_value(&self.documents.input_defaults)
+        if let Some(declared_defaults) = known_json_projection(&self.documents.input_defaults)
             && declared_defaults.is_object()
         {
             let _span = tracing::info_span!("preserve_declared_defaults").entered();

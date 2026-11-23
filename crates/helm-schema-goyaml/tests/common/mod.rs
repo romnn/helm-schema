@@ -252,6 +252,7 @@ fn key_identity(key: &helm_schema_goyaml::Value) -> Option<CoercedKey> {
     let singleton = YamlValue::Mapping(vec![Entry {
         key: key.clone(),
         value: YamlValue::Null,
+        authored: false,
     }]);
     let json = to_json(&singleton, Target::Generic).ok()?;
     let rendered = json.as_object()?.keys().next()?.clone();

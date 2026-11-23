@@ -8,6 +8,11 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+const DEMO_MANIFEST: &str = indoc! {"
+    name: demo
+    version: 0.1.0
+"};
+
 fn load_directory(root: &VfsPath, include_tests: bool) -> EngineResult<LoadedChart> {
     LoadedChart::read_directory(Arc::new(Directory::new(root.clone(), None)), include_tests)
 }
@@ -32,8 +37,8 @@ fn directory_and_archive_twins_expose_the_same_ordered_entries() -> eyre::Result
         ("templates/_helpers.tpl", "{{ define \"banner\" }}{{ end }}"),
         ("files/banner.txt", "Hello"),
         ("crds/record.yaml", "kind: CustomResourceDefinition"),
-        ("charts/child/Chart.yaml", "name: child"),
-        ("Chart.yaml", "name: demo"),
+        ("charts/child/Chart.yaml", "name: child\nversion: 0.1.0"),
+        ("Chart.yaml", DEMO_MANIFEST),
     ];
     let root = VfsPath::new(vfs::MemoryFS::new());
     for (name, contents) in entries {
@@ -67,7 +72,7 @@ fn directory_and_archive_twins_expose_the_same_ordered_entries() -> eyre::Result
 #[test]
 fn archive_keeps_duplicate_members_in_input_order() -> eyre::Result<()> {
     let entries = [
-        ("Chart.yaml", "name: demo"),
+        ("Chart.yaml", DEMO_MANIFEST),
         ("values.yaml", "old: true"),
         ("templates/z.yaml", "kind: Secret"),
         ("values.yaml", "new: true"),
@@ -146,7 +151,10 @@ fn file_roles_follow_chart_file_classification() -> eyre::Result<()> {
         &chart_dir.join("templates/_script.txt")?,
         "{{ .Values.script }}\n",
     )?;
-    test_util::write(&chart_dir.join("charts/child/Chart.yaml")?, "name: child")?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "name: child\nversion: 0.1.0",
+    )?;
     test_util::write(&chart_dir.join("charts/child/config/child.json")?, "{}\n")?;
 
     test_util::write(
@@ -154,6 +162,7 @@ fn file_roles_follow_chart_file_classification() -> eyre::Result<()> {
         indoc! {"
             apiVersion: v2
             name: root
+            version: 0.1.0
         "},
     )?;
     test_util::write(&chart_dir.join("values.schema.json")?, "{}")?;
@@ -197,6 +206,7 @@ fn file_roles_follow_chart_file_classification() -> eyre::Result<()> {
 #[test]
 fn loaded_chart_corpus_owns_the_classified_source_snapshot() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(&chart_dir.join("Chart.yaml")?, DEMO_MANIFEST)?;
     let template = chart_dir.join("templates/configmap.yaml")?;
     test_util::write(&template, "kind: ConfigMap\n")?;
     let values = chart_dir.join("values.yaml")?;
@@ -222,6 +232,7 @@ fn loaded_chart_corpus_owns_the_classified_source_snapshot() -> eyre::Result<()>
 fn directory_chart_roles_use_case_sensitive_member_names() -> eyre::Result<()> {
     let scratch = test_util::scratch::ScratchDir::new("chart-loader-casing")?;
     let root = VfsPath::new(vfs::PhysicalFS::new(scratch.path()));
+    test_util::write(&root.join("Chart.yaml")?, DEMO_MANIFEST)?;
     for name in [
         "VALUES.YAML",
         "CRDS/widget.yaml",
@@ -249,6 +260,7 @@ fn directory_chart_roles_use_case_sensitive_member_names() -> eyre::Result<()> {
 #[test]
 fn case_sensitive_template_selection_keeps_distinct_directory_entries() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(&root.join("Chart.yaml")?, DEMO_MANIFEST)?;
     test_util::write(&root.join("templates/a.yaml")?, "a")?;
     test_util::write(&root.join("Templates/b.yaml")?, "b")?;
     let chart = load_directory(&root, false)?;
@@ -260,18 +272,19 @@ fn case_sensitive_template_selection_keeps_distinct_directory_entries() -> eyre:
 #[test]
 fn vendored_metadata_failure_precedes_later_invalid_package() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join("charts/a/Chart.yaml")?, "name: [")?;
     test_util::write(&root.join("charts/z.tgz")?, "invalid archive")?;
     let error = super::super::discover_chart_contexts(&root.into(), false)
         .expect_err("child metadata is invalid");
-    assert!(matches!(error, CliError::Yaml(_)), "{error:?}");
+    assert!(matches!(error, CliError::ChartDecode { .. }), "{error:?}");
     Ok(())
 }
 
 #[test]
 fn prepared_config_bytes_are_the_same_bytes_seen_by_files_get() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(&root.join("Chart.yaml")?, DEMO_MANIFEST)?;
     let config = root.join("helm-schema.yaml")?;
     test_util::write(&config, "version: 1")?;
     let mut source = crate::chart_source::RootChartSource::directory(root);
@@ -347,7 +360,7 @@ fn nested_packages_with_the_same_wrapper_keep_distinct_templates() -> eyre::Resu
 fn archive_normalizes_members_without_losing_original_spelling() -> eyre::Result<()> {
     let mut tar = tar::Builder::new(GzEncoder::new(Vec::new(), Compression::default()));
     let name = b"demo/./sub/../Chart.yaml";
-    let manifest = b"name: demo";
+    let manifest = DEMO_MANIFEST.as_bytes();
     let mut header = tar::Header::new_gnu();
     header.set_mode(0o644);
     header.set_size(manifest.len().try_into()?);
@@ -357,7 +370,7 @@ fn archive_normalizes_members_without_losing_original_spelling() -> eyre::Result
         .ok_or_eyre("archive name does not fit")?;
     raw_name.copy_from_slice(name);
     header.set_cksum();
-    tar.append(&header, &manifest[..])?;
+    tar.append(&header, manifest)?;
     let bytes = tar.into_inner()?.finish()?;
     let chart = LoadedChart::read_archive(
         bytes.as_slice(),
@@ -376,7 +389,7 @@ fn archive_normalizes_members_without_losing_original_spelling() -> eyre::Result
         matches!(archive.as_ref(), SourcePath::Native(path) if path == Path::new("charts/demo.tgz"))
     );
     sim_assert_eq!(have: original_name.as_ref(), want: name.as_slice());
-    sim_assert_eq!(have: chart.file("Chart.yaml").map(|file| file.source().map(str::to_owned)).transpose()?, want: Some("name: demo".to_string()));
+    sim_assert_eq!(have: chart.file("Chart.yaml").map(|file| file.source().map(str::to_owned)).transpose()?, want: Some(DEMO_MANIFEST.to_string()));
     Ok(())
 }
 
@@ -458,7 +471,7 @@ fn discover_directory(
 #[test]
 fn directory_reads_helmignore_before_the_walk() -> eyre::Result<()> {
     let (root, opens) = ObservedFs::with_denied(&["/.helmignore"]);
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join(".helmignore")?, "*")?;
     let error = discover_directory(root, false).expect_err("unreadable .helmignore");
     assert!(matches!(error, CliError::Vfs(_)), "{error:?}");
@@ -469,7 +482,7 @@ fn directory_reads_helmignore_before_the_walk() -> eyre::Result<()> {
 #[test]
 fn mount_with_files_but_without_a_manifest_is_an_error() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join("charts/no-manifest/file.yaml")?, "opaque")?;
     let error = discover_directory(root, false).expect_err("missing child manifest");
     assert!(matches!(error, CliError::Vfs(_)), "{error:?}");
@@ -485,7 +498,7 @@ fn directory_prunes_ignored_paths_before_opening_members() -> eyre::Result<()> {
     let skipped = "/templates/ignored/fifo";
     let retained = "/templates/retained/control.yaml";
     let (root, opens) = ObservedFs::with_denied(&[skipped]);
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join(".helmignore")?, "templates/ignored/")?;
     test_util::write(&root.join(skipped)?, "")?;
     test_util::write(&root.join(retained)?, "retained")?;
@@ -499,7 +512,7 @@ fn directory_prunes_ignored_paths_before_opening_members() -> eyre::Result<()> {
 #[test]
 fn legacy_snapshot_archive_cap_does_not_truncate_templates() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     let template = "{{ define \"my-helper\" }}my answer{{ end }}";
     test_util::write(&root.join("templates/charts/helper.tgz")?, template)?;
     let charts = discover_directory(root, false)?;
@@ -515,7 +528,7 @@ fn direct_input_lookup_caches_backend_hit_and_miss() -> eyre::Result<()> {
         ..ObservedFs::default()
     });
     let lower = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&upper.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&upper.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&upper.join("VALUES.YAML")?, "answer: upper")?;
     test_util::write(&lower.join("Values.Yaml")?, "answer: lower")?;
     let root = VfsPath::new(vfs::OverlayFS::new(&[upper.clone(), lower]));
@@ -533,7 +546,10 @@ fn direct_input_lookup_caches_backend_hit_and_miss() -> eyre::Result<()> {
 fn legacy_snapshot_reuses_chart_local_values_flag_bytes() -> eyre::Result<()> {
     let scratch = test_util::scratch::ScratchDir::new("chart-loader-local-values")?;
     let values = scratch.path().join("values.yaml");
-    std::fs::write(scratch.path().join("Chart.yaml"), "name: root")?;
+    std::fs::write(
+        scratch.path().join("Chart.yaml"),
+        "name: root\nversion: 0.1.0",
+    )?;
     std::fs::write(&values, "answer: original")?;
     let source = crate::chart_source::RootChartSource::open(scratch.path(), LoadBudget::default())?;
     let charts = crate::chart::discover_chart_contexts(&source, false)?;
@@ -547,10 +563,16 @@ fn legacy_snapshot_reuses_chart_local_values_flag_bytes() -> eyre::Result<()> {
 #[test]
 fn legacy_snapshot_vendored_archive_keeps_its_containing_source() -> eyre::Result<()> {
     let scratch = test_util::scratch::ScratchDir::new("chart-loader-package-parent")?;
-    std::fs::write(scratch.path().join("Chart.yaml"), "name: root")?;
+    std::fs::write(
+        scratch.path().join("Chart.yaml"),
+        "name: root\nversion: 0.1.0",
+    )?;
     std::fs::create_dir(scratch.path().join("charts"))?;
     let package = scratch.path().join("charts/leaf.tgz");
-    std::fs::write(&package, tarball("leaf", &[("Chart.yaml", "name: leaf")])?)?;
+    std::fs::write(
+        &package,
+        tarball("leaf", &[("Chart.yaml", "name: leaf\nversion: 0.1.0")])?,
+    )?;
     let source = crate::chart_source::RootChartSource::open(scratch.path(), LoadBudget::default())?;
     let charts = crate::chart::discover_chart_contexts(&source, false)?;
     let leaf = charts.get(1).ok_or_eyre("leaf chart")?;
@@ -609,7 +631,7 @@ fn non_utf8_manifest_is_a_vfs_read_error() -> eyre::Result<()> {
 #[test]
 fn non_utf8_requirements_are_a_vfs_read_error() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join("requirements.yaml")?, [0xff])?;
     assert_vfs_invalid_data(
         discover_directory(root, false).expect_err("invalid requirements"),
@@ -620,17 +642,11 @@ fn non_utf8_requirements_are_a_vfs_read_error() -> eyre::Result<()> {
 #[test]
 fn non_utf8_defaults_are_a_vfs_read_error() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join("values.yaml")?, [0xff])?;
     let charts = discover_directory(root, false)?;
-    let chart = charts.first().ok_or_eyre("root chart")?;
     assert_vfs_invalid_data(
-        crate::chart::chart_own_values(chart).expect_err("invalid defaults"),
-        "/values.yaml",
-    )?;
-    assert_vfs_invalid_data(
-        crate::chart::load_values_files_and_check_keys(&charts, &[])
-            .expect_err("invalid defaults during key validation"),
+        crate::chart::build_composed_values_document(&charts, false).expect_err("invalid defaults"),
         "/values.yaml",
     )
 }
@@ -646,7 +662,10 @@ fn native_values_flag_preserves_non_utf8_filename_and_reuses_bytes() -> eyre::Re
     let skipped = scratch.path().join("templates/tests");
     std::fs::create_dir_all(&skipped)?;
     let values = skipped.join(OsStr::from_bytes(b"values-\xff.yaml"));
-    std::fs::write(scratch.path().join("Chart.yaml"), "name: root")?;
+    std::fs::write(
+        scratch.path().join("Chart.yaml"),
+        "name: root\nversion: 0.1.0",
+    )?;
     std::fs::write(&values, "answer: original")?;
     let source = crate::chart_source::RootChartSource::open(scratch.path(), LoadBudget::default())?;
     let charts = crate::chart::discover_chart_contexts(&source, false)?;
@@ -663,11 +682,11 @@ fn native_values_flag_preserves_non_utf8_filename_and_reuses_bytes() -> eyre::Re
 #[test]
 fn selection_law_directory_filters_but_archive_does_not() -> eyre::Result<()> {
     let entries = [
-        ("Chart.yaml", "name: root"),
+        ("Chart.yaml", "name: root\nversion: 0.1.0"),
         (".helmignore", "charts/[^x]eaf/\n"),
-        ("charts/leaf/Chart.yaml", "name: leaf"),
+        ("charts/leaf/Chart.yaml", "name: leaf\nversion: 0.1.0"),
         ("charts/leaf/templates/run.yaml", "leaf"),
-        ("charts/xeaf/Chart.yaml", "name: xeaf"),
+        ("charts/xeaf/Chart.yaml", "name: xeaf\nversion: 0.1.0"),
         ("charts/xeaf/templates/run.yaml", "xeaf"),
     ];
     let root = VfsPath::new(vfs::MemoryFS::new());
@@ -686,7 +705,7 @@ fn selection_law_directory_filters_but_archive_does_not() -> eyre::Result<()> {
     )?;
     let mut seen = Vec::new();
     archive.visit_vendored_charts(|child| {
-        seen.push(child.filename().to_owned());
+        seen.push(child.path.rsplit('/').next().unwrap_or_default().to_owned());
         Ok(())
     })?;
     sim_assert_eq!(have: seen, want: vec!["leaf", "xeaf"]);
@@ -702,7 +721,7 @@ fn selection_law_directory_filters_but_archive_does_not() -> eyre::Result<()> {
 fn selection_law_directory_filters_below_retained_child() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
     for (name, contents) in [
-        ("Chart.yaml", "name: root"),
+        ("Chart.yaml", "name: root\nversion: 0.1.0"),
         (
             ".helmignore",
             indoc! {"
@@ -713,7 +732,7 @@ fn selection_law_directory_filters_below_retained_child() -> eyre::Result<()> {
                 charts/leaf/requirements.yaml
             "},
         ),
-        ("charts/leaf/Chart.yaml", "name: leaf"),
+        ("charts/leaf/Chart.yaml", "name: leaf\nversion: 0.1.0"),
         ("charts/leaf/.helmignore", "templates/keep.yaml\n"),
         ("charts/leaf/values.yaml", "enabled: true"),
         ("charts/leaf/requirements.yaml", "dependencies: []"),
@@ -741,12 +760,12 @@ fn selection_law_directory_filters_below_retained_child() -> eyre::Result<()> {
 #[test]
 fn selection_law_skips_prefixed_nested_mounts_and_keeps_packages() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     let package = |name: &str, template: &str| {
         tarball(
             "wrapper",
             &[
-                ("Chart.yaml", format!("name: {name}")),
+                ("Chart.yaml", format!("name: {name}\nversion: 0.1.0")),
                 ("templates/run.yaml", template.to_owned()),
             ],
         )
@@ -757,8 +776,11 @@ fn selection_law_skips_prefixed_nested_mounts_and_keeps_packages() -> eyre::Resu
     let parent = tarball(
         "wrapper",
         &[
-            ("Chart.yaml", b"name: parent".as_slice()),
-            ("charts/_hidden/Chart.yaml", b"name: hidden".as_slice()),
+            ("Chart.yaml", b"name: parent\nversion: 0.1.0".as_slice()),
+            (
+                "charts/_hidden/Chart.yaml",
+                b"name: hidden\nversion: 0.1.0".as_slice(),
+            ),
             (
                 "charts/_hidden/templates/run.yaml",
                 b"underscore skipped".as_slice(),
@@ -835,7 +857,10 @@ fn selection_law_uses_exact_mount_extension_and_never_searches_archive_roots() -
             false,
         )
     };
-    let displaced = tarball("wrapper", &[("nested/Chart.yaml", "name: root")])?;
+    let displaced = tarball(
+        "wrapper",
+        &[("nested/Chart.yaml", "name: root\nversion: 0.1.0")],
+    )?;
     assert!(matches!(
         read(&displaced),
         Err(CliError::NoChartYamlInArchive { .. })
@@ -844,12 +869,12 @@ fn selection_law_uses_exact_mount_extension_and_never_searches_archive_roots() -
     let valid = tarball(
         "wrapper",
         &[
-            ("Chart.yaml", "name: leaf"),
+            ("Chart.yaml", "name: leaf\nversion: 0.1.0"),
             ("templates/run.yaml", "retained"),
         ],
     )?;
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     let good = root.join("charts/leaf.tgz")?;
     test_util::write(&good, &valid)?;
     let charts = discover_directory(root.clone(), false)?;
@@ -887,7 +912,7 @@ fn native_directory_selects_symlink_targets_and_prunes_oversized_files() -> eyre
     let target = scratch.path().join("outside");
     std::fs::create_dir_all(root.join("templates"))?;
     std::fs::create_dir_all(&target)?;
-    std::fs::write(root.join("Chart.yaml"), "name: root")?;
+    std::fs::write(root.join("Chart.yaml"), "name: root\nversion: 0.1.0")?;
     let controls = target.join("control.yaml");
     std::fs::write(&controls, "retained")?;
     std::os::unix::fs::symlink(&target, root.join("templates/link"))?;
@@ -920,7 +945,7 @@ fn native_directory_selects_symlink_targets_and_prunes_oversized_files() -> eyre
 #[test]
 fn directory_and_archive_strip_bom_from_selected_payloads() -> eyre::Result<()> {
     let entries = [
-        ("Chart.yaml", "name: root"),
+        ("Chart.yaml", "name: root\nversion: 0.1.0"),
         ("payload.txt", "\u{feff}retained"),
     ];
     let root = VfsPath::new(vfs::MemoryFS::new());
@@ -944,14 +969,17 @@ fn directory_and_archive_strip_bom_from_selected_payloads() -> eyre::Result<()> 
 fn directory_input_prepares_a_source_manifest_before_selection() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
     test_util::write(&root.join(".helmignore")?, "Chart.template.yaml\n")?;
-    test_util::write(&root.join("Chart.template.yaml")?, "name: prepared")?;
+    test_util::write(
+        &root.join("Chart.template.yaml")?,
+        "name: prepared\nversion: 0.1.0",
+    )?;
     test_util::write(&root.join("templates/control.yaml")?, "retained")?;
     let charts = discover_directory(root.clone(), false)?;
     let chart = charts.first().ok_or_eyre("prepared chart")?;
     assert!(chart.files.file("Chart.template.yaml").is_none());
     sim_assert_eq!(have: crate::chart::build_define_index(&charts)?.get_file("prepared/templates/control.yaml"), want: Some("retained"));
 
-    test_util::write(&root.join("Chart.yaml")?, "name: existing")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: existing\nversion: 0.1.0")?;
     let charts = discover_directory(root, false)?;
     sim_assert_eq!(have: crate::chart::build_define_index(&charts)?.get_file("existing/templates/control.yaml"), want: Some("retained"));
     Ok(())
@@ -960,7 +988,10 @@ fn directory_input_prepares_a_source_manifest_before_selection() -> eyre::Result
 #[test]
 fn native_snapshot_bytes_belong_to_one_analysis_session() -> eyre::Result<()> {
     let scratch = test_util::scratch::ScratchDir::new("chart-loader-sessions")?;
-    std::fs::write(scratch.path().join("Chart.yaml"), "name: root")?;
+    std::fs::write(
+        scratch.path().join("Chart.yaml"),
+        "name: root\nversion: 0.1.0",
+    )?;
     let values_path = scratch.path().join("values.yaml");
     std::fs::write(&values_path, "answer: first")?;
     let source = crate::chart_source::RootChartSource::open(scratch.path(), LoadBudget::default())?;
@@ -975,7 +1006,7 @@ fn native_snapshot_bytes_belong_to_one_analysis_session() -> eyre::Result<()> {
 #[test]
 fn directory_loader_rejects_a_directory_in_place_of_helmignore() -> eyre::Result<()> {
     let root = VfsPath::new(vfs::MemoryFS::new());
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     test_util::write(&root.join("templates/control.yaml")?, "retained")?;
     let ignored = root.join(".helmignore")?;
     ignored.create_dir()?;
@@ -1001,7 +1032,7 @@ fn review_law_reads_large_self_ignored_rules() -> eyre::Result<()> {
     let mut rules = b"/.helmignore\n".to_vec();
     rules.extend(b"# short comment\n".repeat(MAX_FILE_SIZE / 8));
     test_util::write(&root.join(".helmignore")?, rules)?;
-    test_util::write(&root.join("Chart.yaml")?, "name: root")?;
+    test_util::write(&root.join("Chart.yaml")?, "name: root\nversion: 0.1.0")?;
     let chart = load_directory(&root, true)?;
     assert!(chart.file(".helmignore").is_none());
     assert!(chart.file("Chart.yaml").is_some());
@@ -1012,7 +1043,10 @@ fn review_law_reads_large_self_ignored_rules() -> eyre::Result<()> {
 fn review_law_preserves_distinct_non_utf8_archive_names() -> eyre::Result<()> {
     let mut tar = tar::Builder::new(GzEncoder::new(Vec::new(), Compression::default()));
     for (name, data) in [
-        (b"root/Chart.yaml".as_slice(), b"name: root".as_slice()),
+        (
+            b"root/Chart.yaml".as_slice(),
+            b"name: root\nversion: 0.1.0".as_slice(),
+        ),
         (b"root/files/\xff.txt".as_slice(), b"first".as_slice()),
         (b"root/files/\xfe.txt".as_slice(), b"second".as_slice()),
     ] {
@@ -1043,7 +1077,7 @@ fn review_law_preserves_distinct_non_utf8_archive_names() -> eyre::Result<()> {
 
 #[test]
 fn review_law_archive_member_count_is_not_a_helm_limit() -> eyre::Result<()> {
-    let mut entries = vec![("Chart.yaml".to_owned(), "name: root")];
+    let mut entries = vec![("Chart.yaml".to_owned(), "name: root\nversion: 0.1.0")];
     entries.extend((0..4096).map(|i| (format!("files/{i}"), "x")));
     let entries: Vec<_> = entries
         .iter()
@@ -1068,6 +1102,7 @@ fn review_law_requirements_uses_the_overlaid_version_and_notes_use_suffix() -> e
             indoc! {"
             apiVersion: v2
             name: root
+            version: 0.1.0
             dependencies: []
         "},
         ),
@@ -1099,7 +1134,7 @@ fn review_law_helm_archive_byte_limits_use_payload_size() -> eyre::Result<()> {
         header.set_mode(0o644);
         tar.append_data(&mut header, format!("root/files/{number}"), file.as_slice())?;
     }
-    let manifest = b"name: root";
+    let manifest = b"name: root\nversion: 0.1.0";
     let mut header = tar::Header::new_gnu();
     header.set_size(manifest.len().try_into()?);
     header.set_mode(0o644);
@@ -1162,5 +1197,51 @@ fn review_law_ignore_literal_keeps_the_filename_bytes() -> eyre::Result<()> {
     assert!(rules.ignores(b"files/\xff.txt", false));
     assert!(!rules.ignores(b"files/\xfe.txt", false));
     assert!(!rules.ignores("files/�.txt".as_bytes(), false));
+    Ok(())
+}
+
+#[test]
+fn slice3_duplicate_manifests_overlay_in_archive_order() -> eyre::Result<()> {
+    let archive = tarball(
+        "root",
+        &[
+            (
+                "Chart.yaml",
+                indoc! {"
+            apiVersion: v2
+            name: earlier
+            version: 0.1.0
+            description: carry-forward
+            dependencies:
+              - {name: first}
+              - {name: second, condition: gates.second}
+        "},
+            ),
+            (
+                "Chart.yaml",
+                indoc! {"
+                name: later
+                dependencies: [{name: first}]
+            "},
+            ),
+            (
+                "requirements.yaml",
+                indoc! {"
+                dependencies: [{name: first}, {name: added}]
+            "},
+            ),
+        ],
+    )?;
+    let chart = LoadedChart::read_archive(
+        archive.as_slice(),
+        SourcePath::Native(PathBuf::from("chart.tgz")),
+        false,
+    )?;
+    sim_assert_eq!(
+        have: ["name", "description", "apiVersion"].map(|field| chart.metadata()[field].as_str()),
+        want: [Some("later"), Some("carry-forward"), Some("v2")],
+    );
+    sim_assert_eq!(have: chart.metadata()["dependencies"][1]["name"].as_str(), want: Some("added"));
+    sim_assert_eq!(have: chart.metadata()["dependencies"][1]["condition"].as_str(), want: Some("gates.second"));
     Ok(())
 }

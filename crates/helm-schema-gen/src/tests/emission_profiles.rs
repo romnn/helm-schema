@@ -401,37 +401,83 @@ fn requirement_alternative_rejected_only_by_lint_keeps_its_own_disposition() -> 
             ConditionalGuard::Requirement(graph.freeze().root(split, true)),
         ]],
     );
-    let coalesced = json!({"flag":false,"check":true});
-    let raw = json!({"flag":true,"check":true});
-    let documents = crate::PreparedValuesDocuments::new(
-        serde_yaml::to_value(&coalesced)?,
-        serde_yaml::Value::Null,
-    )
-    .with_uncoalesced_root(serde_yaml::to_value(&raw)?);
-    let schema = generate_values_schema(
-        ValuesSchemaInput::new(&signals, &NoopProvider).with_values_documents(&documents),
-    );
-    let no_requirements = ContractSchemaSignals::default();
-    let mut expected = generate_values_schema(
-        ValuesSchemaInput::new(&no_requirements, &NoopProvider).with_values_documents(&documents),
-    );
-    expected["definitions"] = json!({
-        "t": crate::condition_encoding::helm_truthy_definition_schema(),
-        "helm-condition-2": {
-            "if":{"type":"object","properties":{"flag":{"$ref":"#/definitions/t"}},"required":["flag"]},
-            "then":false,
-            "else":true,
-        },
-    });
-    expected["allOf"] = json!([{"if":{"allOf":[
+    // An unrelated converted-key collision leaves only its own member unknown.
+    for unrelated in ["", "paths: {'1': !unknown ~}"] {
+        let coalesced = json!({"flag":false,"check":true});
+        let raw = json!({"flag":true,"check":true});
+        let with_unrelated = |document: &serde_json::Value| -> eyre::Result<serde_yaml::Value> {
+            let mut document = serde_yaml::to_value(document)?;
+            if let (Some(target), Some(serde_yaml::Value::Mapping(extra))) = (
+                document.as_mapping_mut(),
+                serde_yaml::from_str::<Option<serde_yaml::Value>>(unrelated)?,
+            ) {
+                target.extend(extra);
+            }
+            Ok(document)
+        };
+        let documents = crate::PreparedValuesDocuments::new(
+            with_unrelated(&coalesced)?,
+            serde_yaml::Value::Null,
+        )
+        .with_uncoalesced_root(with_unrelated(&raw)?);
+        let schema = generate_values_schema(
+            ValuesSchemaInput::new(&signals, &NoopProvider).with_values_documents(&documents),
+        );
+        let no_requirements = ContractSchemaSignals::default();
+        let mut expected = generate_values_schema(
+            ValuesSchemaInput::new(&no_requirements, &NoopProvider)
+                .with_values_documents(&documents),
+        );
+        expected["definitions"] = json!({
+            "t": crate::condition_encoding::helm_truthy_definition_schema(),
+            "helm-condition-2": {
+                "if":{"type":"object","properties":{"flag":{"$ref":"#/definitions/t"}},"required":["flag"]},
+                "then":false,
+                "else":true,
+            },
+        });
+        expected["allOf"] = json!([{"if":{"allOf":[
         {"type":"object","properties":{"check":{"$ref":"#/definitions/t"}},"required":["check"]},
         {"$ref":"#/definitions/helm-condition-2"},
     ]},"then":false}]);
-    sim_assert_eq!(have: &schema, want: &expected);
+        sim_assert_eq!(have: &schema, want: &expected);
+        let validator = jsonschema::validator_for(&schema)?;
+        sim_assert_eq!(have: validator.is_valid(&raw), want: true);
+        sim_assert_eq!(have: validator.is_valid(&coalesced), want: false);
+        sim_assert_eq!(have: validator.is_valid(&json!({"flag":false,"check":false})), want: true);
+    }
+    Ok(())
+}
+
+/// Collision winners that differ only at the second item's `key` join to an unknown item.
+/// Helm 4.2.3 renders either winner, so the declared schema of `paths.true.*.key` must accept
+/// both.
+#[test]
+fn wildcard_declaration_withholds_its_type_beside_an_unknown_item() -> eyre::Result<()> {
+    use helm_schema_core::ValuesPath;
+    use serde_json::json;
+
+    let defaults: serde_yaml::Value =
+        serde_yaml::from_str(r#"paths: {"true": [{key: a}, {key: !unknown ~}]}"#)?;
+    let path = ValuesPath::parse("paths.true.*.key");
+    let none = BTreeSet::new();
+    let info = crate::values_yaml::build_values_yaml_path_info(
+        &defaults,
+        &BTreeSet::from([path.clone()]),
+        &none,
+        &none,
+        &none,
+        &none,
+    );
+    let schema = info
+        .get(&path)
+        .map_or_else(crate::schema_model::empty_schema, |info| {
+            info.schema.clone()
+        });
     let validator = jsonschema::validator_for(&schema)?;
-    sim_assert_eq!(have: validator.is_valid(&raw), want: true);
-    sim_assert_eq!(have: validator.is_valid(&coalesced), want: false);
-    sim_assert_eq!(have: validator.is_valid(&json!({"flag":false,"check":false})), want: true);
+    for winner in [json!("text"), json!(7)] {
+        sim_assert_eq!(have: validator.is_valid(&winner), want: true, "{winner}");
+    }
     Ok(())
 }
 

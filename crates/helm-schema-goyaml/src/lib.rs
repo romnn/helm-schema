@@ -7,6 +7,7 @@
 //! This crate contains modified ports of go-yaml and libyaml; see `NOTICE` and `LICENSE-APACHE`.
 
 mod decode;
+mod inputs;
 mod machine;
 mod parser;
 mod reader;
@@ -16,8 +17,10 @@ pub mod stages;
 mod types;
 
 pub use decode::{
-    Document, Entry, Target, Value, decode_events, has_json_key_collisions, read_document, to_json,
+    Document, Entry, Target, Value, decode_events, has_json_key_collisions, is_merge_key,
+    read_document, to_json,
 };
+pub use inputs::{MetadataOverlay, is_authored, merge_values, values_map};
 pub use machine::{Reader, ReaderControl, Syntax};
 pub use types::{Error, ErrorKind, Event, EventKind, Mark, ScalarStyle, Token, TokenKind};
 

@@ -5,10 +5,9 @@ use std::sync::Arc;
 
 use bstr::ByteSlice;
 use flate2::read::MultiGzDecoder;
-use serde::Deserialize as _;
 use vfs::VfsPath;
 
-use super::directory::Directory;
+use super::{directory::Directory, inputs::Inputs};
 use crate::error::{CliError, EngineResult};
 use crate::load_budget::read_to_end_capped;
 
@@ -31,10 +30,11 @@ pub(crate) struct LoadedChart {
     pub(crate) path: String,
     include_tests: bool,
     last: Arc<BTreeMap<Vec<u8>, usize>>,
+    decoded: Arc<Inputs>,
 }
 
 #[derive(Debug, Default)]
-struct LoadedEntries {
+pub(crate) struct LoadedEntries {
     files: Vec<Entry>,
     mounts: BTreeMap<Vec<u8>, Vec<Entry>>,
 }
@@ -54,10 +54,11 @@ pub(crate) struct LoadedFile {
 
 impl LoadedFile {
     pub(super) fn new(name: Vec<u8>, path: String, bytes: Arc<[u8]>) -> Self {
-        let bytes = if let Some(data) = bytes.strip_prefix(b"\xef\xbb\xbf") {
-            Arc::from(data)
-        } else {
+        let stripped = strip_bom(&bytes);
+        let bytes = if stripped.len() == bytes.len() {
             bytes
+        } else {
+            Arc::from(stripped)
         };
         Self { name, path, bytes }
     }
@@ -73,16 +74,19 @@ impl LoadedFile {
     }
 
     pub(crate) fn yaml_text(&self) -> EngineResult<&str> {
-        std::str::from_utf8(&self.bytes).map_err(|_| {
-            let error = std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "stream did not contain valid UTF-8",
-            );
-            vfs::VfsError::from(error)
-                .with_context(|| format!("Could not read path '{}'", self.path))
-                .into()
-        })
+        std::str::from_utf8(&self.bytes).map_err(|_| yaml_utf8_error(&self.path))
     }
+}
+
+pub(super) fn strip_bom(bytes: &[u8]) -> &[u8] {
+    bytes.strip_prefix(b"\xef\xbb\xbf").unwrap_or(bytes)
+}
+
+pub(super) fn yaml_utf8_error(path: &str) -> CliError {
+    let error = Error::new(ErrorKind::InvalidData, "stream did not contain valid UTF-8");
+    vfs::VfsError::from(error)
+        .with_context(|| format!("Could not read path '{path}'"))
+        .into()
 }
 
 #[derive(Debug, Clone)]
@@ -114,13 +118,15 @@ impl LoadedChart {
         include_tests: bool,
     ) -> EngineResult<Self> {
         let path = directory.path().to_owned();
-        let entries = directory.entries()?;
-        Ok(Self::from_entries(
+        let entries = Arc::new(LoadedEntries::new(directory.entries()?));
+        let lint = directory.lint_values();
+        Self::finish(
             entries,
             path,
             Some(directory),
             include_tests,
-        ))
+            lint.as_deref(),
+        )
     }
 
     pub(crate) fn read_archive(
@@ -128,111 +134,72 @@ impl LoadedChart {
         source: SourcePath,
         include_tests: bool,
     ) -> EngineResult<Self> {
-        let path = source.label();
-        let entries = archive_entries(input, &path, &Arc::new(source))?;
-        let chart = Self::from_entries(entries, String::new(), None, include_tests);
-        if chart.file("Chart.yaml").is_none() {
-            return Err(CliError::NoChartYamlInArchive { archive: path });
-        }
-        Ok(chart)
+        Self::finish_archive(
+            LoadedEntries::capture_archive(input, source)?,
+            include_tests,
+        )
     }
 
-    fn from_entries(
-        entries: Vec<Entry>,
+    pub(crate) fn finish_archive(
+        entries: Arc<LoadedEntries>,
+        include_tests: bool,
+    ) -> EngineResult<Self> {
+        Self::finish(entries, String::new(), None, include_tests, None)
+    }
+
+    fn finish(
+        entries: Arc<LoadedEntries>,
         path: String,
         directory: Option<Arc<Directory>>,
         include_tests: bool,
-    ) -> Self {
-        let mut loaded = LoadedEntries::default();
-        let mut last = BTreeMap::new();
-        for mut entry in entries {
-            if let Some(member) = entry.file.name.strip_prefix(b"charts/")
-                && extension(member) != b".prov"
-            {
-                let mount = member.split(|byte| *byte == b'/').next().unwrap_or(member);
-                if !matches!(mount.first(), Some(b'_' | b'.')) {
-                    let group = loaded.mounts.entry(mount.to_owned()).or_default();
-                    entry.file.name = member.to_owned();
-                    group.push(entry);
-                }
-            } else {
-                if !matches!(
+        lint: Option<&[u8]>,
+    ) -> EngineResult<Self> {
+        if !entries.files.iter().any(is_manifest) {
+            return Err(missing_manifest(&path));
+        }
+        let mut last = entries
+            .files
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| {
+                !matches!(
                     entry.file.name.as_slice(),
                     b"requirements.yaml" | b"requirements.lock"
-                ) {
-                    last.insert(entry.file.name.clone(), loaded.files.len());
-                }
-                loaded.files.push(entry);
-            }
-        }
-        Self {
-            entries: Arc::new(loaded),
+                )
+            })
+            .map(|(index, entry)| (entry.file.name.clone(), index))
+            .collect();
+        let decoded = Arc::new(Inputs::load(&entries.files, &mut last, lint)?);
+        Ok(Self {
+            entries,
             directory,
             path,
             include_tests,
             last: Arc::new(last),
-        }
+            decoded,
+        })
     }
 
-    pub(crate) fn analysis_view(&self, include_tests: bool) -> Self {
-        Self {
-            include_tests,
-            ..self.clone()
-        }
+    pub(super) fn metadata(&self) -> &serde_yaml::Value {
+        &self.decoded.metadata
     }
 
-    pub(super) fn set_api_version(&mut self, version: Option<&str>) {
-        let mut v1 = matches!(version, None | Some("" | "v1"));
-        for (index, entry) in self.entries.files.iter().enumerate() {
-            match entry.file.name.as_slice() {
-                b"requirements.yaml" => {
-                    if let Some(version) = entry
-                        .file
-                        .source()
-                        .ok()
-                        .and_then(helm_schema_syntax::decoded_yaml_value)
-                        .and_then(|doc| {
-                            doc.as_object()?
-                                .iter()
-                                .rfind(|(key, _)| key.eq_ignore_ascii_case("apiVersion"))
-                                .map(|(_, value)| value.clone())
-                        })
-                        .filter(|value| !value.is_null())
-                    {
-                        v1 = version.as_str() == Some("v1");
-                    }
-                }
-                b"requirements.lock" => {}
-                _ => continue,
-            }
-            if v1 {
-                Arc::make_mut(&mut self.last).insert(entry.file.name.clone(), index);
-            }
-        }
+    pub(crate) fn defaults(&self) -> EngineResult<&serde_yaml::Value> {
+        self.decoded.defaults()
     }
 
     pub(crate) fn file_path(&self, name: &str) -> String {
         format!("{}/{name}", self.path)
     }
 
-    pub(crate) fn filename(&self) -> &str {
-        self.path.rsplit('/').next().unwrap_or_default()
-    }
-
     pub(crate) fn manifest(&self) -> EngineResult<&LoadedFile> {
-        self.file("Chart.yaml").ok_or_else(|| {
-            vfs::VfsError::from(vfs::error::VfsErrorKind::FileNotFound)
-                .with_context(|| format!("Could not read path '{}'", self.file_path("Chart.yaml")))
-                .into()
-        })
+        self.file("Chart.yaml")
+            .or_else(|| self.file("requirements.yaml"))
+            .ok_or_else(|| missing_manifest(&self.path))
     }
 
     pub(crate) fn file(&self, name: &str) -> Option<&LoadedFile> {
-        self.entries
-            .files
-            .iter()
-            .map(|entry| &entry.file)
-            .rfind(|file| file.name == name.as_bytes())
+        self.entries.file(name)
     }
 
     pub(crate) fn load_local_file(&self, path: &Path) -> EngineResult<Option<Arc<[u8]>>> {
@@ -243,15 +210,7 @@ impl LoadedChart {
     }
 
     pub(crate) fn lint_values(&self) -> Option<serde_yaml::Value> {
-        let raw = self.directory.as_ref()?.lint_values()?;
-        let doc =
-            serde_yaml::Value::deserialize(serde_yaml::Deserializer::from_slice(&raw).next()?)
-                .ok()?;
-        match doc {
-            serde_yaml::Value::Null => Some(serde_yaml::Value::Mapping(serde_yaml::Mapping::new())),
-            serde_yaml::Value::Mapping(_) => Some(doc),
-            _ => None,
-        }
+        self.decoded.lint.clone()
     }
 
     pub(crate) fn files_with_role(&self, role: FileRole) -> impl Iterator<Item = &LoadedFile> {
@@ -326,16 +285,67 @@ impl LoadedChart {
                         Some(entry)
                     })
                     .collect();
-                visit(Self::from_entries(
-                    entries,
+                visit(Self::finish(
+                    Arc::new(LoadedEntries::new(entries)),
                     path,
                     self.directory.clone(),
                     self.include_tests,
-                ))?;
+                    None,
+                )?)?;
             }
         }
         Ok(())
     }
+}
+
+impl LoadedEntries {
+    pub(crate) fn capture_archive(input: impl Read, source: SourcePath) -> EngineResult<Arc<Self>> {
+        let path = source.label();
+        let entries = archive_entries(input, &path, &Arc::new(source))?;
+        if !entries.iter().any(is_manifest) {
+            return Err(CliError::NoChartYamlInArchive { archive: path });
+        }
+        Ok(Arc::new(Self::new(entries)))
+    }
+
+    fn new(entries: Vec<Entry>) -> Self {
+        let mut loaded = Self::default();
+        for mut entry in entries {
+            if let Some(member) = entry.file.name.strip_prefix(b"charts/")
+                && extension(member) != b".prov"
+            {
+                let mount = member.split(|byte| *byte == b'/').next().unwrap_or(member);
+                if !matches!(mount.first(), Some(b'_' | b'.')) {
+                    let group = loaded.mounts.entry(mount.to_owned()).or_default();
+                    entry.file.name = member.to_owned();
+                    group.push(entry);
+                }
+            } else {
+                loaded.files.push(entry);
+            }
+        }
+        loaded
+    }
+
+    pub(crate) fn file(&self, name: &str) -> Option<&LoadedFile> {
+        self.files
+            .iter()
+            .map(|entry| &entry.file)
+            .rfind(|file| file.name == name.as_bytes())
+    }
+}
+
+fn is_manifest(entry: &Entry) -> bool {
+    matches!(
+        entry.file.name.as_slice(),
+        b"Chart.yaml" | b"requirements.yaml"
+    )
+}
+
+fn missing_manifest(path: &str) -> CliError {
+    vfs::VfsError::from(vfs::error::VfsErrorKind::FileNotFound)
+        .with_context(|| format!("Could not read path '{path}/Chart.yaml'"))
+        .into()
 }
 
 fn archive_entries(

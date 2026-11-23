@@ -16,7 +16,7 @@ pub fn build_composed_values_document(
 ) -> EngineResult<YamlValue> {
     let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
 
-    let mut doc = chart_own_values(root)?;
+    let mut doc = root.files.defaults()?.clone();
     // An empty or comment-only file parses to null; Helm reads it as an
     // empty table.
     if doc.is_null() {
@@ -47,14 +47,6 @@ pub fn build_dependency_refill_values_document(charts: &[ChartContext]) -> Engin
     Ok(doc)
 }
 
-/// The chart's own `values.yaml`, or null when it has none.
-pub(crate) fn chart_own_values(chart: &ChartContext) -> EngineResult<YamlValue> {
-    let Some(file) = chart.files.file("values.yaml") else {
-        return Ok(YamlValue::Null);
-    };
-    Ok(serde_yaml::from_str(file.yaml_text()?)?)
-}
-
 pub(crate) struct DependencyGlobalOwnership {
     pub(crate) shadowed_input_paths: BTreeSet<String>,
 }
@@ -64,7 +56,7 @@ pub(crate) fn build_dependency_global_ownership(
 ) -> EngineResult<DependencyGlobalOwnership> {
     let mut declarations = Vec::new();
     for chart in charts {
-        let defaults = chart_own_values(chart)?;
+        let defaults = chart.files.defaults()?;
         let Some(global) = defaults
             .as_mapping()
             .and_then(|mapping| mapping.get(YamlValue::String("global".to_string())))
@@ -172,14 +164,14 @@ fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> Engi
             .and_then(YamlValue::as_mapping)
             .and_then(|mapping| mapping.get(YamlValue::String("global".to_string())))
             .cloned();
-        let target = ensure_mapping_path(doc, &chart.values_prefix);
+        let Some(target) = ensure_mapping_path(doc, &chart.values_prefix) else {
+            continue;
+        };
         coalesce_global_values(target, parent_global.as_ref());
-
-        let defaults = chart_own_values(chart)?;
+        let defaults = chart.files.defaults()?;
         let dependency_keys = direct_dependency_keys(charts, &chart.values_prefix);
-        coalesce_chart_values(target, defaults, &dependency_keys);
+        coalesce_chart_values(target, defaults.clone(), &dependency_keys);
     }
-
     Ok(())
 }
 
@@ -236,6 +228,10 @@ fn coalesce_global_values(destination_chart: &mut YamlValue, source_global: Opti
         Some(_) => return,
     };
     let source_global = match source_global {
+        Some(source @ YamlValue::Tagged(_)) => {
+            destination.insert(global_key, source.clone());
+            return;
+        }
         None => serde_yaml::Mapping::new(),
         Some(YamlValue::Mapping(mapping)) => mapping.clone(),
         Some(_) => return,
@@ -287,16 +283,19 @@ fn coalesce_chart_values(
     }
 }
 
-fn ensure_mapping_path<'a>(root: &'a mut YamlValue, path: &[String]) -> &'a mut YamlValue {
+fn ensure_mapping_path<'a>(root: &'a mut YamlValue, path: &[String]) -> Option<&'a mut YamlValue> {
     let mut current = root;
 
     for segment in path {
+        if matches!(current, YamlValue::Tagged(_)) {
+            return None;
+        }
         if !matches!(current, YamlValue::Mapping(_)) {
             *current = YamlValue::Mapping(serde_yaml::Mapping::default());
         }
 
         let YamlValue::Mapping(mapping) = current else {
-            return current;
+            return None;
         };
 
         let key = YamlValue::String(segment.clone());
@@ -305,7 +304,7 @@ fn ensure_mapping_path<'a>(root: &'a mut YamlValue, path: &[String]) -> &'a mut 
             .or_insert_with(|| YamlValue::Mapping(serde_yaml::Mapping::default()));
     }
 
-    current
+    (!matches!(current, YamlValue::Tagged(_))).then_some(current)
 }
 
 fn merge_mapping_existing_prefers_left(

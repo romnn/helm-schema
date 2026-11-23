@@ -919,6 +919,17 @@ fn build_single_condition_fragment(
     polarity: ConditionPolarity,
     cache: &mut ConditionFragmentCache,
 ) -> Option<SchemaNode> {
+    if guard.value_paths().iter().any(|path| {
+        [
+            values_yaml_doc,
+            absence.runtime_defaults,
+            absence.dependency_refill,
+        ]
+        .into_iter()
+        .any(|doc| yaml_value_at_path(doc, path).is_some_and(crate::values_yaml::has_unknown))
+    }) {
+        return None;
+    }
     let runtime_defaults_doc = absence.runtime_defaults;
     let dependency_roots = absence.dependency_roots;
     match guard {
@@ -2071,6 +2082,18 @@ fn evaluate_requirement_condition(
 }
 
 fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValue) -> Option<bool> {
+    if guard.value_paths().iter().any(|path| {
+        yaml_value_at_path(values_yaml_doc, path).is_some_and(crate::values_yaml::has_unknown)
+    }) {
+        return None;
+    }
+    evaluate_known_guard_on_values(guard, values_yaml_doc)
+}
+
+fn evaluate_known_guard_on_values(
+    guard: &ConditionalGuard,
+    values_yaml_doc: &YamlValue,
+) -> Option<bool> {
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_some_and(yaml_value_is_truthy))

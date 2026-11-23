@@ -104,6 +104,7 @@ fn seed_dependency_control_hints(charts: &[chart::ChartContext], contract: &mut 
         for path in chart
             .dependency_activation_chain
             .iter()
+            .filter(|level| level.legacy)
             .flat_map(|level| level.condition_paths.iter().chain(level.tag_paths.iter()))
         {
             let path = ValuesPath::parse(path.trim());
@@ -118,6 +119,7 @@ fn seed_dependency_control_hints(charts: &[chart::ChartContext], contract: &mut 
         for path in chart
             .dependency_activation_chain
             .iter()
+            .filter(|level| level.legacy)
             .flat_map(|level| level.condition_paths.iter().chain(level.tag_paths.iter()))
         {
             let path = ValuesPath::parse(path.trim());
@@ -134,12 +136,7 @@ fn dependency_values_roots(
 ) -> EngineResult<Vec<DependencyValuesRoot>> {
     let own_values = charts
         .iter()
-        .map(|chart| {
-            Ok((
-                chart.values_prefix.as_slice(),
-                chart::chart_own_values(chart)?,
-            ))
-        })
+        .map(|chart| Ok((chart.values_prefix.as_slice(), chart.files.defaults()?)))
         .collect::<EngineResult<std::collections::BTreeMap<_, _>>>()?;
     let by_prefix = charts
         .iter()
@@ -153,12 +150,16 @@ fn dependency_values_roots(
         let active = helm_enabled_guard_sets(&chart.dependency_activation_chain);
         let declared = own_values
             .get(parent_prefix)
-            .and_then(serde_yaml::Value::as_mapping)
+            .and_then(|value| value.as_mapping())
             .and_then(|mapping| mapping.get(key.as_str()));
         // Only a LISTED dependency keeps the parent's dependency metadata
         // non-nil, which is what makes Helm merge the parent's defaults with
         // its dependencies' tables.
-        if chart.listed_dependency && declared.is_some_and(|value| !value.is_mapping()) {
+        if chart.listed_dependency
+            && declared.is_some_and(|value| {
+                !value.is_mapping() && !matches!(value, serde_yaml::Value::Tagged(_))
+            })
+        {
             contract.add_terminal_fail_condition(activation_predicate(active.clone()));
         }
         // The pre-pruning pass keys nested dependencies by chart name; only
