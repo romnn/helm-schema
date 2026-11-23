@@ -133,3 +133,77 @@ fn formatted_map_keys_keep_their_colon_boundary_before_members() -> eyre::Result
     }
     Ok(())
 }
+
+/// Helm reads a leading `-` before a safe character, and `=` anywhere, as plain text in block
+/// and flow, but its manifest splitter cuts a line-start `---` and `- ` opens a nested sequence
+/// (transfer/helm-receipts/dash-plain-start/receipts.txt).
+#[test]
+fn dash_led_flag_words_stay_plain_until_a_third_dash() {
+    let end = |text: &str| {
+        text.chars()
+            .try_fold(LexicalState::PlainStart, LexicalState::step)
+    };
+    for (text, want) in [
+        ("-m", Some(LexicalState::Plain)),
+        ("--port=1", Some(LexicalState::Plain)),
+        ("--metrics-bind-address=:8080", Some(LexicalState::Plain)),
+        ("-_", Some(LexicalState::Plain)),
+        ("x=y", Some(LexicalState::Plain)),
+        ("-", Some(LexicalState::PlainDash)),
+        ("- x", None),
+        ("---x", None),
+    ] {
+        sim_assert_eq!(have: end(text), want: want, "{text:?}");
+    }
+}
+
+/// Inside a flow collection the same words stay plain, but `[` and `]` end the scalar
+/// (transfer/helm-receipts/dash-plain-start/receipts.txt, review r2).
+#[test]
+fn flow_plain_words_leave_brackets_unknown() {
+    let end = |text: &str| {
+        text.chars()
+            .try_fold(LexicalState::FlowPlainStart, LexicalState::step)
+    };
+    for (text, want) in [
+        ("--x=a", Some(LexicalState::FlowPlain)),
+        ("-m", Some(LexicalState::FlowPlain)),
+        ("--x=a[b]", None),
+        ("a]", None),
+        ("[]", Some(LexicalState::FlowEnd)),
+    ] {
+        sim_assert_eq!(have: end(text), want: want, "{text:?}");
+    }
+}
+
+/// A serialized number may be negative: after `--` it can spell the `---` that starts a Helm
+/// 4.2.3 manifest at column zero (receipts, review r2), so only one dash admits it as a word.
+#[test]
+fn serialized_numbers_cross_the_two_dash_boundary_like_formatted_ones() {
+    let state = crate::value::State::new(crate::value::Value::nil());
+    let value = state
+        .heap
+        .freeze(&crate::value::Value::input(ValuesPath::parse("n")));
+    let memo = PredicateMemo::new();
+    let number = Predicate::from(Guard::TypeIs {
+        path: ValuesPath::parse("n"),
+        schema_type: "number".to_owned(),
+    });
+    for (start, word, admitted) in [
+        (LexicalState::PlainDash, LexicalState::Plain, true),
+        (LexicalState::PlainDashes, LexicalState::Plain, false),
+        (
+            LexicalState::FlowPlainDashes,
+            LexicalState::FlowPlain,
+            false,
+        ),
+    ] {
+        let states = serialized_input(States::from([(start, Predicate::True)]), &value, &memo);
+        let word = states.get(&word).cloned().unwrap_or(Predicate::False);
+        sim_assert_eq!(
+            have: memo.exactly_implies(&number, &word),
+            want: admitted,
+            "{start:?}"
+        );
+    }
+}

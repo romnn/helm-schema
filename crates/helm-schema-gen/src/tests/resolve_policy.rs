@@ -620,6 +620,11 @@ fn plain_probe_port_preserves_provider_one_of_semantics() -> eyre::Result<()> {
         // rather than guessing a rejection (ADR 0013). Receipt: plain_probe_port_*/original-invalid.
         (serde_json::json!("a\n1"), true),
         (serde_json::json!(true), false),
+        // A dash-led or `=`-bearing word followed by `: ` opens a mapping inside the probe value;
+        // Helm 4.2.3 aborts (transfer/helm-receipts/dash-plain-start/receipts.txt).
+        (serde_json::json!("-a: b"), false),
+        (serde_json::json!("--a: b"), false),
+        (serde_json::json!("a=b: c"), false),
     ] {
         sim_assert_eq!(
             have: schema_accepts_instance(&schema, &serde_json::json!({"port": port})),

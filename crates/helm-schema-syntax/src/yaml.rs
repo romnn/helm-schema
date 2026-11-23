@@ -925,7 +925,7 @@ impl Tree {
                 let length = gap
                     .get(comment_start..)
                     .unwrap_or_default()
-                    .find(['\r', '\n', '\u{85}', '\u{2028}', '\u{2029}'])
+                    .find(helm_schema_goyaml::is_yaml_line_break)
                     .unwrap_or(gap.len() - comment_start);
                 comments.push((
                     gap_start + comment_start,

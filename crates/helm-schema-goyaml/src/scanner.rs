@@ -762,8 +762,9 @@ fn is_alpha(character: char) -> bool {
 fn is_blank(character: char) -> bool {
     matches!(character, ' ' | '\t')
 }
-/// Ports `is_break`, `yamlprivateh.go:102`.
-fn is_break(character: char) -> bool {
+/// Returns whether the character is a YAML line break (`is_break` in `yamlprivateh.go:102`).
+#[must_use]
+pub fn is_break(character: char) -> bool {
     matches!(character, '\r' | '\n' | '\u{85}' | '\u{2028}' | '\u{2029}')
 }
 /// Ports `is_breakz`, `yamlprivateh.go:115`.

@@ -40,18 +40,38 @@ pub(super) enum LexicalState {
     Unicode8,
     Surrogate3,
     Invalid,
+    /// A plain scalar's leading `-`, plain only before a safe character in block and flow.
+    PlainDash,
+    /// Two leading dashes; a third may complete Helm's line-start document separator.
+    PlainDashes,
+    /// The plain states of a scalar inside a flow collection, where `[` and `]` end it.
+    FlowPlainStart,
+    FlowPlain,
+    FlowPlainColon,
+    FlowPlainDash,
+    FlowPlainDashes,
 }
 
 impl LexicalState {
     pub(super) fn step(self, character: char) -> Option<Self> {
         use LexicalState::{
             BlockInvalid, Closed, ClosedCollection, CollectionInvalid, Directive, DirectiveInvalid,
-            Double, Escape, FlowEmptyStart, FlowEnd, FoldedDouble, Hex1, Hex2, Hex3, Hex4, Invalid,
-            Plain, PlainColon, PlainStart, Separated, Single, SingleEnd, Surrogate3, Unicode4,
-            Unicode5, Unicode5Max, Unicode6, Unicode7, Unicode8,
+            Double, Escape, FlowEmptyStart, FlowEnd, FlowPlain, FlowPlainColon, FlowPlainDash,
+            FlowPlainDashes, FlowPlainStart, FoldedDouble, Hex1, Hex2, Hex3, Hex4, Invalid, Plain,
+            PlainColon, PlainDash, PlainDashes, PlainStart, Separated, Single, SingleEnd,
+            Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7, Unicode8,
         };
         if self.is_absorbing() {
             return Some(self);
+        }
+        if let Some(block) = self.flow_plain_as_block() {
+            let next = block.step(character)?;
+            return match next.flow_plain() {
+                // A flow indicator would end the scalar and change the enclosing collection.
+                Some(_) if matches!(character, '[' | ']') => None,
+                Some(flow) => Some(flow),
+                None => Some(next),
+            };
         }
         // Removing Helm's marker cannot change any transition in this alphabet.
         if character == '<' || !alphabet().any(|allowed| allowed == character) {
@@ -66,15 +86,25 @@ impl LexicalState {
             FlowEmptyStart if character == ']' => FlowEnd,
             PlainStart if character == '%' => Directive,
             Directive if character == '!' => DirectiveInvalid,
-            PlainStart if character.is_ascii_alphanumeric() || "_./".contains(character) => Plain,
-            Plain | PlainColon if character == ':' => PlainColon,
-            PlainColon if matches!(character, ' ' | '\t') => BlockInvalid,
-            Plain | PlainColon
-                if character.is_ascii_alphanumeric() || " _./-[]".contains(character) =>
+            PlainStart if character == '-' => PlainDash,
+            PlainDash if character == '-' => PlainDashes,
+            PlainStart | PlainDash | PlainDashes
+                if character.is_ascii_alphanumeric() || "_./".contains(character) =>
             {
                 Plain
             }
-            FlowEmptyStart | Directive | PlainStart | Plain | PlainColon => return None,
+            Plain | PlainColon if character == ':' => PlainColon,
+            PlainColon if matches!(character, ' ' | '\t') => BlockInvalid,
+            // `=` never indicates inside a plain scalar, so `--flag=value` stays one word.
+            Plain | PlainColon
+                if character.is_ascii_alphanumeric() || " _./-[]=".contains(character) =>
+            {
+                Plain
+            }
+            // Flow plain states never reach here: they delegate to their block twins above.
+            FlowEmptyStart | Directive | PlainStart | PlainDash | PlainDashes | Plain
+            | PlainColon | FlowPlainStart | FlowPlain | FlowPlainColon | FlowPlainDash
+            | FlowPlainDashes => return None,
             Double => match character {
                 '"' => Closed,
                 '\\' => Escape,
@@ -120,6 +150,30 @@ impl LexicalState {
         })
     }
 
+    /// The block twin of a flow plain state.
+    fn flow_plain_as_block(self) -> Option<Self> {
+        match self {
+            Self::FlowPlainStart => Some(Self::PlainStart),
+            Self::FlowPlain => Some(Self::Plain),
+            Self::FlowPlainColon => Some(Self::PlainColon),
+            Self::FlowPlainDash => Some(Self::PlainDash),
+            Self::FlowPlainDashes => Some(Self::PlainDashes),
+            _ => None,
+        }
+    }
+
+    /// The flow twin of a block plain state.
+    pub(super) fn flow_plain(self) -> Option<Self> {
+        match self {
+            Self::PlainStart => Some(Self::FlowPlainStart),
+            Self::Plain => Some(Self::FlowPlain),
+            Self::PlainColon => Some(Self::FlowPlainColon),
+            Self::PlainDash => Some(Self::FlowPlainDash),
+            Self::PlainDashes => Some(Self::FlowPlainDashes),
+            _ => None,
+        }
+    }
+
     pub(super) fn is_absorbing(self) -> bool {
         matches!(
             self,
@@ -130,7 +184,14 @@ impl LexicalState {
     pub(super) fn is_unterminated(self) -> bool {
         match self {
             Self::PlainStart
+            | Self::PlainDash
+            | Self::PlainDashes
             | Self::PlainColon
+            | Self::FlowPlainStart
+            | Self::FlowPlainDash
+            | Self::FlowPlainDashes
+            | Self::FlowPlainColon
+            | Self::FlowPlain
             | Self::Directive
             | Self::DirectiveInvalid
             | Self::Plain
@@ -192,6 +253,7 @@ fn hexadecimal(character: char, next: LexicalState) -> LexicalState {
 static STATES: std::sync::LazyLock<Vec<LexicalState>> = std::sync::LazyLock::new(|| {
     let mut states = vec![
         LexicalState::PlainStart,
+        LexicalState::FlowPlainStart,
         LexicalState::Double,
         LexicalState::Single,
         // Formatted empty arrays enter at their closing boundary.
@@ -425,9 +487,14 @@ fn build_formatted(
 // Scalar words preserve these boundaries; escape tails remain unknown.
 fn scalar_boundary(state: LexicalState) -> Option<LexicalState> {
     match state {
-        LexicalState::PlainStart | LexicalState::Plain | LexicalState::PlainColon => {
-            Some(LexicalState::Plain)
-        }
+        LexicalState::PlainStart
+        | LexicalState::PlainDash
+        | LexicalState::Plain
+        | LexicalState::PlainColon => Some(LexicalState::Plain),
+        LexicalState::FlowPlainStart
+        | LexicalState::FlowPlainDash
+        | LexicalState::FlowPlain
+        | LexicalState::FlowPlainColon => Some(LexicalState::FlowPlain),
         LexicalState::Double | LexicalState::FoldedDouble => Some(LexicalState::Double),
         LexicalState::Single => Some(LexicalState::Single),
         LexicalState::SingleEnd | LexicalState::Closed | LexicalState::Separated => {
@@ -440,7 +507,10 @@ fn scalar_boundary(state: LexicalState) -> Option<LexicalState> {
         | LexicalState::BlockInvalid
         | LexicalState::CollectionInvalid
         | LexicalState::DirectiveInvalid => Some(state),
-        LexicalState::Escape
+        // A negative number after two dashes may spell Helm's document separator.
+        LexicalState::PlainDashes
+        | LexicalState::FlowPlainDashes
+        | LexicalState::Escape
         | LexicalState::FlowEmptyStart
         | LexicalState::Directive
         | LexicalState::Hex1
@@ -755,24 +825,27 @@ pub(super) fn serialized_input(
     let Some(path) = value.identity() else {
         return result;
     };
+    let typed = |condition: &Predicate, schema_type: &str| {
+        Predicate::all(vec![
+            condition.clone(),
+            Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.to_owned(),
+            }),
+        ])
+    };
     for (state, condition) in states {
         // Boolean and null spellings agree across the pinned JSON/YAML serializers.
-        for schema_type in ["boolean", "null", "number"] {
-            let spelling = match schema_type {
-                "null" => "null",
-                "number" => "0",
-                _ => "true",
-            };
-            let guard = Predicate::all(vec![
-                condition.clone(),
-                Predicate::from(Guard::TypeIs {
-                    path: path.clone(),
-                    schema_type: schema_type.to_owned(),
-                }),
-            ]);
+        for (schema_type, spelling) in [("boolean", "true"), ("null", "null")] {
+            let guard = typed(&condition, schema_type);
             for (end, guard) in literal(BTreeMap::from([(state, guard)]), spelling, memo) {
                 merge(&mut result, end, guard, memo);
             }
+        }
+        // A serialized number may be negative, so it crosses the same word boundary as a
+        // directly formatted one.
+        if let Some(end) = scalar_boundary(state) {
+            merge(&mut result, end, typed(&condition, "number"), memo);
         }
     }
     result

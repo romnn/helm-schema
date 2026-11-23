@@ -1109,3 +1109,61 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
 }
 
 pub(crate) mod fragment_inspection;
+
+/// An earlier unquoted `--flag=` argument keeps the slots after it placed: Helm reads it as one
+/// plain string (transfer/helm-receipts/dash-plain-start/receipts.txt).
+#[test]
+fn dash_led_flag_arguments_keep_later_scalars_placed() {
+    let src = indoc! {r"
+        {{- if .Values.enabled }}
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: web
+        spec:
+          template:
+            spec:
+              containers:
+                - name: web
+                  args:
+                  - --metrics-bind-address=:{{ .Values.metricsPort }}
+                  {{- range $key, $value := .Values.extraArgs }}
+                  - --{{ $key }}={{ $value }}
+                  {{- end }}
+                  readinessProbe:
+                    successThreshold: {{ .Values.probe.successThreshold }}
+        {{- end }}
+    "};
+    let idx = DefineIndex::new();
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let placed = ir
+        .uses()
+        .iter()
+        .filter(|use_| {
+            use_.source_expr == conditional_path("probe.successThreshold")
+                && use_.kind == ValueKind::Scalar
+        })
+        .map(|use_| {
+            (
+                use_.path.clone(),
+                use_.plain_scalar_placement,
+                use_.resource.as_ref().map(|resource| resource.kind.clone()),
+            )
+        })
+        .collect::<Vec<_>>();
+    sim_assert_eq!(
+        have: placed,
+        want: vec![(
+            YamlPath(
+                ["spec", "template", "spec", "containers[*]", "readinessProbe", "successThreshold"]
+                    .map(str::to_owned)
+                    .to_vec()
+            ),
+            helm_schema_core::PlainScalarPlacement::BlockValue,
+            Some("Deployment".to_owned()),
+        )]
+    );
+}

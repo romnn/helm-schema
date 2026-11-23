@@ -22,6 +22,7 @@ pub use decode::{
 };
 pub use inputs::{MetadataOverlay, is_authored, merge_values, values_map};
 pub use machine::{Reader, ReaderControl, Syntax};
+pub use scanner::is_break as is_yaml_line_break;
 pub use types::{Error, ErrorKind, Event, EventKind, Mark, ScalarStyle, Token, TokenKind};
 
 /// Reads and decodes the first YAML document (`yaml.go:137-160`, `decode.go:170-178`).

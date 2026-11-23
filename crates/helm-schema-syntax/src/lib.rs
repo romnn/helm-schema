@@ -50,6 +50,8 @@ mod yaml;
 mod yaml_dialect;
 mod yaml_scan;
 
+pub use helm_schema_goyaml::is_yaml_line_break;
+
 pub use actions::{ActionId, ActionKind, TemplateAction, parse_go_template};
 pub use cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,

@@ -1253,3 +1253,82 @@ fn refused_chunks_leave_colliding_json_keys_undecided() -> eyre::Result<()> {
     sim_assert_eq!(have: rejection(source, &json!({}))?, want: false);
     Ok(())
 }
+
+/// Whether `values` place a Scalar row for `path` in the executed document.
+fn placed(source: &str, path: &[&str], values: &Value) -> eyre::Result<bool> {
+    let idx = DefineIndex::new();
+    let ir = crate::SymbolicIrContext::new(&idx)
+        .generate_contract_ir(source)
+        .finalize();
+    let path = crate::YamlPath(path.iter().map(|segment| (*segment).to_owned()).collect());
+    for use_ in ir
+        .uses()
+        .iter()
+        .filter(|use_| use_.path == path && use_.kind == crate::ValueKind::Scalar)
+    {
+        for disjunct in use_.condition.disjuncts() {
+            let mut holds = true;
+            for predicate in disjunct {
+                holds &= matches(predicate, values)?;
+            }
+            if holds {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
+/// `: ` inside a block value opens a mapping when the value starts on a later line; Helm 4.2.3
+/// refuses it only on the key's own line (transfer/helm-receipts/dash-plain-start/receipts.txt,
+/// review r2).
+#[test]
+fn a_colon_space_value_fails_only_on_its_keys_line() -> eyre::Result<()> {
+    let inline = indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: inline
+        data: {{ .Values.payload }}
+    "};
+    let mut rejected_next_line = Vec::new();
+    for payload in ["-a: b", "a: b"] {
+        let values = json!({"payload": payload});
+        sim_assert_eq!(have: rejection(inline, &values)?, want: true, "inline {payload:?}");
+        for line_break in ["\n", "\r\n", "\r", "\u{85}", "\u{2028}", "\u{2029}"] {
+            let next_line = inline.replace("data: ", &format!("data:{line_break}  "));
+            if rejection(&next_line, &values)? {
+                rejected_next_line.push((line_break, payload));
+            }
+        }
+    }
+    sim_assert_eq!(have: rejected_next_line.as_slice(), want: &[]);
+    Ok(())
+}
+
+/// Brackets end a plain scalar inside a flow collection, so Helm 4.2.3 cannot parse
+/// `[--x=a[b]]` while the block spelling is plain text (receipts, review r2); a later field is
+/// placed only for flow-safe spellings.
+#[test]
+fn flow_plain_tokens_do_not_absorb_brackets() -> eyre::Result<()> {
+    let source = indoc::indoc! {"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: flow
+        spec:
+          containers:
+            - name: c
+              args: [--x={{ .Values.x }}]
+              image: {{ .Values.image }}
+    "};
+    let image = ["spec", "containers[*]", "image"];
+    for (x, want) in [("a", true), ("a[b]", false)] {
+        sim_assert_eq!(
+            have: placed(source, &image, &json!({"x": x, "image": "nginx"}))?,
+            want: want,
+            "x={x:?}"
+        );
+    }
+    Ok(())
+}

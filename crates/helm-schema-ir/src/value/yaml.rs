@@ -3061,7 +3061,10 @@ impl<'a> LexicalTransfers<'a> {
                 let mut result = States::new();
                 if let Some(nil) = nil {
                     quoted::merge(&mut result, state, nil.clone(), memo);
-                    if state == LexicalState::PlainStart {
+                    if matches!(
+                        state,
+                        LexicalState::PlainStart | LexicalState::FlowPlainStart
+                    ) {
                         quoted::merge(&mut result, LexicalState::Closed, nil.negated(), memo);
                     }
                 }
@@ -3172,6 +3175,9 @@ impl<'a> LexicalTransfers<'a> {
         let (state, skip) = match style {
             ScalarStyle::DoubleQuoted => (LexicalState::Double, 1),
             ScalarStyle::SingleQuoted => (LexicalState::Single, 1),
+            ScalarStyle::Plain if flow_ancestor(owned, node).is_some() => {
+                (LexicalState::FlowPlainStart, 0)
+            }
             ScalarStyle::Plain => (LexicalState::PlainStart, 0),
         };
         self.range(
@@ -3485,10 +3491,14 @@ fn token_preservation(
 ) -> Predicate {
     let mut preserved = vec![states.remove(&closed).unwrap_or(Predicate::False)];
     if style == ScalarStyle::Plain {
+        // A token's start fixes its context, so only one plain family can appear.
         for end in [
             LexicalState::Closed,
             LexicalState::PlainStart,
             LexicalState::PlainColon,
+            LexicalState::FlowPlain,
+            LexicalState::FlowPlainStart,
+            LexicalState::FlowPlainColon,
         ] {
             preserved.push(states.remove(&end).unwrap_or(Predicate::False));
         }
@@ -3814,6 +3824,38 @@ fn ends_document(owned: &YamlOwnership, span: Span) -> bool {
         .is_some_and(|tail| tail.trim().is_empty())
 }
 
+/// The innermost flow collection enclosing `node`.
+fn flow_ancestor(
+    owned: &YamlOwnership,
+    node: &helm_schema_syntax::YamlNode,
+) -> Option<YamlNodeKind> {
+    let mut parent = node.parent;
+    while let Some(ancestor) = parent.and_then(|parent| owned.nodes.get(parent)) {
+        if matches!(
+            ancestor.kind,
+            YamlNodeKind::FlowMapping | YamlNodeKind::FlowSequence
+        ) {
+            return Some(ancestor.kind);
+        }
+        parent = ancestor.parent;
+    }
+    None
+}
+
+/// Whether `node` is a block pair's value starting on its key's line.
+fn inline_pair_value(owned: &YamlOwnership, node: &helm_schema_syntax::YamlNode) -> bool {
+    node.parent
+        .and_then(|parent| owned.nodes.get(parent))
+        .is_some_and(|parent| {
+            parent.kind == YamlNodeKind::Pair
+                && owned
+                    .skeleton
+                    .text
+                    .get(parent.span.start..node.span.start)
+                    .is_some_and(|text| !text.contains(helm_schema_syntax::is_yaml_line_break))
+        })
+}
+
 fn invalid_states(
     owned: &YamlOwnership,
     node: &helm_schema_syntax::YamlNode,
@@ -3837,9 +3879,20 @@ fn invalid_states(
         );
     }
     if !node.key && block_parent(owned, node) == Some(YamlNodeKind::Pair) {
-        for state in [LexicalState::BlockInvalid, LexicalState::ClosedCollection] {
-            failures.push(states.remove(&state).unwrap_or(Predicate::False));
+        // `: ` opens a nested mapping where the value starts on a later line; Helm refuses it
+        // only on the key's own line.
+        if inline_pair_value(owned, node) {
+            failures.push(
+                states
+                    .remove(&LexicalState::BlockInvalid)
+                    .unwrap_or(Predicate::False),
+            );
         }
+        failures.push(
+            states
+                .remove(&LexicalState::ClosedCollection)
+                .unwrap_or(Predicate::False),
+        );
     }
     // Helm may stop decoding after a root flow collection, ignoring a later token.
     // An enclosing block container still needs completion on this line.
@@ -3909,33 +3962,10 @@ impl SerializedPosition {
             }
             _ => None,
         };
-        let mut flow = None;
-        let mut parent = node.parent;
-        while let Some(ancestor) = parent.and_then(|parent| owned.nodes.get(parent)) {
-            if matches!(
-                ancestor.kind,
-                YamlNodeKind::FlowMapping | YamlNodeKind::FlowSequence
-            ) {
-                flow = Some(ancestor.kind);
-                break;
-            }
-            parent = ancestor.parent;
-        }
-        let inline = node
-            .parent
-            .and_then(|parent| owned.nodes.get(parent))
-            .is_some_and(|parent| {
-                parent.kind == YamlNodeKind::Pair
-                    && owned
-                        .skeleton
-                        .text
-                        .get(parent.span.start..node.span.start)
-                        .is_some_and(|text| !text.contains('\n'))
-            });
         Self {
             decoding,
-            flow,
-            inline,
+            flow: flow_ancestor(owned, node),
+            inline: inline_pair_value(owned, node),
             sequence: node.kind == YamlNodeKind::Item,
         }
     }
