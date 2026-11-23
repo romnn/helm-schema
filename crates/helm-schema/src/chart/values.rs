@@ -49,7 +49,7 @@ pub fn build_dependency_refill_values_document(charts: &[ChartContext]) -> Engin
 
 /// The chart's own `values.yaml`, or null when it has none.
 pub(crate) fn chart_own_values(chart: &ChartContext) -> EngineResult<YamlValue> {
-    let Some(file) = chart.files.file("values.yaml")? else {
+    let Some(file) = chart.files.file("values.yaml") else {
         return Ok(YamlValue::Null);
     };
     Ok(serde_yaml::from_str(file.yaml_text()?)?)
@@ -187,7 +187,7 @@ fn add_values_file_descriptions(
     chart: &ChartContext,
     out: &mut BTreeMap<String, String>,
 ) -> EngineResult<()> {
-    let Some(file) = chart.files.file("values.yaml")? else {
+    let Some(file) = chart.files.file("values.yaml") else {
         return Ok(());
     };
     let descriptions = extract_values_yaml_descriptions(file.yaml_text()?);

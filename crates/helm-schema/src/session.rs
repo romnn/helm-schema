@@ -79,11 +79,7 @@ struct PreparedSession {
 
 impl PreparedSession {
     fn from_generate_options(opts: &GenerateOptions) -> EngineResult<Self> {
-        let charts = &chart::discover_chart_contexts(
-            &opts.chart_source,
-            opts.include_tests,
-            crate::load_budget::LoadBudget::default(),
-        )?;
+        let charts = &chart::discover_chart_contexts(&opts.chart_source, opts.include_tests)?;
         let values_files = chart::load_values_files_and_check_keys(charts, &opts.values_files)?;
 
         let defines = chart::build_define_index(charts)?;
@@ -113,18 +109,18 @@ impl PreparedSession {
         )?;
         let shadowed_input_paths = chart_analysis.shadowed_input_paths;
 
+        let mut values_documents =
+            PreparedValuesDocuments::new(composed_values, dependency_refill_values_yaml);
+        if let Some(lint_values) = charts.first().and_then(|chart| chart.files.lint_values()) {
+            values_documents = values_documents.with_uncoalesced_root(lint_values);
+        }
+
         Ok(Self {
             analysis: Analysis {
                 contract: chart_analysis.contract,
                 local_schemas: chart_analysis.local_schema_universe,
             },
-            // `helm lint` validates the root `values.yaml` as written, so the
-            // schema must accept it as well as the coalesced defaults.
-            values_documents: PreparedValuesDocuments::new(
-                composed_values,
-                dependency_refill_values_yaml,
-            )
-            .with_uncoalesced_root(chart::build_composed_values_document(charts, false)?),
+            values_documents,
             shadowed_input_paths,
             explicit_value_paths: values_roots.explicit_paths,
             values_descriptions,
@@ -745,3 +741,7 @@ fn primary_kubernetes_version(opts: &GenerateOptions) -> Option<String> {
 #[cfg(test)]
 #[path = "tests/session_owned.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "tests/loader_lint.rs"]
+mod loader_lint;

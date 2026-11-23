@@ -86,13 +86,6 @@ pub enum CliError {
     #[error("template parse error: {0}")]
     TemplateParse(#[from] helm_schema_ast::ParseError),
 
-    /// A chart file role was queried before source preparation.
-    #[error("chart file roles have not been prepared for {path}")]
-    ChartRolesNotPrepared {
-        /// Path of the chart whose files were queried.
-        path: String,
-    },
-
     /// Chart discovery found no analyzable charts.
     #[error("no charts discovered")]
     NoChartsDiscovered,
@@ -202,15 +195,6 @@ pub enum CliError {
         subject: String,
         /// Maximum permitted byte count.
         limit_bytes: usize,
-    },
-
-    /// An archive or directory exceeded the configured entry budget.
-    #[error("load budget exceeded for {subject} (limit {limit_entries} entries)")]
-    LoadEntryBudgetExceeded {
-        /// Archive or directory being enumerated.
-        subject: String,
-        /// Maximum permitted entry count.
-        limit_entries: usize,
     },
 
     /// An archive member would escape its extraction root.

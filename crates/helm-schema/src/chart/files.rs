@@ -1,17 +1,21 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::io::Read as _;
+use std::collections::BTreeMap;
+use std::io::{Error, ErrorKind, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use flate2::read::GzDecoder;
+use bstr::ByteSlice;
+use flate2::read::MultiGzDecoder;
+use serde::Deserialize as _;
 use vfs::VfsPath;
 
 use super::directory::Directory;
-use super::discovery::{is_chart_archive, validate_archive_entry_path};
 use crate::error::{CliError, EngineResult};
-use crate::load_budget::LoadBudget;
+use crate::load_budget::read_to_end_capped;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(super) const MAX_FILE_SIZE: usize = 5 * 1024 * 1024;
+const MAX_ARCHIVE_SIZE: usize = 100 * 1024 * 1024;
+
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum FileRole {
     ManifestTemplate,
     DefineIndexTemplate,
@@ -20,43 +24,46 @@ pub(crate) enum FileRole {
     NotesTemplate,
 }
 
-/// A chart's view into a directory or archive captured at the input boundary.
-/// Vendored directories share their containing source's entries.
 #[derive(Debug, Clone)]
 pub(crate) struct LoadedChart {
     entries: Arc<LoadedEntries>,
-    prefix: String,
-    path: String,
+    directory: Option<Arc<Directory>>,
+    pub(crate) path: String,
     include_tests: bool,
+    last: Arc<BTreeMap<Vec<u8>, usize>>,
 }
 
-#[derive(Debug)]
-enum LoadedEntries {
-    Directory(Directory),
-    Archive {
-        source_path: SourcePath,
-        entries: Vec<Entry>,
-        visible: Vec<usize>,
-    },
+#[derive(Debug, Default)]
+struct LoadedEntries {
+    files: Vec<Entry>,
+    mounts: BTreeMap<Vec<u8>, Vec<Entry>>,
 }
 
-#[derive(Debug)]
-struct Entry {
-    name: String,
-    original_archive_name: Box<[u8]>,
-    bytes: Arc<[u8]>,
+#[derive(Debug, Clone)]
+pub(super) struct Entry {
+    pub(super) file: LoadedFile,
+    pub(super) source: SourcePath,
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct LoadedFile {
-    pub(crate) name: String,
+    pub(crate) name: Vec<u8>,
     pub(crate) path: String,
     pub(crate) bytes: Arc<[u8]>,
 }
 
 impl LoadedFile {
-    pub(crate) fn path(&self) -> &str {
-        &self.path
+    pub(super) fn new(name: Vec<u8>, path: String, bytes: Arc<[u8]>) -> Self {
+        let bytes = if let Some(data) = bytes.strip_prefix(b"\xef\xbb\xbf") {
+            Arc::from(data)
+        } else {
+            bytes
+        };
+        Self { name, path, bytes }
+    }
+
+    pub(crate) fn text_name(&self) -> Option<&str> {
+        std::str::from_utf8(&self.name).ok()
     }
 
     pub(crate) fn source(&self) -> EngineResult<&str> {
@@ -81,158 +88,90 @@ impl LoadedFile {
 #[derive(Debug, Clone)]
 pub(crate) enum SourcePath {
     Native(PathBuf),
-    Virtual { root: VfsPath, path: PathBuf },
+    Virtual(VfsPath),
+    ArchiveMember {
+        archive: Arc<Self>,
+        original_name: Box<[u8]>,
+    },
 }
 
 impl SourcePath {
-    fn join_member(&self, member: &str) -> Self {
+    fn label(&self) -> String {
         match self {
-            Self::Native(path) => Self::Native(path.join(member)),
-            Self::Virtual { root, path } => Self::Virtual {
-                root: root.clone(),
-                path: path.join(member),
-            },
+            Self::Native(path) => path.display().to_string(),
+            Self::Virtual(path) => path.as_str().to_owned(),
+            Self::ArchiveMember {
+                archive,
+                original_name,
+            } => format!("{}:{}", archive.label(), original_name.as_bstr()),
         }
     }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct PreparedRootFile {
-    pub(crate) name: String,
-    pub(crate) source: String,
 }
 
 impl LoadedChart {
-    #[tracing::instrument(skip_all)]
     pub(crate) fn read_directory(
-        root: &VfsPath,
-        native_path: Option<&Path>,
-        prepared_file: Option<&PreparedRootFile>,
+        directory: Arc<Directory>,
         include_tests: bool,
     ) -> EngineResult<Self> {
-        let directory = Directory::new(root, native_path, prepared_file)?;
-        Ok(Self {
-            entries: Arc::new(LoadedEntries::Directory(directory)),
-            prefix: String::new(),
-            path: root.as_str().to_string(),
+        let path = directory.path().to_owned();
+        let entries = directory.entries()?;
+        Ok(Self::from_entries(
+            entries,
+            path,
+            Some(directory),
             include_tests,
-        })
+        ))
     }
 
     pub(crate) fn read_archive(
-        bytes: &[u8],
-        archive_path: &str,
-        source_path: SourcePath,
-        budget: LoadBudget,
+        input: impl Read,
+        source: SourcePath,
         include_tests: bool,
     ) -> EngineResult<Self> {
-        if bytes.len() > budget.max_chart_archive_bytes {
-            return Err(CliError::LoadBudgetExceeded {
-                subject: archive_path.to_owned(),
-                limit_bytes: budget.max_chart_archive_bytes,
-            });
+        let path = source.label();
+        let entries = archive_entries(input, &path, &Arc::new(source))?;
+        let chart = Self::from_entries(entries, String::new(), None, include_tests);
+        if chart.file("Chart.yaml").is_none() {
+            return Err(CliError::NoChartYamlInArchive { archive: path });
         }
-        let mut archive = tar::Archive::new(GzDecoder::new(bytes));
-        let mut entries = Vec::new();
-        let mut paths = BTreeMap::new();
-        let mut remaining = budget.max_chart_archive_unpacked_bytes;
-        for entry in archive.entries()? {
-            let entry = entry?;
-            if !entry.header().entry_type().is_file() {
-                continue;
-            }
-            if entries.len() >= budget.max_chart_archive_entries {
-                return Err(CliError::LoadEntryBudgetExceeded {
-                    subject: archive_path.to_string(),
-                    limit_entries: budget.max_chart_archive_entries,
-                });
-            }
+        Ok(chart)
+    }
 
-            let original_archive_name = entry.path_bytes().into_owned().into_boxed_slice();
-            let path = entry.path()?;
-            validate_archive_entry_path(archive_path, &path)?;
-            let raw_name = path.to_string_lossy();
-            let name = raw_name
-                .split('/')
-                .filter(|part| !part.is_empty() && *part != ".")
-                .collect::<Vec<_>>()
-                .join("/");
-            if name.is_empty() || raw_name.ends_with('/') {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("invalid file name {raw_name} in archive {archive_path}"),
-                )
-                .into());
-            }
-            let mut parent = name.as_str();
-            while let Some((dir, _)) = parent.rsplit_once('/') {
-                if paths.entry(dir.to_string()).or_insert(None).is_some() {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::AlreadyExists,
-                        format!("{dir} is already a file in archive {archive_path}"),
-                    )
-                    .into());
+    fn from_entries(
+        entries: Vec<Entry>,
+        path: String,
+        directory: Option<Arc<Directory>>,
+        include_tests: bool,
+    ) -> Self {
+        let mut loaded = LoadedEntries::default();
+        let mut last = BTreeMap::new();
+        for mut entry in entries {
+            if let Some(member) = entry.file.name.strip_prefix(b"charts/")
+                && extension(member) != b".prov"
+            {
+                let mount = member.split(|byte| *byte == b'/').next().unwrap_or(member);
+                if !matches!(mount.first(), Some(b'_' | b'.')) {
+                    let group = loaded.mounts.entry(mount.to_owned()).or_default();
+                    entry.file.name = member.to_owned();
+                    group.push(entry);
                 }
-                parent = dir;
+            } else {
+                if !matches!(
+                    entry.file.name.as_slice(),
+                    b"requirements.yaml" | b"requirements.lock"
+                ) {
+                    last.insert(entry.file.name.clone(), loaded.files.len());
+                }
+                loaded.files.push(entry);
             }
-            paths.insert(name.clone(), Some(entries.len()));
-
-            let mut bytes = Vec::new();
-            let limit = u64::try_from(remaining)
-                .unwrap_or(u64::MAX)
-                .saturating_add(1);
-            entry.take(limit).read_to_end(&mut bytes)?;
-            remaining =
-                remaining
-                    .checked_sub(bytes.len())
-                    .ok_or_else(|| CliError::LoadBudgetExceeded {
-                        subject: format!("expanded {archive_path}"),
-                        limit_bytes: budget.max_chart_archive_unpacked_bytes,
-                    })?;
-            entries.push(Entry {
-                name,
-                original_archive_name,
-                bytes: Arc::from(bytes),
-            });
         }
-
-        // Extraction exposed the last file at each name in lexical order.
-        // Keep that view for analysis while retaining every original member.
-        let visible = paths
-            .iter()
-            .filter_map(|(name, index)| {
-                let mut parent = name.as_str();
-                while let Some((dir, _)) = parent.rsplit_once('/') {
-                    if paths.get(dir).is_some_and(Option::is_some) {
-                        return None;
-                    }
-                    parent = dir;
-                }
-                *index
-            })
-            .collect();
-        let root = Self {
-            entries: Arc::new(LoadedEntries::Archive {
-                source_path,
-                entries,
-                visible,
-            }),
-            prefix: String::new(),
-            path: String::new(),
+        Self {
+            entries: Arc::new(loaded),
+            directory,
+            path,
             include_tests,
-        };
-        if root.has_archive_manifest() {
-            return Ok(root);
+            last: Arc::new(last),
         }
-
-        // Match the directory view's first top-level chart in lexical order.
-        root.child_directories()
-            .into_iter()
-            .map(|name| root.archive_subdirectory(name))
-            .find(Self::has_archive_manifest)
-            .ok_or_else(|| CliError::NoChartYamlInArchive {
-                archive: archive_path.to_string(),
-            })
     }
 
     pub(crate) fn analysis_view(&self, include_tests: bool) -> Self {
@@ -242,8 +181,34 @@ impl LoadedChart {
         }
     }
 
-    pub(crate) fn path(&self) -> &str {
-        &self.path
+    pub(super) fn set_api_version(&mut self, version: Option<&str>) {
+        let mut v1 = matches!(version, None | Some("" | "v1"));
+        for (index, entry) in self.entries.files.iter().enumerate() {
+            match entry.file.name.as_slice() {
+                b"requirements.yaml" => {
+                    if let Some(version) = entry
+                        .file
+                        .source()
+                        .ok()
+                        .and_then(helm_schema_syntax::decoded_yaml_value)
+                        .and_then(|doc| {
+                            doc.as_object()?
+                                .iter()
+                                .rfind(|(key, _)| key.eq_ignore_ascii_case("apiVersion"))
+                                .map(|(_, value)| value.clone())
+                        })
+                        .filter(|value| !value.is_null())
+                    {
+                        v1 = version.as_str() == Some("v1");
+                    }
+                }
+                b"requirements.lock" => {}
+                _ => continue,
+            }
+            if v1 {
+                Arc::make_mut(&mut self.last).insert(entry.file.name.clone(), index);
+            }
+        }
     }
 
     pub(crate) fn file_path(&self, name: &str) -> String {
@@ -254,270 +219,229 @@ impl LoadedChart {
         self.path.rsplit('/').next().unwrap_or_default()
     }
 
-    pub(crate) fn manifest(&self) -> EngineResult<LoadedFile> {
-        if let Some(file) = self.file("Chart.yaml")? {
-            return Ok(file);
-        }
-        if let Some(file) = self.file("Chart.template.yaml")? {
-            return Ok(file);
-        }
-        match self.entries.as_ref() {
-            LoadedEntries::Directory(dir) => dir.required_manifest(),
-            LoadedEntries::Archive {
-                source_path,
-                entries: _,
-                visible: _,
-            } => Err(CliError::NoChartYamlInArchive {
-                archive: format!("{source_path:?}"),
-            }),
-        }
+    pub(crate) fn manifest(&self) -> EngineResult<&LoadedFile> {
+        self.file("Chart.yaml").ok_or_else(|| {
+            vfs::VfsError::from(vfs::error::VfsErrorKind::FileNotFound)
+                .with_context(|| format!("Could not read path '{}'", self.file_path("Chart.yaml")))
+                .into()
+        })
     }
 
-    pub(crate) fn file(&self, name: &str) -> EngineResult<Option<LoadedFile>> {
-        match self.entries.as_ref() {
-            LoadedEntries::Directory(dir) => dir.file(name),
-            LoadedEntries::Archive {
-                source_path: _,
-                entries: _,
-                visible: _,
-            } => Ok(self
-                .archive_entries_under(name)
-                .next()
-                .filter(|(actual, _)| *actual == name)
-                .map(|(name, entry)| self.archive_file(name, entry))),
-        }
+    pub(crate) fn file(&self, name: &str) -> Option<&LoadedFile> {
+        self.entries
+            .files
+            .iter()
+            .map(|entry| &entry.file)
+            .rfind(|file| file.name == name.as_bytes())
     }
 
     pub(crate) fn load_local_file(&self, path: &Path) -> EngineResult<Option<Arc<[u8]>>> {
-        match self.entries.as_ref() {
-            LoadedEntries::Directory(dir) => dir.load_local_file(path),
-            LoadedEntries::Archive {
-                source_path: _,
-                entries: _,
-                visible: _,
-            } => Ok(None),
+        match &self.directory {
+            Some(directory) => directory.local_file(path),
+            None => Ok(None),
         }
     }
 
-    pub(crate) fn prepare_roles(&self) -> EngineResult<()> {
-        if let LoadedEntries::Directory(dir) = self.entries.as_ref() {
-            dir.prepare_roles(self.include_tests)?;
+    pub(crate) fn lint_values(&self) -> Option<serde_yaml::Value> {
+        let raw = self.directory.as_ref()?.lint_values()?;
+        let doc =
+            serde_yaml::Value::deserialize(serde_yaml::Deserializer::from_slice(&raw).next()?)
+                .ok()?;
+        match doc {
+            serde_yaml::Value::Null => Some(serde_yaml::Value::Mapping(serde_yaml::Mapping::new())),
+            serde_yaml::Value::Mapping(_) => Some(doc),
+            _ => None,
         }
-        Ok(())
     }
 
-    pub(crate) fn files_with_role(&self, role: FileRole) -> EngineResult<Vec<LoadedFile>> {
-        if let LoadedEntries::Directory(dir) = self.entries.as_ref() {
-            return dir.files_with_role(role);
+    pub(crate) fn files_with_role(&self, role: FileRole) -> impl Iterator<Item = &LoadedFile> {
+        self.entries
+            .files
+            .iter()
+            .enumerate()
+            .filter_map(move |(index, entry)| {
+                let file = &entry.file;
+                let selected = matches!(role, FileRole::StaticCrd)
+                    || self.last.get(&file.name) == Some(&index);
+                (selected && self.has_role(&file.name, role)).then_some(file)
+            })
+    }
+
+    fn has_role(&self, name: &[u8], role: FileRole) -> bool {
+        let template = name.strip_prefix(b"templates/");
+        let enabled =
+            || template.is_some_and(|name| self.include_tests || !within_template_tests(name));
+        match role {
+            FileRole::DefineIndexTemplate => enabled(),
+            FileRole::ManifestTemplate | FileRole::NotesTemplate => {
+                enabled()
+                    && !basename(name).starts_with(b"_")
+                    && name.ends_with(b"NOTES.txt") == matches!(role, FileRole::NotesTemplate)
+            }
+            FileRole::StaticCrd => {
+                name.starts_with(b"crds/")
+                    && [b".json".as_slice(), b".yaml", b".yml"]
+                        .iter()
+                        .any(|ext| extension(name).eq_ignore_ascii_case(ext))
+            }
+            FileRole::FilesGetSource => {
+                template.is_none()
+                    && !matches!(
+                        name,
+                        b"Chart.yaml" | b"Chart.lock" | b"values.yaml" | b"values.schema.json"
+                    )
+            }
         }
-        let prefix = match role {
-            FileRole::DefineIndexTemplate
-            | FileRole::ManifestTemplate
-            | FileRole::NotesTemplate => "templates/",
-            FileRole::StaticCrd => "crds/",
-            FileRole::FilesGetSource => "",
-        };
-        Ok(self
-            .archive_entries_under(prefix)
-            .filter(|(name, _)| has_role(name, role, self.include_tests))
-            .map(|(name, entry)| self.archive_file(name, entry))
-            .collect())
     }
 
     pub(crate) fn visit_vendored_charts(
         &self,
-        budget: LoadBudget,
         mut visit: impl FnMut(Self) -> EngineResult<()>,
     ) -> EngineResult<()> {
-        match self.entries.as_ref() {
-            LoadedEntries::Directory(dir) => {
-                let vendor = dir.path.join("charts")?;
-                if !vendor.is_dir()? {
-                    return Ok(());
+        for (mount, entries) in &self.entries.mounts {
+            let path = self.file_path(&format!("charts/{}", String::from_utf8_lossy(mount)));
+            if extension(mount) == b".tgz" {
+                let Some(package) = entries.first() else {
+                    continue;
+                };
+                if package.file.name != *mount {
+                    return Err(Error::new(
+                        ErrorKind::InvalidData,
+                        format!("expected archive {path}, got {}", package.file.path),
+                    )
+                    .into());
                 }
-                let mut entries = dir.children(&vendor)?.to_vec();
-                entries.sort_by_key(VfsPath::filename);
-                for entry in entries {
-                    if entry.is_dir()? {
-                        if entry.join("Chart.yaml")?.is_file()?
-                            || entry.join("Chart.template.yaml")?.is_file()?
-                        {
-                            let path = entry.as_str().to_string();
-                            visit(Self {
-                                entries: Arc::new(LoadedEntries::Directory(dir.subchart(entry))),
-                                prefix: String::new(),
-                                path,
-                                include_tests: self.include_tests,
-                            })?;
-                        }
-                    } else if entry.is_file()? && is_chart_archive(&entry.filename()) {
-                        let bytes = dir.read(&entry, Some(budget.max_chart_archive_bytes))?;
-                        visit(Self::read_archive(
-                            &bytes,
-                            entry.as_str(),
-                            dir.source_path(&entry),
-                            budget,
-                            self.include_tests,
-                        )?)?;
-                    }
-                }
-            }
-            LoadedEntries::Archive {
-                source_path,
-                entries: _,
-                visible: _,
-            } => {
-                let mut children = BTreeMap::new();
-                for (relative, entry) in self.archive_entries_under("charts/") {
-                    let Some(name) = relative.strip_prefix("charts/") else {
-                        continue;
-                    };
-                    if let Some((dir, _)) = name.split_once('/') {
-                        children.entry(dir).or_insert(None);
-                    } else if is_chart_archive(name) {
-                        children.insert(name, Some(entry));
-                    }
-                }
-                for (name, package) in children {
-                    let name = format!("charts/{name}");
-                    if let Some(package) = package {
-                        let original = String::from_utf8_lossy(&package.original_archive_name);
-                        let source = source_path.join_member(&original);
-                        visit(Self::read_archive(
-                            &package.bytes,
-                            &self.file_path(&name),
-                            source,
-                            budget,
-                            self.include_tests,
-                        )?)?;
-                    } else {
-                        let child = self.archive_subdirectory(&name);
-                        if child.has_archive_manifest() {
-                            visit(child)?;
-                        }
-                    }
-                }
+                visit(Self::read_archive(
+                    package.file.bytes.as_ref(),
+                    package.source.clone(),
+                    self.include_tests,
+                )?)?;
+            } else {
+                let entries = entries
+                    .iter()
+                    .filter_map(|entry| {
+                        let (_, name) = entry.file.name.split_once_str(b"/")?;
+                        let mut entry = entry.clone();
+                        entry.file.name = name.to_owned();
+                        Some(entry)
+                    })
+                    .collect();
+                visit(Self::from_entries(
+                    entries,
+                    path,
+                    self.directory.clone(),
+                    self.include_tests,
+                ))?;
             }
         }
         Ok(())
     }
-
-    fn has_archive_manifest(&self) -> bool {
-        ["Chart.yaml", "Chart.template.yaml"]
-            .into_iter()
-            .any(|manifest| {
-                self.archive_entries_under(manifest)
-                    .any(|(name, _)| name == manifest)
-            })
-    }
-
-    fn archive_subdirectory(&self, name: &str) -> Self {
-        Self {
-            entries: Arc::clone(&self.entries),
-            prefix: format!("{}{name}/", self.prefix),
-            path: self.file_path(name),
-            include_tests: self.include_tests,
-        }
-    }
-
-    fn child_directories(&self) -> BTreeSet<&str> {
-        self.archive_entries_under("")
-            .filter_map(|(name, _)| name.split_once('/').map(|(dir, _)| dir))
-            .collect()
-    }
-
-    fn archive_file(&self, name: &str, entry: &Entry) -> LoadedFile {
-        LoadedFile {
-            name: name.to_string(),
-            path: self.file_path(name),
-            bytes: Arc::clone(&entry.bytes),
-        }
-    }
-
-    fn archive_entries_under<'a>(
-        &'a self,
-        relative_prefix: &str,
-    ) -> impl Iterator<Item = (&'a str, &'a Entry)> + use<'a> {
-        let (entries, visible): (&[Entry], &[usize]) = match self.entries.as_ref() {
-            LoadedEntries::Directory(_) => (&[], &[]),
-            LoadedEntries::Archive {
-                source_path: _,
-                entries,
-                visible,
-            } => (entries, visible),
-        };
-        let prefix = format!("{}{relative_prefix}", self.prefix);
-        let start = visible
-            .partition_point(|index| entries.get(*index).is_some_and(|entry| entry.name < prefix));
-        visible
-            .iter()
-            .skip(start)
-            .filter_map(|index| entries.get(*index))
-            .take_while(move |entry| entry.name.starts_with(&prefix))
-            .filter_map(|entry| Some((entry.name.strip_prefix(&self.prefix)?, entry)))
-    }
 }
 
-pub(super) fn has_role(name: &str, role: FileRole, include_tests: bool) -> bool {
-    let basename = name.rsplit('/').next().unwrap_or_default();
-    match role {
-        FileRole::DefineIndexTemplate | FileRole::ManifestTemplate | FileRole::NotesTemplate => {
-            let Some(template) = name.strip_prefix("templates/") else {
-                return false;
-            };
-            let (dirs, _) = template.rsplit_once('/').unwrap_or(("", template));
-            if !include_tests && within_template_tests(dirs) {
-                return false;
+fn archive_entries(
+    input: impl Read,
+    path: &str,
+    source: &Arc<SourcePath>,
+) -> EngineResult<Vec<Entry>> {
+    let mut archive = tar::Archive::new(MultiGzDecoder::new(input));
+    let mut entries = Vec::new();
+    let mut remaining = MAX_ARCHIVE_SIZE;
+    for entry in archive.entries()? {
+        let mut entry = entry?;
+        let kind = entry.header().entry_type();
+        let original_name = entry.path_bytes();
+        let old_directory =
+            entry.header().as_old().linkflag.first() == Some(&0) && original_name.ends_with(b"/");
+        if kind.is_dir()
+            || old_directory
+            || kind.is_pax_global_extensions()
+            || kind.is_pax_local_extensions()
+        {
+            continue;
+        }
+        let original_name = original_name.into_owned().into_boxed_slice();
+        let name = archive_name(path, &original_name)?;
+        if entry.size() >= remaining as u64 {
+            return Err(CliError::LoadBudgetExceeded {
+                subject: format!("expanded {path}"),
+                limit_bytes: MAX_ARCHIVE_SIZE,
+            });
+        }
+        let data = read_to_end_capped(
+            &mut entry,
+            MAX_FILE_SIZE,
+            format!("expanded {path}/{}", name.as_bstr()),
+        )?;
+        remaining -= data.len();
+        entries.push(Entry {
+            file: LoadedFile::new(
+                name.clone(),
+                format!("/{}", name.as_bstr()),
+                Arc::from(data),
+            ),
+            source: SourcePath::ArchiveMember {
+                archive: Arc::clone(source),
+                original_name,
+            },
+        });
+    }
+    Ok(entries)
+}
+
+fn archive_name(archive: &str, raw: &[u8]) -> EngineResult<Vec<u8>> {
+    let separator = if raw.contains(&b'\\') { b'\\' } else { b'/' };
+    let error = || CliError::UnsafeArchiveEntryPath {
+        archive: archive.to_owned(),
+        entry_path: String::from_utf8_lossy(raw).into_owned(),
+    };
+    let (wrapper, member) = raw.split_once_str(&[separator]).ok_or_else(error)?;
+    if wrapper == b"Chart.yaml"
+        || matches!(member.first(), Some(first) if *first == b'/' || *first == separator)
+    {
+        return Err(error());
+    }
+    let mut parts = Vec::new();
+    for part in member.split(|byte| *byte == separator || *byte == b'/') {
+        match part {
+            b"." | b"" => {}
+            b".." if parts.last().is_some_and(|part| *part != b"..") => {
+                parts.pop();
             }
-            match role {
-                FileRole::DefineIndexTemplate => true,
-                FileRole::ManifestTemplate => {
-                    !basename.starts_with('_') && extension_is_one_of(basename, &["yaml", "yml"])
-                }
-                FileRole::NotesTemplate => basename == "NOTES.txt",
-                FileRole::StaticCrd | FileRole::FilesGetSource => false,
-            }
+            _ => parts.push(part),
         }
-        FileRole::StaticCrd => extension_is_one_of(basename, &["json", "yaml", "yml"]),
-        FileRole::FilesGetSource => {
-            let (dirs, _) = name.rsplit_once('/').unwrap_or(("", name));
-            !dirs.split('/').any(excluded_files_directory)
-                && !matches!(
-                    basename,
-                    ".helmignore"
-                        | "Chart.lock"
-                        | "Chart.yaml"
-                        | "values.schema.json"
-                        | "values.yaml"
-                )
-        }
+    }
+    let name = parts.join(&b'/');
+    let drive_path =
+        matches!(name.as_slice(), [letter, b':', b'/', ..] if letter.is_ascii_alphabetic());
+    if name.is_empty() || name.starts_with(b"..") || drive_path {
+        Err(error())
+    } else {
+        Ok(name)
     }
 }
 
-pub(super) fn excluded_files_directory(name: &str) -> bool {
-    name.eq_ignore_ascii_case("charts") || name.eq_ignore_ascii_case("templates")
+fn basename(name: &[u8]) -> &[u8] {
+    name.rsplit(|byte| *byte == b'/').next().unwrap_or(name)
 }
 
-fn within_template_tests(dirs: &str) -> bool {
+fn extension(name: &[u8]) -> &[u8] {
+    let basename = basename(name);
+    basename
+        .rfind(b".")
+        .and_then(|dot| basename.get(dot..))
+        .unwrap_or_default()
+}
+
+fn within_template_tests(template: &[u8]) -> bool {
+    let (dirs, _) = template.rsplit_once_str(b"/").unwrap_or((b"", template));
     let mut in_templates = true;
-    for dir in dirs.split('/') {
-        if in_templates && dir.eq_ignore_ascii_case("tests") {
+    for dir in dirs.split(|byte| *byte == b'/') {
+        if in_templates && dir.eq_ignore_ascii_case(b"tests") {
             return true;
         }
-        in_templates = dir.eq_ignore_ascii_case("templates");
+        in_templates = dir.eq_ignore_ascii_case(b"templates");
     }
     false
-}
-
-fn extension_is_one_of(name: &str, extensions: &[&str]) -> bool {
-    Path::new(name)
-        .extension()
-        .and_then(|ext| ext.to_str())
-        .is_some_and(|ext| {
-            extensions
-                .iter()
-                .any(|candidate| ext.eq_ignore_ascii_case(candidate))
-        })
 }
 
 #[cfg(test)]

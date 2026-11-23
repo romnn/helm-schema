@@ -1,11 +1,12 @@
-use std::path::{Path, PathBuf};
+use std::fs::{self, File};
+use std::path::Path;
+use std::sync::Arc;
 
 use vfs::VfsPath;
 
-use crate::chart::discovery::is_chart_archive;
-use crate::chart::{LoadedChart, PreparedRootFile, SourcePath};
+use crate::chart::{Directory, LoadedChart, SourcePath};
 use crate::error::{CliError, EngineResult};
-use crate::load_budget::{LoadBudget, read_to_end_capped};
+use crate::load_budget::LoadBudget;
 
 /// Root chart input shared by config discovery and chart analysis.
 #[derive(Debug, Clone)]
@@ -13,11 +14,7 @@ pub struct RootChartSource(Source);
 
 #[derive(Debug, Clone)]
 enum Source {
-    Directory {
-        path: VfsPath,
-        native_path: Option<PathBuf>,
-        prepared_file: Option<PreparedRootFile>,
-    },
+    Directory(Arc<Directory>),
     Archive(LoadedChart),
 }
 
@@ -31,11 +28,7 @@ impl RootChartSource {
     /// Uses a virtual-filesystem directory as the chart source.
     #[must_use]
     pub fn directory(path: VfsPath) -> Self {
-        Self(Source::Directory {
-            path,
-            native_path: None,
-            prepared_file: None,
-        })
+        Self(Source::Directory(Arc::new(Directory::new(path, None))))
     }
 
     /// Opens a physical chart directory or captures a packaged chart archive.
@@ -44,39 +37,23 @@ impl RootChartSource {
     ///
     /// Returns an error when the path cannot be inspected, is neither a
     /// directory nor a supported chart archive, or the archive cannot be read.
-    pub fn open(path: &Path, load_budget: LoadBudget) -> EngineResult<Self> {
-        let metadata = std::fs::metadata(path)?;
+    pub fn open(path: &Path, _load_budget: LoadBudget) -> EngineResult<Self> {
+        let metadata = fs::metadata(path)?;
         if metadata.is_dir() {
-            return Ok(Self(Source::Directory {
-                path: VfsPath::new(vfs::PhysicalFS::new(path)),
-                native_path: Some(path.to_path_buf()),
-                prepared_file: None,
-            }));
+            return Ok(Self(Source::Directory(Arc::new(Directory::new(
+                VfsPath::new(vfs::PhysicalFS::new(path)),
+                Some(path),
+            )))));
         }
-        if let Some(name) = path.file_name().map(|name| name.to_string_lossy())
-            && metadata.is_file()
-            && is_chart_archive(&name)
-        {
-            let parent = path.parent().unwrap_or_else(|| Path::new("."));
-            let parent = parent.to_string_lossy();
-            let root = VfsPath::new(vfs::PhysicalFS::new(parent.as_ref()));
-            let archive = root.join(name.as_ref())?;
-            let bytes = read_to_end_capped(
-                &mut archive.open_file()?,
-                load_budget.max_chart_archive_bytes,
-                archive.as_str(),
-            )?;
+        if metadata.is_file() {
             return Ok(Self(Source::Archive(LoadedChart::read_archive(
-                &bytes,
-                archive.as_str(),
+                File::open(path)?,
                 SourcePath::Native(path.to_path_buf()),
-                load_budget,
                 true,
             )?)));
         }
-
         Err(CliError::CliValidation(format!(
-            "chart source must be a directory or .tgz/.tar.gz archive: {}",
+            "chart source must be a directory or gzip archive: {}",
             path.display()
         )))
     }
@@ -87,28 +64,19 @@ impl RootChartSource {
     ///
     /// Returns an error when the file cannot be read as UTF-8.
     pub fn read_root_file(&mut self, name: &str) -> EngineResult<Option<String>> {
-        match &mut self.0 {
-            Source::Directory {
-                path,
-                native_path: _,
-                prepared_file,
-            } => {
-                if let Some(file) = prepared_file.as_ref().filter(|file| file.name == name) {
-                    return Ok(Some(file.source.clone()));
-                }
-                let path = path.join(name)?;
-                if path.is_file()? {
-                    let source = path.read_to_string()?;
-                    *prepared_file = Some(PreparedRootFile {
-                        name: name.to_string(),
-                        source: source.clone(),
-                    });
-                    return Ok(Some(source));
-                }
-                Ok(None)
-            }
+        match &self.0 {
+            Source::Directory(dir) => dir
+                .direct(name)?
+                .map(|bytes| {
+                    std::str::from_utf8(&bytes).map(str::to_owned).map_err(|_| {
+                        CliError::NonUtf8ChartSource {
+                            path: format!("{}/{name}", dir.path()),
+                        }
+                    })
+                })
+                .transpose(),
             Source::Archive(chart) => chart
-                .file(name)?
+                .file(name)
                 .map(|file| file.source().map(str::to_owned))
                 .transpose(),
         }
@@ -116,28 +84,15 @@ impl RootChartSource {
 
     pub(crate) fn load(&self, include_tests: bool) -> EngineResult<LoadedChart> {
         match &self.0 {
-            Source::Directory {
-                path,
-                native_path,
-                prepared_file,
-            } => Ok(LoadedChart::read_directory(
-                path,
-                native_path.as_deref(),
-                prepared_file.as_ref(),
-                include_tests,
-            )?),
+            Source::Directory(dir) => LoadedChart::read_directory(dir.for_session(), include_tests),
             Source::Archive(chart) => Ok(chart.analysis_view(include_tests)),
         }
     }
 
     pub(crate) fn logical_path(&self) -> &str {
         match &self.0 {
-            Source::Directory {
-                path,
-                native_path: _,
-                prepared_file: _,
-            } => path.as_str(),
-            Source::Archive(chart) => chart.path(),
+            Source::Directory(dir) => dir.path(),
+            Source::Archive(chart) => chart.path.as_str(),
         }
     }
 }

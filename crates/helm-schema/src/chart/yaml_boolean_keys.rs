@@ -98,8 +98,8 @@ pub(crate) fn load_values_files_and_check_keys(
     let mut keys = Vec::new();
 
     for chart in charts {
-        if let Some(file) = chart.files.file("values.yaml")? {
-            collect_keys(file.path(), file.yaml_text()?, &mut keys)?;
+        if let Some(file) = chart.files.file("values.yaml") {
+            collect_keys(&file.path, file.yaml_text()?, &mut keys)?;
         }
     }
     let mut loaded = BTreeMap::new();

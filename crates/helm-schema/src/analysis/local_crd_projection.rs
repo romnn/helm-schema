@@ -22,11 +22,11 @@ pub(crate) fn collect_static_crd_universe(
     let mut universe = LocalSchemaUniverse::default();
 
     for chart in charts {
-        for file in chart.files.files_with_role(FileRole::StaticCrd)? {
+        for file in chart.files.files_with_role(FileRole::StaticCrd) {
             for resource_schema in resource_schemas_from_literal_documents(
                 file.source()?,
                 STATIC_CRD_SOURCE_ID,
-                file.path(),
+                &file.path,
             ) {
                 universe.insert_resource_schema(resource_schema);
             }

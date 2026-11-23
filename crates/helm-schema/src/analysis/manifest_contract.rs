@@ -19,18 +19,16 @@ pub(crate) fn collect_manifest_contract_for_chart(
 
     let manifests = chart
         .files
-        .files_with_role(chart::FileRole::ManifestTemplate)?;
-    let notes = chart
-        .files
-        .files_with_role(chart::FileRole::NotesTemplate)?;
+        .files_with_role(chart::FileRole::ManifestTemplate);
+    let notes = chart.files.files_with_role(chart::FileRole::NotesTemplate);
     let files = manifests
-        .iter()
         .map(|file| (file, false))
-        .chain(notes.iter().map(|file| (file, true)))
-        .map(|(file, textual)| {
+        .chain(notes.map(|file| (file, true)))
+        .filter_map(|(file, textual)| Some((file, file.text_name()?, textual)))
+        .map(|(file, name, textual)| {
             Ok(ManifestSource {
-                path: file.path(),
-                name: chart::template_execution_name(chart, &file.name),
+                path: &file.path,
+                name: chart::template_execution_name(chart, name),
                 source: file.source()?,
                 textual,
             })

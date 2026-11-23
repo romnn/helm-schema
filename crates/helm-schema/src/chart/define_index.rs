@@ -7,23 +7,24 @@ use crate::error::EngineResult;
 
 #[instrument(skip_all)]
 pub fn build_define_index(charts: &[ChartContext]) -> EngineResult<DefineIndex> {
-    // The loading stage precedes UTF-8 validation and defaults decoding.
-    for chart in charts {
-        chart.files.prepare_roles()?;
-    }
     let mut index = DefineIndex::new();
 
     for chart in charts {
-        for file in chart.files.files_with_role(FileRole::DefineIndexTemplate)? {
+        for file in chart.files.files_with_role(FileRole::DefineIndexTemplate) {
+            let Some(name) = file.text_name() else {
+                continue;
+            };
             index.add_chart_template_source(
                 &chart.template_namespace,
-                &template_execution_name(chart, &file.name),
+                &template_execution_name(chart, name),
                 file.source()?,
             );
         }
 
-        for file in chart.files.files_with_role(FileRole::FilesGetSource)? {
-            index.add_chart_file(&chart.template_namespace, &file.name, &file.bytes);
+        for file in chart.files.files_with_role(FileRole::FilesGetSource) {
+            if let Some(name) = file.text_name() {
+                index.add_chart_file(&chart.template_namespace, name, &file.bytes);
+            }
         }
     }
 

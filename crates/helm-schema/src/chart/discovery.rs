@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Component, Path};
 
 use serde::Deserialize;
 use tracing::instrument;
@@ -9,7 +8,6 @@ use super::paths::scope_values_path;
 use super::types::{ChartContext, ChartDependencyActivation};
 use crate::chart_source::RootChartSource;
 use crate::error::{CliError, EngineResult};
-use crate::load_budget::LoadBudget;
 
 #[derive(Debug, Deserialize)]
 struct ChartYaml {
@@ -64,15 +62,16 @@ struct InstalledChart {
 }
 
 impl InstalledChart {
-    fn read(files: LoadedChart, is_root: bool) -> EngineResult<Self> {
+    fn read(mut files: LoadedChart, is_root: bool) -> EngineResult<Self> {
         let metadata = read_chart_yaml(&files)?;
+        files.set_api_version(metadata.api_version.as_deref());
         let name = metadata
             .name
             .clone()
             .unwrap_or_else(|| files.filename().to_string());
         if name.is_empty() && metadata.name.is_none() && !is_root {
             return Err(CliError::SubchartNameMissing {
-                path: files.path().to_string(),
+                path: files.path.clone(),
             });
         }
         Ok(Self {
@@ -83,8 +82,8 @@ impl InstalledChart {
         })
     }
 
-    fn load_children(&mut self, budget: LoadBudget) -> EngineResult<()> {
-        self.files.visit_vendored_charts(budget, |child| {
+    fn load_children(&mut self) -> EngineResult<()> {
+        self.files.visit_vendored_charts(|child| {
             self.children.push(Self::read(child, false)?);
             Ok(())
         })?;
@@ -93,7 +92,7 @@ impl InstalledChart {
             self.files.file_path("charts"),
         )?;
         for child in &mut self.children {
-            child.load_children(budget)?;
+            child.load_children()?;
         }
         Ok(())
     }
@@ -103,10 +102,9 @@ impl InstalledChart {
 pub(crate) fn discover_chart_contexts(
     source: &RootChartSource,
     include_tests: bool,
-    load_budget: LoadBudget,
 ) -> EngineResult<Vec<ChartContext>> {
     let mut root = InstalledChart::read(source.load(include_tests)?, true)?;
-    root.load_children(load_budget)?;
+    root.load_children()?;
     let mut out = Vec::new();
     discover_chart_contexts_inner(&root, &root.name, &[], &[], false, &mut out);
     Ok(out)
@@ -215,47 +213,6 @@ fn chart_static_root_strings(chart: &ChartYaml) -> BTreeMap<Vec<String>, String>
     strings
 }
 
-pub(crate) fn is_chart_archive(file_name: &str) -> bool {
-    let path = Path::new(file_name);
-    let is_tgz = path
-        .extension()
-        .and_then(|extension| extension.to_str())
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("tgz"));
-    let is_tar_gz = path
-        .extension()
-        .and_then(|extension| extension.to_str())
-        .is_some_and(|extension| extension.eq_ignore_ascii_case("gz"))
-        && path
-            .file_stem()
-            .and_then(|stem| Path::new(stem).extension())
-            .and_then(|extension| extension.to_str())
-            .is_some_and(|extension| extension.eq_ignore_ascii_case("tar"));
-
-    is_tgz || is_tar_gz
-}
-
-pub(crate) fn validate_archive_entry_path(archive: &str, entry_path: &Path) -> EngineResult<()> {
-    // `components()` parses with the HOST's separator rules, but tar entry
-    // names are platform-independent `/`-separated strings: an entry named
-    // `..\evil` parses as a traversal on Windows and as one opaque filename
-    // on Unix. Chart archives never legitimately contain backslashes (Helm
-    // requires `/`-separated member names), so reject them outright — the
-    // same entries then pass or fail identically on every platform.
-    let is_safe = entry_path.components().all(|component| match component {
-        Component::Normal(name) => !name.to_string_lossy().contains('\\'),
-        Component::CurDir => true,
-        _ => false,
-    });
-    if is_safe {
-        return Ok(());
-    }
-
-    Err(CliError::UnsafeArchiveEntryPath {
-        archive: archive.to_string(),
-        entry_path: entry_path.display().to_string(),
-    })
-}
-
 fn dependency_metadata_map(
     chart_yaml: &ChartYaml,
     parent_prefix: &[String],
@@ -338,13 +295,13 @@ fn scope_chart_yaml_value_path(path: &str, prefix: &[String]) -> String {
 fn read_chart_yaml(chart: &LoadedChart) -> EngineResult<ChartYaml> {
     let manifest = chart.manifest()?;
     let mut metadata: ChartYaml = serde_yaml::from_str(manifest.yaml_text()?)?;
-    let mut dependency_source = manifest.path().to_owned();
+    let mut dependency_source = manifest.path.clone();
     if metadata.dependencies.is_none()
-        && let Some(requirements) = chart.file("requirements.yaml")?
+        && let Some(requirements) = chart.file("requirements.yaml")
     {
         let yaml: RequirementsYaml = serde_yaml::from_str(requirements.yaml_text()?)?;
         metadata.dependencies = yaml.dependencies;
-        dependency_source = requirements.path().to_owned();
+        dependency_source = requirements.path.clone();
     }
     reject_duplicate_dependency_values_keys(
         metadata.dependencies.as_deref().unwrap_or_default(),
@@ -396,7 +353,7 @@ fn reject_duplicate_installed_dependency_names(
         entries_by_name
             .entry(&chart.name)
             .or_insert_with(Vec::new)
-            .push(chart.files.path());
+            .push(chart.files.path.as_str());
     }
     let details = entries_by_name
         .into_iter()
