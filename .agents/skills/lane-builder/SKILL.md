@@ -108,3 +108,11 @@ counts, CPU table, LOC delta, anything unfinished and its exact blocker.
   never a reason to hand back early.
 - When you need something only the orchestrator can do (a native sample, a decision), ask once,
   carry on with independent work, and name the file you will read the answer from.
+- `git apply` inside an extracted tree that sits under another clone (for example
+  `<clone>/target/<x>/src` from `git archive`) discovers the enclosing repository and silently
+  skips every path; `--check` then passes vacuously. Set `GIT_CEILING_DIRECTORIES=<clone>/target`
+  (or extract outside any clone) and confirm the applied tree differs from its base before
+  trusting a red or green run on it.
+- Disks fill: one full dump plus incremental debug builds takes tens of GiB. Build with
+  `CARGO_INCREMENTAL=0`, delete scratch targets and stale dumps when a step is done, and treat a
+  "No space left on device" failure as censored, not as a result.
