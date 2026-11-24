@@ -72,6 +72,9 @@ impl Chain {
         resource: &ResourceRef,
         path: &YamlPath,
     ) -> ChainLookupOutcome {
+        if !resource.capability_guards.is_empty() {
+            return ChainLookupOutcome::Resolved(None);
+        }
         self.resolve_concrete_resource(resource, path, true)
     }
 
@@ -95,6 +98,21 @@ impl Chain {
             }
         }
         None
+    }
+
+    // Selecting a guarded header requires Helm's render capability set.
+    fn schema_fragment_for_selected_resource(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> Option<ProviderSchemaFragment> {
+        if !resource.capability_guards.is_empty() {
+            return None;
+        }
+        if needs_inference(resource) {
+            return self.schema_fragment_for_resource_needing_inference(resource, path);
+        }
+        self.schema_fragment_for_planned_candidates(resource, path)
     }
 
     fn schema_fragment_for_resource_needing_inference(
@@ -327,6 +345,9 @@ impl Chain {
 impl ResourceSchemaOracle for Chain {
     #[tracing::instrument(skip_all)]
     fn resource_is_served(&self, resource: &ResourceRef) -> Option<bool> {
+        if !resource.capability_guards.is_empty() {
+            return None;
+        }
         self.providers
             .iter()
             .find_map(|provider| provider.resource_is_served_at_primary_version(resource))
@@ -334,11 +355,7 @@ impl ResourceSchemaOracle for Chain {
 
     #[tracing::instrument(skip_all)]
     fn observe_resource(&self, resource: &ResourceRef) {
-        drop(if needs_inference(resource) {
-            self.schema_fragment_for_resource_needing_inference(resource, &YamlPath::default())
-        } else {
-            self.schema_fragment_for_planned_candidates(resource, &YamlPath::default())
-        });
+        drop(self.schema_fragment_for_selected_resource(resource, &YamlPath::default()));
     }
 
     #[tracing::instrument(
@@ -356,13 +373,7 @@ impl ResourceSchemaOracle for Chain {
         )
     )]
     fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
-        let resource = &use_.resource;
-
-        if needs_inference(resource) {
-            return self.schema_fragment_for_resource_needing_inference(resource, &use_.path);
-        }
-
-        self.schema_fragment_for_planned_candidates(resource, &use_.path)
+        self.schema_fragment_for_selected_resource(&use_.resource, &use_.path)
     }
 }
 

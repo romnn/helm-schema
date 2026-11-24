@@ -9,9 +9,64 @@ use helm_schema_core::{
     ContractPathSchemaEvidence, ContractSchemaSignals, ProviderSchemaFragment, ProviderSchemaUse,
     ResourceRef, ResourceSchemaOracle, ValueKind, ValuesPath, YamlPath,
 };
+use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 use crate::provider_resolution::ProviderSchemaResolutions;
+
+#[derive(Debug, Default)]
+struct CapabilityBlindOracle {
+    observed: Mutex<Vec<ResourceRef>>,
+    availability: Mutex<Vec<ResourceRef>>,
+    fragments: Mutex<Vec<ResourceRef>>,
+}
+
+impl ResourceSchemaOracle for CapabilityBlindOracle {
+    fn observe_resource(&self, resource: &ResourceRef) {
+        if let Ok(mut observed) = self.observed.lock() {
+            observed.push(resource.clone());
+        }
+    }
+
+    fn resource_is_served(&self, resource: &ResourceRef) -> Option<bool> {
+        self.availability.lock().ok()?.push(resource.clone());
+        Some(resource.api_version != "autoscaling/v2beta2")
+    }
+
+    fn schema_fragment_for_use(&self, use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
+        self.fragments.lock().ok()?.push(use_.resource.clone());
+        Some(ProviderSchemaFragment::new(
+            serde_json::json!({"type": "boolean"}),
+        ))
+    }
+}
+
+#[test]
+fn guarded_resources_never_reach_the_oracle() -> eyre::Result<()> {
+    let signals = super::schema_signals_for(super::parse_ir(indoc! {r#"
+        apiVersion: {{ ternary "autoscaling/v2" "autoscaling/v2beta2" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: example
+        spec:
+          maxReplicas: {{ .Values.replicas }}
+    "#}));
+    sim_assert_eq!(have: signals.observed_resources().len(), want: 2);
+    assert!(signals.observed_resources().iter().all(|observation| {
+        observation.activation == Some(Vec::new())
+            && !observation.resource.capability_guards.is_empty()
+    }));
+    let oracle = CapabilityBlindOracle::default();
+    let schema = crate::generate_values_schema(crate::ValuesSchemaInput::new(&signals, &oracle));
+    assert!(super::schema_accepts_instance(
+        &schema,
+        &serde_json::json!({"replicas": 2})
+    ));
+    for calls in [oracle.observed, oracle.availability, oracle.fragments] {
+        sim_assert_eq!(have: calls.into_inner().map_err(|error| eyre::eyre!("{error}"))?, want: Vec::<ResourceRef>::new());
+    }
+    Ok(())
+}
 
 #[derive(Debug, Default)]
 struct CountingProvider {

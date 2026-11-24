@@ -135,6 +135,13 @@ impl ProviderSchemaResolutions {
     }
 }
 
+fn provider_for_resource<'a>(
+    resource: &ResourceRef,
+    provider: &'a dyn ResourceSchemaOracle,
+) -> Option<&'a dyn ResourceSchemaOracle> {
+    resource.capability_guards.is_empty().then_some(provider)
+}
+
 fn unavailable_resource_activations(
     signals: &ContractSchemaSignals,
     by_use: &BTreeMap<ProviderSchemaUse, ProviderSchemaResolution>,
@@ -151,6 +158,9 @@ fn unavailable_resource_activations(
         activation,
     } in signals.observed_resources()
     {
+        let Some(provider) = provider_for_resource(resource, provider) else {
+            continue;
+        };
         if queried.insert(resource) {
             provider.observe_resource(resource);
         }
@@ -171,6 +181,9 @@ fn insert_resolution(
     use_: ProviderSchemaUse,
     provider: &dyn ResourceSchemaOracle,
 ) {
+    let Some(provider) = provider_for_resource(&use_.resource, provider) else {
+        return;
+    };
     resolutions
         .entry(use_)
         .or_insert_with_key(|use_| ProviderSchemaResolution {

@@ -349,6 +349,8 @@ struct FrozenTest {
     when_true: Predicate,
     when_false: Predicate,
     coverage: Coverage,
+    // This environment decision has no outcome determined by values alone.
+    capability: Option<helm_schema_core::CapabilityGuard>,
     runtime: Option<guard::RuntimeGuard>,
 }
 
@@ -826,6 +828,7 @@ pub(crate) const MAX_SCALAR_DISPATCH_STATES: usize = 128;
 #[path = "../tests/runtime_execution.rs"]
 pub(crate) mod tests;
 
+#[cfg(test)]
 #[derive(Clone, Debug)]
 pub(crate) struct ValueAlternative {
     condition: Predicate,

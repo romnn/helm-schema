@@ -122,12 +122,7 @@ pub(super) fn transfer(invocation: &Invocation, state: &mut State) -> Value {
             value.derived(
                 state.heap.freeze(receiver),
                 super::relationship::ValueOperation::Capability {
-                    guard: helm_schema_core::CapabilityGuard::Has { api: api.clone() },
-                    decision: state.heap.arena.decision(
-                        helm_schema_core::Predicate::False,
-                        helm_schema_core::Predicate::False,
-                        super::Coverage::Partial,
-                    ),
+                    decision: state.heap.arena.capability_test(api.clone()),
                 },
             )
         }

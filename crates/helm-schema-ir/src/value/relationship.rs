@@ -138,29 +138,20 @@ pub(super) enum TextFormat {
 /// One executed operation, retained on its result's canonical origin.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum ValueOperation {
-    Capability {
-        guard: helm_schema_core::CapabilityGuard,
-        decision: Rc<super::FrozenTest>,
-    },
+    Capability { decision: Rc<super::FrozenTest> },
     Decode(Decoder),
     Format(TextFormat),
     Text(TextTransform),
-    SplitLiteral {
-        separator: String,
-    },
+    SplitLiteral { separator: String },
     SplitSegment(helm_schema_core::SplitSegmentUse),
     Trim,
     Numeric(super::ScalarType),
-    Descriptor {
-        kind_only: bool,
-    },
+    Descriptor { kind_only: bool },
     Member(String),
     Copy,
     Omit(BTreeSet<String>),
     Pick(BTreeSet<String>),
-    Merge {
-        overwrite: bool,
-    },
+    Merge { overwrite: bool },
 }
 
 #[derive(Clone, Debug)]
@@ -1587,10 +1578,7 @@ pub(super) fn structural_preimage(preimage: &[Preimage<'_>]) -> bool {
                 ValueOperation::Decode(format) if decode.is_none() => decode = Some(*format),
                 ValueOperation::Copy | ValueOperation::Omit(_) => {}
                 ValueOperation::Decode(_)
-                | ValueOperation::Capability {
-                    guard: _,
-                    decision: _,
-                }
+                | ValueOperation::Capability { decision: _ }
                 | ValueOperation::Trim
                 | ValueOperation::Text(_)
                 | ValueOperation::SplitLiteral { separator: _ }
@@ -2109,10 +2097,7 @@ fn fallback_input_path(value: &Value) -> Option<&helm_schema_core::ValuesPath> {
 fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
     match operation {
         ValueOperation::Format(TextFormat::Value | TextFormat::String)
-        | ValueOperation::Capability {
-            guard: _,
-            decision: _,
-        }
+        | ValueOperation::Capability { decision: _ }
         | ValueOperation::Trim
         | ValueOperation::Text(_)
         | ValueOperation::SplitSegment(_)
@@ -2245,10 +2230,7 @@ impl<'a> RelationshipQuery<'a, '_> {
                 super::lexical::printed_preimage(&query.matched),
                 super::lexical::printed_preimage(&query.unmatched),
             ),
-            ValueOperation::Capability {
-                guard: _,
-                decision: _,
-            }
+            ValueOperation::Capability { decision: _ }
             | ValueOperation::Decode(_)
             | ValueOperation::Trim
             | ValueOperation::SplitLiteral { separator: _ }

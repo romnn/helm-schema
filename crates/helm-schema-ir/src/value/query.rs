@@ -1532,7 +1532,7 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
     }
     if let Some(super::relationship::Derivation {
         source: _,
-        operation: super::relationship::ValueOperation::Capability { guard: _, decision },
+        operation: super::relationship::ValueOperation::Capability { decision },
     }) = value.operation_preimage()
     {
         return Rc::clone(decision);
@@ -1935,11 +1935,82 @@ impl FrozenValue {
 }
 
 impl FrozenValue {
+    pub(crate) fn selected_names(
+        &self,
+        mut names: impl FnMut(&Self) -> Vec<(String, Predicate)>,
+    ) -> Vec<(String, Predicate, Vec<helm_schema_core::CapabilityGuard>)> {
+        use super::guard::RuntimeGuard;
+        let Some(arena) = self.heap.arena.upgrade() else {
+            return Vec::new();
+        };
+        let mut selections = Vec::<(_, Vec<_>, _, RuntimeGuard)>::new();
+        visit_header_alternatives(
+            self,
+            Predicate::True,
+            &mut Vec::new(),
+            &mut |leaf, _, edges| {
+                let names = names(leaf);
+                if names.is_empty() {
+                    return;
+                }
+                let mut capabilities = Vec::new();
+                let mut decisions = Vec::new();
+                for super::DecisionEdge { test, taken } in edges {
+                    if let Some(guard) = test.capability_guard(*taken) {
+                        capabilities.push(guard);
+                    } else {
+                        decisions.push(super::DecisionEdge {
+                            test: Rc::clone(test),
+                            taken: *taken,
+                        });
+                    }
+                }
+                capabilities.sort_unstable();
+                capabilities.dedup();
+                let guard = arena.runtime_path(&decisions);
+                // Prove the name after unioning its original selectors.
+                // An opaque decision may have both outcomes emit the same name on a shared domain.
+                for (text, condition) in names {
+                    if let Some((_, _, _, prior)) =
+                        selections
+                            .iter_mut()
+                            .find(|(name, requirements, proof, _)| {
+                                *name == text
+                                    && *requirements == capabilities
+                                    && *proof == condition
+                            })
+                    {
+                        *prior = arena.union_runtime_guards(prior, &guard);
+                    } else {
+                        selections.push((text, capabilities.clone(), condition, guard.clone()));
+                    }
+                }
+            },
+        );
+        selections
+            .into_iter()
+            .filter_map(|(text, capabilities, condition, guard)| {
+                let activation = match guard {
+                    RuntimeGuard::False => return None,
+                    RuntimeGuard::True => Predicate::True,
+                    RuntimeGuard::Branch(_) => arena.budget_test(guard).when_true.clone(),
+                };
+                (activation != Predicate::False).then_some((
+                    text,
+                    Predicate::all(vec![condition, activation]),
+                    capabilities,
+                ))
+            })
+            .collect()
+    }
+
+    #[cfg(test)]
     pub(crate) fn alternatives(&self) -> Vec<super::ValueAlternative> {
         let mut result = Vec::new();
         alternative_views(self, Predicate::True, true, &mut result);
         result
     }
+
     pub(crate) fn go_type(&self) -> super::kinds::GoType {
         let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
         runtime_type(&self.value, &mut remaining)
@@ -2005,6 +2076,7 @@ impl ScalarType {
         }
     }
 }
+#[cfg(test)]
 impl super::ValueAlternative {
     pub(crate) fn condition(&self) -> &Predicate {
         &self.condition
@@ -2099,6 +2171,59 @@ fn ancestor_nil_domain(
     })
 }
 
+fn visit_header_alternatives(
+    value: &FrozenValue,
+    condition: Predicate,
+    decisions: &mut Vec<super::DecisionEdge>,
+    visit: &mut impl FnMut(&FrozenValue, Predicate, &[super::DecisionEdge]),
+) {
+    if matches!(
+        value.value.node.as_ref(),
+        ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _
+        }
+    ) && value.identity().is_some()
+    {
+        visit(value, condition, decisions);
+        return;
+    }
+    match value.value.node.as_ref() {
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => visit(value, condition, decisions),
+        ValueNode::Select { decision, yes, no } => {
+            for (taken, arm) in [(true, yes), (false, no)] {
+                let predicate = if decision.coverage != Coverage::Exact {
+                    Predicate::True
+                } else if taken {
+                    decision.when_true.clone()
+                } else {
+                    decision.when_false.clone()
+                };
+                let condition =
+                    Predicate::all(vec![condition.clone(), predicate]).normalize_boolean();
+                if condition == Predicate::False {
+                    continue;
+                }
+                decisions.push(super::DecisionEdge {
+                    test: Rc::clone(decision),
+                    taken,
+                });
+                visit_header_alternatives(
+                    &FrozenValue::at(Rc::clone(&value.heap), arm.clone()),
+                    condition,
+                    decisions,
+                    visit,
+                );
+                decisions.pop();
+            }
+        }
+    }
+}
+#[cfg(test)]
 fn alternative_views(
     value: &FrozenValue,
     condition: Predicate,

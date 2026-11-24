@@ -321,7 +321,12 @@ pub(crate) fn executed_scalar_body(
             let Some(arms) = scalar_names(&document, execution, node, &PredicateMemo::new()) else {
                 return HelperBranchBody::literals(Vec::new());
             };
-            for NamedValue { condition: _, text } in arms {
+            for NamedValue {
+                condition: _,
+                text,
+                capabilities: _,
+            } in arms
+            {
                 if !text.is_empty() && !names.contains(&text) {
                     names.push(text);
                 }

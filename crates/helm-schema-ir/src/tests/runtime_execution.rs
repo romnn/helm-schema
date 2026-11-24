@@ -3575,8 +3575,9 @@ pub(crate) fn conditional_helper_text(
     for site in execution.all_sites() {
         if let Some(super::relationship::Derivation {
             source: _,
-            operation: super::relationship::ValueOperation::Capability { guard, decision },
+            operation: super::relationship::ValueOperation::Capability { decision },
         }) = site.value().value.operation_preimage()
+            && let Some(guard) = &decision.capability
         {
             hosts.insert(
                 decision.id,

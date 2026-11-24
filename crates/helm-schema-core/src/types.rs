@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{HelperBranch, Predicate, ValuesPath};
+use crate::{CapabilityGuard, HelperBranch, Predicate, ValuesPath};
 
 /// YAML path in the rendered manifest, e.g. `["metadata", "name"]`.
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -91,6 +91,9 @@ pub struct ResourceRef {
     /// Guarded helper branches that produce API-version alternatives.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub api_version_branches: Vec<HelperBranch>,
+    /// Capability outcomes required for this resource identity to be selected.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub capability_guards: Vec<CapabilityGuard>,
     /// Predicate-qualified alternatives behind an inline-conditional
     /// `kind:`. An IR-internal enrichment: attached at use-tagging time
     /// (the selecting locals resolve only in template scope) and consumed
@@ -119,6 +122,7 @@ impl ResourceRef {
             kind_candidates: Vec::new(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
+            capability_guards: Vec::new(),
             kind_branches: Vec::new(),
             kind_selector: None,
         }

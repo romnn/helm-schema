@@ -116,7 +116,57 @@ impl NodeRef {
 struct SelectedSpan {
     range: Span,
     condition: Predicate,
+    capability: Option<SelectedCapability>,
     local: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct SelectedCapability {
+    guard: helm_schema_core::CapabilityGuard,
+    survival: bool,
+}
+
+impl SelectedSpan {
+    fn overlaps(&self, span: Span) -> bool {
+        self.range.start < span.end && span.start < self.range.end
+    }
+
+    fn in_document(&self, document: &DocumentLayout, source_mapped: bool) -> Option<Self> {
+        let start = self.range.start.saturating_sub(document.offset);
+        let end = self
+            .range
+            .end
+            .min(document.scope.end)
+            .saturating_sub(document.offset);
+        if self.local && start >= end {
+            return None;
+        }
+        let range = if source_mapped {
+            Span::new(start, end)
+        } else {
+            Span::new(0, document.ownership.skeleton.text.len())
+        };
+        Some(Self {
+            range,
+            ..self.clone()
+        })
+    }
+
+    fn is_proved(&self) -> bool {
+        use helm_schema_core::{CapabilityGuard, PredicateKind};
+        match self.capability.as_ref().map(|selection| &selection.guard) {
+            Some(CapabilityGuard::Has { .. } | CapabilityGuard::NotHas { .. }) => true,
+            Some(CapabilityGuard::Opaque { text: _ }) => false,
+            None => {
+                !self.condition.contains_approximation()
+                    || matches!(
+                        self.condition.kind(),
+                        PredicateKind::Approximate { sound_subset: Some(proof), .. }
+                            if *proof != Predicate::False && !proof.contains_approximation()
+                    )
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -201,6 +251,7 @@ impl<'a> PlacedTerm<'a> {
                         when_true,
                         when_false,
                         coverage,
+                        capability: _,
                         runtime: _,
                     } = decision.as_ref();
                     if *coverage != Coverage::Exact
@@ -430,6 +481,55 @@ impl<'a> PlacedDocument<'a> {
             .collect()
     }
 
+    pub(crate) fn mapping_key(&self, pair: NodeIx) -> Option<NodeIx> {
+        self.children(pair)
+            .iter()
+            .copied()
+            .find(|node| self.is_key(*node))
+    }
+
+    pub(crate) fn mapping_survivors(
+        &self,
+        pairs: &[NodeIx],
+        payloads: &BTreeMap<NodeIx, Predicate>,
+        memo: &PredicateMemo,
+        payload_member_absent: impl Fn(NodeIx, &str) -> Predicate,
+    ) -> BTreeMap<NodeIx, Predicate> {
+        let mut known = BTreeMap::<String, Predicate>::new();
+        let mut unknown = Predicate::False;
+        let mut any = Predicate::False;
+        let mut later_payloads = Vec::new();
+        let mut survivors = BTreeMap::new();
+        for pair in pairs.iter().rev() {
+            let active = self
+                .mapping_key(*pair)
+                .map_or(Predicate::False, |key| self.selection_guard(key));
+            if let Some(payload) = payloads.get(pair) {
+                later_payloads.push((*pair, payload));
+            } else if let Some(key) = self
+                .mapping_key(*pair)
+                .and_then(|key| self.literal_key(key))
+            {
+                let previous = known.get(key).cloned().unwrap_or(Predicate::False);
+                let mut guards = vec![unknown.negated(), previous.negated()];
+                for (later, active) in &later_payloads {
+                    let absent = payload_member_absent(*later, key);
+                    guards.push(Predicate::Or(vec![active.negated(), absent]));
+                }
+                survivors.insert(*pair, memo.normalize(Predicate::all(guards)));
+                known.insert(
+                    key.to_owned(),
+                    memo.normalize(Predicate::Or(vec![previous, active.clone()])),
+                );
+            } else {
+                survivors.insert(*pair, any.negated());
+                unknown = memo.normalize(Predicate::Or(vec![unknown, active.clone()]));
+            }
+            any = memo.normalize(Predicate::Or(vec![any, active]));
+        }
+        survivors
+    }
+
     pub(crate) fn literal_key(&self, node: NodeIx) -> Option<&str> {
         let index = node.0;
         let node = self.ownership.nodes.get(index)?;
@@ -522,6 +622,74 @@ impl<'a> PlacedDocument<'a> {
             self.span_selection_guard(span),
             self.prefix_guard(span),
         ])
+    }
+
+    pub(crate) fn header_capabilities(
+        &self,
+        kind: &[NodeIx],
+        api_version: &[NodeIx],
+    ) -> Option<Vec<helm_schema_core::CapabilityGuard>> {
+        let literal_pair = matches!(
+            (kind, api_version),
+            ([kind], [version]) if self.literal_header(*kind) && self.literal_header(*version)
+        );
+        let fixed_literal = [kind, api_version].into_iter().any(|fields| {
+            matches!(fields, [value] if self.literal_header(*value)
+            && self.header_span(*value).is_some_and(|header| {
+                !self.document.selections.iter().any(|span| span.local && span.overlaps(header))
+            }))
+        });
+        kind.iter()
+            .chain(api_version)
+            .all(|value| {
+                self.header_selection_known(
+                    *value,
+                    literal_pair,
+                    fixed_literal && self.literal_header(*value),
+                )
+            })
+            .then(|| self.capability_guards(literal_pair).collect())
+    }
+
+    fn literal_header(&self, value: NodeIx) -> bool {
+        matches!(self.kind(value), Some(YamlNodeKind::Scalar(_))) && !self.has_hole(value)
+    }
+
+    fn header_span(&self, value: NodeIx) -> Option<Span> {
+        self.parent(value).and_then(|pair| self.span(pair))
+    }
+
+    fn capability_guards(
+        &self,
+        literal_pair: bool,
+    ) -> impl Iterator<Item = helm_schema_core::CapabilityGuard> + '_ {
+        self.document.selections.iter().filter_map(move |span| {
+            use helm_schema_core::CapabilityGuard;
+            let SelectedCapability { guard, survival } = span.capability.as_ref()?;
+            // A survival check cannot choose between two co-placed header literals.
+            if literal_pair && *survival && matches!(guard, CapabilityGuard::Opaque { text: _ }) {
+                return None;
+            }
+            Some(guard.clone())
+        })
+    }
+
+    fn header_selection_known(
+        &self,
+        value: NodeIx,
+        literal_pair: bool,
+        literal_with_fixed_peer: bool,
+    ) -> bool {
+        let Some(header) = self.header_span(value) else {
+            return false;
+        };
+        self.document.selections.iter().all(|span| {
+            // Literal headers in one layout already co-occur unless local choices were merged.
+            !span.overlaps(header)
+                || (literal_pair && !span.local)
+                || (literal_with_fixed_peer && span.capability.is_none())
+                || span.is_proved()
+        })
     }
 
     pub(crate) fn selection_guard(&self, node: NodeIx) -> Predicate {
@@ -888,7 +1056,7 @@ impl FilePlacement {
             let condition = exit.state.whole_path_predicate();
             let memo = &exit.state.heap.arena.predicate_memo;
             let placement = if matches!(exit.flow, Flow::Normal(_)) {
-                OutputPlacement::new(
+                let mut placement = OutputPlacement::new(
                     &Rc::new(exit.state.output.clone()),
                     &claim,
                     memo,
@@ -896,7 +1064,38 @@ impl FilePlacement {
                     &mut syntax,
                     &exit.state.heap.arena.input_paths.borrow(),
                     &exit.state.heap.arena.input_objects.borrow(),
-                )
+                );
+                // A surviving exit can own a header even when the opposite branch aborted.
+                if !exit.state.active.coverage_exact() {
+                    let capabilities = exit
+                        .state
+                        .active
+                        .links()
+                        .into_iter()
+                        .filter_map(|link| {
+                            let super::DecisionEdge { test, taken } = link.edge();
+                            Some(SelectedCapability {
+                                guard: test.placement_capability(*taken)?,
+                                survival: link.kind() == super::path::LinkKind::Survival,
+                            })
+                        })
+                        .collect::<Vec<_>>();
+                    for document in placement
+                        .layouts
+                        .iter_mut()
+                        .flat_map(|layout| &mut layout.documents)
+                    {
+                        document.selections.extend(capabilities.iter().cloned().map(
+                            |capability| SelectedSpan {
+                                range: Span::new(0, document.ownership.skeleton.text.len()),
+                                condition: Predicate::True,
+                                capability: Some(capability),
+                                local: false,
+                            },
+                        ));
+                    }
+                }
+                placement
             } else {
                 OutputPlacement {
                     layouts: Vec::new(),
@@ -1334,6 +1533,7 @@ impl LayoutBuilder<'_> {
             when_true,
             when_false,
             coverage,
+            capability: _,
             runtime: _,
         } = decision.as_ref();
         let exact = *coverage == Coverage::Exact
@@ -1405,7 +1605,15 @@ impl LayoutBuilder<'_> {
     }
 
     fn local_choices(&mut self, prefixes: &LayoutContexts, delta: &mut LayoutContexts) {
-        if delta.unknown != Predicate::False || delta.known.len() < 2 {
+        if delta.unknown != Predicate::False
+            || delta.known.len() < 2
+            || delta.known.iter().any(|branch| {
+                branch
+                    .selections
+                    .iter()
+                    .any(|span| span.capability.is_some())
+            })
+        {
             return;
         }
         let mut contribution = None;
@@ -1460,6 +1668,7 @@ impl LayoutBuilder<'_> {
             branch.selections.push(SelectedSpan {
                 range: Span::new(0, branch.skeleton.text.len()),
                 condition: branch.condition.clone(),
+                capability: None,
                 local: true,
             });
             if !merged.extend(branch) {
@@ -1484,6 +1693,7 @@ impl LayoutBuilder<'_> {
             when_true,
             when_false,
             coverage: _,
+            capability: _,
             runtime: _,
         } = decision;
         let guard = if taken { when_true } else { when_false };
@@ -1512,6 +1722,12 @@ impl LayoutBuilder<'_> {
         }
         selections.push(SelectedSpan {
             range: Span::new(0, skeleton.text.len()),
+            capability: decision
+                .placement_capability(taken)
+                .map(|guard| SelectedCapability {
+                    guard,
+                    survival: false,
+                }),
             local: false,
             // An inexact branch still certainly renders where its decision proves this outcome.
             condition: if exact {
@@ -1568,6 +1784,7 @@ impl LayoutBuilder<'_> {
             when_true,
             when_false,
             coverage: _,
+            capability: _,
             runtime: _,
         } = decision.as_ref();
         let covered = self
@@ -1579,6 +1796,7 @@ impl LayoutBuilder<'_> {
                 range: Span::new(0, yes_skeleton.text.len()),
                 local: false,
                 condition: covered.clone(),
+                capability: None,
             });
         }
         Some(LayoutContext {
@@ -1935,39 +2153,29 @@ impl LayoutBuilder<'_> {
         }
         let mut documents = Vec::new();
         for mut document in owned_documents {
+            let ambient = selections.iter().filter(|selection| {
+                !selection.local
+                    && (!removed.is_empty()
+                        || (selection.range.start <= document.scope.end
+                            && document.scope.start <= selection.range.end))
+            });
             document.condition = self.memo.normalize(Predicate::all(
                 std::iter::once(self.root_condition.clone())
-                    .chain(
-                        selections
-                            .iter()
-                            .filter(|selection| {
-                                !selection.local
-                                    && (!removed.is_empty()
-                                        || (selection.range.start <= document.scope.end
-                                            && document.scope.start <= selection.range.end))
-                            })
-                            .map(|selection| selection.condition.clone()),
-                    )
+                    .chain(ambient.clone().map(|span| span.condition.clone()))
                     .collect(),
             ));
-            if removed.is_empty() {
-                document.selections = selections
-                    .iter()
-                    .filter(|selection| selection.local)
-                    .filter_map(|selection| {
-                        let start = selection.range.start.max(document.offset);
-                        let end = selection.range.end.min(document.scope.end);
-                        (start < end).then(|| SelectedSpan {
-                            range: Span::new(start - document.offset, end - document.offset),
-                            condition: selection.condition.clone(),
-                            local: true,
-                        })
-                    })
-                    .collect();
-            } else if selections.iter().any(|selection| selection.local) {
+            if !removed.is_empty() && selections.iter().any(|selection| selection.local) {
                 self.unknown.push(condition.clone());
                 return;
             }
+            document.selections = selections
+                .iter()
+                .filter(|span| span.local)
+                .chain(ambient.filter(|span| {
+                    span.condition.contains_approximation() || span.capability.is_some()
+                }))
+                .filter_map(|span| span.in_document(&document, removed.is_empty()))
+                .collect();
             document.serializations =
                 serialization_sites(&document.ownership, &document.selections, &terms);
             let result = quoted_tokens(
@@ -2151,6 +2359,7 @@ impl LayoutContext {
         for SelectedSpan {
             range,
             condition: _,
+            capability: _,
             local: _,
         } in &mut selections
         {
@@ -2168,6 +2377,7 @@ impl LayoutContext {
             range: Span::new(0, self.skeleton.text.len()),
             local: false,
             condition: self.condition.clone(),
+            capability: None,
         });
         true
     }
@@ -2799,10 +3009,7 @@ impl<'a> LexicalTransfers<'a> {
                 self.stringified(&derivation.source, state, memo)
             }
             super::relationship::ValueOperation::Decode(_)
-            | super::relationship::ValueOperation::Capability {
-                guard: _,
-                decision: _,
-            }
+            | super::relationship::ValueOperation::Capability { decision: _ }
             | super::relationship::ValueOperation::Trim
             | super::relationship::ValueOperation::SplitLiteral { separator: _ }
             | super::relationship::ValueOperation::SplitSegment(_)
@@ -3124,6 +3331,7 @@ impl<'a> LexicalTransfers<'a> {
             when_true,
             when_false,
             coverage,
+            capability: _,
             runtime: _,
         } = decision;
         let [yes, no] = branches;
@@ -3798,7 +4006,9 @@ fn selection_guard(selections: &[SelectedSpan], span: Span) -> Predicate {
         selections
             .iter()
             .filter(|selection| {
-                selection.range.start <= span.start && span.end <= selection.range.end
+                selection.local
+                    && selection.range.start <= span.start
+                    && span.end <= selection.range.end
             })
             .map(|selection| selection.condition.clone())
             .collect(),
@@ -4346,6 +4556,7 @@ fn collect_exact_arms(
                 when_true,
                 when_false,
                 coverage,
+                capability: _,
                 runtime: _,
             } = decision.as_ref();
             if *coverage != Coverage::Exact

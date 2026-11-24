@@ -136,6 +136,12 @@ impl Value {
 }
 
 impl Arena {
+    pub(super) fn capability_test(&self, api: String) -> Rc<FrozenTest> {
+        let mut test = self.decision(Predicate::False, Predicate::False, Coverage::Partial);
+        Rc::make_mut(&mut test).capability = Some(helm_schema_core::CapabilityGuard::Has { api });
+        test
+    }
+
     pub(super) fn decision(
         &self,
         when_true: Predicate,
@@ -162,6 +168,7 @@ impl Arena {
             when_true,
             when_false,
             coverage,
+            capability: None,
             runtime: None,
         });
         if let Some(key) = key {

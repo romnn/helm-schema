@@ -2086,6 +2086,15 @@ impl DocumentExecution {
         self.placement.documents(&self.root_programs)
     }
 
+    pub(crate) fn literal_conditions(&self) -> impl Iterator<Item = Predicate> {
+        self.exits
+            .iter()
+            .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
+            .flat_map(|exit| exit.state.text_sites.iter())
+            .filter(|site| self.root_programs.contains(&site.program))
+            .map(super::ExecutedText::condition)
+    }
+
     pub(crate) fn sites(&self) -> impl Iterator<Item = &ExecutedSite> {
         self.exits
             .iter()

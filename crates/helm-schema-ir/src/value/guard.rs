@@ -449,6 +449,25 @@ impl RuntimeGuard {
         }
     }
 
+    fn may_use_capability(&self) -> bool {
+        let mut pending = vec![self];
+        let mut visited = AHashSet::new();
+        while let Some(guard) = pending.pop() {
+            let Self::Branch(node) = guard else {
+                continue;
+            };
+            if !visited.insert(Rc::as_ptr(node)) {
+                continue;
+            }
+            if node.test.capability.is_some() || visited.len() > MAX_PROJECTION_WORK {
+                return true;
+            }
+            pending.extend([&node.yes, &node.no]);
+            pending.extend(node.test.runtime.iter());
+        }
+        false
+    }
+
     pub(super) fn is_input_exact(&self) -> bool {
         match self {
             Self::False | Self::True => true,
@@ -739,6 +758,37 @@ impl RuntimeGuard {
 }
 
 impl FrozenTest {
+    pub(super) fn capability_guard(
+        &self,
+        taken: bool,
+    ) -> Option<helm_schema_core::CapabilityGuard> {
+        use helm_schema_core::CapabilityGuard;
+        let CapabilityGuard::Has { api } = self.capability.as_ref()? else {
+            return None;
+        };
+        Some(if taken {
+            CapabilityGuard::Has { api: api.clone() }
+        } else {
+            CapabilityGuard::NotHas { api: api.clone() }
+        })
+    }
+
+    pub(super) fn placement_capability(
+        &self,
+        taken: bool,
+    ) -> Option<helm_schema_core::CapabilityGuard> {
+        self.capability_guard(taken).or_else(|| {
+            (self.coverage != Coverage::Exact
+                && self
+                    .runtime
+                    .as_ref()
+                    .is_some_and(RuntimeGuard::may_use_capability))
+            .then(|| helm_schema_core::CapabilityGuard::Opaque {
+                text: format!("executed output {} {taken}", self.id),
+            })
+        })
+    }
+
     /// The independently proved conditions for selecting the true and false arms.
     pub(super) fn certified_guards(&self) -> Option<[&Predicate; 2]> {
         let certified = match self.coverage {
@@ -1008,6 +1058,7 @@ impl DecisionStore {
             when_true: Predicate::False,
             when_false: Predicate::False,
             coverage: Coverage::Partial,
+            capability: None,
             runtime: Some(condition),
         });
         self.select(test, yes, no)
@@ -1756,6 +1807,7 @@ impl Arena {
             when_true: sufficient,
             when_false: necessary.negated(),
             coverage,
+            capability: None,
             runtime: Some(runtime),
         });
         store.tests.insert(key, Rc::downgrade(&test));

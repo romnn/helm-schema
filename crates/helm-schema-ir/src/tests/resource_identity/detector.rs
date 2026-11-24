@@ -507,66 +507,208 @@ fn helper_output_under_guarded_resource_does_not_become_api_version_candidate() 
     sim_assert_eq!(have: resource.api_version_branches, want: [] as [helm_schema_core::HelperBranch; 0]);
 }
 
-/// signoz HPA: a capability call piped into `ternary` selects one of
-/// two literal apiVersions exactly like an `if`/`else` pair, so the
-/// identity keeps guard-qualified branches instead of reporting an unknown
-/// apiVersion.
+fn placed_resources(source: &str) -> Vec<crate::resource_identity::PlacedResource> {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = crate::value::tests::execute_document(source, None, &db);
+    execution
+        .placed_documents()
+        .flat_map(|document| crate::resource_identity::placed_resources(&document, &execution))
+        .collect()
+}
+
+fn placed_identities(source: &str) -> Vec<(String, String)> {
+    let mut identities = placed_resources(source)
+        .into_iter()
+        .map(|resource| (resource.resource.api_version, resource.resource.kind))
+        .collect::<Vec<_>>();
+    identities.sort();
+    identities.dedup();
+    identities
+}
+
+#[test]
+fn resource_headers_abstain_when_a_later_computed_key_can_overwrite() {
+    let identities = placed_identities(indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        {{ .Values.headerKey | quote }}: Secret
+        metadata:
+          name: example
+    "});
+    sim_assert_eq!(have: identities, want: Vec::<(String, String)>::new());
+
+    let identities = placed_identities(indoc! {r"
+        apiVersion: v1
+        {{ .Values.headerKey | quote }}: Secret
+        kind: ConfigMap
+        metadata:
+          name: example
+    "});
+    sim_assert_eq!(have: identities, want: Vec::<(String, String)>::new());
+
+    let identities = placed_identities(indoc! {r"
+        {{ .Values.headerKey | quote }}: Secret
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: example
+    "});
+    sim_assert_eq!(have: identities, want: vec![("v1".to_owned(), "ConfigMap".to_owned())]);
+}
+
+fn assert_capability_hpa_versions(source: &str) {
+    let mut actual: Vec<_> = placed_resources(source)
+        .into_iter()
+        .map(|resource| {
+            let resource = resource.resource;
+            sim_assert_eq!(have: resource.kind, want: "HorizontalPodAutoscaler");
+            (resource.api_version, resource.capability_guards)
+        })
+        .collect();
+    actual.sort();
+    actual.dedup();
+    sim_assert_eq!(have: actual, want: vec![
+        ("autoscaling/v2".to_owned(), vec![CapabilityGuard::Has { api: "example.com/v1".to_owned() }]),
+        ("autoscaling/v2beta2".to_owned(), vec![CapabilityGuard::NotHas { api: "example.com/v1".to_owned() }]),
+    ]);
+}
+
 #[test]
 fn decodes_capability_ternary_api_version_pipeline() {
-    let resource = detect(
-        indoc! {r#"
-            apiVersion: {{ .Capabilities.APIVersions.Has "autoscaling/v2" | ternary "autoscaling/v2" "autoscaling/v2beta2" }}
-            kind: HorizontalPodAutoscaler
-            metadata:
-              name: example
-        "#},
-        &DefineIndex::new(),
-    )
-    .expect("resource");
+    assert_capability_hpa_versions(indoc! {r#"
+        apiVersion: {{ .Capabilities.APIVersions.Has "example.com/v1" | ternary "autoscaling/v2" "autoscaling/v2beta2" }}
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: example
+    "#});
+}
 
-    sim_assert_eq!(have: resource.kind, want: "HorizontalPodAutoscaler");
-    sim_assert_eq!(have: resource.api_version, want: "autoscaling/v2");
+#[test]
+fn decodes_capability_ternary_api_version_direct_call() {
+    assert_capability_hpa_versions(indoc! {r#"
+        apiVersion: {{ ternary "autoscaling/v2" "autoscaling/v2beta2" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        kind: HorizontalPodAutoscaler
+        metadata:
+          name: example
+    "#});
+}
+
+#[test]
+fn resource_headers_pair_only_compatible_capability_arms() {
+    let identities = placed_identities(indoc! {r#"
+        apiVersion: {{ ternary "apps/v1" "v1" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        kind: {{ ternary "Deployment" "ConfigMap" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        metadata:
+          name: example
+    "#});
     sim_assert_eq!(
-        have: resource.api_version_candidates,
-        want: vec!["autoscaling/v2beta2".to_string()]
-    );
-    sim_assert_eq!(have: resource.api_version_branches.len(), want: 2);
-    sim_assert_eq!(
-        have: resource.api_version_branches[0].guard,
-        want: Some(CapabilityGuard::Has {
-            api: "autoscaling/v2".to_string()
-        })
-    );
-    sim_assert_eq!(
-        have: resource.api_version_branches[1].body,
-        want: HelperBranchBody::literals(vec!["autoscaling/v2beta2".to_string()])
+        have: identities,
+        want: vec![
+            ("apps/v1".to_owned(), "Deployment".to_owned()),
+            ("v1".to_owned(), "ConfigMap".to_owned()),
+        ]
     );
 }
 
-/// The direct-call `ternary "on" "off" COND` spelling decodes identically.
 #[test]
-fn decodes_capability_ternary_api_version_direct_call() {
-    let resource = detect(
-        indoc! {r#"
-            apiVersion: {{ ternary "autoscaling/v2" "autoscaling/v2beta2" (.Capabilities.APIVersions.Has "autoscaling/v2") }}
-            kind: HorizontalPodAutoscaler
-            metadata:
-              name: example
-        "#},
-        &DefineIndex::new(),
-    )
-    .expect("resource");
-
-    sim_assert_eq!(have: resource.api_version, want: "autoscaling/v2");
-    sim_assert_eq!(
-        have: resource.api_version_candidates,
-        want: vec!["autoscaling/v2beta2".to_string()]
-    );
-    sim_assert_eq!(
-        have: resource.api_version_branches[0].guard,
-        want: Some(CapabilityGuard::Has {
-            api: "autoscaling/v2".to_string()
+fn resource_headers_pair_if_and_ternary_under_the_same_capability() {
+    let source = indoc! {r#"
+        {{- if .Capabilities.APIVersions.Has "example.com/v1" }}
+        apiVersion: apps/v1
+        {{- else }}
+        apiVersion: v1
+        {{- end }}
+        kind: {{ ternary "Deployment" "ConfigMap" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        metadata:
+          name: mixed
+    "#};
+    let mut actual: Vec<_> = placed_resources(source)
+        .into_iter()
+        .map(|placed| {
+            (
+                placed.resource.api_version,
+                placed.resource.kind,
+                placed.resource.capability_guards,
+            )
         })
+        .collect();
+    actual.sort();
+    actual.dedup();
+    sim_assert_eq!(have: actual, want: vec![
+        ("apps/v1".to_owned(), "Deployment".to_owned(), vec![CapabilityGuard::Has { api: "example.com/v1".to_owned() }]),
+        ("v1".to_owned(), "ConfigMap".to_owned(), vec![CapabilityGuard::NotHas { api: "example.com/v1".to_owned() }]),
+    ]);
+}
+
+#[test]
+fn resource_headers_respect_the_capability_of_a_surviving_exit() {
+    let actual = placed_identities(indoc! {r#"
+        {{- if .Capabilities.APIVersions.Has "example.com/v1" }}
+        apiVersion: apps/v1
+        {{- else }}
+        {{- fail "requires example.com/v1" }}
+        {{- end }}
+        kind: {{ ternary "Deployment" "ConfigMap" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        metadata:
+          name: mixed
+    "#});
+    sim_assert_eq!(have: actual, want: vec![("apps/v1".to_owned(), "Deployment".to_owned())]);
+}
+
+#[test]
+fn resource_headers_leave_an_unresolved_placement_choice_open() {
+    let actual = placed_identities(indoc! {r#"
+        {{- if and .Values.override (.Capabilities.APIVersions.Has "example.com/v1") }}
+        apiVersion: apps/v1
+        {{- else }}
+        apiVersion: v1
+        {{- end }}
+        kind: {{ ternary "Deployment" "ConfigMap" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        metadata:
+          name: mixed
+    "#});
+    assert!(
+        !actual.contains(&("apps/v1".to_owned(), "ConfigMap".to_owned())),
+        "{actual:?}"
+    );
+}
+
+#[test]
+fn resource_headers_carry_a_list_selection_to_its_items() -> eyre::Result<()> {
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: {{ ternary "List" "ConfigMap" (.Capabilities.APIVersions.Has "example.com/v1") }}
+        metadata:
+          name: envelope
+        items:
+          - apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: item
+    "#};
+    let item = placed_resources(source)
+        .into_iter()
+        .find(|placed| placed.path_prefix == ["items[*]"])
+        .ok_or_eyre("missing capability-selected List item")?;
+    sim_assert_eq!(have: item.resource.api_version, want: "v1");
+    sim_assert_eq!(have: item.resource.kind, want: "ConfigMap");
+    sim_assert_eq!(have: item.resource.capability_guards, want: vec![CapabilityGuard::Has { api: "example.com/v1".to_owned() }]);
+    Ok(())
+}
+
+#[test]
+fn resource_headers_keep_a_proved_pair_beside_an_opaque_arm() {
+    let identities = placed_identities(indoc! {r#"
+        {{- $opaque := regexMatch .Values.pattern .Values.subject -}}
+        {{- $fallback := ternary "example.com/v1" .Values.version $opaque -}}
+        apiVersion: {{ ternary "apps/v1" $fallback (eq .Values.useApps true) }}
+        kind: Deployment
+        metadata:
+          name: example
+    "#});
+    sim_assert_eq!(
+        have: identities,
+        want: vec![("apps/v1".to_owned(), "Deployment".to_owned())]
     );
 }
 

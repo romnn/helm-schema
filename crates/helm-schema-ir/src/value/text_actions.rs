@@ -523,10 +523,7 @@ impl Query<'_> {
                 return Some(TextShape::literal("number"));
             }
             ValueOperation::Copy
-            | ValueOperation::Capability {
-                guard: _,
-                decision: _,
-            }
+            | ValueOperation::Capability { decision: _ }
             | ValueOperation::Decode(_)
             | ValueOperation::SplitLiteral { separator: _ }
             | ValueOperation::SplitSegment(_)

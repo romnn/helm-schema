@@ -175,14 +175,6 @@ impl<'a> Projection<'a, '_> {
         }
     }
 
-    fn keys(&self, pair: NodeIx) -> Option<NodeIx> {
-        self.document
-            .children(pair)
-            .iter()
-            .find(|index| self.document.is_key(**index))
-            .copied()
-    }
-
     fn literal_key(&self, index: NodeIx) -> Option<String> {
         self.document.literal_key(index).map(str::to_owned)
     }
@@ -211,7 +203,11 @@ impl<'a> Projection<'a, '_> {
         let siblings = pairs
             .iter()
             .filter(|pair| !payloads.contains_key(pair))
-            .filter_map(|pair| self.keys(*pair).and_then(|key| self.literal_key(key)))
+            .filter_map(|pair| {
+                self.document
+                    .mapping_key(*pair)
+                    .and_then(|key| self.literal_key(key))
+            })
             .collect::<BTreeSet<_>>();
         let active = payloads
             .keys()
@@ -232,13 +228,22 @@ impl<'a> Projection<'a, '_> {
                 ))
             })
             .collect::<BTreeMap<_, _>>();
-        let survivors = self.mapping_survivors(pairs, &active);
+        let survivors = self.document.mapping_survivors(
+            pairs,
+            &active,
+            self.db.predicate_memo(),
+            |pair, name| self.payload_member_absent(pair, name),
+        );
         for pair in pairs {
             if let Some(rows) = payloads.remove(pair) {
                 let later_keys = pairs
                     .iter()
                     .filter(|other| *other > pair)
-                    .filter_map(|other| self.keys(*other).map(|key| self.literal_key(key)))
+                    .filter_map(|other| {
+                        self.document
+                            .mapping_key(*other)
+                            .map(|key| self.literal_key(key))
+                    })
                     .collect::<Option<BTreeSet<_>>>();
                 let Some(later_keys) = later_keys else {
                     continue;
@@ -262,7 +267,7 @@ impl<'a> Projection<'a, '_> {
                 }
                 continue;
             }
-            let Some(key) = self.keys(*pair) else {
+            let Some(key) = self.document.mapping_key(*pair) else {
                 continue;
             };
             let child_path = if let Some(key) = self.literal_key(key) {
@@ -286,54 +291,6 @@ impl<'a> Projection<'a, '_> {
                 self.node(*child, &child_path, &survives, contract);
             }
         }
-    }
-
-    fn mapping_survivors(
-        &self,
-        pairs: &[NodeIx],
-        payloads: &BTreeMap<NodeIx, Predicate>,
-    ) -> BTreeMap<NodeIx, Predicate> {
-        let mut known = BTreeMap::<String, Predicate>::new();
-        let mut unknown = Predicate::False;
-        let mut any = Predicate::False;
-        let mut later_payloads = Vec::new();
-        let mut survivors = BTreeMap::new();
-        for pair in pairs.iter().rev() {
-            let active = self
-                .keys(*pair)
-                .map_or(Predicate::False, |key| self.document.selection_guard(key));
-            if let Some(payload) = payloads.get(pair) {
-                later_payloads.push((*pair, payload));
-            } else if let Some(key) = self.keys(*pair).and_then(|key| self.literal_key(key)) {
-                let previous = known.get(&key).cloned().unwrap_or(Predicate::False);
-                let mut guards = vec![unknown.negated(), previous.negated()];
-                for (later, active) in &later_payloads {
-                    let absent = self.payload_member_absent(*later, &key);
-                    guards.push(Predicate::Or(vec![active.negated(), absent]));
-                }
-                survivors.insert(
-                    *pair,
-                    self.db.predicate_memo().normalize(Predicate::all(guards)),
-                );
-                known.insert(
-                    key,
-                    self.db
-                        .predicate_memo()
-                        .normalize(Predicate::Or(vec![previous, active.clone()])),
-                );
-            } else {
-                survivors.insert(*pair, any.negated());
-                unknown = self
-                    .db
-                    .predicate_memo()
-                    .normalize(Predicate::Or(vec![unknown, active.clone()]));
-            }
-            any = self
-                .db
-                .predicate_memo()
-                .normalize(Predicate::Or(vec![any, active]));
-        }
-        survivors
     }
 
     fn payload_member_absent(&self, pair: NodeIx, key: &str) -> Predicate {

@@ -153,10 +153,7 @@ impl<'a> Transfer<'a> {
                 self.result.split_segment = Some(segment);
                 self.result.stringified = true;
             }
-            ValueOperation::Capability {
-                guard: _,
-                decision: _,
-            }
+            ValueOperation::Capability { decision: _ }
             | ValueOperation::Decode(_)
             | ValueOperation::SplitLiteral { separator: _ }
             | ValueOperation::SplitSegment(_)

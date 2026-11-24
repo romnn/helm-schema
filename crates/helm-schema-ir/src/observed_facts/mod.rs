@@ -31,6 +31,7 @@ impl ObservedResource {
             kind_candidates: _,
             api_version_candidates: _,
             api_version_branches: _,
+            capability_guards: _,
             kind_branches,
             kind_selector,
         } = resource;

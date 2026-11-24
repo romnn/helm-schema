@@ -357,6 +357,7 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
             // MissingSchema(policy/v1, ...) in the snapshot.
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
+            capability_guards: Vec::new(),
             kind_branches: Vec::new(),
             kind_selector: None,
         },
@@ -406,6 +407,7 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
         kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: Vec::new(),
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
     };
@@ -463,6 +465,7 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
         kind: "PodSecurityPolicy".to_string(),
         kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
         api_version_branches: vec![
@@ -520,6 +523,7 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
         kind: "PodSecurityPolicy".to_string(),
         kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
         api_version_branches: vec![
@@ -586,6 +590,7 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
         kind: "SomeKind".to_string(),
         kind_candidates: Vec::new(),
         api_version_candidates: vec![],
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
         api_version_branches: vec![
@@ -649,6 +654,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
         kind: "SomeKind".to_string(),
         kind_candidates: Vec::new(),
         api_version_candidates: vec![],
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
         api_version_branches: vec![
@@ -702,6 +708,7 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
             }),
             vec!["policy/v1".to_string()],
         )],
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
     };
@@ -791,6 +798,7 @@ fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_le
             kind_candidates: Vec::new(),
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
+            capability_guards: Vec::new(),
             kind_branches: Vec::new(),
             kind_selector: None,
         },
@@ -825,6 +833,7 @@ fn chain_schema_fragment_for_use_total_failure_attributes_to_primary() {
             kind_candidates: Vec::new(),
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
+            capability_guards: Vec::new(),
             kind_branches: Vec::new(),
             kind_selector: None,
         },

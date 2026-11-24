@@ -542,6 +542,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             kind_candidates,
             api_version_candidates,
             api_version_branches,
+            capability_guards,
             kind_branches,
             kind_selector,
         } = resource;
@@ -550,6 +551,7 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             || !api_version_candidates.is_empty()
             || !kind_candidates.is_empty()
             || !api_version_branches.is_empty()
+            || !capability_guards.is_empty()
             || !kind_branches.is_empty()
             || kind_selector.is_some()
         {

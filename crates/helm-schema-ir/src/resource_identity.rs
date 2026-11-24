@@ -1,7 +1,10 @@
 //! Resource headers and List envelopes recovered from executed YAML ownership.
 
+use std::collections::BTreeMap;
+
 use helm_schema_core::{
-    Guard, GuardValue, KindBranch, Predicate, PredicateKind, PredicateMemo, ResourceRef, ValuesPath,
+    CapabilityGuard, Guard, GuardValue, KindBranch, Predicate, PredicateKind, PredicateMemo,
+    ResourceRef, ValuesPath,
 };
 use helm_schema_syntax::YamlNodeKind;
 
@@ -18,6 +21,7 @@ pub(crate) struct PlacedResource {
 struct NamedValue {
     condition: Predicate,
     text: String,
+    capabilities: Vec<CapabilityGuard>,
 }
 
 #[derive(Default)]
@@ -25,6 +29,7 @@ struct HeaderNodes {
     kind: Vec<NodeIx>,
     api_version: Vec<NodeIx>,
     items: Vec<NodeIx>,
+    has_computed_key: bool,
 }
 
 #[tracing::instrument(skip_all, level = "debug")]
@@ -35,7 +40,7 @@ pub(crate) fn placed_resources(
     let projection = ResourceProjection::new(document, execution);
     let mut resources = Vec::new();
     for index in projection.roots() {
-        projection.mapping(index, &document.condition, &[], &mut resources);
+        projection.mapping(index, &document.condition, &[], &[], &mut resources);
     }
     resources
 }
@@ -70,14 +75,11 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         let mut headers = HeaderNodes::default();
         for pair in self.document.children(mapping) {
             let children = self.document.children(*pair);
-            let Some(key) = children
-                .iter()
-                .copied()
-                .find(|index| self.document.is_key(*index))
-            else {
+            let Some(key) = self.document.mapping_key(*pair) else {
                 continue;
             };
             let Some(key) = self.document.literal_key(key) else {
+                headers.has_computed_key = true;
                 continue;
             };
             let value = children.iter().copied().find(|index| {
@@ -97,6 +99,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         &self,
         index: NodeIx,
         ambient: &Predicate,
+        inherited_capabilities: &[CapabilityGuard],
         path_prefix: &[String],
         resources: &mut Vec<PlacedResource>,
     ) {
@@ -107,18 +110,29 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
             kind,
             api_version,
             items,
+            has_computed_key,
         } = self.headers(index);
-        let kinds = self.selected_names(&kind);
-        let mut versions = self.selected_names(&api_version);
+        let Some(mut capabilities) = self.document.header_capabilities(&kind, &api_version) else {
+            return;
+        };
+        capabilities.extend_from_slice(inherited_capabilities);
+        let overwrites = has_computed_key.then(|| self.mapping_survivors(index));
+        let kinds = self.selected_names(&kind, overwrites.as_ref());
+        let mut versions = self.selected_names(&api_version, overwrites.as_ref());
         if versions.is_empty() {
+            if has_computed_key {
+                return;
+            }
             versions.push(NamedValue {
                 condition: Predicate::True,
                 text: String::new(),
+                capabilities: Vec::new(),
             });
         }
         for NamedValue {
             condition: kind_condition,
             text: kind,
+            capabilities: kind_capabilities,
         } in kinds
         {
             if kind.is_empty() {
@@ -127,6 +141,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
             for NamedValue {
                 condition: version_condition,
                 text: version,
+                capabilities: version_capabilities,
             } in &versions
             {
                 let condition = self.memo.normalize(Predicate::all(vec![
@@ -137,6 +152,11 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                 if condition == Predicate::False {
                     continue;
                 }
+                let Some(capabilities) =
+                    join_capabilities(&capabilities, &kind_capabilities, version_capabilities)
+                else {
+                    continue;
+                };
                 if kind == "List" && version == "v1" {
                     for items in &items {
                         let selected = self.document.placement_guard(*items);
@@ -145,6 +165,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                             &self
                                 .memo
                                 .normalize(Predicate::all(vec![condition.clone(), selected])),
+                            &capabilities,
                             path_prefix,
                             resources,
                         );
@@ -169,6 +190,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                         kind_candidates: Vec::new(),
                         api_version_candidates: Vec::new(),
                         api_version_branches: Vec::new(),
+                        capability_guards: capabilities,
                         kind_branches,
                         kind_selector,
                     },
@@ -182,6 +204,7 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         &self,
         items: NodeIx,
         condition: &Predicate,
+        capabilities: &[CapabilityGuard],
         path_prefix: &[String],
         resources: &mut Vec<PlacedResource>,
     ) {
@@ -189,12 +212,12 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         prefix.push("items[*]".to_owned());
         for item in self.document.children(items) {
             if self.mapping_node(*item) {
-                self.mapping(*item, condition, &prefix, resources);
+                self.mapping(*item, condition, capabilities, &prefix, resources);
                 continue;
             }
             for child in self.document.children(*item) {
                 if self.mapping_node(*child) {
-                    self.mapping(*child, condition, &prefix, resources);
+                    self.mapping(*child, condition, capabilities, &prefix, resources);
                 }
             }
         }
@@ -207,7 +230,20 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         )
     }
 
-    fn selected_names(&self, indices: &[NodeIx]) -> Vec<NamedValue> {
+    fn mapping_survivors(&self, index: NodeIx) -> BTreeMap<NodeIx, Predicate> {
+        self.document.mapping_survivors(
+            self.document.children(index),
+            &BTreeMap::new(),
+            &self.memo,
+            |_, _| Predicate::False,
+        )
+    }
+
+    fn selected_names(
+        &self,
+        indices: &[NodeIx],
+        overwrites: Option<&BTreeMap<NodeIx, Predicate>>,
+    ) -> Vec<NamedValue> {
         let mut names = Vec::new();
         let mut remaining = Predicate::True;
         for index in indices.iter().rev().take(128) {
@@ -215,10 +251,19 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                 continue;
             }
             let active = self.document.selection_guard(*index);
+            let survives = overwrites.map_or_else(
+                || remaining.clone(),
+                |survivors| {
+                    self.document
+                        .parent(*index)
+                        .and_then(|pair| survivors.get(&pair).cloned())
+                        .unwrap_or(Predicate::False)
+                },
+            );
             for mut name in self.names(*index).unwrap_or_default() {
                 name.condition = self.memo.normalize(Predicate::all(vec![
                     name.condition,
-                    remaining.clone(),
+                    survives.clone(),
                     active.clone(),
                     self.document.placement_guard(*index),
                 ]));
@@ -226,9 +271,11 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
                     names.push(name);
                 }
             }
-            remaining = self
-                .memo
-                .normalize(Predicate::all(vec![remaining, active.negated()]));
+            if overwrites.is_none() {
+                remaining = self
+                    .memo
+                    .normalize(Predicate::all(vec![remaining, active.negated()]));
+            }
         }
         names.reverse();
         names
@@ -240,6 +287,26 @@ impl<'a, 'b> ResourceProjection<'a, 'b> {
         }
         scalar_names(self.document, self.execution, index, &self.memo)
     }
+}
+
+fn join_capabilities(
+    inherited: &[CapabilityGuard],
+    kind: &[CapabilityGuard],
+    version: &[CapabilityGuard],
+) -> Option<Vec<CapabilityGuard>> {
+    let mut guards = [inherited, kind, version].concat();
+    guards.sort_unstable();
+    guards.dedup();
+    for guard in &guards {
+        if let CapabilityGuard::Has { api } = guard
+            && guards
+                .binary_search(&CapabilityGuard::NotHas { api: api.clone() })
+                .is_ok()
+        {
+            return None;
+        }
+    }
+    Some(guards)
 }
 
 fn selector_path(predicate: &Predicate, kind: &str, memo: &PredicateMemo) -> Option<ValuesPath> {
@@ -303,37 +370,36 @@ fn scalar_names(
             vec![NamedValue {
                 condition: Predicate::True,
                 text,
+                capabilities: Vec::new(),
             }]
         });
     };
     let mut names = Vec::new();
     for (guard, value) in value {
-        for alternative in value.alternatives() {
-            let condition = memo.normalize(Predicate::all(vec![
-                document.condition.clone(),
-                guard.clone(),
-                alternative.condition().clone(),
-            ]));
-            if condition == Predicate::False {
-                continue;
+        let ambient = memo.normalize(Predicate::all(vec![document.condition.clone(), guard]));
+        let selected = value.selected_names(|leaf| {
+            if let Some(exact) = leaf.exact_text() {
+                decoded_name(&format!("{before}{exact}{after}"))
+                    .map(|text| (text, Predicate::True))
+                    .into_iter()
+                    .collect()
+            } else {
+                relationship_names(leaf, execution, &before, &after, memo)
             }
-            if !alternative.coverage_exact() {
-                return None;
-            }
-            let Some(text) = alternative.value().exact_text() else {
-                names.extend(relationship_names(
-                    alternative.value(),
-                    execution,
-                    &before,
-                    &after,
-                    &condition,
-                    memo,
-                ));
-                continue;
-            };
-            let text = decoded_name(&format!("{before}{text}{after}"))?;
-            names.push(NamedValue { condition, text });
-        }
+        });
+        names.extend(
+            selected
+                .into_iter()
+                .filter_map(|(text, condition, capabilities)| {
+                    let condition =
+                        memo.normalize(Predicate::all(vec![ambient.clone(), condition]));
+                    (condition != Predicate::False).then_some(NamedValue {
+                        condition,
+                        text,
+                        capabilities,
+                    })
+                }),
+        );
     }
     Some(names)
 }
@@ -343,9 +409,8 @@ fn relationship_names(
     execution: &DocumentExecution,
     before: &str,
     after: &str,
-    ambient: &Predicate,
     memo: &PredicateMemo,
-) -> Vec<NamedValue> {
+) -> Vec<(String, Predicate)> {
     let mut result = Vec::new();
     let mut remaining = 1024_usize;
     for relationship in execution.relationships(value, &[], remaining).known {
@@ -363,8 +428,8 @@ fn relationship_names(
         }
         let mut candidates = std::collections::BTreeSet::new();
         let mut pending = execution
-            .sites()
-            .map(crate::value::ExecutedSite::condition)
+            .literal_conditions()
+            .chain(execution.sites().map(crate::value::ExecutedSite::condition))
             .collect::<Vec<_>>();
         while let Some(predicate) = pending.pop() {
             let Some(rest) = remaining.checked_sub(1) else {
@@ -397,17 +462,16 @@ fn relationship_names(
             let Some(text) = decoded_name(&format!("{before}{candidate}{after}")) else {
                 continue;
             };
-            result.push(NamedValue {
-                condition: memo.normalize(Predicate::all(vec![
-                    ambient.clone(),
+            result.push((
+                text,
+                memo.normalize(Predicate::all(vec![
                     policy.condition.clone(),
                     Predicate::from(Guard::Eq {
                         path: policy.source.as_ref().clone(),
                         value: GuardValue::String(candidate),
                     }),
                 ])),
-                text,
-            });
+            ));
         }
     }
     result

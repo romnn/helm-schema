@@ -41,6 +41,7 @@ fn resource(api_version: &str, candidates: &[&str], branches: Vec<HelperBranch>)
             .map(|candidate| (*candidate).to_string())
             .collect(),
         api_version_branches: branches,
+        capability_guards: Vec::new(),
         kind_branches: Vec::new(),
         kind_selector: None,
     }

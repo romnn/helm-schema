@@ -76,6 +76,99 @@ fn strict_provider() -> Chain {
     )])
 }
 
+#[derive(Debug)]
+struct ReleaseCatalogProvider(Option<bool>);
+
+impl helm_schema_k8s::K8sSchemaProvider for ReleaseCatalogProvider {
+    fn origin(&self) -> helm_schema_k8s::ProviderOrigin {
+        helm_schema_k8s::ProviderOrigin::KubernetesOpenApi
+    }
+
+    fn lookup(
+        &self,
+        resource: &ResourceRef,
+        path: &YamlPath,
+    ) -> helm_schema_k8s::ProviderLookupResult {
+        if matches!(
+            resource.kind.as_str(),
+            "PodSecurityPolicy" | "PodDisruptionBudget"
+        ) && path.0 == ["spec", "selector"]
+            && matches!(
+                resource.api_version.as_str(),
+                "policy/v1beta1" | "policy/v1"
+            )
+        {
+            return helm_schema_k8s::ProviderLookupResult::Found {
+                schema: ProviderSchemaFragment::new(serde_json::json!({
+                    "description": resource.api_version,
+                    "type": "integer",
+                })),
+                resolved_k8s_version: None,
+            };
+        }
+        helm_schema_k8s::ProviderLookupResult::NotOwned
+    }
+
+    fn capability_has_query_at_primary_version(
+        &self,
+        query: &helm_schema_core::ApiPresenceQuery,
+    ) -> Option<bool> {
+        (query.canonical_helm_literal() == "policy/v1beta1")
+            .then_some(self.0)
+            .flatten()
+    }
+}
+
+#[test]
+fn vector_psp_capability_stays_open_to_helm() -> eyre::Result<()> {
+    let signals = schema_signals_for(parse_ir(indoc! {r#"
+        apiVersion: {{ ternary "policy/v1beta1" "policy/v1" (.Capabilities.APIVersions.Has "policy/v1beta1") }}
+        kind: {{ ternary "PodSecurityPolicy" "PodDisruptionBudget" (.Capabilities.APIVersions.Has "policy/v1beta1") }}
+        metadata:
+          name: witness
+        spec:
+          selector: {{ .Values.selector }}
+    "#}));
+    let evidence = signals
+        .evidence_for(&helm_schema_core::ValuesPath::parse("selector"))
+        .ok_or_eyre("selector evidence missing")?;
+    sim_assert_eq!(have: evidence.provider_schema_uses.len(), want: 2);
+    for has in [Some(false), Some(true), None] {
+        let chain = Chain::new(vec![Box::new(ReleaseCatalogProvider(has))]);
+        assert!(
+            evidence
+                .provider_schema_uses
+                .iter()
+                .all(|use_| chain.schema_fragment_for_use(use_).is_none())
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn opaque_header_sibling_leaves_its_provider_open() {
+    let signals = schema_signals_for(parse_ir(indoc! {r#"
+        {{- $opaque := regexMatch .Values.pattern .Values.subject -}}
+        {{- $fallback := ternary "example.com/v1" .Values.version $opaque -}}
+        apiVersion: {{ ternary "v1" $fallback (eq .Values.useCore true) }}
+        kind: ConfigMap
+        metadata:
+          name: witness
+        immutable: {{ .Values.immutable }}
+    "#}));
+    let schema = generate_values_schema(ValuesSchemaInput::new(&signals, &strict_provider()));
+    for (use_core, valid) in [(true, false), (false, true)] {
+        let instance = serde_json::json!({
+            "pattern": "^a",
+            "subject": "b",
+            "version": "custom.example/v1",
+            "useCore": use_core,
+            "immutable": 7,
+        });
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: valid);
+    }
+}
+
 /// bitnami-redis master: a values-selected `kind:` crossed with a
 /// helper-resolved apiVersion partitions the strategy slot per kind. The
 /// Deployment arm places `spec.strategy` (no `rollingUpdate.partition`),
