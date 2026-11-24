@@ -528,14 +528,29 @@ fn type_test_keeps_each_selected_binding_leaf_under_its_decision() {
 }
 
 #[test]
-fn type_test_keeps_partial_selected_binding_truth_unresolved() {
+fn type_test_keeps_partial_selected_binding_truth_unresolved() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::predicate_holds;
+    use serde_json::json;
+
     let result = observe(
         r#"{{ $value := .Values.a }}{{ if or .Values.known (eq (randAlphaNum 1) "a") }}{{ $value = .Values.b }}{{ end }}"#,
         r#"kindIs "string" $value"#,
     );
     sim_assert_eq!(have: result.truth(), want: None);
-    sim_assert_eq!(have: result.when_true(), want: Predicate::all(vec![truthy("known"), typed("b", "string")]).normalize_boolean());
-    sim_assert_eq!(have: result.when_false(), want: Predicate::all(vec![truthy("known"), typed("b", "string").negated()]).normalize_boolean());
+    for known in [false, true] {
+        for a in [json!("string"), json!(1)] {
+            for b in [json!("string"), json!(1)] {
+                let document = json!({ "known": known, "a": a, "b": b });
+                let always_string = b.is_string() && (known || a.is_string());
+                let never_string = !b.is_string() && (known || !a.is_string());
+                sim_assert_eq!(have: predicate_holds(result.certainly_true(), &document)?, want: always_string, "{document}");
+                sim_assert_eq!(have: predicate_holds(result.certainly_false(), &document)?, want: never_string, "{document}");
+                sim_assert_eq!(have: predicate_holds(&result.when_true(), &document)?, want: !never_string, "{document}");
+                sim_assert_eq!(have: predicate_holds(&result.when_false(), &document)?, want: !always_string, "{document}");
+            }
+        }
+    }
+    Ok(())
 }
 
 #[test]
@@ -553,23 +568,28 @@ fn type_test_follows_first_truthy_value_selection() {
 }
 
 #[test]
-fn default_composes_selected_primary_leaves_with_its_fallback() {
+fn default_composes_selected_primary_leaves_with_its_fallback() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::{predicate_holds, truthy};
+    use serde_json::json;
+
     let result = observe(
         "{{ $value := .Values.a }}{{ if .Values.useB }}{{ $value = .Values.b }}{{ end }}",
         r#"kindIs "map" (default (dict) $value)"#,
     );
-    let expected = Predicate::Or(vec![
-        Predicate::all(vec![truthy("useB"), truthy("b"), typed("b", "object")]),
-        Predicate::all(vec![truthy("useB"), truthy("b").negated()]),
-        Predicate::all(vec![
-            truthy("useB").negated(),
-            truthy("a"),
-            typed("a", "object"),
-        ]),
-        Predicate::all(vec![truthy("useB").negated(), truthy("a").negated()]),
-    ])
-    .normalize_boolean();
-    sim_assert_eq!(have: result.truth(), want: Some(expected));
+    let predicate = result
+        .truth()
+        .ok_or_eyre("default lost the complete selection")?;
+    for use_b in [false, true] {
+        for a in [json!(0), json!(1), json!({ "k": 1 })] {
+            for b in [json!(0), json!(1), json!({ "k": 1 })] {
+                let selected = if use_b { &b } else { &a };
+                let document = json!({ "useB": use_b, "a": a, "b": b });
+                let is_map = selected.is_object() || !truthy(Some(selected));
+                sim_assert_eq!(have: predicate_holds(&predicate, &document)?, want: is_map, "{document}");
+            }
+        }
+    }
+    Ok(())
 }
 
 #[test]
@@ -1105,6 +1125,38 @@ fn split_list_preserves_mixed_length_path_alternatives() {
     );
     // A nonempty first literal prevents the later candidate from being selected.
     sim_assert_eq!(have: result.sequences(), want: vec![vec![Some(GuardValue::string("auth")), Some(GuardValue::string("password"))]]);
+}
+
+#[test]
+fn split_and_index_dispatch_strict_use_to_the_selected_leaf() -> eyre::Result<()> {
+    let result = observe(
+        indoc! {r#"
+            {{- $key := "auth.password" -}}
+            {{- if .Values.globalKey -}}{{- $key = "global.auth.password" -}}{{- end -}}
+            {{- $parts := splitList "." $key -}}
+            {{- $value := index .Values (index $parts 0) -}}
+            {{- $value = index $value (index $parts 1) -}}
+            {{- if .Values.globalKey -}}
+              {{- $value = index $value (index $parts 2) -}}
+            {{- end -}}
+        "#},
+        "upper $value",
+    );
+    let local = serde_json::json!({ "auth": { "password": "local" }, "global": { "auth": { "password": 7 } } });
+    let global = serde_json::json!({ "auth": { "password": 7 }, "global": { "auth": { "password": "global" } } });
+    let mut wrong_global = local.clone();
+    wrong_global["globalKey"] = serde_json::json!(true);
+    let mut selected_global = global.clone();
+    selected_global["globalKey"] = serde_json::json!(true);
+    result.assert_string_consumption_verdicts(
+        &["auth.password", "global.auth.password"],
+        &[
+            (local, false),
+            (wrong_global, true),
+            (global, true),
+            (selected_global, false),
+        ],
+    )
 }
 
 #[test]

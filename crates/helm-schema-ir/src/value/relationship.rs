@@ -1067,19 +1067,27 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         self.decisions.insert(decision.id, false);
         let no = no(self);
         self.decisions.remove(&decision.id);
-        if decision.coverage != super::Coverage::Exact
-            || decision.when_true.contains_approximation()
-            || decision.when_false.contains_approximation()
-        {
-            return self.common(yes, &no);
-        }
-        let mut view = Relationships {
-            known: Vec::new(),
-            unknown: Predicate::False,
+        let Some([when_true, when_false]) = decision.certified_guards() else {
+            return self.common(&yes, &no, Predicate::True);
         };
-        for (branch, guard) in [(yes, &decision.when_true), (no, &decision.when_false)] {
-            if guard.contains_approximation() {
-                view.unknown = Predicate::True;
+        let remainder = if decision.coverage == Coverage::Exact {
+            Predicate::False
+        } else {
+            self.predicates.normalize(Predicate::all(vec![
+                when_true.negated(),
+                when_false.negated(),
+            ]))
+        };
+        let mut view = if remainder == Predicate::False {
+            Relationships {
+                known: Vec::new(),
+                unknown: Predicate::False,
+            }
+        } else {
+            self.common(&yes, &no, remainder)
+        };
+        for (branch, guard) in [(yes, when_true), (no, when_false)] {
+            if *guard == Predicate::False {
                 continue;
             }
             for mut arm in branch.known {
@@ -1099,31 +1107,60 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 Predicate::all(vec![guard.clone(), branch.unknown]),
             ]));
         }
-        if decision.coverage != super::Coverage::Exact {
-            view.unknown = Predicate::True;
-        }
         view
     }
 
-    fn common(&mut self, yes: Relationships<'a>, no: &Relationships<'a>) -> Relationships<'a> {
-        let mut view = Relationships::unknown();
-        for mut left in yes.known {
-            for right in &no.known {
-                if !self.charge(1 + left.preimage.len() + right.preimage.len()) {
+    fn common(
+        &mut self,
+        yes: &Relationships<'a>,
+        no: &Relationships<'a>,
+        remainder: Predicate,
+    ) -> Relationships<'a> {
+        let mut view = Relationships {
+            known: Vec::new(),
+            unknown: remainder,
+        };
+        for Relationship {
+            condition: left_condition,
+            source,
+            output_path,
+            omitted_members,
+            capture,
+            preimage,
+        } in &yes.known
+        {
+            for Relationship {
+                condition: right_condition,
+                source: right_source,
+                output_path: right_output_path,
+                omitted_members: right_omitted_members,
+                capture: right_capture,
+                preimage: right_preimage,
+            } in &no.known
+            {
+                if !self.charge(1 + preimage.len() + right_preimage.len()) {
                     return view;
                 }
-                if left.source == right.source
-                    && left.output_path == right.output_path
-                    && left.omitted_members == right.omitted_members
-                    && left.preimage == right.preimage
-                    && same_capture(left.capture, right.capture)
+                if source == right_source
+                    && output_path == right_output_path
+                    && omitted_members == right_omitted_members
+                    && preimage == right_preimage
+                    && same_capture(*capture, *right_capture)
                 {
-                    left.condition = self.predicates.normalize(Predicate::all(vec![
-                        left.condition,
-                        right.condition.clone(),
+                    let condition = self.predicates.normalize(Predicate::all(vec![
+                        view.unknown.clone(),
+                        left_condition.clone(),
+                        right_condition.clone(),
                     ]));
-                    if left.condition != Predicate::False {
-                        view.known.push(left);
+                    if condition != Predicate::False {
+                        view.known.push(Relationship {
+                            condition,
+                            source: source.clone(),
+                            output_path: output_path.clone(),
+                            omitted_members: omitted_members.clone(),
+                            capture: *capture,
+                            preimage: preimage.clone(),
+                        });
                     }
                     break;
                 }

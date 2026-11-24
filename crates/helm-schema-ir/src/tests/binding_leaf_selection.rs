@@ -69,14 +69,32 @@ fn mixed_selection_read_reports_the_proven_arm_and_the_unresolved_remainder() {
         .iter()
         .flat_map(|site| site.value().alternatives())
         .filter(super::super::value::ValueAlternative::coverage_exact)
-        .filter_map(|arm| arm.value().identity().cloned())
+        .filter_map(|arm| Some((arm.value().identity()?.clone(), arm.condition().clone())))
         .collect::<BTreeSet<_>>();
-    sim_assert_eq!(have: proven, want: BTreeSet::from([ValuesPath::parse("proven")]));
-    assert!(
-        sites
-            .iter()
-            .any(|site| records_unresolved_width(site.value()))
-    );
+    let flag = Predicate::truthy_path("flag");
+    let expected = BTreeSet::from([(ValuesPath::parse("proven"), flag.clone())]);
+    sim_assert_eq!(have: &proven, want: &expected);
+
+    let mut relationships = BTreeSet::new();
+    for site in sites {
+        let remainder = site
+            .value()
+            .alternatives()
+            .into_iter()
+            .filter(|arm| !arm.coverage_exact())
+            .map(|arm| arm.condition().clone())
+            .collect::<BTreeSet<_>>();
+        sim_assert_eq!(have: remainder, want: BTreeSet::from([flag.negated()]));
+
+        let view = execution.relationships(site.value(), &[], 1024);
+        sim_assert_eq!(have: view.unknown, want: flag.negated());
+        relationships.extend(
+            view.known
+                .into_iter()
+                .map(|arm| (arm.source.into_owned(), arm.condition)),
+        );
+    }
+    sim_assert_eq!(have: relationships, want: expected);
 }
 
 /// Mutually exclusive wrapped and bare bindings must not become one conjunction.

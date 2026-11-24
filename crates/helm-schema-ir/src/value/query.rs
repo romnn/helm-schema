@@ -2068,25 +2068,32 @@ fn alternative_views(
             coverage_exact,
         }),
         ValueNode::Select { decision, yes, no } => {
-            for (taken, arm) in [(true, yes), (false, no)] {
-                let predicate = if decision.coverage != Coverage::Exact {
-                    Predicate::True
-                } else if taken {
-                    decision.when_true.clone()
-                } else {
-                    decision.when_false.clone()
-                };
-                let condition =
-                    Predicate::all(vec![condition.clone(), predicate]).normalize_boolean();
-                if condition == Predicate::False {
-                    continue;
+            let guards = decision.certified_guards();
+            let unconstrained = Predicate::True;
+            let [when_true, when_false] = guards.unwrap_or([&unconstrained; 2]);
+            for (arm, guard) in [(yes, when_true), (no, when_false)] {
+                let branch =
+                    Predicate::all(vec![condition.clone(), guard.clone()]).normalize_boolean();
+                if branch != Predicate::False {
+                    alternative_views(
+                        &FrozenValue::at(Rc::clone(&value.heap), arm.clone()),
+                        branch,
+                        coverage_exact && guards.is_some(),
+                        result,
+                    );
                 }
-                alternative_views(
-                    &FrozenValue::at(Rc::clone(&value.heap), arm.clone()),
-                    condition,
-                    coverage_exact && decision.coverage == Coverage::Exact,
-                    result,
-                );
+            }
+            if guards.is_some() && decision.coverage != Coverage::Exact {
+                let remainder =
+                    Predicate::all(vec![condition, when_true.negated(), when_false.negated()])
+                        .normalize_boolean();
+                if remainder != Predicate::False {
+                    result.push(super::ValueAlternative {
+                        condition: remainder,
+                        value: value.clone(),
+                        coverage_exact: false,
+                    });
+                }
             }
         }
     }

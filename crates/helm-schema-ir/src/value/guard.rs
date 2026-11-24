@@ -739,6 +739,21 @@ impl RuntimeGuard {
 }
 
 impl FrozenTest {
+    /// The independently proved conditions for selecting the true and false arms.
+    pub(super) fn certified_guards(&self) -> Option<[&Predicate; 2]> {
+        let certified = match self.coverage {
+            Coverage::Exact | Coverage::CertifiedPartial => true,
+            Coverage::Partial => {
+                self.runtime.is_some()
+                    && (self.when_true != Predicate::False || self.when_false != Predicate::False)
+            }
+        };
+        (certified
+            && !self.when_true.contains_approximation()
+            && !self.when_false.contains_approximation())
+        .then_some([&self.when_true, &self.when_false])
+    }
+
     pub(super) fn possible_predicate(&self, taken: bool) -> Predicate {
         if self.coverage == Coverage::Exact {
             if taken {
