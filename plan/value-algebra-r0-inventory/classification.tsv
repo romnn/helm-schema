@@ -344,8 +344,14 @@ field:symbolic_local_state/mod.rs:VariableLocalState.range_member_value	S	scope-
 field:symbolic_local_state/mod.rs:VariableLocalState.scalar_dispatch	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
 field:symbolic_local_state/mod.rs:VariableLocalState.truthy_reduction	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
 field:symbolic_local_state/mod.rs:VariableLocalState.typeof_source	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:value/control.rs:RangeExits.backedge	V	runtime exits that may enter another iteration	frozen guard over range exits	keep		range-output continuation landing, 2026-11-24	
+field:value/control.rs:RangeExits.completed	V	runtime exits that leave the range and take its suffix	frozen guard over range exits	keep		range-output continuation landing, 2026-11-24	
+field:value/control.rs:RangeExits.continuation	V	the output carried by a stable range backedge	frozen guard over range exits	keep		range-output continuation landing, 2026-11-24	
 field:value/loops.rs:Carried.state	V	Rest post-fixpoint start state widened only at carried locations	private canonical Value/Flow/frame/invocation data	keep		R3b step 6a1 loop transfer audit, 2026-11-17	""
 field:value/loops.rs:CarriedScope.rebound	V	names a range iteration declares afresh, so their outer values are not carried	private canonical Value/Flow/frame/invocation data	keep		R3b step 6a1 rework (binder rebind coverage), 2026-11-18	""
+field:value/mod.rs:RepeatedOutput.bodies	R	executed body outputs for repeating iterations in the text DAG	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
+field:value/mod.rs:RepeatedOutput.breaks	R	executed body outputs for the final break iteration in the text DAG	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
+field:value/mod.rs:RepeatedOutput.inputs	R	dependencies of the opaque representation of the text DAG term	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
 variant:value/loops.rs:Uncovered::Assumption	G	validity assumption a loop pass added beyond its start	canonical correlated runtime guard DAG	keep		R3b step 6a1 rework (state coverage), 2026-11-17	""
 field:value/state.rs:ContinuationKey.arena	K	canonical continuation identity within one runtime arena	stored frame layout plus execution context	keep		R3b construction root audit, 2026-10-26	
 field:value/control.rs:LoopPass.backedge	V	one range body pass: exits that continue to the next iteration	private canonical Value/Flow/frame/invocation data	keep		R3b step 6a1 loop transfer audit, 2026-11-17	""
@@ -775,6 +781,7 @@ variant:value/mod.rs:ObjectData::Map	R	representation of ObjectData::Map	private
 variant:value/mod.rs:ObjectData::Strings	R	representation of ObjectData::Strings	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/mod.rs:ObjectData::Widened	R	representation of ObjectData::Widened	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/mod.rs:TextPart::Frozen	R	representation of TextPart::Frozen	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
+variant:value/mod.rs:TextPart::Repeat	R	canonical text DAG representation of a range continuation	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
 variant:value/mod.rs:TextPart::Select	R	representation of TextPart::Select	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/mod.rs:TextPart::Unknown	R	representation of TextPart::Unknown	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
 variant:value/mod.rs:ValueNode::Leaf	R	representation of ValueNode::Leaf	private canonical value/runtime representation	keep		R3b construction root audit, 2026-10-26	
