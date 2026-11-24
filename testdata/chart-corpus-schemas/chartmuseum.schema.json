@@ -282,39 +282,6 @@
     {
       "if": {
         "properties": {
-          "ingress": {
-            "$ref": "#/definitions/constrains~1enabled:t@2"
-          }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Ingress for load balancer",
-            "properties": {
-              "hosts": {
-                "description": "Chartmuseum Ingress hostnames\nMust be provided if Ingress is enabled\n- name: chartmuseum.domain1.com\npath: /\ntls: false\n- name: chartmuseum.domain2.com\npath: /\nSet this to true in order to enable TLS on the ingress record\ntls: true\nIf TLS is set to true, you must declare what secret will store the key/certificate for TLS\nSecrets must be added manually to the namespace\ntlsSecret: chartmuseum.domain2-tls",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "persistence": {
             "properties": {
               "pv": {
@@ -1454,6 +1421,54 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "ingress": {
+            "$ref": "#/definitions/constrains~1enabled:t@2"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Ingress for load balancer",
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Chartmuseum Ingress hostnames\nMust be provided if Ingress is enabled\n- name: chartmuseum.domain1.com\npath: /\ntls: false\n- name: chartmuseum.domain2.com\npath: /\nSet this to true in order to enable TLS on the ingress record\ntls: true\nIf TLS is set to true, you must declare what secret will store the key/certificate for TLS\nSecrets must be added manually to the namespace\ntlsSecret: chartmuseum.domain2-tls"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -5631,14 +5646,157 @@
         "existingSecretMappings": {
           "description": "Stores Enviromnt Variable to secret key name mappings"
         },
-        "field": {},
+        "field": {
+          "additionalProperties": {},
+          "type": "object"
+        },
         "open": {
           "additionalProperties": {},
+          "properties": {
+            "ALLOW_OVERWRITE": {
+              "description": "allow chart versions to be re-uploaded",
+              "type": "boolean"
+            },
+            "AUTH_ANONYMOUS_GET": {
+              "description": "allow anonymous GET operations when auth is used",
+              "type": "boolean"
+            },
+            "AUTH_REALM": {
+              "description": "auth realm used for bearer auth"
+            },
+            "AUTH_SERVICE": {
+              "description": "auth service used for bearer auth"
+            },
+            "BEARER_AUTH": {
+              "description": "enable bearer auth",
+              "type": "boolean"
+            },
+            "CACHE": {
+              "description": "cache store, can be one of: redis (leave blank for inmemory cache)"
+            },
+            "CACHE_REDIS_ADDR": {
+              "description": "address of Redis service (host:port)"
+            },
+            "CACHE_REDIS_DB": {
+              "description": "Redis database to be selected after connect",
+              "type": "integer"
+            },
+            "CHART_POST_FORM_FIELD_NAME": {
+              "description": "form field which will be queried for the chart file content",
+              "type": "string"
+            },
+            "CHART_URL": {
+              "description": "absolute url for .tgzs in index.yaml"
+            },
+            "CONTEXT_PATH": {
+              "description": "sets the base context path"
+            },
+            "DEBUG": {
+              "description": "show debug messages",
+              "type": "boolean"
+            },
+            "DEPTH": {
+              "description": "levels of nested repos for multitenancy. The default depth is 0 (singletenant server)",
+              "type": "integer"
+            },
+            "DISABLE_API": {
+              "description": "disable all routes prefixed with /api",
+              "type": "boolean"
+            },
+            "DISABLE_STATEFILES": {
+              "description": "disable use of index-cache.yaml",
+              "type": "boolean"
+            },
+            "ENABLE_METRICS": {
+              "description": "enable Prometheus metrics",
+              "type": "boolean"
+            },
+            "INDEX_LIMIT": {
+              "description": "parallel scan limit for the repo indexer",
+              "type": "integer"
+            },
+            "LOG_JSON": {
+              "description": "output structured logs as json",
+              "type": "boolean"
+            },
+            "PROV_POST_FORM_FIELD_NAME": {
+              "description": "form field which will be queried for the provenance file content",
+              "type": "string"
+            },
+            "STORAGE": {
+              "description": "storage backend, can be one of: local, alibaba, amazon, google, microsoft, oracle"
+            },
+            "STORAGE_ALIBABA_BUCKET": {
+              "description": "oss bucket to store charts for alibaba storage backend"
+            },
+            "STORAGE_ALIBABA_ENDPOINT": {
+              "description": "oss endpoint to store charts for alibaba storage backend"
+            },
+            "STORAGE_ALIBABA_PREFIX": {
+              "description": "prefix to store charts for alibaba storage backend"
+            },
+            "STORAGE_ALIBABA_SSE": {
+              "description": "server side encryption algorithm for alibaba storage backend, can be one\nof: AES256 or KMS"
+            },
+            "STORAGE_AMAZON_BUCKET": {
+              "description": "s3 bucket to store charts for amazon storage backend"
+            },
+            "STORAGE_AMAZON_ENDPOINT": {
+              "description": "alternative s3 endpoint"
+            },
+            "STORAGE_AMAZON_PREFIX": {
+              "description": "prefix to store charts for amazon storage backend"
+            },
+            "STORAGE_AMAZON_REGION": {
+              "description": "region of s3 bucket to store charts"
+            },
+            "STORAGE_AMAZON_SSE": {
+              "description": "server side encryption algorithm"
+            },
+            "STORAGE_GOOGLE_BUCKET": {
+              "description": "gcs bucket to store charts for google storage backend"
+            },
+            "STORAGE_GOOGLE_PREFIX": {
+              "description": "prefix to store charts for google storage backend"
+            },
+            "STORAGE_MICROSOFT_CONTAINER": {
+              "description": "container to store charts for microsoft storage backend"
+            },
+            "STORAGE_MICROSOFT_PREFIX": {
+              "description": "prefix to store charts for microsoft storage backend"
+            },
+            "STORAGE_OPENSTACK_CACERT": {
+              "description": "path to a CA cert bundle for your openstack endpoint"
+            },
+            "STORAGE_OPENSTACK_CONTAINER": {
+              "description": "container to store charts for openstack storage backend"
+            },
+            "STORAGE_OPENSTACK_PREFIX": {
+              "description": "prefix to store charts for openstack storage backend"
+            },
+            "STORAGE_OPENSTACK_REGION": {
+              "description": "region of openstack container"
+            },
+            "STORAGE_ORACLE_BUCKET": {
+              "description": "oci bucket to store charts for oracle storage backend"
+            },
+            "STORAGE_ORACLE_COMPARTMENTID": {
+              "description": "compartment id for for oracle storage backend"
+            },
+            "STORAGE_ORACLE_PREFIX": {
+              "description": "prefix to store charts for oracle storage backend"
+            }
+          },
           "type": "object"
         },
         "secret": {
           "additionalProperties": {},
-          "description": "POD_IP: status.podIP"
+          "description": "POD_IP: status.podIP",
+          "properties": {
+            "GOOGLE_CREDENTIALS_JSON": {
+              "description": "GCP service account json file"
+            }
+          }
         }
       },
       "type": "object"

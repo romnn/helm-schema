@@ -290,33 +290,6 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+4more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/when~1ingress.configurationSnippet:t~1then~1ingress.enabled:t+networkExposure.type=gateway+networkExposure.type=ingress~1else~1any"
       },
       "then": {
@@ -332,13 +305,28 @@
                     "additionalProperties": {},
                     "properties": {
                       "additionalListeners": {
-                        "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
-                        "type": [
-                          "array",
-                          "integer",
-                          "null",
-                          "object"
-                        ]
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "type": "object"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret"
                       }
                     }
                   }
@@ -362,6 +350,33 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1gateway.gatewayClass.tls.source=letsEncrypt+4more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
       }
     },
     {

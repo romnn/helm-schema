@@ -137,6 +137,75 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "haproxy": {
+                "additionalProperties": {},
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
+                "properties": {
+                  "additionalPorts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Additional ports to expose on HAProxy service and deployment\nEach port should have a name, containerPort, and optionally servicePort (defaults to containerPort)\nExample:\nadditionalPorts:\n- name: custom-port\ncontainerPort: 8080\nservicePort: 8080\n- name: another-port\ncontainerPort: 9090"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "haproxy": {
+                "additionalProperties": {},
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "Service for HAProxy",
+                    "properties": {
+                      "labels": {
+                        "description": "HAProxy service labels",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -1072,60 +1141,6 @@
             "type": "object"
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "additionalPorts": {
-                    "description": "Additional ports to expose on HAProxy service and deployment\nEach port should have a name, containerPort, and optionally servicePort (defaults to containerPort)\nExample:\nadditionalPorts:\n- name: custom-port\ncontainerPort: 8080\nservicePort: 8080\n- name: another-port\ncontainerPort: 9090",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "Service for HAProxy",
-                    "properties": {
-                      "labels": {
-                        "description": "HAProxy service labels",
-                        "type": [
-                          "array",
-                          "null",
-                          "object"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {

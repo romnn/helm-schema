@@ -506,6 +506,96 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "secrets": {}
+                      },
+                      "required": [
+                        "secrets"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "secrets": {
+                        "maxItems": 1,
+                        "maxProperties": 1
+                      }
+                    },
+                    "required": [
+                      "secrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.secrets:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Configure the ingress resource that allows you to access the Redmine installation\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+            "properties": {
+              "secrets": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: redmine.local-tls\nkey:\ncertificate:"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "mariadb": {
@@ -520,34 +610,10 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "secrets": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "secrets"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1ingress.secrets:t"
           },
           {
-            "properties": {
-              "ingress": {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
           }
         ]
       },
@@ -1765,6 +1831,36 @@
           "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
         }
       ]
+    },
+    "constrains/ingress.enabled:t": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.secrets:t": {
+      "properties": {
+        "ingress": {
+          "properties": {
+            "secrets": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "secrets"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
     },
     "constrains/mariadb": {
       "not": {

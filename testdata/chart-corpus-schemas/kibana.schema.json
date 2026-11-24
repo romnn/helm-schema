@@ -17,187 +17,7 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "kibanaConfig": {
-            "$ref": "#/definitions/t"
-          }
-        },
-        "required": [
-          "kibanaConfig"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "kibanaConfig": {
-            "description": "Allows you to add any config files in /usr/share/kibana/config/\nsuch as kibana.yml\nkibana.yml: |\nkey:\nnestedkey: value",
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@9"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@7"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
           {
             "allOf": [
               {
@@ -221,13 +41,45 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@7"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@5"
               },
               {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@8"
@@ -240,13 +92,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@5"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -262,16 +114,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@9"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@5"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@9"
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -287,10 +139,95 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1group-1"
               },
               {
                 "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@9"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride@4"
@@ -351,6 +288,195 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "ingress": {
+                  "properties": {
+                    "path": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {
+                  "properties": {
+                    "hosts": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "hosts"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1kibanaConfig:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kibanaConfig": {
+            "description": "Allows you to add any config files in /usr/share/kibana/config/\nsuch as kibana.yml\nkibana.yml: |\nkey:\nnestedkey: value",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "kibanaConfig": {
+                "$ref": "#/definitions/helm-no-template-actions"
+              }
+            },
+            "required": [
+              "kibanaConfig"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1kibanaConfig:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kibanaConfig": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "Allows you to add any config files in /usr/share/kibana/config/\nsuch as kibana.yml\nkibana.yml: |\nkey:\nnestedkey: value"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -450,6 +576,17 @@
       },
       "required": [
         "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/kibanaConfig:t": {
+      "properties": {
+        "kibanaConfig": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "kibanaConfig"
       ],
       "type": "object"
     },
@@ -579,6 +716,40 @@
         "nameOverride"
       ],
       "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [

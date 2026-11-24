@@ -4,6 +4,76 @@
   "allOf": [
     {
       "if": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+            }
+          ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alertmanager": {
+            "additionalProperties": {},
+            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+            "properties": {
+              "verticalPodAutoscaler": {
+                "additionalProperties": {},
+                "description": "--- Vertical Pod Autoscaler",
+                "properties": {
+                  "recommenders": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1prometheus-pushgateway+prometheus-pushgateway.enabled+2more@2"
       },
       "then": {
@@ -649,61 +719,6 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1alertmanager.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.recommenders:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1alertmanager.verticalPodAutoscaler.enabled:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "alertmanager": {
-            "additionalProperties": {},
-            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-            "properties": {
-              "verticalPodAutoscaler": {
-                "additionalProperties": {},
-                "description": "--- Vertical Pod Autoscaler",
-                "properties": {
-                  "recommenders": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/when~1server.service.enabled:t~1then~1any~1else~1server.verticalAutoscaler+serviceAccounts.server.create:t"
@@ -1232,53 +1247,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/when~1alertmanager.enabled:t~1then~1any~1else~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanager": {
-                "additionalProperties": {},
-                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                "properties": {
-                  "extraArgs": {
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "alertmanager": {
-                "additionalProperties": {},
-                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-                "properties": {
-                  "extraSecretMounts": {
-                    "description": "Additional Alertmanager Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: alertmanager-secret-files\nreadOnly: true",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -2205,6 +2173,68 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1alertmanager.enabled:t~1then~1any~1else~1alertmanager+alertmanager.enabled+alertmanager.enabled=null"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanager": {
+                "additionalProperties": {},
+                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                "properties": {
+                  "extraArgs": {
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "alertmanager": {
+                "additionalProperties": {},
+                "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+                "properties": {
+                  "extraSecretMounts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Additional Alertmanager Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: alertmanager-secret-files\nreadOnly: true"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {

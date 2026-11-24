@@ -17,6 +17,55 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1logstashConfig:t"
+          },
+          {
+            "properties": {
+              "logstashConfig": {
+                "$ref": "#/definitions/helm-no-template-actions"
+              }
+            },
+            "required": [
+              "logstashConfig"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "logstashConfig": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "Allows you to add any config files in /usr/share/logstash/config/\nsuch as logstash.yml and log4j2.properties\nNote that when overriding logstash.yml, `http.host: 0.0.0.0` should always be included\nto make default probes work.\nlogstash.yml: |\nkey:\nnestedkey: value\nlog4j2.properties: |\nkey = value"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -81,15 +130,7 @@
     },
     {
       "if": {
-        "properties": {
-          "logstashConfig": {
-            "$ref": "#/definitions/t"
-          }
-        },
-        "required": [
-          "logstashConfig"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1logstashConfig:t"
       },
       "then": {
         "additionalProperties": {},
@@ -129,6 +170,51 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/logstashConfig:t": {
+      "properties": {
+        "logstashConfig": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "logstashConfig"
+      ],
+      "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [

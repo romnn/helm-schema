@@ -5388,74 +5388,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "minio": {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "minio"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "minio": {
-                  "properties": {
-                    "defaultBucket": {
-                      "$ref": "#/definitions/constrains~1enabled:t@2"
-                    }
-                  },
-                  "required": [
-                    "defaultBucket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "minio"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1minio.enabled:t~1then~1minio.mode=distributed~1else~1minio+minio.enabled+minio.enabled=null+tags.minio+tags.minio:t+tags.minio=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "minio": {
-            "additionalProperties": {},
-            "properties": {
-              "buckets": {
-                "description": "Create multiple buckets after minio install\nEnabling `defaultBucket` will take priority over this list\n- name: bucket1\npolicy: none\npurge: false\n- name: bucket2\npolicy: none\npurge: false",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1mixCoordinator.enabled:t@2"
           },
           {
@@ -36548,6 +36480,89 @@
               "commonLabels": {
                 "description": "Labels to add to all deployed objects",
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "minio": {
+                "properties": {
+                  "buckets": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "buckets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "minio"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "minio": {
+                  "properties": {
+                    "defaultBucket": {
+                      "$ref": "#/definitions/constrains~1enabled:t@2"
+                    }
+                  },
+                  "required": [
+                    "defaultBucket"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "minio"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/when~1minio.enabled:t~1then~1minio.mode=distributed~1else~1minio+minio.enabled+minio.enabled=null+tags.minio+tags.minio:t+tags.minio=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minio": {
+            "additionalProperties": {},
+            "properties": {
+              "buckets": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Create multiple buckets after minio install\nEnabling `defaultBucket` will take priority over this list\n- name: bucket1\npolicy: none\npurge: false\n- name: bucket2\npolicy: none\npurge: false"
               }
             }
           }

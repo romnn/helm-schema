@@ -93,6 +93,49 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1configs.jetstream.versions:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configs": {
+            "additionalProperties": {},
+            "description": "Event bus configuration",
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "description": "JetStream event bus",
+                "properties": {
+                  "versions": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Supported versions of JetStream eventbus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "else": {
           "else": {
             "else": {
@@ -164,43 +207,6 @@
           "nameOverride": {
             "description": "Provide a name in place of `argo-events`",
             "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1webhook.topologySpreadConstraints:t"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "webhook": {
-            "additionalProperties": {},
-            "description": "Argo Events admission webhook",
-            "properties": {
-              "topologySpreadConstraints": {
-                "description": "Assign custom [TopologySpreadConstraints] rules to the event controller\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
           }
         }
       }
@@ -535,37 +541,6 @@
           "fullnameOverride": {
             "description": "String to fully override \"argo-events.fullname\" template",
             "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1configs.jetstream.versions:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configs": {
-            "additionalProperties": {},
-            "description": "Event bus configuration",
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "description": "JetStream event bus",
-                "properties": {
-                  "versions": {
-                    "description": "Supported versions of JetStream eventbus",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -3099,6 +3074,55 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1webhook.topologySpreadConstraints:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1controller.rbac.namespaced:t@2"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhook": {
+            "additionalProperties": {},
+            "description": "Argo Events admission webhook",
+            "properties": {
+              "topologySpreadConstraints": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Assign custom [TopologySpreadConstraints] rules to the event controller\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
       },
       "then": {
@@ -3245,13 +3269,25 @@
             "description": "Argo Events controller",
             "properties": {
               "topologySpreadConstraints": {
-                "description": "Assign custom [TopologySpreadConstraints] rules to the events controller\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Assign custom [TopologySpreadConstraints] rules to the events controller\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
               }
             }
           }
@@ -3503,6 +3539,65 @@
     },
     {
       "if": {
+        "properties": {
+          "configs": {
+            "properties": {
+              "nats": {
+                "$ref": "#/definitions/constrains~1versions:t"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "configs"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configs": {
+            "additionalProperties": {},
+            "description": "Event bus configuration",
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "description": "NATS event bus",
+                "properties": {
+                  "versions": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Supported versions of NATS event bus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1controller.image.tag:t"
       },
       "then": {
@@ -3689,53 +3784,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "configs": {
-            "properties": {
-              "nats": {
-                "$ref": "#/definitions/constrains~1versions:t"
-              }
-            },
-            "required": [
-              "nats"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "configs"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configs": {
-            "additionalProperties": {},
-            "description": "Event bus configuration",
-            "properties": {
-              "nats": {
-                "additionalProperties": {},
-                "description": "NATS event bus",
-                "properties": {
-                  "versions": {
-                    "description": "Supported versions of NATS event bus",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -10692,6 +10740,12 @@
     "values/controller.serviceAccount.annotations": {
       "additionalProperties": {},
       "description": "Annotations applied to created service account"
+    },
+    "values/object": {
+      "additionalProperties": {
+        "type": "object"
+      },
+      "type": "object"
     }
   },
   "properties": {

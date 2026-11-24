@@ -38,6 +38,55 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "commonLabels": {
+                "$ref": "#/definitions/helm-no-template-actions"
+              }
+            },
+            "required": [
+              "commonLabels"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1test.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "Additional labels applied to every resource in this chart, and on the StatefulSet's pods"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1test.enabled:t"
       },
       "then": {
@@ -262,6 +311,40 @@
         "test"
       ],
       "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [

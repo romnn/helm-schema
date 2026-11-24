@@ -2690,27 +2690,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1server.enabled:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1server.GKEbackendConfig.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "apiVersionOverrides": {
-            "description": "Override APIVersions",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "properties": {
               "server": {
                 "properties": {
@@ -2745,17 +2724,53 @@
                 "description": "Gateway API HTTPRoute configuration\nNOTE: Gateway API support is in EXPERIMENTAL status\nSupport depends on your Gateway controller implementation\nSome controllers may require additional configuration (e.g., BackendTLSPolicy for HTTPS backends)\nRefer to https://gateway-api.sigs.k8s.io/implementations/ for controller-specific details",
                 "properties": {
                   "rules": {
-                    "description": "HTTPRoute rules configuration",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "HTTPRoute rules configuration"
                   }
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1server.enabled:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1server.GKEbackendConfig.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "apiVersionOverrides": {
+            "description": "Override APIVersions",
+            "type": "object"
           }
         }
       }

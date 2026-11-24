@@ -594,69 +594,28 @@
                 "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
                 "properties": {
                   "tls": {
-                    "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.tls:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ltb-passwd.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.tls:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ltb-passwd": {
-            "additionalProperties": {},
-            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "tls": {
-                    "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Ingress cert\n- secretName: phpldapadmin.example\nhosts:\n- phpldapadmin.example"
                   }
                 }
               }
@@ -712,6 +671,77 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ltb-passwd+ltb-passwd.enabled+ltb-passwd.enabled=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.tls:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
+            }
+          ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ltb-passwd.enabled:t"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.tls:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "additionalProperties": {},
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Ingress cert\n- secretName: ssl-ldap2.example\nhosts:\n- ssl-ldap2.example\nldap:\nif you want to restrict search base tree for users instead of complete domain\nsearchBase: \"ou=....,dc=mydomain,dc=com\"\nif you want to use a dedicated bindDN for the search with less permissions instead of cn=admin one\nbindDN: \"cn=....,dc=mydomain,dc=com\"\nif you want to use a specific key of the credentials secret instead of the default one (LDAP_ADMIN_PASSWORD)\npassKey: LDAP_MY_KEY"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {

@@ -5584,6 +5584,7 @@
       ],
       "properties": {
         "extraArgs": {
+          "additionalProperties": {},
           "description": "allowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nAdditional container arguments"
         },
         "extraEnv": {
@@ -5677,6 +5678,16 @@
           "description": "if False the tempo-query container is not deployed"
         },
         "extraArgs": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
           "description": "Additional container arguments"
         },
         "extraEnv": {

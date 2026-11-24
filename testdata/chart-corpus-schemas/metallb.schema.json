@@ -579,71 +579,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1prometheus.prometheusRule.enabled:t"
-          },
-          {
-            "properties": {
-              "prometheus": {
-                "properties": {
-                  "prometheusRule": {
-                    "properties": {
-                      "addressPoolUsage": {
-                        "$ref": "#/definitions/constrains~1enabled:t"
-                      }
-                    },
-                    "required": [
-                      "addressPoolUsage"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheusRule"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheus"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheus": {
-            "additionalProperties": {},
-            "properties": {
-              "prometheusRule": {
-                "additionalProperties": {},
-                "description": "Prometheus Operator alertmanager alerts",
-                "properties": {
-                  "addressPoolUsage": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "thresholds": {
-                        "type": [
-                          "array",
-                          "integer",
-                          "null",
-                          "object"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -2983,6 +2918,86 @@
               "nameOverride": {
                 "description": "String to override the default chart name.",
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1prometheus.prometheusRule.enabled:t"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "prometheusRule": {
+                    "properties": {
+                      "addressPoolUsage": {
+                        "$ref": "#/definitions/constrains~1enabled:t"
+                      }
+                    },
+                    "required": [
+                      "addressPoolUsage"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheusRule"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus": {
+            "additionalProperties": {},
+            "properties": {
+              "prometheusRule": {
+                "additionalProperties": {},
+                "description": "Prometheus Operator alertmanager alerts",
+                "properties": {
+                  "addressPoolUsage": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "thresholds": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "type": "object"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           }

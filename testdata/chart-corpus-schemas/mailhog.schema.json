@@ -17,6 +17,44 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -49,13 +87,28 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
               }
             }
           }
@@ -1362,29 +1415,6 @@
             "properties": {
               "fileContents": {
                 "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
               }
             }
           }

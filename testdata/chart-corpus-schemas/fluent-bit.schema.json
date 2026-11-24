@@ -550,40 +550,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "extraPorts": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "extraPorts"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1serviceMonitor.metricRelabelings+serviceMonitor.metricRelabelings:t~1else~1any"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "extraPorts": {
-            "description": "- port: 5170\ncontainerPort: 5170\nprotocol: TCP\nname: tcp\nnodePort: 30517",
-            "type": [
-              "array",
-              "integer",
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1serviceMonitor.metricRelabelings+serviceMonitor.metricRelabelings:t~1else~1any"
       },
       "then": {
@@ -739,6 +705,55 @@
                 "type": "object"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "extraPorts": {
+                "$ref": "#/definitions/t"
+              }
+            },
+            "required": [
+              "extraPorts"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/when~1serviceMonitor.enabled:t~1then~1serviceMonitor.metricRelabelings+serviceMonitor.metricRelabelings:t~1else~1any"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraPorts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "- port: 5170\ncontainerPort: 5170\nprotocol: TCP\nname: tcp\nnodePort: 30517"
           }
         }
       }

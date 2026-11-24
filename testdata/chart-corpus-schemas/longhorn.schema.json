@@ -307,74 +307,6 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
-                "properties": {
-                  "secrets": {
-                    "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses.",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
-                "properties": {
-                  "annotations": {
-                    "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
-                "properties": {
-                  "extraHosts": {
-                    "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1persistence.createStorageClass:t"
       },
       "then": {
@@ -491,6 +423,175 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "items": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+                "properties": {
+                  "annotations": {
+                    "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/definitions/constrains~1certificate"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/definitions/constrains~1certificate"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+                "properties": {
+                  "extraHosts": {
+                    "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -631,13 +732,28 @@
             "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using kube-lego, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\n- name: longhorn.local-tls\nkey:\ncertificate:",
             "properties": {
               "parentRefs": {
-                "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Gateway references for HTTPRoute. Specify which Gateway(s) should handle this route.\nExample:\n- name: gateway-name\nnamespace: gateway-namespace\nOptional fields with defaults:\ngroup: gateway.networking.k8s.io  # default\nkind: Gateway                      # default\nsectionName: https                 # optional, targets a specific listener"
               }
             }
           }
@@ -2844,6 +2960,17 @@
     }
   ],
   "definitions": {
+    "constrains/certificate": {
+      "properties": {
+        "certificate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "certificate"
+      ],
+      "type": "object"
+    },
     "constrains/createSecret:t": {
       "properties": {
         "createSecret": {

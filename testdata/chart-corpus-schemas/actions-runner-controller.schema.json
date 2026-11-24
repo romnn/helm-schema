@@ -4,66 +4,6 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "githubWebhookServer": {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "tls": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "githubWebhookServer"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1githubWebhookServer.ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "githubWebhookServer": {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "tls": {
-                    "description": "- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nfor Kubernetes >=1.19 (when \"networking.k8s.io/v1\" is used)\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1githubWebhookServer.ingress.enabled:t"
@@ -265,6 +205,50 @@
             "null",
             "object"
           ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1githubWebhookServer.ingress.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "githubWebhookServer": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -1230,35 +1214,6 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1githubWebhookServer.ingress.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "githubWebhookServer": {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "properties": {
-                  "hosts": {
-                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1nameOverride:t@2"
       },
       "then": {
@@ -1322,6 +1277,81 @@
                       "null",
                       "object"
                     ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "githubWebhookServer": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/definitions/t"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "githubWebhookServer"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1githubWebhookServer.ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "githubWebhookServer": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nfor Kubernetes >=1.19 (when \"networking.k8s.io/v1\" is used)\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
                   }
                 }
               }

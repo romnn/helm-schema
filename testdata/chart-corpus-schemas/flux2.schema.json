@@ -115,7 +115,15 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1prometheus"
+                    "not": {
+                      "properties": {
+                        "prometheus": {}
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
                   },
                   {
                     "$ref": "#/definitions/constrains~1prometheus=null"
@@ -629,7 +637,13 @@
                     "not": {
                       "properties": {
                         "cli": {
-                          "$ref": "#/definitions/constrains~1serviceAccount@2"
+                          "properties": {
+                            "serviceAccount": {}
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
                         }
                       },
                       "required": [
@@ -641,6 +655,17 @@
                 ]
               }
             ]
+          },
+          {
+            "not": {
+              "properties": {
+                "prometheus": {}
+              },
+              "required": [
+                "prometheus"
+              ],
+              "type": "object"
+            }
           },
           {
             "allOf": [
@@ -902,9 +927,6 @@
             "$ref": "#/definitions/constrains~1notificationController=null"
           },
           {
-            "$ref": "#/definitions/constrains~1prometheus"
-          },
-          {
             "$ref": "#/definitions/constrains~1prometheus=null"
           },
           {
@@ -1074,58 +1096,10 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "notificationController": {
-                "properties": {
-                  "webhookReceiver": {
-                    "properties": {
-                      "ingress": {
-                        "$ref": "#/definitions/constrains~1create:t"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhookReceiver"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "notificationController"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1notificationController.webhookReceiver.ingress.create:t"
           },
           {
-            "properties": {
-              "notificationController": {
-                "properties": {
-                  "webhookReceiver": {
-                    "properties": {
-                      "ingress": {
-                        "$ref": "#/definitions/constrains~1annotations:t"
-                      }
-                    },
-                    "required": [
-                      "ingress"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhookReceiver"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "notificationController"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1notificationController.webhookReceiver.ingress.annotations:t"
           },
           {
             "$ref": "#/definitions/constrains~1notificationController.create:t"
@@ -1151,6 +1125,100 @@
                           "null",
                           "object"
                         ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "notificationController": {
+                "properties": {
+                  "webhookReceiver": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "annotations": {
+                            "$ref": "#/definitions/helm-no-template-actions"
+                          }
+                        },
+                        "required": [
+                          "annotations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhookReceiver"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "notificationController"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1notificationController.webhookReceiver.ingress.annotations:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1notificationController.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1notificationController.webhookReceiver.ingress.create:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "notificationController": {
+            "additionalProperties": {},
+            "properties": {
+              "webhookReceiver": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          }
+                        ],
+                        "description": "ingressClassName: nginx"
                       }
                     }
                   }
@@ -1678,7 +1746,17 @@
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1service=null"
+              "properties": {
+                "service": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
             },
             {
               "not": {
@@ -1689,25 +1767,6 @@
                   "service"
                 ],
                 "type": "object"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/create:t+serviceAccount+serviceAccount=null": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1create:t"
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount=null"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1serviceAccount@2"
               }
             }
           ]
@@ -1813,6 +1872,60 @@
       ],
       "type": "object"
     },
+    "constrains/notificationController.webhookReceiver.ingress.annotations:t": {
+      "properties": {
+        "notificationController": {
+          "properties": {
+            "webhookReceiver": {
+              "properties": {
+                "ingress": {
+                  "$ref": "#/definitions/constrains~1annotations:t"
+                }
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhookReceiver"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "notificationController"
+      ],
+      "type": "object"
+    },
+    "constrains/notificationController.webhookReceiver.ingress.create:t": {
+      "properties": {
+        "notificationController": {
+          "properties": {
+            "webhookReceiver": {
+              "properties": {
+                "ingress": {
+                  "$ref": "#/definitions/constrains~1create:t"
+                }
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "webhookReceiver"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "notificationController"
+      ],
+      "type": "object"
+    },
     "constrains/notificationController=null": {
       "properties": {
         "notificationController": {
@@ -1839,17 +1952,6 @@
       ],
       "type": "object"
     },
-    "constrains/prometheus": {
-      "not": {
-        "properties": {
-          "prometheus": {}
-        },
-        "required": [
-          "prometheus"
-        ],
-        "type": "object"
-      }
-    },
     "constrains/prometheus=null": {
       "properties": {
         "prometheus": {
@@ -1871,19 +1973,6 @@
         }
       }
     },
-    "constrains/service=null": {
-      "properties": {
-        "service": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
-    },
     "constrains/serviceAccount": {
       "additionalProperties": {},
       "properties": {
@@ -1892,6 +1981,24 @@
         }
       }
     },
+    "constrains/serviceAccount+serviceAccount=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount=null"
+        },
+        {
+          "not": {
+            "properties": {
+              "serviceAccount": {}
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/serviceAccount=null": {
       "properties": {
         "serviceAccount": {
@@ -1899,15 +2006,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount@2": {
-      "properties": {
-        "serviceAccount": {}
       },
       "required": [
         "serviceAccount"
@@ -2121,6 +2219,40 @@
         }
       ]
     },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -2146,14 +2278,6 @@
         }
       ]
     },
-    "values/notificationController.service": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {},
-        "labels": {},
-        "ports": {}
-      }
-    },
     "values/notificationController.serviceAccount": {
       "additionalProperties": {},
       "properties": {
@@ -2175,7 +2299,14 @@
                 "$ref": "#/definitions/constrains~1create:t+service+service=null"
               },
               {
-                "$ref": "#/definitions/constrains~1create:t+serviceAccount+serviceAccount=null"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+                  }
+                ]
               }
             ]
           },
@@ -2203,7 +2334,12 @@
         "resources": {},
         "securityContext": {},
         "service": {
-          "$ref": "#/definitions/values~1notificationController.service"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "labels": {},
+            "ports": {}
+          }
         },
         "serviceAccount": {
           "$ref": "#/definitions/values~1notificationController.serviceAccount"
@@ -2222,16 +2358,7 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount=null"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1serviceAccount@2"
-                }
-              }
-            ]
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
           },
           "then": false
         }
@@ -2373,7 +2500,17 @@
                       {
                         "properties": {
                           "webhookReceiver": {
-                            "$ref": "#/definitions/constrains~1service=null"
+                            "properties": {
+                              "service": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "service"
+                            ],
+                            "type": "object"
                           }
                         },
                         "required": [
@@ -2478,7 +2615,14 @@
                 ]
               },
               {
-                "$ref": "#/definitions/constrains~1create:t+serviceAccount+serviceAccount=null"
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1create:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+                  }
+                ]
               }
             ]
           },
@@ -2507,7 +2651,12 @@
         "resources": {},
         "securityContext": {},
         "service": {
-          "$ref": "#/definitions/values~1notificationController.service"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "labels": {},
+            "ports": {}
+          }
         },
         "serviceAccount": {
           "$ref": "#/definitions/values~1notificationController.serviceAccount"

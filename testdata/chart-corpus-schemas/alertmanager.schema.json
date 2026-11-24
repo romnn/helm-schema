@@ -234,6 +234,35 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "extraSecretMounts": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional Alertmanager Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: alertmanager-secret-files\nreadOnly: true"
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -816,20 +845,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "extraSecretMounts": {
-          "description": "Additional Alertmanager Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: alertmanager-secret-files\nreadOnly: true",
-          "type": [
-            "array",
-            "integer",
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/definitions/constrains~1fullnameOverride:t"
       },
@@ -877,11 +892,26 @@
             "description": "--- Vertical Pod Autoscaler",
             "properties": {
               "recommenders": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               }
             }

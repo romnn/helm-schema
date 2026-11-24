@@ -214,6 +214,46 @@
     },
     {
       "if": {
+        "properties": {
+          "starrocks": {
+            "properties": {
+              "starrocksFESpec": {
+                "$ref": "#/definitions/constrains~1csiVolumes:t"
+              }
+            },
+            "required": [
+              "starrocksFESpec"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "starrocks"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksFESpec": {
+                "additionalProperties": {},
+                "description": "spec to deploy fe.",
+                "properties": {
+                  "csiVolumes": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.image.tag:t+starrocks.starrocksCluster.enabledBe:t"
@@ -284,6 +324,68 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksFeProxySpec": {
+                    "$ref": "#/definitions/constrains~1emptyDirs:t"
+                  }
+                },
+                "required": [
+                  "starrocksFeProxySpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksFeProxySpec.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksFeProxySpec": {
+                "additionalProperties": {},
+                "description": "specify the FE proxy deployment or not.",
+                "properties": {
+                  "emptyDirs": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@2"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Note: will create emptyDir volume for FE proxy, PVC is not supported."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "starrocks": {
             "properties": {
@@ -330,12 +432,12 @@
             "properties": {
               "starrocks": {
                 "properties": {
-                  "starrocksFeProxySpec": {
-                    "$ref": "#/definitions/constrains~1emptyDirs:t"
+                  "starrocksCnSpec": {
+                    "$ref": "#/definitions/constrains~1hostPaths:t"
                   }
                 },
                 "required": [
-                  "starrocksFeProxySpec"
+                  "starrocksCnSpec"
                 ],
                 "type": "object"
               }
@@ -346,7 +448,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksFeProxySpec.enabled:t"
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledCn:t"
           }
         ]
       },
@@ -356,21 +458,58 @@
           "starrocks": {
             "additionalProperties": {},
             "properties": {
-              "starrocksFeProxySpec": {
+              "starrocksCnSpec": {
                 "additionalProperties": {},
-                "description": "specify the FE proxy deployment or not.",
+                "description": "spec for compute node, compute node provide compute function.",
                 "properties": {
-                  "emptyDirs": {
-                    "description": "Note: will create emptyDir volume for FE proxy, PVC is not supported.",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
+                  "hostPaths": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@2"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "e.g., mount an emptyDir volume to /tmp\n- name: tmp-data\nmountPath: /tmp\nmount hostPath volumes if necessary.\nNote:\n1. Please use the storageSpec field for persistent storage data and log.\n2. Please use podAntiAffinity to avoid the pods are scheduled on the same node.\n3. If you use hostPath to mount the volume of cache data, the cache will be lost when the pod is restarted."
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "starrocks": {
+          "additionalProperties": {},
+          "properties": {
+            "secrets": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/values~1object@2"
+                },
+                {
+                  "$ref": "#/definitions/values~1array"
+                },
+                {
+                  "maximum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "create secrets if necessary.\ne.g., create my-secret\n- name: my-secret\ndata:\nkey: |\nthis is the content of the secret\nwhen mounted, the key will be the name of the file"
             }
           }
         }
@@ -469,6 +608,30 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "starrocksOperator": {
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -505,7 +668,7 @@
                 "description": "spec for compute node, compute node provide compute function.",
                 "properties": {
                   "secrets": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;mount-secrets-if-necessary"
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@5"
                   }
                 }
               }
@@ -516,20 +679,43 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1operator.starrocksOperator.enabled:t@2"
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksBeSpec": {
+                    "$ref": "#/definitions/constrains~1secrets:t"
+                  }
+                },
+                "required": [
+                  "starrocksBeSpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "operator": {
+          "starrocks": {
             "additionalProperties": {},
-            "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
-              "starrocksOperator": {
+              "starrocksBeSpec": {
                 "additionalProperties": {},
+                "description": "spec for component be, provide storage and compute function.",
                 "properties": {
-                  "image": {
-                    "type": "object"
+                  "secrets": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@5"
                   }
                 }
               }
@@ -583,19 +769,47 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "starrocks": {
-          "additionalProperties": {},
-          "properties": {
-            "secrets": {
-              "description": "create secrets if necessary.\ne.g., create my-secret\n- name: my-secret\ndata:\nkey: |\nthis is the content of the secret\nwhen mounted, the key will be the name of the file",
-              "type": [
-                "array",
-                "integer",
-                "null",
-                "object"
-              ]
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksCnSpec": {
+                    "$ref": "#/definitions/constrains~1csiVolumes:t"
+                  }
+                },
+                "required": [
+                  "starrocksCnSpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledCn:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksCnSpec": {
+                "additionalProperties": {},
+                "description": "spec for compute node, compute node provide compute function.",
+                "properties": {
+                  "csiVolumes": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
+                  }
+                }
+              }
             }
           }
         }
@@ -888,46 +1102,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "starrocks": {
-            "properties": {
-              "starrocksFESpec": {
-                "$ref": "#/definitions/constrains~1configMaps:t"
-              }
-            },
-            "required": [
-              "starrocksFESpec"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "starrocks"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksFESpec": {
-                "additionalProperties": {},
-                "description": "spec to deploy fe.",
-                "properties": {
-                  "configMaps": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-my-secret-to"
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -1281,7 +1455,7 @@
                               "$ref": "#/definitions/constrains~1group-32"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec+2more@3"
+                              "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec+2more@2"
                             },
                             {
                               "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.hostAliases:t+starrocks.starrocksCluster.enabledBe:t"
@@ -3160,53 +3334,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksBeSpec": {
-                    "$ref": "#/definitions/constrains~1configMaps:t"
-                  }
-                },
-                "required": [
-                  "starrocksBeSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksBeSpec": {
-                "additionalProperties": {},
-                "description": "spec for component be, provide storage and compute function.",
-                "properties": {
-                  "configMaps": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-my-secret-to"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "else": {
@@ -3515,146 +3642,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksBeSpec": {
-                    "$ref": "#/definitions/constrains~1secrets:t"
-                  }
-                },
-                "required": [
-                  "starrocksBeSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksBeSpec": {
-                "additionalProperties": {},
-                "description": "spec for component be, provide storage and compute function.",
-                "properties": {
-                  "secrets": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;mount-secrets-if-necessary"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksBeSpec": {
-                    "$ref": "#/definitions/constrains~1hostPaths:t"
-                  }
-                },
-                "required": [
-                  "starrocksBeSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksBeSpec": {
-                "additionalProperties": {},
-                "description": "spec for component be, provide storage and compute function.",
-                "properties": {
-                  "hostPaths": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-an-emptydir"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "starrocks": {
-            "properties": {
-              "starrocksFESpec": {
-                "$ref": "#/definitions/constrains~1emptyDirs:t"
-              }
-            },
-            "required": [
-              "starrocksFESpec"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "starrocks"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksFESpec": {
-                "additionalProperties": {},
-                "description": "spec to deploy fe.",
-                "properties": {
-                  "emptyDirs": {
-                    "description": "mount emptyDir volumes if necessary.\nNote: please use storageSpec field for persistent metadata and log.",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -3849,6 +3836,53 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksBeSpec": {
+                    "$ref": "#/definitions/constrains~1hostPaths:t"
+                  }
+                },
+                "required": [
+                  "starrocksBeSpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksBeSpec": {
+                "additionalProperties": {},
+                "description": "spec for component be, provide storage and compute function.",
+                "properties": {
+                  "hostPaths": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@2"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1starrocks.starrocksFESpec.configyaml:t"
           },
           {
@@ -3878,59 +3912,6 @@
                     "description": "A map object for setting the FE config. When configyaml is set to non-empty, the configs in configyaml will take\nprecedence and values in the config field will be discarded.\nNote: When using configyaml, the number needs to be quoted to avoid being converted to scientific notation.\nE.g., brpc_socket_max_unwritten_bytes: \"10737418240\"",
                     "type": [
                       "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksCnSpec": {
-                    "$ref": "#/definitions/constrains~1hostPaths:t"
-                  }
-                },
-                "required": [
-                  "starrocksCnSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledCn:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksCnSpec": {
-                "additionalProperties": {},
-                "description": "spec for compute node, compute node provide compute function.",
-                "properties": {
-                  "hostPaths": {
-                    "description": "e.g., mount an emptyDir volume to /tmp\n- name: tmp-data\nmountPath: /tmp\nmount hostPath volumes if necessary.\nNote:\n1. Please use the storageSpec field for persistent storage data and log.\n2. Please use podAntiAffinity to avoid the pods are scheduled on the same node.\n3. If you use hostPath to mount the volume of cache data, the cache will be lost when the pod is restarted.",
-                    "type": [
-                      "array",
-                      "integer",
                       "null",
                       "object"
                     ]
@@ -4401,6 +4382,46 @@
     },
     {
       "if": {
+        "properties": {
+          "starrocks": {
+            "properties": {
+              "starrocksFESpec": {
+                "$ref": "#/definitions/constrains~1secrets:t"
+              }
+            },
+            "required": [
+              "starrocksFESpec"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "starrocks"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksFESpec": {
+                "additionalProperties": {},
+                "description": "spec to deploy fe.",
+                "properties": {
+                  "secrets": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@5"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1global.rbac"
@@ -4453,25 +4474,6 @@
                   }
                 }
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "starrocks": {
-          "additionalProperties": {},
-          "properties": {
-            "configMaps": {
-              "description": "create configmaps if necessary.\ne.g., create my-configmap\n- name: my-configmap\ndata:\nkey: |\nthis is the content of the configmap\nwhen mounted, the key will be the name of the file",
-              "type": [
-                "array",
-                "integer",
-                "null",
-                "object"
-              ]
             }
           }
         }
@@ -4552,58 +4554,11 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksCnSpec": {
-                    "$ref": "#/definitions/constrains~1configMaps:t"
-                  }
-                },
-                "required": [
-                  "starrocksCnSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledCn:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksCnSpec": {
-                "additionalProperties": {},
-                "description": "spec for compute node, compute node provide compute function.",
-                "properties": {
-                  "configMaps": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-my-secret-to"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "starrocks": {
             "properties": {
               "starrocksFESpec": {
-                "$ref": "#/definitions/constrains~1secrets:t"
+                "$ref": "#/definitions/constrains~1emptyDirs:t"
               }
             },
             "required": [
@@ -4627,48 +4582,23 @@
                 "additionalProperties": {},
                 "description": "spec to deploy fe.",
                 "properties": {
-                  "secrets": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;mount-secrets-if-necessary"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "starrocks": {
-            "properties": {
-              "starrocksFESpec": {
-                "$ref": "#/definitions/constrains~1csiVolumes:t"
-              }
-            },
-            "required": [
-              "starrocksFESpec"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "starrocks"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksFESpec": {
-                "additionalProperties": {},
-                "description": "spec to deploy fe.",
-                "properties": {
-                  "csiVolumes": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-a-hostpath"
+                  "emptyDirs": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@2"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "mount emptyDir volumes if necessary.\nNote: please use storageSpec field for persistent metadata and log."
                   }
                 }
               }
@@ -4680,15 +4610,12 @@
     {
       "if": {
         "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
-          },
           {
             "properties": {
               "starrocks": {
                 "properties": {
                   "starrocksBeSpec": {
-                    "$ref": "#/definitions/constrains~1csiVolumes:t"
+                    "$ref": "#/definitions/constrains~1emptyDirs:t"
                   }
                 },
                 "required": [
@@ -4701,6 +4628,9 @@
               "starrocks"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
           }
         ]
       },
@@ -4714,8 +4644,8 @@
                 "additionalProperties": {},
                 "description": "spec for component be, provide storage and compute function.",
                 "properties": {
-                  "csiVolumes": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-a-hostpath"
+                  "emptyDirs": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@4"
                   }
                 }
               }
@@ -4769,53 +4699,6 @@
               "starrocks": {
                 "properties": {
                   "starrocksCnSpec": {
-                    "$ref": "#/definitions/constrains~1csiVolumes:t"
-                  }
-                },
-                "required": [
-                  "starrocksCnSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledCn:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksCnSpec": {
-                "additionalProperties": {},
-                "description": "spec for compute node, compute node provide compute function.",
-                "properties": {
-                  "csiVolumes": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-a-hostpath"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksCnSpec": {
                     "$ref": "#/definitions/constrains~1emptyDirs:t"
                   }
                 },
@@ -4846,7 +4729,134 @@
                 "description": "spec for compute node, compute node provide compute function.",
                 "properties": {
                   "emptyDirs": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;mount-emptydir-volumes-if"
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "starrocks": {
+            "properties": {
+              "starrocksFESpec": {
+                "$ref": "#/definitions/constrains~1configMaps:t"
+              }
+            },
+            "required": [
+              "starrocksFESpec"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "starrocks"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksFESpec": {
+                "additionalProperties": {},
+                "description": "spec to deploy fe.",
+                "properties": {
+                  "configMaps": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksBeSpec": {
+                    "$ref": "#/definitions/constrains~1configMaps:t"
+                  }
+                },
+                "required": [
+                  "starrocksBeSpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksBeSpec": {
+                "additionalProperties": {},
+                "description": "spec for component be, provide storage and compute function.",
+                "properties": {
+                  "configMaps": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@3"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "starrocks": {
+            "properties": {
+              "starrocksFESpec": {
+                "$ref": "#/definitions/constrains~1hostPaths:t"
+              }
+            },
+            "required": [
+              "starrocksFESpec"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "starrocks"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksFESpec": {
+                "additionalProperties": {},
+                "description": "spec to deploy fe.",
+                "properties": {
+                  "hostPaths": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@2"
                   }
                 }
               }
@@ -4989,40 +4999,28 @@
       }
     },
     {
-      "if": {
-        "properties": {
-          "starrocks": {
-            "properties": {
-              "starrocksFESpec": {
-                "$ref": "#/definitions/constrains~1hostPaths:t"
-              }
-            },
-            "required": [
-              "starrocksFESpec"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "starrocks"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksFESpec": {
-                "additionalProperties": {},
-                "description": "spec to deploy fe.",
-                "properties": {
-                  "hostPaths": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;e-g-mount-an-emptydir"
-                  }
+      "additionalProperties": {},
+      "properties": {
+        "starrocks": {
+          "additionalProperties": {},
+          "properties": {
+            "configMaps": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/values~1object@2"
+                },
+                {
+                  "$ref": "#/definitions/values~1array"
+                },
+                {
+                  "maximum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
                 }
-              }
+              ],
+              "description": "create configmaps if necessary.\ne.g., create my-configmap\n- name: my-configmap\ndata:\nkey: |\nthis is the content of the configmap\nwhen mounted, the key will be the name of the file"
             }
           }
         }
@@ -5155,6 +5153,53 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
+          },
+          {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksBeSpec": {
+                    "$ref": "#/definitions/constrains~1csiVolumes:t"
+                  }
+                },
+                "required": [
+                  "starrocksBeSpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksBeSpec": {
+                "additionalProperties": {},
+                "description": "spec for component be, provide storage and compute function.",
+                "properties": {
+                  "csiVolumes": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1starrocks.starrocksCnSpec.entrypoint:t"
       },
       "then": {
@@ -5237,53 +5282,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "starrocks": {
-                "properties": {
-                  "starrocksBeSpec": {
-                    "$ref": "#/definitions/constrains~1emptyDirs:t"
-                  }
-                },
-                "required": [
-                  "starrocksBeSpec"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledBe:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "starrocks": {
-            "additionalProperties": {},
-            "properties": {
-              "starrocksBeSpec": {
-                "additionalProperties": {},
-                "description": "spec for component be, provide storage and compute function.",
-                "properties": {
-                  "emptyDirs": {
-                    "$ref": "#/definitions/values~1array,integer,null,object;mount-emptydir-volumes-if"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1global.rbac"
           },
           {
@@ -5317,6 +5315,53 @@
                         "type": "object"
                       }
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "properties": {
+                  "starrocksCnSpec": {
+                    "$ref": "#/definitions/constrains~1configMaps:t"
+                  }
+                },
+                "required": [
+                  "starrocksCnSpec"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.enabledCn:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "starrocks": {
+            "additionalProperties": {},
+            "properties": {
+              "starrocksCnSpec": {
+                "additionalProperties": {},
+                "description": "spec for compute node, compute node provide compute function.",
+                "properties": {
+                  "configMaps": {
+                    "$ref": "#/definitions/values~1anyOf~1array+integer+null+object@3"
                   }
                 }
               }
@@ -11031,7 +11076,7 @@
     "constrains/group-35": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec+2more@3"
+          "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec+2more@2"
         },
         {
           "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.hostAliases:t+starrocks.starrocksCluster.enabledBe:t"
@@ -11136,7 +11181,7 @@
           "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.schedulerName:t+starrocks.starrocksCluster.enabledBe:t"
         },
         {
-          "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec+2more@2"
+          "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec+2more@3"
         }
       ]
     },
@@ -14418,11 +14463,11 @@
     "constrains/starrocks.starrocksBeSpec+2more@2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.componentValues.runAsNonRoot:t+1more@2"
+          "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.componentValues.hostAliases:t+1more"
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.runAsNonRoot:t"
+            "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.hostAliases:t"
           }
         }
       ]
@@ -14430,11 +14475,11 @@
     "constrains/starrocks.starrocksBeSpec+2more@3": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.componentValues.hostAliases:t+1more"
+          "$ref": "#/definitions/constrains~1starrocks.starrocksCluster.componentValues.runAsNonRoot:t+1more@2"
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.hostAliases:t"
+            "$ref": "#/definitions/constrains~1starrocks.starrocksBeSpec.runAsNonRoot:t"
           }
         }
       ]
@@ -19634,50 +19679,101 @@
         }
       ]
     },
-    "values/array,integer,null,object;e-g-mount-a-hostpath": {
-      "description": "e.g., mount a hostPath volume to /tmp\n- name: tmp-data\nhostPath:\npath: /tmp\ntype: Directory\nmountPath: /tmp\nmount CSI ephemeral inline volumes if necessary.\nUnlike storageSpec, no PersistentVolumeClaim is created: the volume is published by the CSI\ndriver when the pod starts and is torn down with the pod. The driver must already be installed\nin the cluster.",
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
+    "values/anyOf/array+integer+null+object": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/values~1object@2"
+        },
+        {
+          "$ref": "#/definitions/values~1array"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "e.g., mount a hostPath volume to /tmp\n- name: tmp-data\nhostPath:\npath: /tmp\ntype: Directory\nmountPath: /tmp\nmount CSI ephemeral inline volumes if necessary.\nUnlike storageSpec, no PersistentVolumeClaim is created: the volume is published by the CSI\ndriver when the pod starts and is torn down with the pod. The driver must already be installed\nin the cluster."
     },
-    "values/array,integer,null,object;e-g-mount-an-emptydir": {
-      "description": "e.g., mount an emptyDir volume to /tmp\n- name: tmp-data\nmountPath: /tmp\nmount hostPath volumes if necessary.\nNote: please use storageSpec field for persistent storage data and log.",
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
+    "values/anyOf/array+integer+null+object@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/values~1object@2"
+        },
+        {
+          "$ref": "#/definitions/values~1array"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "e.g., mount an emptyDir volume to /tmp\n- name: tmp-data\nmountPath: /tmp\nmount hostPath volumes if necessary.\nNote: please use storageSpec field for persistent storage data and log."
     },
-    "values/array,integer,null,object;e-g-mount-my-secret-to": {
-      "description": "e.g., mount my-secret to /etc/my-secret\n- name: my-secret\nmountPath: /etc/my-secret\nsubPath: \"\"\nmount configmaps if necessary.\nsee https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath for more details about subPath.",
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
+    "values/anyOf/array+integer+null+object@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/values~1object@2"
+        },
+        {
+          "$ref": "#/definitions/values~1array"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "e.g., mount my-secret to /etc/my-secret\n- name: my-secret\nmountPath: /etc/my-secret\nsubPath: \"\"\nmount configmaps if necessary.\nsee https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath for more details about subPath."
     },
-    "values/array,integer,null,object;mount-emptydir-volumes-if": {
-      "description": "mount emptyDir volumes if necessary.\nNote: please use storageSpec field for persistent storage data and log.",
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
+    "values/anyOf/array+integer+null+object@4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/values~1object@2"
+        },
+        {
+          "$ref": "#/definitions/values~1array"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "mount emptyDir volumes if necessary.\nNote: please use storageSpec field for persistent storage data and log."
     },
-    "values/array,integer,null,object;mount-secrets-if-necessary": {
-      "description": "mount secrets if necessary.\nsee https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath for more details about subPath.",
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
+    "values/anyOf/array+integer+null+object@5": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/values~1object@2"
+        },
+        {
+          "$ref": "#/definitions/values~1array"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "mount secrets if necessary.\nsee https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath for more details about subPath."
+    },
+    "values/array": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
     },
     "values/array,null,object;a-map-object-for": {
       "description": "A map object for setting the config. When configyaml is set, to non-empty, the configs in configyaml will take\nprecedence and values in the config field will be discarded.\nNote: When using configyaml, the number needs to be quoted to avoid being converted to scientific notation.\nE.g., brpc_socket_max_unwritten_bytes: \"10737418240\"",
@@ -19755,6 +19851,12 @@
     },
     "values/object;name-net-ipv4-ip-unprivileged-port-start-value": {
       "description": "- name: net.ipv4.ip_unprivileged_port_start\nvalue: \"2048\"\nspecify the service name and port config and serviceType\nthe service type refers https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+      "type": "object"
+    },
+    "values/object@2": {
+      "additionalProperties": {
+        "type": "object"
+      },
       "type": "object"
     },
     "values/operator.starrocksOperator.image": {
@@ -27898,7 +28000,8 @@
               "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule|ScheduleAnyway\nlabelSelector:\nmatchLabels:\nfoo: bar\nresources for FE pod.",
               "properties": {
                 "limits": {
-                  "$ref": "#/definitions/values~1starrocks.starrocksBeSpec.resources.limits"
+                  "additionalProperties": {},
+                  "description": "If you want to remove one resource limit, e.g., cpu, you can set it to cpu: \"unlimited\"."
                 },
                 "requests": {}
               }

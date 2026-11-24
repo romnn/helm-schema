@@ -50,59 +50,26 @@
             "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
               "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/definitions/t"
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
                   }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "configure UI ingress. If needed: \"enabled: true\"",
-            "properties": {
-              "tls": {
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
                 ]
               }
             }
@@ -558,6 +525,69 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "configure UI ingress. If needed: \"enabled: true\"",
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {

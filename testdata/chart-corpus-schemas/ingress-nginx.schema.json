@@ -2193,31 +2193,6 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1defaultBackend.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "defaultBackend": {
-            "additionalProperties": {},
-            "description": "Default 404 backend",
-            "properties": {
-              "extraConfigMaps": {
-                "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1controller.admissionWebhooks.enabled:t@2"
@@ -2246,6 +2221,46 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1defaultBackend.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "defaultBackend": {
+            "additionalProperties": {},
+            "description": "Default 404 backend",
+            "properties": {
+              "extraConfigMaps": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->"
               }
             }
           }
@@ -7256,7 +7271,9 @@
           "description": "Security context for default backend containers"
         },
         "enabled": {},
-        "extraArgs": {},
+        "extraArgs": {
+          "additionalProperties": {}
+        },
         "extraConfigMaps": {
           "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->"
         },

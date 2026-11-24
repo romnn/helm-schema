@@ -57,15 +57,7 @@
             "$ref": "#/definitions/constrains~1ignoreChartChecksums:t@2"
           },
           {
-            "properties": {
-              "buckets": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "buckets"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1buckets:t"
           }
         ]
       },
@@ -103,6 +95,110 @@
             "type": "string"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1buckets:t"
+          },
+          {
+            "properties": {
+              "buckets": {
+                "$ref": "#/definitions/helm-no-template-actions"
+              }
+            },
+            "required": [
+              "buckets"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mode=distributed@2"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "buckets": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "List of buckets to be created after minio install\nName of the bucket\n- name: bucket1\nPolicy to be set on the\nbucket [none|download|upload|public]\npolicy: none\nPurge if bucket exists already\npurge: false\nset versioning for\nbucket [true|false]\nversioning: false # remove this key if you do not want versioning feature\nset objectlocking for\nbucket [true|false] NOTE: versioning is enabled by default if you use locking\nobjectlocking: false\n- name: bucket2\npolicy: none\npurge: false\nversioning: true\nset objectlocking for\nbucket [true|false] NOTE: versioning is enabled by default if you use locking\nobjectlocking: false"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "buckets": {
+                "anyOf": [
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "additionalProperties": {
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "items": {
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "List of buckets to be created after minio install\nName of the bucket\n- name: bucket1\nPolicy to be set on the\nbucket [none|download|upload|public]\npolicy: none\nPurge if bucket exists already\npurge: false\nset versioning for\nbucket [true|false]\nversioning: false # remove this key if you do not want versioning feature\nset objectlocking for\nbucket [true|false] NOTE: versioning is enabled by default if you use locking\nobjectlocking: false\n- name: bucket2\npolicy: none\npurge: false\nversioning: true\nset objectlocking for\nbucket [true|false] NOTE: versioning is enabled by default if you use locking\nobjectlocking: false"
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -360,10 +456,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
+                "$ref": "#/definitions/constrains~1existingSecret:t"
               },
               {
-                "$ref": "#/definitions/constrains~1existingSecret:t"
+                "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
               },
               {
                 "$ref": "#/definitions/constrains~1mode=distributed@2"
@@ -562,10 +658,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
+            "$ref": "#/definitions/constrains~1existingSecret:t"
           },
           {
-            "$ref": "#/definitions/constrains~1existingSecret:t"
+            "$ref": "#/definitions/constrains~1ignoreChartChecksums:t"
           },
           {
             "$ref": "#/definitions/constrains~1mode=distributed@2"
@@ -584,6 +680,17 @@
     }
   ],
   "definitions": {
+    "constrains/buckets:t": {
+      "properties": {
+        "buckets": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "buckets"
+      ],
+      "type": "object"
+    },
     "constrains/existingSecret:t": {
       "not": {
         "properties": {
@@ -782,6 +889,40 @@
         "tls"
       ],
       "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [

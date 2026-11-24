@@ -53,29 +53,6 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t+3more"
@@ -165,6 +142,47 @@
               }
             ],
             "description": "A custom namespace to override the default namespace for the deployed resources."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
+              }
+            }
           }
         }
       }
@@ -821,52 +839,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "tls": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "not": {
               "properties": {
                 "readinessProbe": {
@@ -919,6 +891,24 @@
               "exec": {
                 "description": "The NodeJS Version of this Healthcheck is no longer supported, therefore we don't specify a node command.\nhttps://github.com/louislam/uptime-kuma/blob/ae224f9e188b1fc32ed8729818710975589cdce7/extra/healthcheck.js#L6",
                 "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
               }
             }
           }
@@ -3190,6 +3180,29 @@
         },
         {
           "const": true
+        }
+      ]
+    },
+    "values/anyOf/array+integer+null+object": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "object"
+          },
+          "type": "object"
+        },
+        {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
         }
       ]
     },

@@ -26,11 +26,26 @@
             "additionalProperties": {},
             "properties": {
               "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               }
             }
@@ -49,11 +64,26 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               }
             }

@@ -1544,11 +1544,26 @@
                 "additionalProperties": {},
                 "properties": {
                   "extraPorts": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   }
                 }

@@ -1637,32 +1637,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1ingress-nginx.defaultBackend.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/when~1ingress-nginx.enabled:t~1then~1any~1else~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress-nginx": {
-            "additionalProperties": {},
-            "description": "Dependencies",
-            "properties": {
-              "defaultBackend": {
-                "$ref": "#/definitions/constrains~1extraConfigMaps"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled:t+1more"
           },
           {
@@ -2892,31 +2866,6 @@
       }
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1okteto-nginx.defaultBackend.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/when~1okteto-nginx.enabled:t~1then~1any~1else~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "okteto-nginx": {
-            "additionalProperties": {},
-            "properties": {
-              "defaultBackend": {
-                "$ref": "#/definitions/constrains~1extraConfigMaps"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "ingress-nginx": {
@@ -3466,6 +3415,32 @@
             "properties": {
               "fullnameOverride": {
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1ingress-nginx.defaultBackend.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/when~1ingress-nginx.enabled:t~1then~1any~1else~1ingress-nginx+ingress-nginx.enabled+ingress-nginx.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress-nginx": {
+            "additionalProperties": {},
+            "description": "Dependencies",
+            "properties": {
+              "defaultBackend": {
+                "$ref": "#/definitions/constrains~1extraConfigMaps"
               }
             }
           }
@@ -8550,6 +8525,31 @@
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1okteto-nginx.defaultBackend.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/when~1okteto-nginx.enabled:t~1then~1any~1else~1okteto-nginx+okteto-nginx.enabled+okteto-nginx.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "okteto-nginx": {
+            "additionalProperties": {},
+            "properties": {
+              "defaultBackend": {
+                "$ref": "#/definitions/constrains~1extraConfigMaps"
               }
             }
           }
@@ -16175,13 +16175,28 @@
       "description": "Default 404 backend",
       "properties": {
         "extraConfigMaps": {
-          "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->",
-          "type": [
-            "array",
-            "integer",
-            "null",
-            "object"
-          ]
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->"
         }
       }
     },
@@ -24281,7 +24296,9 @@
           "description": "Security context for default backend containers"
         },
         "enabled": {},
-        "extraArgs": {},
+        "extraArgs": {
+          "additionalProperties": {}
+        },
         "extraConfigMaps": {
           "description": "Additional configmaps to the default backend pod.\n- name: my-extra-configmap-1\nlabels:\ntype: config-1\ndata:\nextra_file_1.html: |\n<!-- Extra HTML content for ConfigMap 1 -->\n- name: my-extra-configmap-2\nlabels:\ntype: config-2\ndata:\nextra_file_2.html: |\n<!-- Extra HTML content for ConfigMap 2 -->"
         },

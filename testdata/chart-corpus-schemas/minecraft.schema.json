@@ -283,6 +283,39 @@
           {
             "additionalProperties": {},
             "properties": {
+              "minecraftServer": {
+                "additionalProperties": {},
+                "properties": {
+                  "extraPorts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
               "extraDeploy": {
                 "description": "Array of extra objects to deploy with the release\nextraDeploy:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ template \"minecraft.fullname\" . }}-extra-cm\ndata:\nkey: |-\n{\n\"key\": \"value\"\n}",
                 "type": [
@@ -301,11 +334,42 @@
                 "additionalProperties": {},
                 "properties": {
                   "extraPorts": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "properties": {
+                            "service": {
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "additionalProperties": {
+                          "properties": {
+                            "service": {
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   }
                 }

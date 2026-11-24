@@ -44,23 +44,47 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "ingress": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "hosts": {}
+                      },
+                      "required": [
+                        "hosts"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "tls": {
-                    "$ref": "#/definitions/t"
+                  "ingress": {
+                    "properties": {
+                      "hosts": {
+                        "maxItems": 1,
+                        "maxProperties": 1
+                      }
+                    },
+                    "required": [
+                      "hosts"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "tls"
+                  "ingress"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            ]
           },
           {
             "$ref": "#/definitions/constrains~1ingress.enabled:t"
@@ -73,14 +97,26 @@
           "ingress": {
             "additionalProperties": {},
             "properties": {
-              "tls": {
-                "description": "Ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
+              "hosts": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Hostname(s) for the Ingress resource\nPlease refer to https://kubernetes.io/docs/reference/kubernetes-api/service-resources/ingress-v1/#IngressSpec for more information.\nEach path may optionally specify `backend.service.{name,port}` to override\nthe default Headlamp Service / `service.port`. `name` supports `tpl` so\nvalues like `{{ .Release.Name }}-extra` can be used. `port` accepts either\n`number` or `name` (matching `service.extraServicePorts[].name`)."
               }
             }
           }
@@ -129,6 +165,65 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1config.oidc.callbackURL:t"
           },
           {
@@ -155,6 +250,37 @@
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "additionalProperties": {},
+          "properties": {
+            "extraServicePorts": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/values~1object"
+                },
+                {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                {
+                  "maximum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Additional ports to expose on the Service in addition to the default\nhttp port. Each entry must have a unique `name` and a `port`. `targetPort`\ndefaults to `port` when omitted. `nodePort` is only honored when\n`service.type` is `NodePort` or `LoadBalancer`. A matching containerPort\nmust be provided by the user (e.g. via a sidecar) for traffic to actually\nbe routed.\n- name: extra\nport: 9090\ntargetPort: extra\nprotocol: TCP\nnodePort: null"
             }
           }
         }
@@ -422,25 +548,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "extraServicePorts": {
-              "description": "Additional ports to expose on the Service in addition to the default\nhttp port. Each entry must have a unique `name` and a `port`. `targetPort`\ndefaults to `port` when omitted. `nodePort` is only honored when\n`service.type` is `NodePort` or `LoadBalancer`. A matching containerPort\nmust be provided by the user (e.g. via a sidecar) for traffic to actually\nbe routed.\n- name: extra\nport: 9090\ntargetPort: extra\nprotocol: TCP\nnodePort: null",
-              "type": [
-                "array",
-                "integer",
-                "null",
-                "object"
-              ]
-            }
-          }
-        }
       }
     },
     {
@@ -4230,6 +4337,12 @@
         }
       ],
       "type": "string"
+    },
+    "values/object": {
+      "additionalProperties": {
+        "type": "object"
+      },
+      "type": "object"
     }
   },
   "properties": {

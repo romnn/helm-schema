@@ -523,66 +523,6 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1falcosidekick.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "falcosidekick": {
-            "additionalProperties": {},
-            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
-            "properties": {
-              "webui": {
-                "additionalProperties": {},
-                "properties": {
-                  "ingress": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "hosts": {
-                        "description": "Web UI ingress hosts configuration",
-                        "type": [
-                          "array",
-                          "integer",
-                          "null",
-                          "object"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1controller.kind=deployment+driver.enabled:t+driver.kind=kmod+6more@2"
@@ -989,63 +929,6 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1k8s-metacollector.service.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8s-metacollector.service.ports:t"
-            },
-            {
-              "$ref": "#/definitions/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1any"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1collectors.kubernetes.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1k8s-metacollector.service.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1k8s-metacollector.service.ports:t"
-            },
-            {
-              "$ref": "#/definitions/when~1k8s-metacollector.serviceMonitor.create:t~1then~1k8s-metacollector.serviceMonitor.namespace:t~1else~1any"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "k8s-metacollector": {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
-                "properties": {
-                  "ports": {
-                    "description": "ports denotes all the ports on which the Service will listen.",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/when~1serviceMonitor.create:t~1then~1controller.kind=deployment+serviceMonitor.namespace:t~1else~1any"
       },
       "then": {
@@ -1146,44 +1029,6 @@
           "falcosidekick": {
             "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
             "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1falco-talon.ingress.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/when~1responseActions.enabled:t~1then~1any~1else~1responseActions.enabled+responseActions.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "falco-talon": {
-            "additionalProperties": {},
-            "description": "It must be used in conjunction with the response_actions.enabled option.",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "ingress parameters",
-                "properties": {
-                  "hosts": {
-                    "description": "hosts",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -1521,6 +1366,53 @@
           "certs": {
             "description": "certificates used by webserver.\npaste certificate content or use helm with --set-file\nor use existing secret containing key, crt, ca as well as pem bundle",
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1falco-talon.ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/when~1responseActions.enabled:t~1then~1any~1else~1responseActions.enabled+responseActions.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falco-talon": {
+            "additionalProperties": {},
+            "description": "It must be used in conjunction with the response_actions.enabled option.",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "ingress parameters",
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@3"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array@2"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "hosts"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2022,55 +1914,6 @@
               "config": {
                 "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers.",
                 "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1falco-talon.ingress.enabled:t"
-          },
-          {
-            "properties": {
-              "falco-talon": {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              }
-            },
-            "required": [
-              "falco-talon"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/when~1responseActions.enabled:t~1then~1any~1else~1responseActions.enabled+responseActions.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "falco-talon": {
-            "additionalProperties": {},
-            "description": "It must be used in conjunction with the response_actions.enabled option.",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "ingress parameters",
-                "properties": {
-                  "tls": {
-                    "description": "tls\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
               }
             }
           }
@@ -2747,6 +2590,64 @@
             "properties": {
               "namespace": {
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1falco-talon.ingress.enabled:t"
+          },
+          {
+            "properties": {
+              "falco-talon": {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              }
+            },
+            "required": [
+              "falco-talon"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/when~1responseActions.enabled:t~1then~1any~1else~1responseActions.enabled+responseActions.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falco-talon": {
+            "additionalProperties": {},
+            "description": "It must be used in conjunction with the response_actions.enabled option.",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "ingress parameters",
+                "properties": {
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@3"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array@2"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "tls\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+                  }
+                }
               }
             }
           }
@@ -4468,6 +4369,29 @@
             "description": "It must be used in conjunction with the response_actions.enabled option.",
             "type": "object"
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "services": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/values~1object@3"
+            },
+            {
+              "$ref": "#/definitions/values~1array@2"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Network services configuration (scenario requirement)\nAdd here your services to be deployed together with Falco.\nExample configuration for the \"k8sauditlog\" plugin\n- name: k8saudit-webhook\ntype: NodePort\nports:\n- port: 9765 # See plugin open_params\nnodePort: 30007\nprotocol: TCP"
         }
       }
     },
@@ -11888,6 +11812,150 @@
     },
     {
       "if": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
+            }
+          ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1falcosidekick.enabled:t"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcosidekick": {
+            "additionalProperties": {},
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/values~1object@3"
+                          },
+                          {
+                            "$ref": "#/definitions/values~1array@2"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Web UI ingress hosts configuration"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.tls:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
+            }
+          ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1falcosidekick.enabled:t"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.tls:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcosidekick": {
+            "additionalProperties": {},
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/values~1object@3"
+                          },
+                          {
+                            "$ref": "#/definitions/values~1array@2"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Web UI ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1collectors.enabled:t+controller.kind=deployment+driver+falcoctl.artifact.follow+3more"
@@ -12190,20 +12258,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "services": {
-          "description": "Network services configuration (scenario requirement)\nAdd here your services to be deployed together with Falco.\nExample configuration for the \"k8sauditlog\" plugin\n- name: k8saudit-webhook\ntype: NodePort\nports:\n- port: 9765 # See plugin open_params\nnodePort: 30007\nprotocol: TCP",
-          "type": [
-            "array",
-            "integer",
-            "null",
-            "object"
-          ]
         }
       }
     },
@@ -16458,6 +16512,9 @@
               "$ref": "#/definitions/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
             },
             {
+              "$ref": "#/definitions/constrains~1falcosidekick.ingress.tls:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1falcosidekick.ingress.enabled:t"
             }
           ]
@@ -16466,7 +16523,14 @@
           "$ref": "#/definitions/constrains~1falcosidekick.enabled:t"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1falcosidekick.ingress.enabled:t"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.ingress.tls:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1falcosidekick.ingress.enabled:t"
+            }
+          ]
         }
       },
       "then": {
@@ -16479,14 +16543,23 @@
               "ingress": {
                 "additionalProperties": {},
                 "properties": {
-                  "hosts": {
-                    "description": "Ingress hosts",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
+                  "tls": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@3"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array@2"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
                   }
                 }
               }
@@ -16885,54 +16958,97 @@
         "else": {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
+              "$ref": "#/definitions/constrains~1k8s-metacollector.service.create:t"
             },
             {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.tls:t"
+              "$ref": "#/definitions/constrains~1k8s-metacollector.service.ports:t"
             },
             {
-              "$ref": "#/definitions/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
+              "$ref": "#/definitions/when~1k8s-metacollector.serviceMonitor.create:t~1then~1collectors.kubernetes.enabled+collectors.kubernetes.enabled=null+1more~1else~1any"
             }
           ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1falcosidekick.enabled:t"
+          "$ref": "#/definitions/constrains~1collectors.kubernetes.enabled:t"
         },
         "then": {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.enabled:t"
+              "$ref": "#/definitions/constrains~1k8s-metacollector.service.create:t"
             },
             {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.tls:t"
+              "$ref": "#/definitions/constrains~1k8s-metacollector.service.ports:t"
             },
             {
-              "$ref": "#/definitions/constrains~1falcosidekick.webui.ingress.enabled:t"
+              "$ref": "#/definitions/when~1k8s-metacollector.serviceMonitor.create:t~1then~1k8s-metacollector.serviceMonitor.namespace:t~1else~1any"
             }
           ]
         }
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "falcosidekick": {
+        "allOf": [
+          {
             "additionalProperties": {},
-            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
             "properties": {
-              "webui": {
+              "k8s-metacollector": {
                 "additionalProperties": {},
                 "properties": {
-                  "ingress": {
+                  "service": {
                     "additionalProperties": {},
+                    "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
                     "properties": {
-                      "tls": {
-                        "description": "Web UI ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+                      "ports": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "type": [
+                                "array",
+                                "null",
+                                "object"
+                              ]
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "items": {
+                              "type": [
+                                "array",
+                                "null",
+                                "object"
+                              ]
+                            },
+                            "type": "array"
+                          }
+                        ],
+                        "description": "ports denotes all the ports on which the Service will listen."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "k8s-metacollector": {
+                "additionalProperties": {},
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
+                    "properties": {
+                      "ports": {
+                        "description": "ports denotes all the ports on which the Service will listen.",
                         "type": [
                           "array",
-                          "integer",
                           "null",
                           "object"
                         ]
@@ -16943,7 +17059,7 @@
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -17249,9 +17365,6 @@
               "$ref": "#/definitions/constrains~1falcosidekick+falcosidekick.enabled+falcosidekick.enabled=null"
             },
             {
-              "$ref": "#/definitions/constrains~1falcosidekick.ingress.tls:t"
-            },
-            {
               "$ref": "#/definitions/constrains~1falcosidekick.ingress.enabled:t"
             }
           ]
@@ -17260,14 +17373,7 @@
           "$ref": "#/definitions/constrains~1falcosidekick.enabled:t"
         },
         "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.ingress.tls:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1falcosidekick.ingress.enabled:t"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1falcosidekick.ingress.enabled:t"
         }
       },
       "then": {
@@ -17280,14 +17386,23 @@
               "ingress": {
                 "additionalProperties": {},
                 "properties": {
-                  "tls": {
-                    "description": "Ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object@3"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1array@2"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Ingress hosts"
                   }
                 }
               }
@@ -36378,6 +36493,12 @@
       },
       "type": "array"
     },
+    "values/array@2": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
     "values/driver.kmod.bufSizePreset": {
       "description": "bufSizePreset determines the size of the shared space between Falco and its drivers.\nThis shared space serves as a temporary storage for syscall events."
     },
@@ -36555,6 +36676,12 @@
           "pattern": "[^A-Za-z0-9_.$/+-]"
         },
         "type": "string"
+      },
+      "type": "object"
+    },
+    "values/object@3": {
+      "additionalProperties": {
+        "type": "object"
       },
       "type": "object"
     },

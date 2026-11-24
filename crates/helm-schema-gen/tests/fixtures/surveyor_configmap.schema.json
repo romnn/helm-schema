@@ -4,6 +4,197 @@
   "allOf": [
     {
       "if": {
+        "properties": {
+          "config": {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "properties": {
+                  "jetstream": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "accounts": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "if": {
+                                "properties": {
+                                  "tls": {
+                                    "$ref": "#/definitions/t"
+                                  }
+                                },
+                                "required": [
+                                  "tls"
+                                ],
+                                "type": "object"
+                              },
+                              "then": {
+                                "properties": {
+                                  "tls": {
+                                    "not": {
+                                      "type": "null"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "tls"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "if": {
+                                "properties": {
+                                  "tls": {
+                                    "$ref": "#/definitions/t"
+                                  }
+                                },
+                                "required": [
+                                  "tls"
+                                ],
+                                "type": "object"
+                              },
+                              "then": {
+                                "properties": {
+                                  "tls": {
+                                    "not": {
+                                      "type": "null"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "tls"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "properties": {
+                  "jetstream": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "accounts": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "if": {
+                                "properties": {
+                                  "tls": {
+                                    "$ref": "#/definitions/t"
+                                  }
+                                },
+                                "required": [
+                                  "tls"
+                                ],
+                                "type": "object"
+                              },
+                              "then": {
+                                "properties": {
+                                  "tls": {
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {
+                              "if": {
+                                "properties": {
+                                  "tls": {
+                                    "$ref": "#/definitions/t"
+                                  }
+                                },
+                                "required": [
+                                  "tls"
+                                ],
+                                "type": "object"
+                              },
+                              "then": {
+                                "properties": {
+                                  "tls": {
+                                    "type": "object"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/helm-condition-2"
       },
       "then": {
@@ -16,11 +207,26 @@
                 "additionalProperties": {},
                 "properties": {
                   "accounts": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   }
                 }

@@ -19,12 +19,58 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
+          },
           {
             "not": {
-              "$ref": "#/definitions/constrains~1installation.kubernetesProvider"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1tigeraOperator=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tigeraOperator"
+                }
+              ]
             }
           },
+          {
+            "$ref": "#/definitions/constrains~1tigeraOperator.registry:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tigeraOperator": {
+            "additionalProperties": {},
+            "description": "Image and registry configuration for the tigera/operator pod.",
+            "properties": {
+              "registry": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "imagePullSecrets": {
+          "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "allOf": [
               {
@@ -58,6 +104,11 @@
                 "$ref": "#/definitions/constrains~1tigeraOperator.registry:t"
               }
             ]
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1installation.kubernetesProvider"
+            }
           },
           {
             "$ref": "#/definitions/constrains~1installation"
@@ -160,57 +211,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1tigeraOperator+tigeraOperator=null"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1tigeraOperator=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1tigeraOperator"
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1tigeraOperator.registry:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tigeraOperator": {
-            "additionalProperties": {},
-            "description": "Image and registry configuration for the tigera/operator pod.",
-            "properties": {
-              "registry": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "imagePullSecrets": {
-          "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json",
-          "type": [
-            "array",
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1installation.enabled:t"
       },
       "then": {
@@ -219,6 +219,48 @@
           "installation": {
             "description": "Configures general installation parameters for Calico. Schema is based\non the operator.tigera.io/Installation API documented\nhere: https://docs.tigera.io/calico/latest/reference/installation/api#installationspec",
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "imagePullSecrets": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "imagePullSecrets"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "imagePullSecrets": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json"
           }
         }
       }
@@ -420,6 +462,7 @@
       "description": "goldmane configures the Calico Goldmane flow aggregator."
     },
     "imagePullSecrets": {
+      "additionalProperties": {},
       "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json"
     },
     "installation": {

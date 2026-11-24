@@ -1350,6 +1350,57 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1cluster.auth.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.auth.users:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "cluster": {
+            "additionalProperties": {},
+            "properties": {
+              "auth": {
+                "additionalProperties": {},
+                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                "properties": {
+                  "users": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/definitions/constrains~1password+permissions+username"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/definitions/constrains~1password+permissions+username"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "properties": {
               "cluster": {
                 "properties": {
@@ -1816,69 +1867,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1cluster.auth.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1cluster.create:t"
-          },
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1group-13"
           }
         ]
@@ -2054,6 +2042,89 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1cluster.auth.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.auth.users:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/definitions/constrains~1password+permissions+username"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {
+                              "$ref": "#/definitions/constrains~1password+permissions+username"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -13270,6 +13341,33 @@
       ],
       "type": "object"
     },
+    "constrains/cluster.auth.users:t": {
+      "properties": {
+        "cluster": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "users": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "users"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
     "constrains/cluster.configReload+cluster.configReload.enabled": {
       "anyOf": [
         {
@@ -15244,6 +15342,38 @@
       ],
       "type": "object"
     },
+    "constrains/password+permissions+username": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "password": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "username": {}
+              }
+            },
+            {
+              "additionalProperties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "permissions": {}
+              }
+            }
+          ]
+        }
+      ]
+    },
     "constrains/pullPolicy": {
       "properties": {
         "pullPolicy": {
@@ -16615,6 +16745,7 @@
               "description": "This is where you enter a username/password for 1 user"
             },
             "users": {
+              "additionalProperties": {},
               "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
             }
           }

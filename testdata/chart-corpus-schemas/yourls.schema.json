@@ -159,6 +159,151 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "secrets": {}
+                      },
+                      "required": [
+                        "secrets"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "secrets": {
+                        "maxItems": 1,
+                        "maxProperties": 1
+                      }
+                    },
+                    "required": [
+                      "secrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.secrets:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure the ingress resource that allows you to access the YOURLS installation\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "properties": {
+                            "Values": {
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "Values"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "properties": {
+                            "Values": {
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "Values"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Custom TLS certificates as secrets\nNOTE: 'key' and 'certificate' are expected in PEM format\nNOTE: 'name' should line up with a 'secretName' set further up\nIf it is not set, and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set, and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside this helm chart\nPlease see README.md for more information\ne.g:\nsecrets:\n- name: yourls.local-tls\nkey: |-\n...\ncertificate: |-\n..."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure the ingress resource that allows you to access the YOURLS installation\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Custom TLS certificates as secrets\nNOTE: 'key' and 'certificate' are expected in PEM format\nNOTE: 'name' should line up with a 'secretName' set further up\nIf it is not set, and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set, and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside this helm chart\nPlease see README.md for more information\ne.g:\nsecrets:\n- name: yourls.local-tls\nkey: |-\n...\ncertificate: |-\n..."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -382,34 +527,10 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "ingress": {
-                "properties": {
-                  "secrets": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "secrets"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1ingress.secrets:t"
           },
           {
-            "properties": {
-              "ingress": {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
           }
         ]
       },
@@ -620,6 +741,36 @@
           "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
         }
       ]
+    },
+    "constrains/ingress.enabled:t": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.secrets:t": {
+      "properties": {
+        "ingress": {
+          "properties": {
+            "secrets": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "secrets"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
     },
     "constrains/mariadb+mariadb.enabled+mariadb.enabled=null": {
       "anyOf": [

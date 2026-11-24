@@ -396,6 +396,71 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1deployment.enabled:t@2"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "servers": {
+                    "maxItems": 1,
+                    "maxProperties": 1
+                  }
+                },
+                "required": [
+                  "servers"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "servers": {}
+                  },
+                  "required": [
+                    "servers"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "servers": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [

@@ -134,59 +134,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "dashboard": {
-                "properties": {
-                  "httproute": {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "httproute"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "dashboard"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dashboard": {
-            "additionalProperties": {},
-            "properties": {
-              "httproute": {
-                "additionalProperties": {},
-                "description": "HTTPRoute configuration (Gateway API).\nref: https://gateway-api.sigs.k8s.io/api-types/httproute/",
-                "properties": {
-                  "rules": {
-                    "description": "HTTPRoute rules configuration",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1podLabels+podLabels=null@2"
           },
           {
@@ -476,6 +423,71 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "dashboard": {
+                "properties": {
+                  "httproute": {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                },
+                "required": [
+                  "httproute"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "dashboard"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboard": {
+            "additionalProperties": {},
+            "properties": {
+              "httproute": {
+                "additionalProperties": {},
+                "description": "HTTPRoute configuration (Gateway API).\nref: https://gateway-api.sigs.k8s.io/api-types/httproute/",
+                "properties": {
+                  "rules": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "HTTPRoute rules configuration"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -2692,6 +2704,60 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/when~1global.deploymentLabels+global.deploymentLabels=null~1then~1podLabels+podLabels=null~1else~1global.deploymentLabels"
+          },
+          {
+            "properties": {
+              "dashboard": {
+                "$ref": "#/definitions/constrains~1topologySpreadConstraints:t"
+              }
+            },
+            "required": [
+              "dashboard"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboard": {
+            "additionalProperties": {},
+            "properties": {
+              "topologySpreadConstraints": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Assign custom [TopologySpreadConstraints] rules to the dashboard server\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1dashboard.ingress.enabled:t"
           },
           {
@@ -2756,45 +2822,6 @@
               "deploymentLabels": {
                 "description": "Labels for all deployed Deployments",
                 "type": [
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "controller": {
-                "$ref": "#/definitions/constrains~1topologySpreadConstraints:t"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/when~1global.deploymentLabels+global.deploymentLabels=null~1then~1podLabels+podLabels=null~1else~1global.deploymentLabels"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "topologySpreadConstraints": {
-                "description": "Assign custom [TopologySpreadConstraints] rules to the controller\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule",
-                "type": [
-                  "array",
-                  "integer",
                   "null",
                   "object"
                 ]
@@ -3008,48 +3035,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/when~1global.deploymentLabels+global.deploymentLabels=null~1then~1podLabels+podLabels=null~1else~1global.deploymentLabels"
-          },
-          {
-            "properties": {
-              "dashboard": {
-                "$ref": "#/definitions/constrains~1topologySpreadConstraints:t"
-              }
-            },
-            "required": [
-              "dashboard"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dashboard": {
-            "additionalProperties": {},
-            "properties": {
-              "topologySpreadConstraints": {
-                "description": "Assign custom [TopologySpreadConstraints] rules to the dashboard server\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "not": {
               "$ref": "#/definitions/constrains~1dashboard.ingress.hosts:t"
             }
@@ -3156,6 +3141,57 @@
         "properties": {
           "controller": {
             "$ref": "#/definitions/constrains~1component"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "$ref": "#/definitions/constrains~1topologySpreadConstraints:t"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/when~1global.deploymentLabels+global.deploymentLabels=null~1then~1podLabels+podLabels=null~1else~1global.deploymentLabels"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "topologySpreadConstraints": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Assign custom [TopologySpreadConstraints] rules to the controller\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nIf labelSelector is left out, it will default to the labelSelector configuration of the deployment\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
+              }
+            }
           }
         }
       }
@@ -9480,6 +9516,12 @@
     },
     "values/controller.pdb.minAvailable": {
       "description": "Minimum number / percentage of pods that should remain scheduled\n1"
+    },
+    "values/object": {
+      "additionalProperties": {
+        "type": "object"
+      },
+      "type": "object"
     },
     "when/clusterInstall:t/then/controller.createClusterRole:t+controller.createConfigmap:t+9more/else/any": {
       "else": true,

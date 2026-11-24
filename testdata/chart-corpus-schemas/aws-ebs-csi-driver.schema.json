@@ -70,13 +70,28 @@
         "additionalProperties": {},
         "properties": {
           "volumeSnapshotClasses": {
-            "description": "Add VolumeSnapshotClass resources like:\n- name: ebs-vsc\nannotation metadata\nannotations:\nsnapshot.storage.kubernetes.io/is-default-class: \"true\"\nlabel metadata\nlabels:\nmy-label-is: supercool\ndeletionPolicy must be specified\ndeletionPolicy: Delete\nparameters:",
-            "type": [
-              "array",
-              "integer",
-              "null",
-              "object"
-            ]
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add VolumeSnapshotClass resources like:\n- name: ebs-vsc\nannotation metadata\nannotations:\nsnapshot.storage.kubernetes.io/is-default-class: \"true\"\nlabel metadata\nlabels:\nmy-label-is: supercool\ndeletionPolicy must be specified\ndeletionPolicy: Delete\nparameters:"
           }
         }
       }
@@ -157,6 +172,64 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "storageClasses": {
+                "maxItems": 1,
+                "maxProperties": 1
+              }
+            },
+            "required": [
+              "storageClasses"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "storageClasses": {}
+              },
+              "required": [
+                "storageClasses"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClasses": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional node DaemonSets, using the node config structure\nSee docs/additional-daemonsets.md for more information\nexample:\nnodeSelector:\nnode.kubernetes.io/instance-type: c5.large\nvolumeAttachLimit: 15\nAdd StorageClass resources like:\n- name: ebs-sc\nannotation metadata\nannotations:\nstorageclass.kubernetes.io/is-default-class: \"true\"\nlabel metadata\nlabels:\nmy-label-is: supercool\ndefaults to WaitForFirstConsumer\nvolumeBindingMode: WaitForFirstConsumer\ndefaults to Delete\nreclaimPolicy: Retain\nparameters:\nencrypted: \"true\""
+          }
+        }
+      }
     }
   ],
   "definitions": {

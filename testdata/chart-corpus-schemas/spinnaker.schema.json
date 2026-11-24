@@ -293,43 +293,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dockerRegistryAccountSecret:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dockerRegistries": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/definitions/constrains~1name+password"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "additionalProperties": {
-                  "$ref": "#/definitions/constrains~1name+password"
-                },
-                "type": "object"
-              }
-            ],
-            "description": "Configure your Docker registries here"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
           },
           {
@@ -2665,75 +2628,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "minio": {
-                "properties": {
-                  "buckets": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "buckets"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "minio"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "minio": {
-                  "properties": {
-                    "defaultBucket": {
-                      "$ref": "#/definitions/constrains~1enabled:t"
-                    }
-                  },
-                  "required": [
-                    "defaultBucket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "minio"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1minio.enabled:t~1then~1minio.mode=distributed~1else~1minio+minio.enabled+minio.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "minio": {
-            "additionalProperties": {},
-            "description": "Minio access/secret keys for the in-cluster S3 usage\nMinio is not exposed publically",
-            "properties": {
-              "buckets": {
-                "description": "Create multiple buckets after minio install\nEnabling `defaultBucket` will take priority over this list\n- name: bucket1\npolicy: none\npurge: false\n- name: bucket2\npolicy: none\npurge: false",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "else": {
           "allOf": [
             {
@@ -3454,6 +3348,36 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dockerRegistries": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/definitions/constrains~1address+email+name+password+passwordCommand+repositories+username"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "items": {
+                  "$ref": "#/definitions/constrains~1address+email+name+password+passwordCommand+repositories+username"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Configure your Docker registries here"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
@@ -3530,47 +3454,6 @@
           "redis": {
             "description": "Redis password to use for the in-cluster redis service\nEnable redis to use in-cluster redis",
             "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1dockerRegistryAccountSecret:t"
-          },
-          {
-            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dockerRegistries": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/definitions/constrains~1name+password"
-                },
-                "type": "array"
-              },
-              {
-                "maximum": 0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "additionalProperties": {
-                  "$ref": "#/definitions/constrains~1name+password"
-                },
-                "type": "object"
-              }
-            ],
-            "description": "Configure your Docker registries here"
           }
         }
       }
@@ -4095,6 +3978,148 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "dockerRegistryAccountSecret": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "dockerRegistryAccountSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dockerRegistries": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/definitions/constrains~1address+email+name+password+passwordCommand+repositories+username"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "items": {
+                  "$ref": "#/definitions/constrains~1address+email+name+password+passwordCommand+repositories+username"
+                },
+                "type": "array"
+              }
+            ],
+            "description": "Configure your Docker registries here"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "minio": {
+                "properties": {
+                  "buckets": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "buckets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "minio"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "minio": {
+                  "properties": {
+                    "defaultBucket": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    }
+                  },
+                  "required": [
+                    "defaultBucket"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "minio"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/when~1minio.enabled:t~1then~1minio.mode=distributed~1else~1minio+minio.enabled+minio.enabled=null"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minio": {
+            "additionalProperties": {},
+            "description": "Minio access/secret keys for the in-cluster S3 usage\nMinio is not exposed publically",
+            "properties": {
+              "buckets": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Create multiple buckets after minio install\nEnabling `defaultBucket` will take priority over this list\n- name: bucket1\npolicy: none\npurge: false\n- name: bucket2\npolicy: none\npurge: false"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "redis": {
@@ -4108,6 +4133,62 @@
     }
   ],
   "definitions": {
+    "constrains/address+email+name+password+passwordCommand+repositories+username": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "password": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "username": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "email": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "repositories": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "address": {}
+              }
+            },
+            {
+              "additionalProperties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "passwordCommand": {}
+              }
+            }
+          ]
+        }
+      ]
+    },
     "constrains/azs+azs=null": {
       "anyOf": [
         {
@@ -4814,19 +4895,6 @@
         "disableCommands"
       ],
       "type": "object"
-    },
-    "constrains/dockerRegistryAccountSecret:t": {
-      "not": {
-        "properties": {
-          "dockerRegistryAccountSecret": {
-            "$ref": "#/definitions/t"
-          }
-        },
-        "required": [
-          "dockerRegistryAccountSecret"
-        ],
-        "type": "object"
-      }
     },
     "constrains/enabled": {
       "properties": {
@@ -7561,32 +7629,6 @@
       ],
       "type": "object"
     },
-    "constrains/name+password": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "name": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "password": {}
-              }
-            },
-            {
-              "additionalProperties": {}
-            }
-          ]
-        }
-      ]
-    },
     "constrains/nameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -9432,7 +9474,6 @@
       }
     },
     "dockerRegistries": {
-      "additionalProperties": {},
       "description": "Configure your Docker registries here"
     },
     "dockerRegistryAccountSecret": {},

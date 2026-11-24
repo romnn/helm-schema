@@ -8,6 +8,66 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.externalSecrets.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.externalSecrets.create:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "signoz-otel-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "externalSecrets": {
+                "additionalProperties": {},
+                "properties": {
+                  "secrets": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/definitions/constrains~1dataFrom"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/definitions/constrains~1dataFrom"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled=null@2"
               },
               {
@@ -126,6 +186,40 @@
             "null",
             "object"
           ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled:t+1more@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "signoz-otel-gateway": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "$ref": "#/definitions/constrains~1annotations+hosts+ingressClassName+name+paths+tls"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "$ref": "#/definitions/constrains~1annotations+hosts+ingressClassName+name+paths+tls"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
         }
       }
     },
@@ -922,6 +1016,89 @@
     {
       "if": {
         "else": {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled=null"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled:t"
+        },
+        "then": true
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "signoz-otel-gateway": {
+                "additionalProperties": {},
+                "properties": {
+                  "env": {
+                    "description": "Define env as key value pairs",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "signoz-otel-gateway": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "signoz-otel-gateway": {
+                "additionalProperties": {},
+                "properties": {
+                  "ingress": {
+                    "anyOf": [
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/definitions/constrains~1annotations+hosts+ingressClassName+name+paths+tls"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/definitions/constrains~1annotations+hosts+ingressClassName+name+paths+tls"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "else": {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled=null"
@@ -1269,26 +1446,68 @@
         }
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "signoz-otel-gateway": {
+        "allOf": [
+          {
             "additionalProperties": {},
             "properties": {
-              "externalSecrets": {
+              "signoz-otel-gateway": {
                 "additionalProperties": {},
                 "properties": {
-                  "secrets": {
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
+                  "externalSecrets": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secrets": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/definitions/constrains~1dataFrom"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "items": {
+                              "$ref": "#/definitions/constrains~1dataFrom"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "signoz-otel-gateway": {
+                "additionalProperties": {},
+                "properties": {
+                  "externalSecrets": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secrets": {
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {
@@ -3919,56 +4138,6 @@
     },
     {
       "if": {
-        "else": {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled=null"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled:t"
-        },
-        "then": true
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "signoz-otel-gateway": {
-                "additionalProperties": {},
-                "properties": {
-                  "env": {
-                    "description": "Define env as key value pairs",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "signoz-otel-gateway": {
-                "additionalProperties": {},
-                "properties": {
-                  "ingress": {
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -4122,6 +4291,56 @@
     }
   ],
   "definitions": {
+    "constrains/annotations+hosts+ingressClassName+name+paths+tls": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "tls": {}
+              }
+            },
+            {
+              "additionalProperties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "paths": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "hosts": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "ingressClassName": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {}
+              }
+            }
+          ]
+        }
+      ]
+    },
     "constrains/architecture=null": {
       "properties": {
         "architecture": {
@@ -4977,6 +5196,26 @@
         "create"
       ],
       "type": "object"
+    },
+    "constrains/dataFrom": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "dataFrom": {}
+              }
+            }
+          ]
+        }
+      ]
     },
     "constrains/enabled": {
       "properties": {
@@ -7477,6 +7716,9 @@
       }
     },
     "constrains/signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled:t+1more": {
+      "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled:t+1more@2"
+    },
+    "constrains/signoz-otel-gateway+signoz-otel-gateway.enabled+signoz-otel-gateway.enabled:t+1more@2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled:t"
@@ -11150,7 +11392,9 @@
                 }
               }
             },
-            "secrets": {}
+            "secrets": {
+              "additionalProperties": {}
+            }
           }
         },
         "fullnameOverride": {},

@@ -697,6 +697,99 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "secrets": {}
+                      },
+                      "required": [
+                        "secrets"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "secrets": {
+                        "maxItems": 1,
+                        "maxProperties": 1
+                      }
+                    },
+                    "required": [
+                      "secrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Ingress configuration",
+            "properties": {
+              "secrets": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "If you're providing your own certificates and want to manage the secret via helm,\nplease use this to add the certificates as secrets key and certificate should start with\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create the secret for you\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nExample\nsecrets:\n- name: phpmyadmin.local-tls\nkey: \"\"\ncertificate: \"\""
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
