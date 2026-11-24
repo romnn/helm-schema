@@ -37,6 +37,153 @@ struct LoopPass {
     breaks: Vec<Exit>,
     other: Vec<Exit>,
 }
+impl LoopPass {
+    fn covers_repetition(&self, entry: &State, scope: super::loops::CarriedScope<'_>) -> bool {
+        self.repeats(|exit| super::loops::covers(entry, &exit.state, scope))
+    }
+
+    fn repeats(&self, covers: impl Fn(&Exit) -> bool) -> bool {
+        // On a successful render a member can be skipped only by leaving the loop.
+        // A stable backedge gives the next member the same input and bindings.
+        self.breaks.is_empty()
+            && self
+                .other
+                .iter()
+                .all(|exit| matches!(exit.flow, Flow::Abort(_)))
+            && self.backedge.iter().chain(&self.other).all(covers)
+    }
+
+    fn repeats_under_action_free_members(
+        &self,
+        entry: &State,
+        scope: super::loops::CarriedScope<'_>,
+        member: &helm_schema_core::ValuesPath,
+    ) -> bool {
+        self.repeats(|exit| {
+            let mut covered = entry.clone();
+            let super::path::Divergence {
+                common: _,
+                left: _,
+                right,
+            } = entry.active.diverge(&exit.state.active);
+            for link in right {
+                if link.kind() != super::path::LinkKind::Assume {
+                    continue;
+                }
+                let edge = link.edge();
+                if !edge.taken
+                    || !super::text_actions::is_action_free_member_input(
+                        &edge.test.when_true,
+                        member,
+                    )
+                {
+                    return false;
+                }
+                covered
+                    .active
+                    .push(edge.clone(), super::path::LinkKind::Assume);
+            }
+            super::loops::covers(&covered, &exit.state, scope)
+        })
+    }
+
+    fn always_aborts(&self, entry: &State, scope: super::loops::CarriedScope<'_>) -> bool {
+        self.backedge.is_empty() && !self.other.is_empty() && self.covers_repetition(entry, scope)
+    }
+
+    fn member_demands<'a>(
+        &'a self,
+        prior: &'a super::history::History<super::Consumption>,
+        member: &'a helm_schema_core::ValuesPath,
+    ) -> impl Iterator<Item = &'a super::Consumption> {
+        self.backedge
+            .iter()
+            .chain(&self.breaks)
+            .chain(&self.other)
+            .flat_map(|exit| exit.state.consumptions.since(prior))
+            .filter(move |fact| {
+                (&fact.path == member || fact.path.is_descendant_of(member))
+                    && matches!(fact.domain, super::ConsumptionDomain::Known { .. })
+            })
+    }
+}
+
+fn input_member_pass(
+    entry: &mut State,
+    collection: helm_schema_core::ValuesPath,
+    source: &Value,
+    bindings: &RangeBindings,
+    enter: &Rc<super::FrozenTest>,
+    run: impl Fn(State, &Value) -> LoopPass,
+) -> Option<LoopPass> {
+    use helm_schema_core::Guard;
+
+    let rebound = bindings.rebound();
+    let scope = super::loops::CarriedScope {
+        frames: entry.frames.len(),
+        rebound: &rebound,
+    };
+    let mut member = collection.clone();
+    member.push_each_member();
+    if entry
+        .heap
+        .version
+        .member_input_may_be_written(&member, super::heap_snapshot::MemberRead::Slot)
+    {
+        return None;
+    }
+    let pass = run(
+        entry.fork(Rc::clone(enter), true),
+        &Value::input(member.clone()),
+    );
+    let stable = pass.covers_repetition(entry, scope);
+    if stable && bindings.key.is_some() {
+        return Some(pass);
+    }
+    let prior = entry.consumptions.clone();
+    let mut demands = pass.member_demands(&prior, &member).peekable();
+    demands.peek()?;
+    let mut restrictions = Vec::new();
+    if !stable {
+        restrictions.push(
+            if pass.repeats_under_action_free_members(entry, scope, &member) {
+                Guard::MatchesValue {
+                    path: collection.clone(),
+                    pattern: helm_schema_core::ValuePattern::TemplateActionFree,
+                }
+            } else {
+                Guard::AtMostOneMember {
+                    path: collection.clone(),
+                }
+            },
+        );
+    }
+    if bindings.key.is_none()
+        && entry.heap.freeze(&entry.consumed(source)).go_type() == super::kinds::GoType::Unknown
+    {
+        let index = Value::scalar(
+            super::ScalarType::Int64,
+            Some(super::scalar_value::ScalarContent::Literal(
+                GuardValue::Int(0),
+            )),
+        );
+        let first = run(entry.clone(), &index);
+        // A collection demand can constrain a positive count only when its first iteration aborts.
+        if !first.always_aborts(entry, scope) {
+            restrictions.push(Guard::NotTypeIs {
+                path: collection,
+                schema_type: "integer".to_owned(),
+            });
+        }
+    }
+    for fact in demands {
+        let mut fact = fact.clone();
+        fact.restrict_to(&restrictions);
+        entry.consumptions.push(fact);
+    }
+    None
+}
+
 impl Executor<'_> {
     pub(super) fn body(&self, source: &str, path: Option<&str>, state: State) -> Vec<Exit> {
         let source = self.db.parsed_source(source, path, path.unwrap_or("gotpl"));
@@ -518,36 +665,9 @@ impl Executor<'_> {
         bindings: &RangeBindings,
         summary: RangeSummary,
     ) -> Vec<Exit> {
-        let RangeSummary { first, mut member } = summary;
-        let uniform_path = uniform_member_path(program, bindings, state, value);
-        if let Some(path) = &uniform_path {
-            let mut path = path.clone();
-            path.push_each_member();
-            member = Value::input(path);
-        }
-        let mut exits = Vec::new();
-        let state = if first.is_some() {
-            state.clone()
-        } else {
-            let test = if let Some(path) = &uniform_path {
-                let predicate =
-                    Predicate::from(helm_schema_core::Guard::Range { path: path.clone() });
-                state
-                    .heap
-                    .arena
-                    .decision(predicate.clone(), predicate.negated(), Coverage::Exact)
-            } else {
-                state
-                    .heap
-                    .arena
-                    .decision(Predicate::False, Predicate::False, Coverage::Partial)
-            };
-            exits.extend(self.range_else(program, boundaries, state.fork(Rc::clone(&test), false)));
-            state.fork(test, true)
-        };
+        let RangeSummary { first, member } = summary;
         let id = state.loop_id(bindings.body.start as u64);
-        let iteration = |mut state: State, entry: Option<&RangeEntry>| {
-            let entry_value = entry.map_or(&member, |entry| &entry.value);
+        let iteration = |mut state: State, entry_value: &Value, entry: Option<&RangeEntry>| {
             state.enter_scope(Some(entry_value.clone()));
             if let Some(name) = &bindings.key {
                 let key = entry.map_or_else(
@@ -564,8 +684,70 @@ impl Executor<'_> {
             }
             state
         };
-        let (other, mut leaving) =
-            self.iterate_members(program, bindings, &iteration, id, &state, first.as_ref());
+        let input = if first.is_none() && id.is_some() && !bindings.assignment {
+            member_collection(state, value)
+        } else {
+            None
+        };
+        let mut exits = Vec::new();
+        let mut entry_state = state.clone();
+        let members = input.and_then(|collection| {
+            let nonempty = Predicate::from(helm_schema_core::Guard::Range {
+                path: collection.clone(),
+            });
+            let enter =
+                state
+                    .heap
+                    .arena
+                    .decision(nonempty.clone(), nonempty.negated(), Coverage::Exact);
+            let pass = input_member_pass(
+                &mut entry_state,
+                collection,
+                value,
+                bindings,
+                &enter,
+                |entry, member| {
+                    self.loop_pass(program, bindings.body, iteration(entry, member, None), id)
+                },
+            )?;
+            exits.extend(self.range_else(program, boundaries, state.fork(enter, false)));
+            Some(pass)
+        });
+        let (other, mut leaving) = if let Some(pass) = members {
+            let LoopPass {
+                mut backedge,
+                breaks: _,
+                mut other,
+            } = pass;
+            for exit in backedge.iter_mut().chain(&mut other) {
+                exit.state.retain_rendered_uses_since(state);
+            }
+            (other, backedge)
+        } else {
+            if first.is_none() {
+                let test = state.heap.arena.decision(
+                    Predicate::False,
+                    Predicate::False,
+                    Coverage::Partial,
+                );
+                exits.extend(self.range_else(
+                    program,
+                    boundaries,
+                    entry_state.fork(Rc::clone(&test), false),
+                ));
+                entry_state = entry_state.fork(test, true);
+            }
+            self.iterate_members(
+                program,
+                bindings,
+                &|state, entry| {
+                    iteration(state, entry.map_or(&member, |entry| &entry.value), entry)
+                },
+                id,
+                &entry_state,
+                first.as_ref(),
+            )
+        };
         for exit in &mut leaving {
             if !matches!(exit.flow, Flow::Normal(_)) {
                 continue;
@@ -599,12 +781,7 @@ impl Executor<'_> {
         // when known. A pass using the summary member can stand for later iterations if its
         // backedges stay inside the entry state.
         // Each iteration declares its binders afresh, so their values never carry over.
-        let rebound = [&bindings.key, &bindings.value]
-            .into_iter()
-            .flatten()
-            .filter(|_| !bindings.assignment)
-            .map(|name| local_name(name).to_owned())
-            .collect();
+        let rebound = bindings.rebound();
         let scope = super::loops::CarriedScope {
             frames: state.frames.len(),
             rebound: &rebound,
@@ -817,84 +994,30 @@ fn literal_span(program: &Program<'_>, next: usize, span: Span) -> Span {
     .unwrap_or_else(|| Span::new(span.start, span.start))
 }
 
-fn uniform_member_path(
-    program: &Program<'_>,
-    bindings: &RangeBindings,
-    state: &State,
-    value: &Value,
-) -> Option<helm_schema_core::ValuesPath> {
-    let path = value.identity()?;
-    if bindings.assignment
-        || bindings.key.is_none()
-            && !matches!(
-                state.heap.freeze(&state.consumed(value)).go_type(),
-                super::kinds::GoType::Map | super::kinds::GoType::Slice
-            )
-        || path.segments().any(|segment| segment.literal().is_none())
+fn member_collection(state: &State, value: &Value) -> Option<helm_schema_core::ValuesPath> {
+    let value = state.consumed(value);
+    let path = value.identity()?.clone();
+    if !matches!(
+        state.heap.freeze(&value).go_type(),
+        super::kinds::GoType::Map | super::kinds::GoType::Slice | super::kinds::GoType::Unknown
+    ) || path.segments().any(|segment| segment.literal().is_none())
         || state
             .heap
             .arena
             .input_objects
             .borrow()
-            .get(path)
+            .get(&path)
             .is_some_and(|backing| state.heap.version.has_allocated_object(&backing.object))
-        || !uniform_member_body(program, bindings.body)
     {
         return None;
     }
-    Some(path.clone())
-}
-
-// This certificate excludes loop-carried writes and control that can skip later members.
-fn uniform_member_body(program: &Program<'_>, body: Window) -> bool {
-    for action in program
-        .syntax
-        .actions
-        .iter()
-        .filter(|action| action.span.start >= body.start && action.span.start < body.end)
-    {
-        if !matches!(
-            action.kind,
-            ActionKind::Assign | ActionKind::Output { .. } | ActionKind::TemplateComment
-        ) {
-            return false;
-        }
-        let Some(parsed) = program.syntax.expressions.at(action.span) else {
-            return false;
-        };
-        let mut safe = true;
-        for expression in parsed.expressions.iter() {
-            expression.walk(|expr| match expr {
-                TemplateExpr::Assignment { name: _, value: _ } | TemplateExpr::Unknown(_) => {
-                    safe = false;
-                }
-                TemplateExpr::Call { function, args: _ } => {
-                    safe &= crate::function_semantics::function_semantics(function).heap_effect
-                        == crate::function_semantics::HeapEffect::ReadOnly;
-                }
-                TemplateExpr::Literal(_)
-                | TemplateExpr::Field(_)
-                | TemplateExpr::Variable(_)
-                | TemplateExpr::Selector {
-                    operand: _,
-                    path: _,
-                }
-                | TemplateExpr::Pipeline(_)
-                | TemplateExpr::Parenthesized(_)
-                | TemplateExpr::VariableDefinition { name: _, value: _ } => {}
-            });
-        }
-        if !safe {
-            return false;
-        }
-    }
-    true
+    Some(path)
 }
 
 fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput {
     use super::kinds::GoType;
 
-    let value = state.consumed(value);
+    let value = state.consumed_contents(value);
     match state.heap.freeze(&value).go_type() {
         GoType::Nil => return RangeInput::Exact(Vec::new()),
         GoType::Bool | GoType::String | GoType::Float64 => return RangeInput::Invalid,
@@ -1466,6 +1589,16 @@ struct RangeBindings {
     value: Option<String>,
     assignment: bool,
     body: Window,
+}
+impl RangeBindings {
+    fn rebound(&self) -> BTreeSet<String> {
+        [&self.key, &self.value]
+            .into_iter()
+            .flatten()
+            .filter(|_| !self.assignment)
+            .map(|name| local_name(name).to_owned())
+            .collect()
+    }
 }
 
 fn range_bindings(

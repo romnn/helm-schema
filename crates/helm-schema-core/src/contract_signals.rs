@@ -178,13 +178,31 @@ impl ConditionalGuard {
     }
 
     pub(crate) fn exact_requirement_encoding_cost(&self) -> Option<usize> {
-        self.exact_requirement_encoding_cost_at_depth(64)
+        self.scoped_requirement_encoding_cost(None)
     }
 
-    fn exact_requirement_encoding_cost_at_depth(&self, depth: usize) -> Option<usize> {
+    pub(crate) fn scoped_requirement_encoding_cost(
+        &self,
+        member: Option<&ValuesPath>,
+    ) -> Option<usize> {
+        self.exact_requirement_encoding_cost_at_depth(member, 64)
+    }
+
+    fn exact_requirement_encoding_cost_at_depth(
+        &self,
+        member: Option<&ValuesPath>,
+        depth: usize,
+    ) -> Option<usize> {
         let depth = depth.checked_sub(1)?;
         let (path, payload) = match self {
             Self::Truthy { path } | Self::With { path } => (path, 0),
+            Self::AtMostOneMember { path }
+            | Self::MatchesValue {
+                path,
+                pattern: crate::ValuePattern::TemplateActionFree,
+            } if member.is_some_and(|member| member.item_parent().as_ref() == Some(path)) => {
+                (path, 0)
+            }
             Self::Absent { path } if path.segments().next().is_some() => (path, 0),
             Self::TypeIs { path, schema_type }
                 if matches!(
@@ -213,7 +231,7 @@ impl ConditionalGuard {
             }
             Self::Not(inner) => {
                 return inner
-                    .exact_requirement_encoding_cost_at_depth(depth)?
+                    .exact_requirement_encoding_cost_at_depth(member, depth)?
                     .checked_add(64)
                     .filter(|cost| *cost <= 8192);
             }
@@ -222,7 +240,7 @@ impl ConditionalGuard {
                     return None;
                 }
                 let cost = parts.iter().try_fold(128_usize, |cost, part| {
-                    cost.checked_add(part.exact_requirement_encoding_cost_at_depth(depth)?)
+                    cost.checked_add(part.exact_requirement_encoding_cost_at_depth(member, depth)?)
                 })?;
                 return (cost <= 8192).then_some(cost);
             }
@@ -237,17 +255,24 @@ impl ConditionalGuard {
             | Self::IntLt { .. }
             | Self::ContainsMemberEquals { .. }
             | Self::ContainsTruthyMember { .. }
-            | Self::ContainsEquals { .. }
             | Self::AtMostOneMember { .. }
+            | Self::ContainsEquals { .. }
             | Self::MinMembers { .. } => return None,
         };
         let mut cost = 256_usize.checked_add(payload.checked_mul(8)?)?;
+        let member_index = member
+            .filter(|member| path == *member || path.is_descendant_of(member))
+            .and_then(|member| member.segments().len().checked_sub(1));
         for (depth, segment) in path.segments().enumerate() {
             if depth >= 64 {
                 return None;
             }
-            let literal = segment.literal()?;
-            cost = cost.checked_add(96 + literal.len().checked_mul(12)?)?;
+            let length = match segment {
+                crate::Segment::Literal(literal) => literal.len(),
+                crate::Segment::EachMember if member_index == Some(depth) => 1,
+                crate::Segment::EachMember => return None,
+            };
+            cost = cost.checked_add(96 + length.checked_mul(12)?)?;
             if cost > 8192 {
                 return None;
             }

@@ -144,6 +144,10 @@ pub(crate) struct ConsumptionKey {
 }
 
 impl Consumption {
+    pub(super) fn restrict_to(&mut self, guards: &[Guard]) {
+        self.activation.extend_from_slice(guards);
+    }
+
     pub(super) fn history_fingerprint(&self) -> u64 {
         let Self {
             path,

@@ -3643,10 +3643,22 @@ fn ranged_member_nil_strict_operands_must_be_present() {
             false,
             "one bad member among good ones still aborts",
         ),
+        (
+            composed_instance(
+                values_yaml,
+                serde_json::json!({ "users": [
+                    { "accessKey": "{{ $_ := set (index .Values.users 1) \"accessKey\" \"repaired\" }}" },
+                    { "policy": "p" }
+                ] }),
+            ),
+            true,
+            "an earlier member can repair a later argument",
+        ),
     ] {
-        assert!(
-            schema_accepts_instance(&schema, &instance) == want,
-            "ranged member presence ({label}): instance={instance}; want={want}; schema={schema}"
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "ranged member presence ({label}): instance={instance}; schema={schema}",
         );
     }
 }

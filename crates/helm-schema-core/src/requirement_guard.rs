@@ -32,7 +32,11 @@ impl RequirementGuard {
         self.projection_exact
     }
 
-    pub(crate) fn check_export_budget(&self, remaining: &mut usize) -> Option<()> {
+    pub(crate) fn check_export_budget(
+        &self,
+        remaining: &mut usize,
+        member: Option<&ValuesPath>,
+    ) -> Option<()> {
         *remaining = remaining.checked_sub(self.decisions.len())?;
         let mut depths = vec![0_usize, 0];
         let mut bytes = 0_usize;
@@ -49,7 +53,7 @@ impl RequirementGuard {
             if depth > 128 {
                 return None;
             }
-            let cost = test.exact_requirement_encoding_cost()?;
+            let cost = test.scoped_requirement_encoding_cost(member)?;
             bytes = bytes.checked_add(cost)?;
             if bytes > 65_536 {
                 return None;

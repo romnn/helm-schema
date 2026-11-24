@@ -1041,6 +1041,33 @@ fn excludes_brace(pattern: &str) -> bool {
         .is_ok_and(|hir| !contains(&hir))
 }
 
+const ACTION_OPENER_PATTERN: &str = r"\{\{";
+
+pub(super) fn is_action_free_member_input(
+    predicate: &Predicate,
+    member: &helm_schema_core::ValuesPath,
+) -> bool {
+    if predicate.node_work(512).is_none() {
+        return false;
+    }
+    let action_free = Predicate::all(
+        predicate
+            .value_paths()
+            .into_iter()
+            .filter(|path| path == member || path.is_descendant_of(member))
+            .map(|path| {
+                Predicate::from(Guard::MatchesPattern {
+                    path,
+                    pattern: ACTION_OPENER_PATTERN.to_owned(),
+                    templated: false,
+                })
+                .negated()
+            })
+            .collect(),
+    );
+    action_free.exactly_implies(predicate)
+}
+
 fn input_shape(path: &helm_schema_core::ValuesPath) -> TextShape {
     let matches = |pattern: &str| {
         TruthCondition::Exact(Predicate::from(Guard::MatchesPattern {
@@ -1050,7 +1077,7 @@ fn input_shape(path: &helm_schema_core::ValuesPath) -> TextShape {
         }))
     };
     TextShape {
-        opener: matches(r"\{\{"),
+        opener: matches(ACTION_OPENER_PATTERN),
         brace: matches(r"\{"),
         starts: matches(r"^\{"),
         ends: matches(r"\{(?![\s\S])"),

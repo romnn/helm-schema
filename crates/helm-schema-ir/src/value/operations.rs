@@ -21,10 +21,18 @@ pub(super) fn transfer(
     let Some(function) = invocation.callee.function_name() else {
         return Ok(Value::unknown());
     };
+    let observes_contents =
+        invocation.callee.semantics().input_read == crate::function_semantics::InputRead::Contents;
     let values: Vec<_> = invocation
         .operands
         .iter()
-        .map(|operand| operand.value.clone())
+        .map(|operand| {
+            if observes_contents {
+                state.consumed_contents(&operand.value)
+            } else {
+                operand.value.clone()
+            }
+        })
         .collect();
     let arguments = values.as_slice();
     let influences = inputs(arguments, state);
@@ -2103,7 +2111,8 @@ fn copy(
     seen: &mut BTreeSet<super::ObjectId>,
     depth: usize,
 ) -> Value {
-    let frozen = state.heap.freeze(value);
+    let value = state.consumed_contents(value);
+    let frozen = state.heap.freeze(&value);
     let influences = frozen.inputs();
     if depth > 32 {
         return Value::influenced(influences);
@@ -2175,7 +2184,7 @@ fn copy(
                 }
                 | Datum::Unknown(_),
             origin: _,
-        }) => copy_unstructured(value, state, &influences),
+        }) => copy_unstructured(&value, state, &influences),
         ValueNode::Select { decision, yes, no } => Value::select(
             Rc::clone(decision),
             copy(yes, state, &mut seen.clone(), depth + 1),
@@ -2431,6 +2440,7 @@ struct MapFields {
 }
 
 fn map_fields(value: &Value, state: &State) -> Option<MapFields> {
+    let value = state.consumed_contents(value);
     match value.node.as_ref() {
         ValueNode::Leaf(Leaf {
             datum: Datum::Map {

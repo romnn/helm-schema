@@ -1637,7 +1637,7 @@ impl super::State {
         if rendered {
             self.record_container_read(value);
         }
-        let value = self.heap.freeze(&self.consumed(value));
+        let value = self.heap.freeze(&self.consumed_contents(value));
         let slots = self.reserve_observation();
         if rendered {
             self.output.push(OutputNode {

@@ -5,7 +5,7 @@ use super::{
     ContractRequirementTarget, ValuesPath, path_accumulator,
 };
 use crate::value::{ConsumptionDomain, ConsumptionKey, FrozenConsumption};
-use helm_schema_core::{GuardConjunction, GuardPrefix};
+use helm_schema_core::{GuardConjunction, GuardPrefix, RequirementDecision};
 
 /// Work one consumption's grouping inventory, or the absence index of one terminal clause, may take.
 const MAX_ITEM_WORK: usize = 1 << 16;
@@ -65,7 +65,10 @@ pub(super) fn record_executed_requirements(
                 requires_presence: true,
                 ..
             }
-        ) && key.path.item_parent().is_none()
+        ) && !key
+            .path
+            .segments()
+            .any(helm_schema_core::Segment::is_each_member)
             && !dependency_roots.contains(&key.path);
         let presence = presence.then_some(&key.path);
         for clause in fold_clauses(
@@ -290,6 +293,39 @@ fn emit_requirement(
                 kind: target,
             } = requirement_target(&key.path);
             let member = !matches!(target, ContractRequirementTarget::Value);
+            let optional_map_field =
+                !requires_presence && optional_member_map_field(&target, &preimage);
+            let guards = if member && guards.iter().any(needs_member_lowering) {
+                let Some(MemberConditions { outer, selector }) = member_conditions(
+                    &guards,
+                    &target_path,
+                    optional_map_field.then_some(&key.path),
+                ) else {
+                    return;
+                };
+                if let Some(selector) = selector {
+                    if !covered {
+                        emit_selected_member_requirement(
+                            &mut path_accumulator(paths, &target_path).requirement_implications,
+                            target,
+                            outer,
+                            selector,
+                            preimage,
+                            requires_presence,
+                        );
+                    }
+                    return;
+                }
+                outer
+            } else {
+                guards
+            };
+            if matches!(target, ContractRequirementTarget::MembersAt { .. })
+                && !requires_presence
+                && !optional_map_field
+            {
+                return;
+            }
             if !covered {
                 path_accumulator(paths, &target_path)
                     .requirement_implications
@@ -318,6 +354,155 @@ fn emit_requirement(
         }
         ConsumptionDomain::KnownFailure | ConsumptionDomain::KnownAny => {}
     }
+}
+
+fn optional_member_map_field(
+    target: &ContractRequirementTarget,
+    preimage: &super::FailValueRequirement,
+) -> bool {
+    matches!(
+        target,
+        ContractRequirementTarget::MembersAt { target_path, allow_integer: _ }
+            if target_path.len() == 1
+    ) && matches!(
+        preimage,
+        super::FailValueRequirement::MemberHost { handled_kinds, complete_domain: _ }
+            if handled_kinds.iter().any(|kind| kind == "null")
+    )
+}
+
+fn tests_member(guard: &ConditionalGuard) -> bool {
+    guard.value_paths().iter().any(|path| {
+        path.segments()
+            .any(helm_schema_core::Segment::is_each_member)
+    })
+}
+
+fn needs_member_lowering(guard: &ConditionalGuard) -> bool {
+    match guard {
+        ConditionalGuard::Decision(graph) => graph
+            .decisions()
+            .iter()
+            .any(|node| !node.test.is_exact_requirement_atom()),
+        _ => tests_member(guard),
+    }
+}
+
+fn emit_selected_member_requirement(
+    requirements: &mut Vec<ContractRequirementImplication>,
+    target: ContractRequirementTarget,
+    outer: GuardConjunction,
+    selector: Vec<String>,
+    preimage: super::FailValueRequirement,
+    requires_presence: bool,
+) {
+    let (target_path, allow_integer) = match target {
+        ContractRequirementTarget::Members { allow_integer } => (Vec::new(), allow_integer),
+        ContractRequirementTarget::MembersAt {
+            target_path,
+            allow_integer,
+        } => (target_path, allow_integer),
+        _ => return,
+    };
+    if requires_presence && !target_path.is_empty() {
+        requirements.push(ContractRequirementImplication::from_conjunction(
+            outer.clone(),
+            ContractRequirementTarget::MembersAtWhereTruthy {
+                guard_path: selector.clone(),
+                target_path: Vec::new(),
+                allow_integer,
+            },
+            vec![super::FailValueRequirement::FieldPresentNotNull {
+                path: target_path.clone(),
+            }],
+        ));
+    }
+    requirements.push(ContractRequirementImplication::from_conjunction(
+        outer,
+        ContractRequirementTarget::MembersAtWhereTruthy {
+            guard_path: selector,
+            target_path,
+            allow_integer,
+        },
+        vec![preimage],
+    ));
+}
+
+struct MemberConditions {
+    outer: GuardConjunction,
+    selector: Option<Vec<String>>,
+}
+
+fn member_conditions(
+    guards: &GuardConjunction,
+    collection: &ValuesPath,
+    optional_field: Option<&ValuesPath>,
+) -> Option<MemberConditions> {
+    let mut member = collection.clone();
+    member.push_each_member();
+    let mut selector = None;
+    let mut outer = Vec::new();
+    for guard in guards {
+        if !needs_member_lowering(guard) {
+            outer.push(guard.clone());
+            continue;
+        }
+        let mut literals = Vec::new();
+        if let ConditionalGuard::Decision(graph) = guard {
+            let mut node = graph.root();
+            while node > 1 {
+                let RequirementDecision {
+                    test,
+                    when_true,
+                    when_false,
+                } = graph.decisions().get(node - 2)?;
+                if *when_false == 0 {
+                    literals.push(test.clone());
+                    node = *when_true;
+                } else if *when_true == 0 {
+                    literals.push(ConditionalGuard::Not(std::sync::Arc::new(test.clone())));
+                    node = *when_false;
+                } else {
+                    return None;
+                }
+            }
+            if node != 1 {
+                return None;
+            }
+        } else {
+            literals.push(guard.clone());
+        }
+        for literal in literals {
+            if !tests_member(&literal) {
+                outer.push(literal);
+                continue;
+            }
+            // The optional leaf schema already admits absence and null.
+            if let ConditionalGuard::Not(test) = &literal
+                && let ConditionalGuard::Absent { path } = test.as_ref()
+                && optional_field == Some(path)
+            {
+                continue;
+            }
+            let (ConditionalGuard::Truthy { path } | ConditionalGuard::With { path }) = literal
+            else {
+                return None;
+            };
+            if !(path == member || path.is_descendant_of(&member)) || selector.is_some() {
+                return None;
+            }
+            selector = Some(
+                path.segments()
+                    .skip(member.segments().len())
+                    .map(helm_schema_core::Segment::encode_component)
+                    .collect(),
+            );
+        }
+    }
+    Some(MemberConditions {
+        outer: outer.into(),
+        selector,
+    })
 }
 
 /// An opaque use whose guard did not fit its allowance. The declared default is replaced as for
@@ -723,7 +908,19 @@ fn fold_with_budget(
         atoms.insert(atom.clone());
     }
     let atoms = atoms.into_iter().collect::<Vec<_>>();
+    let member = occurrences.first().and_then(|occurrence| {
+        let index = occurrence
+            .path
+            .segments()
+            .position(helm_schema_core::Segment::is_each_member)?;
+        Some(ValuesPath::from_segments(
+            occurrence.path.segments().take(index + 1).cloned(),
+        ))
+    });
     let mut bdd = helm_schema_core::RequirementBdd::new(&atoms, remaining)?;
+    if let Some(member) = &member {
+        bdd = bdd.in_member_scope(member);
+    }
     let mut root = helm_schema_core::RequirementBdd::never();
     let mut shared = crate::value::GuardImports::default();
     for consumption in occurrences {

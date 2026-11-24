@@ -1012,11 +1012,11 @@ fn requirement_export_depth_and_bytes_have_positive_caps() {
         graph.root = graph.decisions.len() + 1;
     }
     let mut work = 16_384;
-    sim_assert_eq!(have: graph.check_export_budget(&mut work), want: None);
+    sim_assert_eq!(have: graph.check_export_budget(&mut work, None), want: None);
     graph.decisions.truncate(1);
     graph.root = 2;
     let mut work = 16_384;
-    sim_assert_eq!(have: graph.check_export_budget(&mut work), want: Some(()));
+    sim_assert_eq!(have: graph.check_export_budget(&mut work, None), want: Some(()));
     graph.decisions.clear();
     graph.root = 1;
     for index in 0..100 {
@@ -1030,7 +1030,7 @@ fn requirement_export_depth_and_bytes_have_positive_caps() {
         });
     }
     let mut work = 16_384;
-    sim_assert_eq!(have: graph.check_export_budget(&mut work), want: None);
+    sim_assert_eq!(have: graph.check_export_budget(&mut work, None), want: None);
 }
 
 #[test]

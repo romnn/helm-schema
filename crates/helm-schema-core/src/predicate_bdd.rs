@@ -1510,6 +1510,7 @@ impl PredicateBdd<'_> {
     fn project_unresolved(
         &mut self,
         root: usize,
+        member: Option<&crate::ValuesPath>,
         memo: &mut AHashMap<usize, usize>,
     ) -> Option<usize> {
         if root <= TRUE {
@@ -1520,19 +1521,13 @@ impl PredicateBdd<'_> {
         }
         self.remaining_work = self.remaining_work.checked_sub(1)?;
         let node = self.node(root)?;
-        let yes = self.project_unresolved(node.when_true, memo)?;
-        let no = self.project_unresolved(node.when_false, memo)?;
+        let yes = self.project_unresolved(node.when_true, member, memo)?;
+        let no = self.project_unresolved(node.when_false, member, memo)?;
         let atom = self.atoms.get(node.variable).copied()?;
         let known = atom
             .to_guard()
             .and_then(|guard| crate::ConditionalGuard::try_from(&guard).ok())
-            .filter(crate::ConditionalGuard::is_exact_requirement_atom)
-            .filter(|guard| {
-                guard
-                    .value_paths()
-                    .iter()
-                    .all(|path| path.segments().all(|segment| segment.literal().is_some()))
-            });
+            .filter(|guard| guard.scoped_requirement_encoding_cost(member).is_some());
         let projected = if known.is_some() {
             self.make_node(node.variable, no, yes)?
         } else {
@@ -1576,6 +1571,7 @@ pub struct RequirementBdd<'input, 'budget> {
     bdd: PredicateBdd<'input>,
     remaining: &'budget mut usize,
     initial_work: usize,
+    member: Option<&'input crate::ValuesPath>,
 }
 
 impl<'input, 'budget> RequirementBdd<'input, 'budget> {
@@ -1624,7 +1620,15 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
             ),
             remaining,
             initial_work,
+            member: None,
         })
+    }
+
+    /// Admits predicates at this bound member while projecting the cone.
+    #[must_use]
+    pub fn in_member_scope(mut self, member: &'input crate::ValuesPath) -> Self {
+        self.member = Some(member);
+        self
     }
 
     /// Imports an exact predicate; unknown-control markers cannot be imported here.
@@ -1746,7 +1750,7 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
     pub fn project(&mut self, node: crate::RequirementNode) -> Option<crate::RequirementNode> {
         let crate::RequirementNode(node) = node;
         self.bdd
-            .project_unresolved(node, &mut AHashMap::new())
+            .project_unresolved(node, self.member, &mut AHashMap::new())
             .map(crate::RequirementNode)
     }
 
@@ -1754,7 +1758,9 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
     #[must_use]
     pub fn finish(mut self, root: crate::RequirementNode) -> Option<crate::ConditionalGuard> {
         let crate::RequirementNode(root) = root;
-        let projected = self.bdd.project_unresolved(root, &mut AHashMap::new())?;
+        let projected = self
+            .bdd
+            .project_unresolved(root, self.member, &mut AHashMap::new())?;
         let mut graph = crate::RequirementGuard {
             decisions: Vec::new(),
             root: FALSE,
@@ -1764,7 +1770,7 @@ impl<'input, 'budget> RequirementBdd<'input, 'budget> {
         graph.root = self
             .bdd
             .export_decisions(root, &mut graph.decisions, &mut AHashMap::new())?;
-        graph.check_export_budget(&mut self.bdd.remaining_work)?;
+        graph.check_export_budget(&mut self.bdd.remaining_work, self.member)?;
         Some(crate::ConditionalGuard::Decision(std::sync::Arc::new(
             graph,
         )))

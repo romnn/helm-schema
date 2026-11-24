@@ -3,6 +3,12 @@
 use std::process::{Command, Output};
 
 use color_eyre::eyre::{self, WrapErr as _};
+use helm_schema_ast::DefineIndex;
+use helm_schema_gen::{PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema};
+use helm_schema_ir::SymbolicIrContext;
+use helm_schema_k8s::Chain;
+use indoc::indoc;
+use serde_json::json;
 use test_util::prelude::sim_assert_eq;
 
 fn render(extra_args: &[&str]) -> eyre::Result<Output> {
@@ -761,6 +767,188 @@ fn control_exits_match_helm() -> eyre::Result<()> {
         ),
     ] {
         check_mode(mode, values, want)?;
+    }
+    Ok(())
+}
+
+fn range_schema(source: &str, helpers: &str, values: &str) -> eyre::Result<jsonschema::Validator> {
+    let mut index = DefineIndex::new();
+    if !helpers.is_empty() {
+        index.add_file_source("helpers.tpl", helpers);
+    }
+    let signals = SymbolicIrContext::new(&index)
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let values =
+        PreparedValuesDocuments::new(serde_yaml::from_str(values)?, serde_yaml::Value::Null);
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &Chain::new(Vec::new())).with_values_documents(&values),
+    );
+    Ok(jsonschema::validator_for(&schema)?)
+}
+
+#[test]
+fn ranged_map_operands_follow_helm_iteration_and_grouping() -> eyre::Result<()> {
+    let src = indoc! {r#"
+        {{- range .Values.count }}
+        {{ hasKey . "key" }}
+        {{- end }}
+        {{- range $member := .Values.grouped }}
+        {{ hasKey ($member.child) "key" }}
+        {{- end }}
+        {{- range .Values.early }}
+        {{ hasKey . "key" }}
+        {{- break }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        count: []
+        grouped: []
+        early: []
+    "};
+    let validator = range_schema(src, "", values_yaml)?;
+    for (instance, want) in [
+        (json!({}), true),
+        (json!({ "count": -1 }), true),
+        (json!({ "count": 0 }), true),
+        (json!({ "count": 2 }), false),
+        (json!({ "grouped": [{}] }), true),
+        (json!({ "grouped": [{ "child": null }] }), true),
+        (json!({ "grouped": [null] }), false),
+        (json!({ "grouped": [{ "child": {} }] }), true),
+        (json!({ "grouped": [{ "child": "scalar" }] }), false),
+        (json!({ "early": [{}, null] }), true),
+    ] {
+        sim_assert_eq!(
+            have: validator.is_valid(&instance),
+            want: want,
+            "instance={instance}",
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn ranged_member_operands_follow_aliased_writes() -> eyre::Result<()> {
+    for (source, helpers, defaults, instance, want) in [
+        (
+            indoc! {r#"
+                {{- range .Values.items }}
+                {{- $_ := set (index $.Values.items 0) "text" "ok" }}
+                {{ tpl .text $ }}
+                {{- end }}
+            "#},
+            "",
+            "items: []",
+            json!({"items": [{}]}),
+            true,
+        ),
+        (
+            indoc! {r#"
+                {{- range .Values.items }}
+                {{- $_ := set $.Values.items.a "text" "ok" }}
+                {{ tpl .text $ }}
+                {{- end }}
+            "#},
+            "",
+            "items: []",
+            json!({"items": {"a": {}}}),
+            true,
+        ),
+        (
+            indoc! {r#"
+                {{- range .Values.items }}
+                {{- $_ := unset $.Values.items.a "enabled" }}
+                {{- if .enabled }}
+                {{ tpl .text $ }}
+                {{- end }}
+                {{- end }}
+            "#},
+            "",
+            "items: []",
+            json!({"items": {"a": {"enabled": true}}}),
+            true,
+        ),
+        (
+            indoc! {r#"
+                {{- range .Values.items }}
+                {{- $_ := include "repair" $ }}
+                {{ tpl .text $ }}
+                {{- end }}
+            "#},
+            indoc! {r#"
+                {{- define "repair" }}
+                {{- $_ := set $.Values.items.a "text" "ok" }}
+                {{- end }}
+            "#},
+            "items: []",
+            json!({"items": {"a": {}}}),
+            true,
+        ),
+        (
+            indoc! {r#"
+                {{- range .Values.items }}
+                {{- $_ := set $.Values.other "text" "ok" }}
+                {{ tpl .text $ }}
+                {{- end }}
+            "#},
+            "",
+            indoc! {"
+                items: []
+                other: {}
+            "},
+            json!({"items": {"a": {}}, "other": {}}),
+            false,
+        ),
+        (
+            indoc! {r#"
+                {{- range .Values.items }}
+                {{ tpl .text $ }}
+                {{- $_ := set $.Values.items.a "text" "ok" }}
+                {{- end }}
+            "#},
+            "",
+            "items: []",
+            json!({"items": {"a": {}}}),
+            false,
+        ),
+    ] {
+        let validator = range_schema(source, helpers, defaults)?;
+        sim_assert_eq!(have: validator.is_valid(&instance), want: want, "source={source}; instance={instance}");
+    }
+    Ok(())
+}
+
+#[test]
+fn ranged_member_sibling_write_preserves_the_operand_demand() -> eyre::Result<()> {
+    check_ranged_text_operand(indoc! {r#"
+        {{- range .Values.items }}
+        {{- $_ := set $.Values.items.a "note" "ok" }}
+        {{ tpl .text $ }}
+        {{- end }}
+    "#})
+}
+
+#[test]
+fn ranged_member_operand_retains_its_captured_value() -> eyre::Result<()> {
+    check_ranged_text_operand(indoc! {r#"
+        {{- range .Values.items }}
+        {{- $saved := .text }}
+        {{- $_ := set $.Values.items.a "text" "ok" }}
+        {{ tpl $saved $ }}
+        {{- end }}
+    "#})
+}
+
+fn check_ranged_text_operand(source: &str) -> eyre::Result<()> {
+    let validator = range_schema(source, "", "items: []")?;
+    for (instance, want) in [
+        (json!({"items": {"a": {"text": "original"}}}), true),
+        (json!({"items": {"a": {}}}), false),
+        (json!({"items": {"a": {"text": 7}}}), false),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&instance), want: want, "instance={instance}");
     }
     Ok(())
 }

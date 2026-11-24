@@ -92,26 +92,27 @@ pub(crate) fn fail_requirement_schema<'a>(
                 allow_integer,
                 ..
             } => {
-                // Nil-tolerant requirements (truthy-scoped types whose absent
-                // leaf is falsy and escapes the consumer) hold only when the
-                // leaf is present, so the
-                // wrapper must not demand the field itself. A
-                // `NotSchemaType` requirement is likewise satisfied by an
-                // absent leaf: the failing test it negates fired only on
-                // values OF that type (a quoted-token splice constrains
-                // strings; members without the field never render it).
-                let tolerant_leaf = implication.requirements.iter().all(|requirement| {
-                    matches!(
-                        requirement,
-                        helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(_)
-                            | helm_schema_core::FailValueRequirement::NotEquals(_)
-                    )
-                }) || implication.requirements.iter().any(|requirement| {
-                    matches!(
-                        requirement,
-                        helm_schema_core::FailValueRequirement::NotSchemaType(_)
-                    )
-                });
+                // Nil-tolerant consumers can accept an absent leaf. A type exclusion also
+                // admits absence because the rejected value must have the excluded type.
+                let tolerant_leaf =
+                    implication
+                        .requirements
+                        .iter()
+                        .all(|requirement| match requirement {
+                            helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(_)
+                            | helm_schema_core::FailValueRequirement::NotEquals(_) => true,
+                            helm_schema_core::FailValueRequirement::MemberHost {
+                                handled_kinds,
+                                complete_domain: _,
+                            } => handled_kinds.iter().any(|kind| kind == "null"),
+                            _ => false,
+                        })
+                        || implication.requirements.iter().any(|requirement| {
+                            matches!(
+                                requirement,
+                                helm_schema_core::FailValueRequirement::NotSchemaType(_)
+                            )
+                        });
                 let member = match &implication.target {
                     // A per-member selector binds only the members the
                     // chart's own gate routes to the consumer; every other

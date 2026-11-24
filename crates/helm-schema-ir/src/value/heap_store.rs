@@ -117,6 +117,10 @@ impl Store {
         self.epoch = Some(epoch);
     }
 
+    pub(super) fn has_unknown_write(&self) -> bool {
+        self.epoch.is_some()
+    }
+
     pub(super) fn region_projection(&self) -> &Projection {
         &self.projection
     }
@@ -184,6 +188,8 @@ impl Store {
                 merged.install(object, storage);
             }
         }
+        // A future input-backed object may also overlap an unknown write on either branch.
+        merged.epoch = merged.epoch.or_else(|| no.epoch.clone());
         merged
     }
 }

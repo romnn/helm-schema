@@ -3,7 +3,7 @@
 use super::work::WorkBudget;
 use super::{Field, HeapVersion, ObjectData, ObjectId, ObjectVersion, Remainder};
 use ahash::AHashMap;
-use helm_schema_core::ValuesPath;
+use helm_schema_core::{Segment, ValuesPath};
 use std::cell::{Cell, RefCell};
 use std::collections::BTreeSet;
 use std::rc::Rc;
@@ -51,7 +51,77 @@ impl Drop for HeapVersion {
     }
 }
 
+#[derive(Clone, Copy)]
+pub(super) enum MemberRead {
+    Slot,
+    Contents,
+}
+
 impl HeapVersion {
+    /// A concrete map key can name the same object as a symbolic range member.
+    pub(super) fn member_input_may_be_written(&self, path: &ValuesPath, kind: MemberRead) -> bool {
+        if !path.segments().any(Segment::is_each_member) {
+            return false;
+        }
+        if self.store.has_unknown_write() {
+            return true;
+        }
+        let mut written = false;
+        self.input_paths.visit(|object, _| {
+            if written {
+                return;
+            }
+            let Some(ObjectVersion {
+                data,
+                multiplicity: _,
+                revision: _,
+            }) = self.borrowed_object(object)
+            else {
+                return;
+            };
+            written = self
+                .input_paths
+                .original_paths(object)
+                .iter()
+                .any(|original| {
+                    let mut read = path.segments();
+                    for write in original.segments() {
+                        let Some(segment) = read.next() else {
+                            break;
+                        };
+                        if let (Some(left), Some(right)) = (write.literal(), segment.literal())
+                            && left != right
+                        {
+                            return false;
+                        }
+                    }
+                    let key = read.next();
+                    if matches!((kind, key), (MemberRead::Slot, None)) {
+                        return false;
+                    }
+                    match data {
+                        ObjectData::Map {
+                            fields,
+                            remainder: Remainder::Input,
+                        } => match (kind, key) {
+                            // Replacing a slot does not modify the object it previously held.
+                            (MemberRead::Contents, Some(_)) => false,
+                            (_, Some(Segment::Literal(key))) => fields.contains_key(key),
+                            (_, Some(Segment::EachMember) | None) => !fields.is_empty(),
+                        },
+                        ObjectData::Map {
+                            fields: _,
+                            remainder: _,
+                        }
+                        | ObjectData::Strings(_)
+                        | ObjectData::Opaque { reachable: _ }
+                        | ObjectData::Widened { inputs: _ } => true,
+                    }
+                });
+        });
+        written
+    }
+
     pub(super) fn has_allocated_object(&self, object: &ObjectId) -> bool {
         self.store.multiplicity(object).is_some()
     }

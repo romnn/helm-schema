@@ -427,6 +427,14 @@ fn member_local_guard_binds_only_the_members_it_selects() {
             "a live string renders",
         ),
         (
+            serde_json::json!({ "items": [
+                { "enabled": false, "template": 7 },
+                { "enabled": true, "template": "body" }
+            ] }),
+            true,
+            "a live member does not require the disabled member's operand",
+        ),
+        (
             serde_json::json!({ "items": [{ "enabled": true, "template": 7 }] }),
             false,
             "a live non-string operand aborts",
@@ -442,9 +450,10 @@ fn member_local_guard_binds_only_the_members_it_selects() {
             "one live member among dead ones still aborts",
         ),
     ] {
-        assert!(
-            schema_accepts_instance(&schema, &instance) == want,
-            "member-local guard scope ({label}): instance={instance}; want={want}; schema={schema}"
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "member-local guard scope ({label}): instance={instance}; schema={schema}",
         );
     }
 }
