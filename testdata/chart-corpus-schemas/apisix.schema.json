@@ -219,7 +219,7 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1group-4"
+                          "$ref": "#/definitions/constrains~1group-5"
                         },
                         {
                           "$ref": "#/definitions/constrains~1etcd.nameOverride"
@@ -245,10 +245,10 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1group-4"
+                          "$ref": "#/definitions/constrains~1group-5"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1group-3"
+                          "$ref": "#/definitions/constrains~1group-4"
                         }
                       ]
                     },
@@ -296,7 +296,7 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1group-4"
+                          "$ref": "#/definitions/constrains~1group-5"
                         },
                         {
                           "$ref": "#/definitions/constrains~1etcd.namespaceOverride"
@@ -428,7 +428,7 @@
                           "$ref": "#/definitions/constrains~1etcd.auth.token.type=jwt@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1group-3"
+                          "$ref": "#/definitions/constrains~1group-4"
                         },
                         {
                           "$ref": "#/definitions/constrains~1etcd.fullnameOverride:t"
@@ -1908,17 +1908,17 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1group-1"
+                    "$ref": "#/definitions/constrains~1group-2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1group-0"
+                    "$ref": "#/definitions/constrains~1group-1"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1group-1"
+                    "$ref": "#/definitions/constrains~1group-2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1namespaceOverride:t"
@@ -1953,7 +1953,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1group-2"
+                    "$ref": "#/definitions/constrains~1group-3"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
@@ -1962,7 +1962,7 @@
                     "$ref": "#/definitions/constrains~1fullnameOverride@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1group-0"
+                    "$ref": "#/definitions/constrains~1group-1"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -2042,7 +2042,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1group-2"
+                    "$ref": "#/definitions/constrains~1group-3"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -2051,7 +2051,7 @@
                     "$ref": "#/definitions/constrains~1nameOverride@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1group-0"
+                    "$ref": "#/definitions/constrains~1group-1"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -3483,6 +3483,40 @@
       "type": "object"
     },
     "constrains/group-0": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@10"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@9"
+        }
+      ]
+    },
+    "constrains/group-1": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1namespaceOverride"
@@ -3492,10 +3526,10 @@
         }
       ]
     },
-    "constrains/group-1": {
+    "constrains/group-2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-2"
+          "$ref": "#/definitions/constrains~1group-3"
         },
         {
           "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
@@ -3511,7 +3545,7 @@
         }
       ]
     },
-    "constrains/group-2": {
+    "constrains/group-3": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1auth.token.privateKey.existingSecret:t"
@@ -3524,7 +3558,7 @@
         }
       ]
     },
-    "constrains/group-3": {
+    "constrains/group-4": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1etcd.nameOverride"
@@ -3540,7 +3574,7 @@
         }
       ]
     },
-    "constrains/group-4": {
+    "constrains/group-5": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1etcd.auth.token.privateKey.existingSecret:t"
@@ -3852,45 +3886,18 @@
         {
           "anyOf": [
             {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
               "$ref": "#/definitions/constrains~1serviceAccount.name"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
             }
           ]
         },
         {
           "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-            },
             {
               "properties": {
                 "serviceAccount": {
@@ -3932,9 +3939,6 @@
                 "serviceAccount"
               ],
               "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@5"
             },
             {
               "properties": {
@@ -3987,19 +3991,13 @@
                     "$ref": "#/definitions/constrains~1serviceAccount.name"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                    "$ref": "#/definitions/constrains~1serviceAccount.name@6"
                   }
                 ]
               }
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+              "$ref": "#/definitions/constrains~1group-0"
             }
           ]
         }
@@ -4134,7 +4132,7 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
           }
         }
       ]
@@ -4166,7 +4164,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
           }
         },
         {
@@ -4360,26 +4358,36 @@
         }
       ]
     },
-    "constrains/serviceAccount.name/array": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
-          }
-        ]
-      },
-      "type": "array"
+    "constrains/serviceAccount.name/anyOf/object+string;pattern-x20-x": {
+      "anyOf": [
+        {
+          "pattern": "^(?:(?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": true,
+          "propertyNames": true,
+          "type": "object"
+        }
+      ]
     },
-    "constrains/serviceAccount.name/array@2": {
+    "constrains/serviceAccount.name/anyOf/string;pattern-x20-x": {
+      "anyOf": [
+        {
+          "pattern": "^(?:(?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+          "type": "string"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/anyOf/string;pattern-x20-x@2": {
+      "anyOf": [
+        {
+          "pattern": "^(?:(?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*))$",
+          "type": "string"
+        }
+      ]
+    },
+    "constrains/serviceAccount.name/array": {
       "items": {
         "anyOf": [
           {
@@ -4393,6 +4401,25 @@
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/serviceAccount.name/array@2": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
           }
         ]
       },
@@ -4419,7 +4446,7 @@
               "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+              "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
             },
             {
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
@@ -4445,7 +4472,7 @@
             "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
           },
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+            "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
@@ -4527,6 +4554,26 @@
       ],
       "type": "object"
     },
+    "constrains/serviceAccount.name@10": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "pattern": "^(?:(?:[\\x20])*[\\x5b](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
     "constrains/serviceAccount.name@2": {
       "properties": {
         "serviceAccount": {
@@ -4540,7 +4587,7 @@
                         "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
                       },
                       {
                         "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1null,boolean,number"
@@ -4563,7 +4610,7 @@
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@3"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
                                 },
                                 {
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
@@ -4574,7 +4621,7 @@
                           },
                           {
                             "not": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
                             }
                           }
                         ]
@@ -4605,7 +4652,7 @@
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1allOf~1array+not~1array@3"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
                                 },
                                 {
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
@@ -4686,7 +4733,7 @@
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x3a-x2d"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
                                 },
                                 {
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
@@ -4704,7 +4751,7 @@
                         "$ref": "#/definitions/constrains~1serviceAccount.name~1object"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                        "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
                       },
                       {
                         "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t~1string;pattern-x3a"
@@ -4733,7 +4780,7 @@
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1string;pattern-x20-x2d"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
+                                  "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
                                 },
                                 {
                                   "$ref": "#/definitions/constrains~1serviceAccount.name~1object@2"
@@ -4744,7 +4791,7 @@
                           },
                           {
                             "not": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.name~1array"
+                              "$ref": "#/definitions/constrains~1serviceAccount.name~1array@2"
                             }
                           }
                         ]
@@ -4781,6 +4828,286 @@
         "serviceAccount": {
           "properties": {
             "name": {
+              "anyOf": [
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 3,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 4,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 3,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 5,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 4,
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@5": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 3,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 4,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 5,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 3,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    },
+                    true
+                  ],
+                  "minItems": 4,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1string;pattern-x20-x@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name~1anyOf~1object+string;pattern-x20-x"
+                    }
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.name@6": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "name": {
               "maxItems": 1,
               "maxProperties": 1
             }
@@ -4796,7 +5123,7 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccount.name@5": {
+    "constrains/serviceAccount.name@7": {
       "properties": {
         "serviceAccount": {
           "properties": {
@@ -4816,7 +5143,7 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccount.name@6": {
+    "constrains/serviceAccount.name@8": {
       "properties": {
         "serviceAccount": {
           "properties": {
@@ -4836,12 +5163,12 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccount.name@7": {
+    "constrains/serviceAccount.name@9": {
       "properties": {
         "serviceAccount": {
           "properties": {
             "name": {
-              "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "pattern": "^(?:(?:[\\x20])*[\\x5b](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
               "type": "string"
             }
           },

@@ -492,36 +492,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1minio.defaultBucket+minio.defaultBucket=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript?+halyard=null+minio.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "minio": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "minio"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -783,256 +753,184 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                "$ref": "#/definitions/constrains~1halyard.persistence+halyard.persistence=null"
               },
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-30"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-29"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-27"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName@7"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1serviceAccount.halyardName@8"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard=null"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1serviceAccount.halyardName@7"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard=null"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-26"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-30"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-29"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-26"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-27"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1serviceAccount.halyardName@9"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName@8"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-25"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.halyardName"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-25"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName@6"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-24"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-28"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-24"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.halyardName"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-29"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-31"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-28"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1group-32"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-31"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.halyardName"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-29"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                  }
-                ]
+                "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1halyard.persistence+halyard.persistence=null"
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.secretKey:t@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1s3.secretKey"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1s3.secretKey:t@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1s3.accessKey"
+                        }
+                      }
+                    ]
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/when~1halyard+halyard=null~1then~1any~1else~1halyard.additionalInitScript?"
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1halyard@2"
+                    },
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1halyard"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1halyard.additionalInitScript@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1halyard=null"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1s3.accessKey:t"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1s3.accessKey"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1s3.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1s3.secretKey:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1s3.secretKey"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1s3.enabled:t"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1s3.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1s3.secretKey:t"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -1122,38 +1020,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-23"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-22"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1halyard@2"
               },
               {
                 "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
               },
               {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1halyard.additionalInitScript"
@@ -1166,10 +1042,23 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-23"
+                "$ref": "#/definitions/constrains~1group-21"
               },
               {
-                "$ref": "#/definitions/constrains~1group-22"
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-21"
               },
               {
                 "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
@@ -1210,41 +1099,41 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1halyard@2"
+                "$ref": "#/definitions/constrains~1group-21"
               },
               {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
               },
               {
-                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard.additionalInitScript"
-              },
-              {
-                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-23"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-22"
+                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t"
               },
               {
                 "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
               },
               {
                 "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1halyard@2"
               },
               {
-                "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard.additionalInitScript"
+              },
+              {
+                "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
               }
             ]
           },
@@ -1369,180 +1258,6 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.secretKey:t@2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1s3.secretKey"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1s3.secretKey:t@2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1s3.accessKey"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript+halyard=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1halyard@2"
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1s3.accessKey:t+s3.secretKey:t"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1halyard.additionalConfigMaps.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1halyard.additionalSecrets"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1halyard.additionalSecrets.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1halyard"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1halyard.additionalInitScript@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1halyard.additionalInitScript?"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1halyard=null"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1s3.accessKey:t"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1s3.accessKey"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1s3.enabled:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1s3.secretKey:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1s3.secretKey"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1s3.enabled:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1s3.secretKey:t"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1s3.accessKey:t@2"
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/definitions/constrains~1s3.enabled:t"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1s3+s3=null"
               },
               {
@@ -1563,6 +1278,36 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1minio.defaultBucket+minio.defaultBucket=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1halyard+halyard.additionalInitScript?+halyard=null+minio.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "minio": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "minio"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
     },
     {
       "if": {
@@ -2181,7 +1926,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1group-21"
+            "$ref": "#/definitions/constrains~1group-20"
           }
         ]
       },
@@ -3603,7 +3348,7 @@
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1group-21"
+            "$ref": "#/definitions/constrains~1group-20"
           }
         ]
       },
@@ -4432,10 +4177,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-20"
+              "$ref": "#/definitions/constrains~1group-19"
             },
             {
-              "$ref": "#/definitions/constrains~1group-18"
+              "$ref": "#/definitions/constrains~1group-17"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -4464,26 +4209,26 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-20"
+              "$ref": "#/definitions/constrains~1group-19"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-16"
             },
             {
               "$ref": "#/definitions/constrains~1group-17"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-18"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-20"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-17"
-            },
-            {
               "$ref": "#/definitions/constrains~1group-19"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-16"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-18"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -4544,10 +4289,7 @@
               "$ref": "#/definitions/constrains~1slave.configmap@2"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configmap:t"
+              "$ref": "#/definitions/constrains~1group-15"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.configmap:t"
@@ -4573,7 +4315,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-13"
+              "$ref": "#/definitions/constrains~1group-12"
+            },
+            {
+              "$ref": "#/definitions/constrains~1configmap:t"
             },
             {
               "$ref": "#/definitions/constrains~1group-11"
@@ -4586,7 +4331,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-13"
+              "$ref": "#/definitions/constrains~1group-12"
             },
             {
               "$ref": "#/definitions/constrains~1configmap:t"
@@ -4602,13 +4347,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-14"
+              "$ref": "#/definitions/constrains~1group-13"
             },
             {
-              "$ref": "#/definitions/constrains~1group-11"
+              "$ref": "#/definitions/constrains~1configmap:t"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.configmap"
+              "$ref": "#/definitions/constrains~1group-10"
             }
           ]
         },
@@ -4687,7 +4432,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-9"
+              "$ref": "#/definitions/constrains~1group-8"
             },
             {
               "$ref": "#/definitions/constrains~1master.configmap:t"
@@ -4700,13 +4445,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-7"
+              "$ref": "#/definitions/constrains~1group-6"
             },
             {
-              "$ref": "#/definitions/constrains~1group-12"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.configmap"
+              "$ref": "#/definitions/constrains~1group-10"
             }
           ]
         },
@@ -4735,10 +4477,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-9"
+              "$ref": "#/definitions/constrains~1group-8"
             },
             {
-              "$ref": "#/definitions/constrains~1group-12"
+              "$ref": "#/definitions/constrains~1group-11"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.configmap@2"
@@ -4748,10 +4490,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-6"
+              "$ref": "#/definitions/constrains~1group-5"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
+              "$ref": "#/definitions/constrains~1group-4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.configmap:t"
@@ -4761,10 +4503,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-4"
+              "$ref": "#/definitions/constrains~1group-2"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
+              "$ref": "#/definitions/constrains~1group-4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.configmap"
@@ -4777,10 +4519,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-2"
+              "$ref": "#/definitions/constrains~1group-0"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
+              "$ref": "#/definitions/constrains~1group-4"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.enabled:t"
@@ -4790,10 +4532,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-7"
+              "$ref": "#/definitions/constrains~1group-6"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
+              "$ref": "#/definitions/constrains~1group-4"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap"
@@ -4806,16 +4548,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-3"
+              "$ref": "#/definitions/constrains~1group-1"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap@2"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configmap:t"
+              "$ref": "#/definitions/constrains~1group-15"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.enabled:t"
@@ -4825,19 +4564,29 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-5"
+              "$ref": "#/definitions/constrains~1group-3"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configmap:t"
+              "$ref": "#/definitions/constrains~1group-15"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.configmap"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1master.configmap:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.enabled:t"
             }
           ]
         },
@@ -4850,19 +4599,6 @@
               "$ref": "#/definitions/constrains~1master.configmap:t"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.enabled:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1master.configmap:t"
-            },
-            {
               "$ref": "#/definitions/constrains~1sentinel.configmap"
             },
             {
@@ -4873,7 +4609,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-6"
+              "$ref": "#/definitions/constrains~1group-5"
             },
             {
               "$ref": "#/definitions/constrains~1master.configmap:t"
@@ -4886,10 +4622,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-1"
+              "$ref": "#/definitions/constrains~1group-12"
             },
             {
-              "$ref": "#/definitions/constrains~1configmap:t"
+              "$ref": "#/definitions/constrains~1group-15"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap"
@@ -4917,13 +4653,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-14"
+              "$ref": "#/definitions/constrains~1group-13"
             },
             {
-              "$ref": "#/definitions/constrains~1group-16"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configmap:t"
+              "$ref": "#/definitions/constrains~1group-15"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap"
@@ -4936,20 +4669,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-1"
+              "$ref": "#/definitions/constrains~1group-12"
             },
             {
-              "$ref": "#/definitions/constrains~1configmap:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1slave.configmap@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
+              "$ref": "#/definitions/constrains~1group-15"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap@3"
@@ -4959,7 +4682,23 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-0"
+              "$ref": "#/definitions/constrains~1group-8"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1slave.configmap@3"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-8"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-4"
             },
             {
               "$ref": "#/definitions/constrains~1slave.configmap"
@@ -5692,7 +5431,7 @@
               "$ref": "#/definitions/constrains~1sentinel.enabled:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1group-17"
+              "$ref": "#/definitions/constrains~1group-16"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -6297,50 +6036,34 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-9"
+          "$ref": "#/definitions/constrains~1group-1"
         },
         {
-          "$ref": "#/definitions/constrains~1group-16"
+          "$ref": "#/definitions/constrains~1group-9"
         }
       ]
     },
     "constrains/group-1": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-13"
+          "$ref": "#/definitions/constrains~1group-14"
         },
         {
-          "$ref": "#/definitions/constrains~1group-16"
+          "$ref": "#/definitions/constrains~1slave.configmap:t@2"
         }
       ]
     },
     "constrains/group-10": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1slave.configmap@2"
+          "$ref": "#/definitions/constrains~1group-11"
         },
         {
-          "$ref": "#/definitions/constrains~1configmap"
-        },
-        {
-          "$ref": "#/definitions/constrains~1configmap:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1configmap@3"
+          "$ref": "#/definitions/constrains~1sentinel.configmap"
         }
       ]
     },
     "constrains/group-11": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1configmap:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-12"
-        }
-      ]
-    },
-    "constrains/group-12": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1master.configmap:t"
@@ -6350,20 +6073,20 @@
         }
       ]
     },
-    "constrains/group-13": {
+    "constrains/group-12": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-14"
+          "$ref": "#/definitions/constrains~1group-13"
         },
         {
           "$ref": "#/definitions/constrains~1slave.configmap@2"
         }
       ]
     },
-    "constrains/group-14": {
+    "constrains/group-13": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-15"
+          "$ref": "#/definitions/constrains~1group-14"
         },
         {
           "$ref": "#/definitions/constrains~1slave.configmap:t@2"
@@ -6373,7 +6096,7 @@
         }
       ]
     },
-    "constrains/group-15": {
+    "constrains/group-14": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1cluster.enabled:t"
@@ -6383,7 +6106,7 @@
         }
       ]
     },
-    "constrains/group-16": {
+    "constrains/group-15": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1master.configmap"
@@ -6393,10 +6116,13 @@
         },
         {
           "$ref": "#/definitions/constrains~1master.configmap@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1configmap:t"
         }
       ]
     },
-    "constrains/group-17": {
+    "constrains/group-16": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
@@ -6406,7 +6132,7 @@
         }
       ]
     },
-    "constrains/group-18": {
+    "constrains/group-17": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -6415,11 +6141,11 @@
           "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
-          "$ref": "#/definitions/constrains~1group-19"
+          "$ref": "#/definitions/constrains~1group-18"
         }
       ]
     },
-    "constrains/group-19": {
+    "constrains/group-18": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1slave.service.type"
@@ -6432,17 +6158,7 @@
         }
       ]
     },
-    "constrains/group-2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-10"
-        }
-      ]
-    },
-    "constrains/group-20": {
+    "constrains/group-19": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1cluster.enabled:t"
@@ -6452,7 +6168,17 @@
         }
       ]
     },
-    "constrains/group-21": {
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-7"
+        }
+      ]
+    },
+    "constrains/group-20": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1global.redis"
@@ -6480,180 +6206,49 @@
         }
       ]
     },
-    "constrains/group-22": {
+    "constrains/group-21": {
       "allOf": [
         {
+          "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
+        },
+        {
           "$ref": "#/definitions/constrains~1halyard.additionalInitScript"
+        },
+        {
+          "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
         },
         {
           "$ref": "#/definitions/constrains~1halyard@2"
         }
       ]
     },
-    "constrains/group-23": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard.additionalInitScript?@2"
-        }
-      ]
-    },
-    "constrains/group-24": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-25"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@5"
-        }
-      ]
-    },
-    "constrains/group-25": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@8"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@9"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard.additionalInitScript@2"
-        }
-      ]
-    },
-    "constrains/group-26": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@7"
-        }
-      ]
-    },
-    "constrains/group-27": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-31"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-28"
-        }
-      ]
-    },
-    "constrains/group-28": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@6"
-        }
-      ]
-    },
-    "constrains/group-29": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@4"
-        }
-      ]
-    },
     "constrains/group-3": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-15"
-        },
-        {
-          "$ref": "#/definitions/constrains~1slave.configmap:t@2"
-        }
-      ]
-    },
-    "constrains/group-30": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-31"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard+halyard=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.halyardName"
-        }
-      ]
-    },
-    "constrains/group-31": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@8"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@9"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@5"
-        }
-      ]
-    },
-    "constrains/group-32": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName@7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard"
-        },
-        {
-          "$ref": "#/definitions/constrains~1halyard=null"
-        }
-      ]
-    },
-    "constrains/group-4": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-8"
-        }
-      ]
-    },
-    "constrains/group-5": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-15"
+          "$ref": "#/definitions/constrains~1group-14"
         },
         {
           "$ref": "#/definitions/constrains~1sentinel.enabled:t@2"
         }
       ]
     },
-    "constrains/group-6": {
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1master.configmap"
+        },
+        {
+          "$ref": "#/definitions/constrains~1master.configmap:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1master.configmap@4"
+        }
+      ]
+    },
+    "constrains/group-5": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1cluster.enabled:t"
@@ -6662,21 +6257,21 @@
           "$ref": "#/definitions/constrains~1slave.configmap:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1group-10"
+          "$ref": "#/definitions/constrains~1group-9"
+        }
+      ]
+    },
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-13"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-7"
         }
       ]
     },
     "constrains/group-7": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-14"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-8"
-        }
-      ]
-    },
-    "constrains/group-8": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1configmap"
@@ -6689,13 +6284,29 @@
         }
       ]
     },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-13"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        }
+      ]
+    },
     "constrains/group-9": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-14"
+          "$ref": "#/definitions/constrains~1slave.configmap@2"
         },
         {
-          "$ref": "#/definitions/constrains~1group-10"
+          "$ref": "#/definitions/constrains~1configmap"
+        },
+        {
+          "$ref": "#/definitions/constrains~1configmap:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1configmap@3"
         }
       ]
     },
@@ -8893,18 +8504,6 @@
       ],
       "type": "object"
     },
-    "constrains/serviceAccount+serviceAccount.halyardName": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName@6"
-          }
-        ]
-      }
-    },
     "constrains/serviceAccount+serviceAccount=null": {
       "anyOf": [
         {
@@ -8942,916 +8541,6 @@
       "properties": {
         "serviceAccount": {
           "$ref": "#/definitions/constrains~1create:t"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "halyardName": {}
-            },
-            "required": [
-              "halyardName"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/serviceAccount.halyardName/allOf/array+not/array": {
-      "allOf": [
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-          }
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/array+not/array@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              false,
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/array+not/array@3": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/array+not/array@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-          }
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-              }
-            ]
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/not/object+object": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              false,
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-              }
-            ]
-          },
-          "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-          }
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/not/object+object@2": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-          }
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/not/object+object@3": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object"
-              }
-            ]
-          },
-          "propertyNames": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-              }
-            ]
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/allOf/not/object+object@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-          }
-        },
-        {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-              }
-            ]
-          },
-          "propertyNames": {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1anyOf~1string;pattern-x20-x2d"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/anyOf/string;pattern-x20-x2d": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-        }
-      ]
-    },
-    "constrains/serviceAccount.halyardName/array": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/serviceAccount.halyardName/array@2": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/serviceAccount.halyardName/array@3": {
-      "items": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-          }
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/serviceAccount.halyardName/not/object": {
-      "not": {
-        "additionalProperties": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-            }
-          ]
-        },
-        "propertyNames": {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-        },
-        "type": "object"
-      }
-    },
-    "constrains/serviceAccount.halyardName/not/object@2": {
-      "not": {
-        "additionalProperties": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a@2"
-            }
-          ]
-        },
-        "propertyNames": {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-        },
-        "type": "object"
-      }
-    },
-    "constrains/serviceAccount.halyardName/null,boolean,number": {
-      "type": [
-        "null",
-        "boolean",
-        "number"
-      ]
-    },
-    "constrains/serviceAccount.halyardName/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName/object@2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName/object@3": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-      },
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName/string;pattern-x20-x2d": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*))$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.halyardName/string;pattern-x20-x2d@2": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.halyardName/string;pattern-x20-x2d@3": {
-      "pattern": "^(?:(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.halyardName/string;pattern-x3a": {
-      "pattern": "^(?:(?:(?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.halyardName/string;pattern-x3a-x2d": {
-      "pattern": "^(?:(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*)$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.halyardName/string;pattern-x3a@2": {
-      "pattern": "^(?:(?:(?:[\\x3a])*|(?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a](?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*(?:|[\\x3a](?:[\\x3a])*)))$",
-      "type": "string"
-    },
-    "constrains/serviceAccount.halyardName:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1serviceAccount.halyardName:t@2"
-      }
-    },
-    "constrains/serviceAccount.halyardName:t@2": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@2": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      false,
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a@2"
-                      }
-                    ]
-                  },
-                  "propertyNames": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-                      }
-                    ]
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1not~1object@2"
-                }
-              ]
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@3": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object"
-                            }
-                          },
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-                                }
-                              ]
-                            },
-                            "propertyNames": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-                                }
-                              ]
-                            },
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "propertyNames": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d"
-                      }
-                    ]
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1not~1object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@4": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a@2"
-                      }
-                    ]
-                  },
-                  "propertyNames": {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1anyOf~1string;pattern-x20-x2d"
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1not~1object@2"
-                }
-              ]
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@5": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "allOf": [
-                {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object"
-                            }
-                          },
-                          {
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-                                }
-                              ]
-                            },
-                            "propertyNames": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1anyOf~1string;pattern-x20-x2d"
-                            },
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "items": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1not~1object+object@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@3"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1allOf~1array+not~1array"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x20-x2d@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1object@2"
-                                }
-                              ]
-                            },
-                            "type": "array"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1array"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1string;pattern-x3a-x2d"
-                      }
-                    ]
-                  },
-                  "propertyNames": {
-                    "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1anyOf~1string;pattern-x20-x2d"
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1not~1object"
-                }
-              ]
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@6": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "maxItems": 1,
-              "maxProperties": 1
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@7": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "pattern": "^(?:(?:[\\x20])*(?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d](?:[\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]|[\\x2d][\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a]))(?:(?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]|[\\x3a](?:[\\x3a])*[\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a]))*[\\x3a](?:[\\x3a])*[\\x09\\x20](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@8": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "pattern": "^(?:(?:[\\x20])*[\\x25][\\x21](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceAccount.halyardName@9": {
-      "properties": {
-        "serviceAccount": {
-          "properties": {
-            "halyardName": {
-              "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "halyardName"
-          ],
-          "type": "object"
         }
       },
       "required": [
@@ -10215,7 +8904,11 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
         },
         {
           "items": {
@@ -10325,7 +9018,11 @@
     "values/anyOf/null,boolean,number+string": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
         },
         {
           "not": {
@@ -10352,7 +9049,11 @@
               "type": "object"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount.halyardName~1null,boolean,number"
+              "type": [
+                "null",
+                "boolean",
+                "number"
+              ]
             },
             {
               "items": {
@@ -11582,89 +10283,6 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1sentinel.enabled!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1sentinel.service.type!=null"
-                }
-              ]
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "cluster": {}
-                      },
-                      "required": [
-                        "cluster"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "cluster": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "cluster"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
-              }
-            ]
-          },
-          "then": false
-        },
-        {
-          "if": {
             "else": {
               "else": {
                 "allOf": [
@@ -11761,6 +10379,89 @@
             },
             "then": false
           }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+4more"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled!=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1sentinel.service.type!=null"
+                }
+              ]
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "cluster": {}
+                      },
+                      "required": [
+                        "cluster"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "cluster": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "cluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled+enabled:t+enabled=null"
+              }
+            ]
+          },
+          "then": false
         },
         {
           "if": {

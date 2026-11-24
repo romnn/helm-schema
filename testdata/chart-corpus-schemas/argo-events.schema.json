@@ -5498,7 +5498,7 @@
           "$ref": "#/definitions/constrains~1group-19"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@13"
+          "$ref": "#/definitions/constrains~1webhook.name@14"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations:t"
@@ -5530,7 +5530,7 @@
           "$ref": "#/definitions/constrains~1group-19"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@14"
+          "$ref": "#/definitions/constrains~1webhook.name@13"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations:t"
@@ -5601,7 +5601,7 @@
           "$ref": "#/definitions/constrains~1group-13"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@14"
+          "$ref": "#/definitions/constrains~1webhook.name@13"
         },
         {
           "$ref": "#/definitions/constrains~1webhook+webhook.deploymentAnnotations"
@@ -5630,7 +5630,7 @@
           "$ref": "#/definitions/constrains~1group-11"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@14"
+          "$ref": "#/definitions/constrains~1webhook.name@13"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations+webhook.deploymentAnnotations=null"
@@ -5836,7 +5836,7 @@
           "$ref": "#/definitions/constrains~1group-13"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@13"
+          "$ref": "#/definitions/constrains~1webhook.name@14"
         },
         {
           "$ref": "#/definitions/constrains~1webhook+webhook.deploymentAnnotations"
@@ -5868,7 +5868,7 @@
           "$ref": "#/definitions/constrains~1group-11"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@13"
+          "$ref": "#/definitions/constrains~1webhook.name@14"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations+webhook.deploymentAnnotations=null"
@@ -5916,7 +5916,7 @@
           "$ref": "#/definitions/constrains~1group-3"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@13"
+          "$ref": "#/definitions/constrains~1webhook.name@14"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations:helm-marker-free"
@@ -5986,7 +5986,7 @@
           "$ref": "#/definitions/constrains~1group-3"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@14"
+          "$ref": "#/definitions/constrains~1webhook.name@13"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations:helm-marker-free"
@@ -6165,7 +6165,7 @@
           "$ref": "#/definitions/constrains~1group-1"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@13"
+          "$ref": "#/definitions/constrains~1webhook.name@14"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations@3"
@@ -6213,7 +6213,7 @@
           "$ref": "#/definitions/constrains~1group-1"
         },
         {
-          "$ref": "#/definitions/constrains~1webhook.name@14"
+          "$ref": "#/definitions/constrains~1webhook.name@13"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.deploymentAnnotations@3"
@@ -6829,6 +6829,9 @@
     "constrains/group-0": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1webhook.name~1allOf~1not~1object+object@4"
+        },
+        {
           "$ref": "#/definitions/constrains~1webhook.name~1array"
         },
         {
@@ -7018,7 +7021,7 @@
     "constrains/group-22": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1webhook.name@14"
+          "$ref": "#/definitions/constrains~1webhook.name@13"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.name@5"
@@ -7048,7 +7051,7 @@
     "constrains/group-25": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1webhook.name@13"
+          "$ref": "#/definitions/constrains~1webhook.name@14"
         },
         {
           "$ref": "#/definitions/constrains~1webhook.name@5"
@@ -9341,14 +9344,17 @@
         }
       ]
     },
-    "constrains/webhook.name/anyOf/allOf/array+not/array": {
+    "constrains/webhook.name/anyOf/allOf/array+not/array+allOf/not/object+object": {
       "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1webhook.name~1allOf~1not~1object+object"
+        },
         {
           "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array"
         }
       ]
     },
-    "constrains/webhook.name/anyOf/allOf/array+not/array+array+string;pattern-x20-x2d": {
+    "constrains/webhook.name/anyOf/allOf/array+not/array+allOf/not/object+object+array+string;pattern-x20-x2d": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array@6"
@@ -9361,7 +9367,7 @@
         }
       ]
     },
-    "constrains/webhook.name/anyOf/allOf/array+not/array+array+string;pattern-x20-x2d@2": {
+    "constrains/webhook.name/anyOf/allOf/array+not/array+allOf/not/object+object+array+string;pattern-x20-x2d@2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array@6"
@@ -9374,8 +9380,11 @@
         }
       ]
     },
-    "constrains/webhook.name/anyOf/array+string;pattern-x20-x2d": {
+    "constrains/webhook.name/anyOf/array+object+string;pattern-x20-x2d": {
       "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.automountServiceAccountToken~1object@5"
+        },
         {
           "additionalItems": false,
           "items": [
@@ -9945,19 +9954,84 @@
             "name": {
               "anyOf": [
                 {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
+                    }
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
                   "additionalItems": true,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
+                    },
+                    true
+                  ],
+                  "minItems": 3,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
+                    },
+                    true
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
+                    },
+                    true
+                  ],
+                  "minItems": 4,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
+                    }
+                  ],
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
                     },
                     true
                   ],
@@ -9968,103 +10042,38 @@
                   "additionalItems": false,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
-                    }
-                  ],
-                  "minItems": 2,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": false,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
-                    }
-                  ],
-                  "minItems": 4,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": true,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
-                    },
-                    true
-                  ],
-                  "minItems": 4,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": false,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
                     }
                   ],
                   "minItems": 3,
                   "type": "array"
                 },
                 {
-                  "additionalItems": true,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
-                    },
-                    true
-                  ],
-                  "minItems": 3,
-                  "type": "array"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array@6"
+                  "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array"
                 },
                 {
                   "additionalItems": false,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d@2"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object"
                     }
                   ],
-                  "minItems": 1,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": true,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+array+string;pattern-x20-x2d"
-                    },
-                    true
-                  ],
-                  "minItems": 2,
+                  "minItems": 4,
                   "type": "array"
                 }
               ]
@@ -10088,19 +10097,53 @@
             "name": {
               "anyOf": [
                 {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d@2"
+                    }
+                  ],
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": false,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d@2"
+                    }
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
                   "additionalItems": true,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d"
+                    },
+                    true
+                  ],
+                  "minItems": 2,
+                  "type": "array"
+                },
+                {
+                  "additionalItems": true,
+                  "items": [
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d"
                     },
                     true
                   ],
@@ -10111,60 +10154,16 @@
                   "additionalItems": false,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
-                    }
-                  ],
-                  "minItems": 2,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": true,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
-                    },
-                    true
-                  ],
-                  "minItems": 4,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": true,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
-                    },
-                    true
-                  ],
-                  "minItems": 3,
-                  "type": "array"
-                },
-                {
-                  "additionalItems": false,
-                  "items": [
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d@2"
                     }
                   ],
                   "minItems": 4,
@@ -10174,13 +10173,13 @@
                   "additionalItems": false,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+string;pattern-x20-x2d"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d@2"
                     }
                   ],
                   "minItems": 3,
@@ -10190,24 +10189,34 @@
                   "additionalItems": true,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d"
                     },
                     true
                   ],
-                  "minItems": 2,
+                  "minItems": 4,
                   "type": "array"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array"
+                  "$ref": "#/definitions/constrains~1webhook.name~1allOf~1array+not~1array@6"
                 },
                 {
-                  "additionalItems": false,
+                  "additionalItems": true,
                   "items": [
                     {
-                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array"
-                    }
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1array+object+string;pattern-x20-x2d"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1webhook.name~1anyOf~1allOf~1array+not~1array+allOf~1not~1object+object+array+string;pattern-x20-x2d"
+                    },
+                    true
                   ],
-                  "minItems": 1,
+                  "minItems": 3,
                   "type": "array"
                 }
               ]
@@ -10266,7 +10275,7 @@
     },
     "constrains/webhook.name@6": {
       "not": {
-        "$ref": "#/definitions/constrains~1webhook.name@14"
+        "$ref": "#/definitions/constrains~1webhook.name@13"
       }
     },
     "constrains/webhook.name@7": {

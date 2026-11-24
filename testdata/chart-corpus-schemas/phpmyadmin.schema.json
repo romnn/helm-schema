@@ -577,133 +577,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
-                }
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.hostname"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "else": {
           "allOf": [
             {
@@ -821,6 +694,133 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
+                      }
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.hostname"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.tls:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.tls:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "definitions": {
@@ -1282,17 +1282,27 @@
               "$ref": "#/definitions/constrains~1ingress.hostname@6"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@13"
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@13"
+              "$ref": "#/definitions/constrains~1ingress.hostname@10"
             },
             {
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1ingress.hostname@9"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
             }
           ]
         },
@@ -1302,14 +1312,14 @@
               "$ref": "#/definitions/constrains~1ingress.hostname@8"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@13"
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@13"
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
             },
             {
               "$ref": "#/definitions/constrains~1ingress.hostname@7"
@@ -1319,15 +1329,155 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname"
+              "$ref": "#/definitions/constrains~1ingress.hostname@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@2"
+              "$ref": "#/definitions/constrains~1ingress.hostname"
             },
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@9"
+                  "$ref": "#/definitions/constrains~1ingress.hostname@8"
+                },
+                {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "hostname": {
+                          "anyOf": [
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 3,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 3,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 5,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 2,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 2,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 4,
+                              "type": "array"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "hostname"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
                 },
                 {
                   "$ref": "#/definitions/constrains~1ingress.hostname@4"
@@ -1348,10 +1498,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname"
+              "$ref": "#/definitions/constrains~1ingress.hostname@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@2"
+              "$ref": "#/definitions/constrains~1ingress.hostname"
             },
             {
               "anyOf": [
@@ -1550,10 +1700,10 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@11"
+                  "$ref": "#/definitions/constrains~1ingress.hostname@12"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@10"
+                  "$ref": "#/definitions/constrains~1ingress.hostname@11"
                 },
                 {
                   "$ref": "#/definitions/constrains~1ingress.hostname=null"
@@ -1588,7 +1738,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@12"
+                  "$ref": "#/definitions/constrains~1ingress.hostname@13"
                 }
               ]
             }
@@ -1597,13 +1747,162 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname"
-            },
-            {
               "$ref": "#/definitions/constrains~1ingress.hostname@2"
             },
             {
+              "$ref": "#/definitions/constrains~1ingress.hostname"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
+            },
+            {
               "anyOf": [
+                {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "hostname": {
+                          "anyOf": [
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 2,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 3,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 5,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 3,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 2,
+                              "type": "array"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "hostname"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@10"
+                },
                 {
                   "$ref": "#/definitions/constrains~1ingress.hostname@4"
                 },
@@ -1611,12 +1910,6 @@
                   "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
                 }
               ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
             }
           ]
         },
@@ -1644,15 +1937,80 @@
                     {
                       "anyOf": [
                         {
+                          "$ref": "#/definitions/constrains~1ingress.hostname@9"
+                        },
+                        {
                           "properties": {
                             "ingress": {
                               "properties": {
                                 "hostname": {
-                                  "items": {
-                                    "pattern": "^[A-Za-z0-9_./+-]*$",
-                                    "type": "string"
-                                  },
-                                  "type": "array"
+                                  "anyOf": [
+                                    {
+                                      "additionalItems": false,
+                                      "items": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        }
+                                      ],
+                                      "minItems": 2,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "items": {
+                                        "pattern": "^[A-Za-z0-9_./+-]*$",
+                                        "type": "string"
+                                      },
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalItems": false,
+                                      "items": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        }
+                                      ],
+                                      "minItems": 4,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalItems": false,
+                                      "items": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        }
+                                      ],
+                                      "minItems": 3,
+                                      "type": "array"
+                                    },
+                                    {
+                                      "additionalItems": false,
+                                      "items": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                        }
+                                      ],
+                                      "minItems": 1,
+                                      "type": "array"
+                                    }
+                                  ]
                                 }
                               },
                               "required": [
@@ -1665,9 +2023,6 @@
                             "ingress"
                           ],
                           "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@8"
                         }
                       ]
                     }
@@ -1809,6 +2164,27 @@
         }
       ]
     },
+    "constrains/ingress+ingress.hostname+ingress.hostname=null/anyOf/object+string;pattern-x20-x": {
+      "anyOf": [
+        {
+          "pattern": "^(?:(?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": true,
+          "propertyNames": true,
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/ingress+ingress.hostname+ingress.hostname=null/anyOf/string;pattern-x20-x": {
+      "anyOf": [
+        {
+          "pattern": "^(?:(?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+          "type": "string"
+        }
+      ]
+    },
     "constrains/ingress+ingress.hostname+ingress.hostname=null/anyOf/string;pattern-x20-x2d": {
       "anyOf": [
         {
@@ -1816,6 +2192,14 @@
         },
         {
           "$ref": "#/definitions/constrains~1ingress+ingress.hostname~1string;pattern-x20-x2d"
+        }
+      ]
+    },
+    "constrains/ingress+ingress.hostname+ingress.hostname=null/anyOf/string;pattern-x20-x@2": {
+      "anyOf": [
+        {
+          "pattern": "^(?:(?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*))$",
+          "type": "string"
         }
       ]
     },
@@ -1974,10 +2358,10 @@
       "not": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1ingress.hostname@11"
+            "$ref": "#/definitions/constrains~1ingress.hostname@12"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.hostname@10"
+            "$ref": "#/definitions/constrains~1ingress.hostname@11"
           },
           {
             "$ref": "#/definitions/constrains~1ingress.hostname=null"
@@ -1986,7 +2370,7 @@
             "$ref": "#/definitions/constrains~1ingress.hostname@3"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.hostname@12"
+            "$ref": "#/definitions/constrains~1ingress.hostname@13"
           }
         ]
       }
@@ -2203,7 +2587,7 @@
     },
     "constrains/ingress.hostname": {
       "not": {
-        "$ref": "#/definitions/constrains~1ingress.hostname@13"
+        "$ref": "#/definitions/constrains~1ingress.hostname@14"
       }
     },
     "constrains/ingress.hostname+ingress.hostname=null": {
@@ -2372,7 +2756,8 @@
         "ingress": {
           "properties": {
             "hostname": {
-              "type": "boolean"
+              "pattern": "^(?:(?:[\\x20])*[\\x5b](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "type": "string"
             }
           },
           "required": [
@@ -2391,7 +2776,7 @@
         "ingress": {
           "properties": {
             "hostname": {
-              "type": "null"
+              "type": "boolean"
             }
           },
           "required": [
@@ -2410,7 +2795,7 @@
         "ingress": {
           "properties": {
             "hostname": {
-              "type": "number"
+              "type": "null"
             }
           },
           "required": [
@@ -2425,6 +2810,25 @@
       "type": "object"
     },
     "constrains/ingress.hostname@13": {
+      "properties": {
+        "ingress": {
+          "properties": {
+            "hostname": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "hostname"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.hostname@14": {
       "properties": {
         "ingress": {
           "properties": {
@@ -2656,7 +3060,7 @@
         "ingress": {
           "properties": {
             "hostname": {
-              "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*)$",
+              "pattern": "^(?:(?:[\\x20])*[\\x5b](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
               "type": "string"
             }
           },
@@ -2676,7 +3080,7 @@
         "ingress": {
           "properties": {
             "hostname": {
-              "pattern": "^(?:(?:[\\x20])*[\\x5b][\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)$",
+              "pattern": "^(?:(?:[\\x20])*[\\x5b](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*))$",
               "type": "string"
             }
           },
