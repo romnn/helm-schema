@@ -427,278 +427,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "dashboard": {
-                "properties": {
-                  "httproute": {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                },
-                "required": [
-                  "httproute"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "dashboard"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dashboard": {
-            "additionalProperties": {},
-            "properties": {
-              "httproute": {
-                "additionalProperties": {},
-                "description": "HTTPRoute configuration (Gateway API).\nref: https://gateway-api.sigs.k8s.io/api-types/httproute/",
-                "properties": {
-                  "rules": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/values~1object"
-                      },
-                      {
-                        "items": {
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "HTTPRoute rules configuration"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1controller.metrics.serviceMonitor.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1controller.metrics.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "properties": {
-                  "serviceMonitor": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "additionalLabels": {
-                        "description": "Labels to be added to the ServiceMonitor",
-                        "type": [
-                          "array",
-                          "null",
-                          "object"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1notifications.secret.create:t"
-          },
-          {
-            "properties": {
-              "notifications": {
-                "properties": {
-                  "secret": {
-                    "$ref": "#/definitions/constrains~1annotations:t"
-                  }
-                },
-                "required": [
-                  "secret"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "notifications"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "notifications": {
-            "additionalProperties": {},
-            "properties": {
-              "secret": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "description": "Annotations to be added to the notifications secret",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1dashboard.ingress.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "apiVersionOverrides": {
-            "description": "Override APIVersions\nIf you want to template helm charts but cannot access k8s API server\nyou can set api versions here",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1dashboard.ingress.hosts:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dashboard.ingress.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "dashboard": {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Ingress configuration.\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "hosts": {
-                    "description": "Dashboard ingress hosts\nArgo Rollouts Dashboard Ingress.\nHostnames must be provided if Ingress is enabled.\nSecrets must be manually created in the namespace\n- argorollouts.example.com",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1global+global.deploymentLabels+global.deploymentLabels=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podAnnotations"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podAnnotations": {
-            "description": "Annotations for the all deployed pods",
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "fullnameOverride": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        },
-        "then": {
-          "additionalProperties": {},
-          "properties": {
-            "fullnameOverride": {
-              "description": "String to fully override \"argo-rollouts.fullname\" template",
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -2189,6 +1917,38 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeVersionOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeVersionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1controller.pdb.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeVersionOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1dashboard.pdb.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeVersionOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
               },
               {
@@ -2610,6 +2370,278 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "dashboard": {
+                "properties": {
+                  "httproute": {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                },
+                "required": [
+                  "httproute"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "dashboard"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboard": {
+            "additionalProperties": {},
+            "properties": {
+              "httproute": {
+                "additionalProperties": {},
+                "description": "HTTPRoute configuration (Gateway API).\nref: https://gateway-api.sigs.k8s.io/api-types/httproute/",
+                "properties": {
+                  "rules": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1object"
+                      },
+                      {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "HTTPRoute rules configuration"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1controller.metrics.serviceMonitor.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1controller.metrics.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceMonitor": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "additionalLabels": {
+                        "description": "Labels to be added to the ServiceMonitor",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1notifications.secret.create:t"
+          },
+          {
+            "properties": {
+              "notifications": {
+                "properties": {
+                  "secret": {
+                    "$ref": "#/definitions/constrains~1annotations:t"
+                  }
+                },
+                "required": [
+                  "secret"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "notifications"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "notifications": {
+            "additionalProperties": {},
+            "properties": {
+              "secret": {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "description": "Annotations to be added to the notifications secret",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1dashboard.ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "apiVersionOverrides": {
+            "description": "Override APIVersions\nIf you want to template helm charts but cannot access k8s API server\nyou can set api versions here",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1dashboard.ingress.hosts:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1dashboard.ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1dashboard.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboard": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Ingress configuration.\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "hosts": {
+                    "description": "Dashboard ingress hosts\nArgo Rollouts Dashboard Ingress.\nHostnames must be provided if Ingress is enabled.\nSecrets must be manually created in the namespace\n- argorollouts.example.com",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global.deploymentLabels+global.deploymentLabels=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podAnnotations"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podAnnotations": {
+            "description": "Annotations for the all deployed pods",
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "fullnameOverride": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "fullnameOverride": {
+              "description": "String to fully override \"argo-rollouts.fullname\" template",
+              "type": "string"
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -4764,7 +4796,7 @@
               "$ref": "#/definitions/constrains~1controller+controller.component@2"
             },
             {
-              "$ref": "#/definitions/constrains~1controller.component@6"
+              "$ref": "#/definitions/constrains~1controller.component@5"
             }
           ]
         },
@@ -4800,7 +4832,7 @@
           "$ref": "#/definitions/constrains~1controller.component@3"
         },
         {
-          "$ref": "#/definitions/constrains~1controller.component@6"
+          "$ref": "#/definitions/constrains~1controller.component@5"
         }
       ]
     },
@@ -4835,7 +4867,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@9"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@13"
@@ -4891,10 +4923,10 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@6"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
                 },
                 {
                   "allOf": [
@@ -4921,7 +4953,7 @@
                   "$ref": "#/definitions/constrains~1serviceAccount.name@10"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@9"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@8"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
@@ -5070,7 +5102,7 @@
     "constrains/controller.component@5": {
       "properties": {
         "controller": {
-          "$ref": "#/definitions/constrains~1component@7"
+          "$ref": "#/definitions/constrains~1component@6"
         }
       },
       "required": [
@@ -5081,7 +5113,7 @@
     "constrains/controller.component@6": {
       "properties": {
         "controller": {
-          "$ref": "#/definitions/constrains~1component@6"
+          "$ref": "#/definitions/constrains~1component@7"
         }
       },
       "required": [
@@ -6929,13 +6961,13 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@6"
                     },
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.name@15"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@7"
                     }
                   ]
                 },
@@ -6948,13 +6980,13 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@6"
                     },
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.name@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@7"
                     }
                   ]
                 }
@@ -6975,96 +7007,96 @@
                     },
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.name@10"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@9"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@15"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@10"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@9"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1group-3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@15"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1group-3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
                     },
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@15"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@10"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1group-3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@15"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1group-3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@4"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@9"
                     },
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.name@13"
@@ -7073,7 +7105,7 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name@10"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@5"
                     }
                   ]
                 },
@@ -7086,7 +7118,7 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@9"
                     },
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.name@15"
@@ -8031,7 +8063,7 @@
           "$ref": "#/definitions/constrains~1controller.component@4"
         },
         {
-          "$ref": "#/definitions/constrains~1controller.component@5"
+          "$ref": "#/definitions/constrains~1controller.component@6"
         },
         {
           "$ref": "#/definitions/constrains~1controller.component@7"
@@ -8315,6 +8347,45 @@
           "$ref": "#/definitions/constrains~1namespaceOverride@2"
         }
       ]
+    },
+    "constrains/kubeVersionOverride": {
+      "properties": {
+        "kubeVersionOverride": {
+          "allOf": [
+            {
+              "pattern": "",
+              "type": "string"
+            },
+            {
+              "pattern": "^[0-9A-Za-z.+-]{1,256}$",
+              "type": "string"
+            },
+            {
+              "pattern": "^(?:v?0*(?:0)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?|v?0*(?:0)\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?|v?0*(?:0)\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?|v?0*1(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?|v?0*1\\.0*(?:0|[1-9]|[1-1][0-9]|2[0-0])(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?|v?0*1\\.0*(?:0|[1-9]|[1-1][0-9]|2[0-0])\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)$",
+              "type": "string"
+            },
+            {
+              "pattern": "^v?(?:0*(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]|1844674407370955161[0-4])|0*18446744073709551615)(?:\\.(?:0*(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]|1844674407370955161[0-4])|0*18446744073709551615)){0,2}(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kubeVersionOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/kubeVersionOverride:t": {
+      "properties": {
+        "kubeVersionOverride": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "kubeVersionOverride"
+      ],
+      "type": "object"
     },
     "constrains/nameOverride": {
       "not": {
@@ -8750,7 +8821,7 @@
           "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@6"
+          "$ref": "#/definitions/constrains~1serviceAccount.name@5"
         }
       ]
     },
@@ -9325,7 +9396,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1component~1string;pattern-x20"
+              "$ref": "#/definitions/constrains~1component~1allOf~1not~1object+object"
             }
           },
           "required": [
@@ -9344,7 +9415,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1component~1allOf~1not~1object+object"
+              "$ref": "#/definitions/constrains~1component~1allOf~1not~1object+object@6"
             }
           },
           "required": [
@@ -9363,7 +9434,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1component~1allOf~1not~1object+object@6"
+              "$ref": "#/definitions/constrains~1component~1string;pattern-x20"
             }
           },
           "required": [
@@ -9382,7 +9453,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1component~1string;pattern-x20-x5b@2"
+              "$ref": "#/definitions/constrains~1component~1string;pattern-x20-x25"
             }
           },
           "required": [
@@ -9401,7 +9472,7 @@
         "serviceAccount": {
           "properties": {
             "name": {
-              "$ref": "#/definitions/constrains~1component~1string;pattern-x20-x25"
+              "$ref": "#/definitions/constrains~1component~1string;pattern-x20-x5b@2"
             }
           },
           "required": [
