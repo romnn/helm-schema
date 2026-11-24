@@ -37,6 +37,40 @@ struct LoopPass {
     breaks: Vec<Exit>,
     other: Vec<Exit>,
 }
+
+struct RangeExits {
+    completed: Vec<Exit>,
+    backedge: Vec<Exit>,
+    continuation: Option<Rc<super::RepeatedOutput>>,
+}
+
+impl RangeExits {
+    fn into_exits(self, source: &Value) -> impl Iterator<Item = Exit> {
+        let Self {
+            completed,
+            backedge,
+            continuation,
+        } = self;
+        completed
+            .into_iter()
+            .chain(backedge.into_iter().map(move |mut exit| {
+                if matches!(exit.flow, Flow::Normal(_)) {
+                    exit.flow = Flow::Normal(Normal {
+                        value: Value::unknown(),
+                    });
+                    if let Some(continuation) = &continuation {
+                        exit.state.output.repeat(Rc::clone(continuation));
+                    } else {
+                        exit.state
+                            .output
+                            .emit(exit.state.heap.freeze(&Value::influenced(source.inputs())));
+                    }
+                }
+                exit
+            }))
+    }
+}
+
 impl LoopPass {
     fn covers_repetition(&self, entry: &State, scope: super::loops::CarriedScope<'_>) -> bool {
         self.repeats(|exit| super::loops::covers(entry, &exit.state, scope))
@@ -89,6 +123,24 @@ impl LoopPass {
 
     fn always_aborts(&self, entry: &State, scope: super::loops::CarriedScope<'_>) -> bool {
         self.backedge.is_empty() && !self.other.is_empty() && self.covers_repetition(entry, scope)
+    }
+
+    fn output_continuation(
+        &self,
+        entry: &State,
+        source: &Value,
+    ) -> Option<Rc<super::RepeatedOutput>> {
+        let outputs = |exits: &[Exit]| {
+            exits
+                .iter()
+                .map(|exit| exit.state.output.suffix_after(&entry.output))
+                .collect::<Option<Vec<_>>>()
+        };
+        Some(Rc::new(super::RepeatedOutput {
+            bodies: outputs(&self.backedge)?,
+            breaks: outputs(&self.breaks)?,
+            inputs: source.inputs(),
+        }))
     }
 
     fn member_demands<'a>(
@@ -713,16 +765,22 @@ impl Executor<'_> {
             exits.extend(self.range_else(program, boundaries, state.fork(enter, false)));
             Some(pass)
         });
-        let (other, mut leaving) = if let Some(pass) = members {
+        let range = if let Some(pass) = members {
+            let continuation = pass.output_continuation(state, value);
             let LoopPass {
                 mut backedge,
-                breaks: _,
+                breaks,
                 mut other,
             } = pass;
             for exit in backedge.iter_mut().chain(&mut other) {
                 exit.state.retain_rendered_uses_since(state);
             }
-            (other, backedge)
+            other.extend(breaks);
+            RangeExits {
+                completed: other,
+                backedge,
+                continuation,
+            }
         } else {
             if first.is_none() {
                 let test = state.heap.arena.decision(
@@ -743,24 +801,12 @@ impl Executor<'_> {
                 &|state, entry| {
                     iteration(state, entry.map_or(&member, |entry| &entry.value), entry)
                 },
-                id,
                 &entry_state,
+                value,
                 first.as_ref(),
             )
         };
-        for exit in &mut leaving {
-            if !matches!(exit.flow, Flow::Normal(_)) {
-                continue;
-            }
-            exit.flow = Flow::Normal(Normal {
-                value: Value::unknown(),
-            });
-            exit.state
-                .output
-                .emit(exit.state.heap.freeze(&Value::influenced(value.inputs())));
-        }
-        exits.extend(other);
-        exits.extend(leaving);
+        exits.extend(range.into_exits(value));
         exits
     }
 
@@ -773,14 +819,15 @@ impl Executor<'_> {
         program: &Program<'_>,
         bindings: &RangeBindings,
         iteration: &dyn Fn(State, Option<&RangeEntry>) -> State,
-        id: Option<super::LoopId>,
         state: &State,
+        source: &Value,
         first_entry: Option<&RangeEntry>,
-    ) -> (Vec<Exit>, Vec<Exit>) {
+    ) -> RangeExits {
         // ADR 0072 §6: the first iteration runs from the entry state with its exact member
         // when known. A pass using the summary member can stand for later iterations if its
         // backedges stay inside the entry state.
         // Each iteration declares its binders afresh, so their values never carry over.
+        let id = state.loop_id(bindings.body.start as u64);
         let rebound = bindings.rebound();
         let scope = super::loops::CarriedScope {
             frames: state.frames.len(),
@@ -800,23 +847,30 @@ impl Executor<'_> {
         {
             exit.state.retain_rendered_uses_since(state);
         }
+        let stable = first_entry.is_none()
+            && first
+                .backedge
+                .iter()
+                .all(|exit| super::loops::covers(state, &exit.state, scope));
+        let continuation = if stable && !first.backedge.is_empty() {
+            first.output_continuation(state, source)
+        } else {
+            None
+        };
         let LoopPass {
             backedge,
             breaks,
-            other,
+            mut other,
         } = first;
-        let mut leaving = breaks;
-        if backedge.is_empty() {
-            return (other, leaving);
+        other.extend(breaks);
+        if backedge.is_empty() || stable {
+            return RangeExits {
+                completed: other,
+                backedge,
+                continuation,
+            };
         }
-        if first_entry.is_none()
-            && backedge
-                .iter()
-                .all(|exit| super::loops::covers(state, &exit.state, scope))
-        {
-            leaving.extend(backedge);
-            return (other, leaving);
-        }
+        let mut leaving = Vec::new();
         let starts = if first_entry.is_some() {
             // A summarized known collection has more than one member.
             backedge
@@ -840,15 +894,21 @@ impl Executor<'_> {
                 })
                 .collect()
         };
-        leaving.extend(self.rest_fixpoint(
+        let (finished, repeating) = self.rest_fixpoint(
             program,
             bindings.body,
             &|state| iteration(state, None),
             id,
             starts,
             scope,
-        ));
-        (other, leaving)
+        );
+        other.extend(finished);
+        leaving.extend(repeating);
+        RangeExits {
+            completed: other,
+            backedge: leaving,
+            continuation: None,
+        }
     }
 
     /// Runs the Rest passes from the states after the first iteration until one pass stays
@@ -862,7 +922,7 @@ impl Executor<'_> {
         id: Option<super::LoopId>,
         mut starts: Vec<super::loops::Carried>,
         scope: super::loops::CarriedScope<'_>,
-    ) -> Vec<Exit> {
+    ) -> (Vec<Exit>, Vec<Exit>) {
         let mut passes = 0;
         let mut leaving = Vec::new();
         loop {
@@ -882,8 +942,10 @@ impl Executor<'_> {
             }
             if stable {
                 tracing::debug!(passes, "range fixpoint");
-                leaving.extend(results.into_iter().flat_map(|pass| pass.backedge));
-                return leaving;
+                return (
+                    leaving,
+                    results.into_iter().flat_map(|pass| pass.backedge).collect(),
+                );
             }
             // Up to the pass bound a changed field of an exact map widens alone; past it every
             // uncovered object widens whole, and past twice the bound every uncovered location

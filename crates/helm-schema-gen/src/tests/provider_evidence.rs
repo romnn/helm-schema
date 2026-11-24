@@ -1629,6 +1629,136 @@ fn unconditional_provider_required_field_requires_direct_source_leaf() {
     }
 }
 
+#[test]
+fn only_the_nil_omitting_mount_path_requires_its_source() -> eyre::Result<()> {
+    let provider = Chain::new(vec![Box::new(
+        KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
+            .with_cache_dir(bundle_cache_dir())
+            .with_allow_download(false),
+    )]);
+    for (expression, missing_allowed) in [
+        (r"{{ .Values.mountPath | quote }}", false),
+        (r#""{{ .Values.mountPath }}""#, true),
+        (r"'{{ .Values.mountPath | quote }}'", true),
+        (r#"{{ .Values.mountPath | default "/data" | quote }}"#, true),
+        (r#"{{ .Values.mountPath | quote | default "/data" }}"#, true),
+        (r"{{ .Values.mountPath | quote | quote }}", true),
+    ] {
+        let source = indoc::formatdoc! {"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: probe
+            spec:
+              selector:
+                matchLabels:
+                  app: probe
+              template:
+                metadata:
+                  labels:
+                    app: probe
+                spec:
+                  containers:
+                    - name: probe
+                      image: busybox
+                      volumeMounts:
+                        - name: data
+                          mountPath: {expression}
+                  volumes:
+                    - name: data
+                      emptyDir: {{}}
+        "};
+        let signals = schema_signals_for(parse_ir(&source));
+        let schema = generate_values_schema(
+            ValuesSchemaInput::new(&signals, &provider)
+                .with_values_documents(&prepared_values_documents(Some("mountPath: /data\n"))),
+        );
+        let validator = jsonschema::validator_for(&schema)?;
+        for (instance, want) in [
+            (serde_json::json!({"mountPath": "/data"}), true),
+            (serde_json::json!({"mountPath": 42}), true),
+            (serde_json::json!({}), missing_allowed),
+            (serde_json::json!({"mountPath": null}), missing_allowed),
+        ] {
+            sim_assert_eq!(
+                have: validator.is_valid(&instance),
+                want: want,
+                "{expression}: {instance}"
+            );
+        }
+    }
+
+    let nullable = indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        data:
+          value: {{ .Values.value | quote }}
+    "};
+    let signals = schema_signals_for(parse_ir(nullable));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &provider)
+            .with_values_documents(&prepared_values_documents(Some("value: text\n"))),
+    );
+    let validator = jsonschema::validator_for(&schema)?;
+    for instance in [serde_json::json!({}), serde_json::json!({"value": null})] {
+        sim_assert_eq!(have: validator.is_valid(&instance), want: true, "{instance}: {schema}");
+    }
+    Ok(())
+}
+
+#[test]
+fn literal_yaml_quotes_keep_a_ranged_mount_source_optional() -> eyre::Result<()> {
+    for (expression, missing_allowed) in [
+        (r"{{ $mount.path | quote }}", false),
+        (r"'{{ $mount.path | quote }}'", true),
+    ] {
+        let source = indoc::formatdoc! {r"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: test
+            spec:
+              selector:
+                matchLabels:
+                  app: test
+              template:
+                metadata:
+                  labels:
+                    app: test
+                spec:
+                  containers:
+                    - name: test
+                      image: busybox
+                      {{{{- if .Values.mounts }}}}
+                      volumeMounts:
+                        {{{{- range $_, $mount := .Values.mounts }}}}
+                        - mountPath: {expression}
+                          name: data
+                        {{{{- end }}}}
+                      {{{{- end }}}}
+                  volumes:
+                    - name: data
+                      emptyDir: {{}}
+        "};
+        let schema = schema_for_values_yaml(parse_ir(&source), Some("mounts: []\n"));
+        let validator = jsonschema::validator_for(&schema)?;
+        for (instance, want) in [
+            (serde_json::json!({"mounts": []}), true),
+            (serde_json::json!({"mounts": [{"path": "/data"}]}), true),
+            (serde_json::json!({"mounts": [{}]}), missing_allowed),
+        ] {
+            sim_assert_eq!(
+                have: validator.is_valid(&instance),
+                want: want,
+                "{expression}: {instance}"
+            );
+        }
+    }
+    Ok(())
+}
+
 /// A chart may intentionally leave a provider input unset for the user to
 /// supply at install time. Presence backprojection must not make that shipped
 /// default document invalid.
@@ -4138,7 +4268,14 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
         probe:
           httpHeaders: []
     "};
-    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let contract = parse_ir(src).finalize();
+    let value = helm_schema_core::ValuesPath::parse("probe.httpHeaders.*.value");
+    assert!(contract.uses().iter().any(|row| {
+        row.source_expr == value
+            && row.kind == ValueKind::Scalar
+            && row.plain_scalar_placement == helm_schema_core::PlainScalarPlacement::BlockValue
+    }));
+    let schema = schema_for_values_yaml(contract.into_schema_signals(), Some(values_yaml));
     for (instance, want, label) in [
         (
             composed_instance(values_yaml, serde_json::json!({})),
@@ -4155,6 +4292,22 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
                 [{ "name": "X-Audit", "value": "audit" }] } }),
             true,
             "populated headers render",
+        ),
+        (
+            serde_json::json!({ "probe": { "httpHeaders": [
+                { "name": "X-Audit", "value": "audit" },
+                { "name": "X-Trace", "value": "trace" },
+            ] } }),
+            true,
+            "two complete headers render",
+        ),
+        (
+            serde_json::json!({ "probe": { "httpHeaders": [
+                { "name": "X-Audit", "value": "audit" },
+                { "name": "X-Trace" },
+            ] } }),
+            false,
+            "a missing value in the second header renders null",
         ),
         (
             serde_json::json!({ "probe": { "httpHeaders": [{}] } }),
@@ -4177,6 +4330,175 @@ fn ranged_member_leaves_of_required_provider_fields_bind_presence() {
             schema_accepts_instance(&schema, &instance) == want,
             "ranged required leaf ({label}): instance={instance}; schema={schema}"
         );
+    }
+}
+
+#[test]
+fn a_range_boundary_can_span_literals_and_empty_inner_ranges() {
+    for interruption in [
+        "{{/* no output */}}",
+        "{{ range $_, $unused := $.Values.noOutput }}{{ continue }}{{ end }}",
+    ] {
+        let source = indoc::formatdoc! {r"
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: test
+            spec:
+              selector:
+                matchLabels:
+                  app: test
+              template:
+                metadata:
+                  labels:
+                    app: test
+                spec:
+                  containers:
+                    - name: test
+                      image: busybox
+                      livenessProbe:
+                        httpGet:
+                          path: /healthz
+                          port: http
+                          {{{{- if .Values.headers }}}}
+                          httpHeaders:
+                          {{{{- range $_, $header := .Values.headers }}}}
+                          {interruption}- name: X-Audit
+                            value: {{{{ $header.value }}}}
+                          {{{{- end }}}}
+                          {{{{- end }}}}
+        "};
+        let contract = parse_ir(&source).finalize();
+        let path = helm_schema_core::ValuesPath::parse("headers.*.value");
+        assert!(
+            contract.uses().iter().any(|row| {
+                row.source_expr == path
+                    && row.kind == ValueKind::Scalar
+                    && row.plain_scalar_placement
+                        == helm_schema_core::PlainScalarPlacement::BlockValue
+            }),
+            "{interruption}"
+        );
+        let schema = schema_for_values_yaml(
+            contract.into_schema_signals(),
+            Some("headers: []\nnoOutput: []\n"),
+        );
+        for (headers, allowed) in [
+            (
+                serde_json::json!([{"value": "ok"}, {"value": "also-ok"}]),
+                true,
+            ),
+            (serde_json::json!([{"value": "ok"}, {}]), false),
+        ] {
+            let instance = serde_json::json!({"headers": headers, "noOutput": [{}, {}]});
+            sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: allowed, "{interruption}: {instance}");
+        }
+    }
+}
+
+#[test]
+fn a_guard_default_does_not_exempt_a_required_ranged_leaf() {
+    let source = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: test
+                  image: busybox
+                  volumeMounts:
+                  {{- range $_, $mount := .Values.mounts }}
+                  {{- if not $mount.enabled }}
+                    - mountPath: {{ $mount.path }}
+                      name: data
+                  {{- end }}
+                  {{- end }}
+              volumes:
+                - name: data
+                  emptyDir: {}
+    "};
+    let defaults = indoc! {"
+        _defaults:
+          mounts:
+            guarded: {enabled: false}
+            refilled: {enabled: false, path: /cache}
+        mounts: {}
+    "};
+    let signals = schema_signals_for(parse_ir(source)).with_values_default_sources([
+        helm_schema_core::ValuesDefaultSource {
+            target_path: helm_schema_core::ValuesPath::default(),
+            source_path: helm_schema_core::ValuesPath::parse("_defaults"),
+        },
+    ]);
+    let schema = schema_for_values_yaml(signals, Some(defaults));
+    for (mounts, allowed) in [
+        (serde_json::json!({"guarded": {}}), false),
+        (serde_json::json!({"guarded": {"path": "/data"}}), true),
+        (serde_json::json!({"guarded": {"enabled": true}}), true),
+        (
+            serde_json::json!({"guarded": {"enabled": true}, "refilled": {}}),
+            true,
+        ),
+    ] {
+        let instance = composed_instance(defaults, serde_json::json!({"mounts": mounts}));
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: allowed, "{instance}: {schema}");
+    }
+}
+
+#[test]
+fn ranged_scalar_parts_can_glue_to_later_members_or_the_suffix() {
+    for (suffix, instances) in [
+        (
+            "",
+            [
+                serde_json::json!([{ "part": 1 }, { "part": "x" }]),
+                serde_json::json!([{}, { "part": "ok" }]),
+            ],
+        ),
+        (
+            "x",
+            [serde_json::json!([{}]), serde_json::json!([{ "part": 1 }])],
+        ),
+    ] {
+        for (bindings, part) in [("", ".part"), ("$_, $piece := ", "$piece.part")] {
+            let source = indoc::formatdoc! {r"
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: probe
+                data:
+                  joined: {{{{ range {bindings}.Values.pieces }}}}{{{{ {part} }}}}{{{{ end }}}}{suffix}
+            "};
+            let contract = parse_ir(&source).finalize();
+            let path = helm_schema_core::ValuesPath::parse("pieces.*.part");
+            if !bindings.is_empty() {
+                assert!(contract.uses().iter().any(|row| {
+                    row.source_expr == path
+                        && row.kind == ValueKind::PartialScalar
+                        && row.path.0.join(".") == "data.joined"
+                }));
+            }
+            assert!(!contract.uses().iter().any(|row| {
+                row.source_expr == path
+                    && row.plain_scalar_placement
+                        == helm_schema_core::PlainScalarPlacement::BlockValue
+            }));
+            let schema =
+                schema_for_values_yaml(contract.into_schema_signals(), Some("pieces: []\n"));
+            for pieces in &instances {
+                let instance = serde_json::json!({ "pieces": pieces });
+                assert!(schema_accepts_instance(&schema, &instance), "{instance}");
+            }
+        }
     }
 }
 

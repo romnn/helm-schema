@@ -1322,6 +1322,7 @@ fn deleted_dependency_roots_refill_from_their_subchart() {
 /// The gate is the document's OWN truthiness rather than `true`: a mapping
 /// is Helm-falsy only when empty, so a document whose every key was
 /// null-deleted never enters the `with` and renders.
+/// The name fallback supplies a valid `ConfigMap` name for that document.
 #[test]
 fn root_scoped_with_navigates_the_document_it_rebinds() {
     let helpers = indoc! {r#"
@@ -1336,7 +1337,7 @@ fn root_scoped_with_navigates_the_document_it_rebinds() {
         apiVersion: v1
         kind: ConfigMap
         metadata:
-          name: {{ .Values.other | quote }}
+          name: {{ .Values.other | default "cm" | quote }}
     "#};
     let values_yaml = indoc! {"
         service:

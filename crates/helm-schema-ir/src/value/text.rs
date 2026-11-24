@@ -187,7 +187,7 @@ fn opaque(graph: &TextBuffer) -> bool {
         return false;
     };
     match node.content() {
-        super::TextPart::Unknown(_) => true,
+        super::TextPart::Unknown(_) | super::TextPart::Repeat(_) => true,
         super::TextPart::Frozen(value) => {
             value.identity().is_none()
                 && matches!(
@@ -368,7 +368,9 @@ fn serialized_buffer(buffer: &TextBuffer, outcome: &Outcome<'_>, remaining: &mut
                         || serialized_buffer(no, outcome, remaining)
                 }
             },
-            super::TextPart::Bytes(_) | super::TextPart::Unknown(_) => false,
+            super::TextPart::Bytes(_)
+            | super::TextPart::Unknown(_)
+            | super::TextPart::Repeat(_) => false,
         };
         if serialized {
             return true;
@@ -679,7 +681,9 @@ pub(super) fn buffer_text(
         let part = match node.content() {
             super::TextPart::Bytes(bytes) => bytes.clone(),
             super::TextPart::Frozen(value) => value_text(value, outcome, remaining)?,
-            super::TextPart::Unknown(_) => return Err(Unresolved::Unknown),
+            super::TextPart::Unknown(_) | super::TextPart::Repeat(_) => {
+                return Err(Unresolved::Unknown);
+            }
             super::TextPart::Select { decision, yes, no } => {
                 buffer_text(selected(decision, yes, no, outcome)?, outcome, remaining)?
             }

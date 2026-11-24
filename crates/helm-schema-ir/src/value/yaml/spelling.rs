@@ -277,7 +277,9 @@ impl SpellingTransfer {
                         self.choice(decision, yes, no)
                     }
                 }
-                TextPart::Bytes(_) | TextPart::Unknown(_) => return Spellings::unknown(),
+                TextPart::Bytes(_) | TextPart::Unknown(_) | TextPart::Repeat(_) => {
+                    return Spellings::unknown();
+                }
             };
             result = self.concatenate(result, &next);
         }

@@ -230,10 +230,9 @@ pub struct ContractUse {
     /// its value: the sink constrains the key domain only.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub range_key: bool,
-    /// The rendered text is a Sprig `quote`/`squote` of the value, which
-    /// skips nil operands: a missing or null source renders an explicit
-    /// YAML null into the sink (see
-    /// [`ProviderSchemaUse::nil_omitting`](crate::ProviderSchemaUse::nil_omitting)).
+    /// The rendered text is empty on a nil source because the outer Sprig quote omits it.
+    ///
+    /// Only whole plain block values turn this empty text into an explicit YAML null.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub nil_omitting: bool,
     /// Literal member keys a guard-scoped `omit` may remove from the

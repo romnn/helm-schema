@@ -1368,7 +1368,9 @@ fn build_single_condition_fragment(
                 absence,
                 polarity,
             );
-            (!clauses.is_empty()).then(|| SchemaNode::all_of(clauses))
+            (!clauses.is_empty()
+                && (polarity != ConditionPolarity::Exact || clauses.len() == guards.len()))
+            .then(|| SchemaNode::all_of(clauses))
         }
         ConditionalGuard::AnyOf(guards) => {
             if guards.is_empty() && polarity == ConditionPolarity::Exact {
@@ -1381,7 +1383,9 @@ fn build_single_condition_fragment(
                 absence,
                 polarity,
             );
-            (!clauses.is_empty()).then(|| SchemaNode::any_of(clauses))
+            (!clauses.is_empty()
+                && (polarity != ConditionPolarity::Exact || clauses.len() == guards.len()))
+            .then(|| SchemaNode::any_of(clauses))
         }
     }
 }

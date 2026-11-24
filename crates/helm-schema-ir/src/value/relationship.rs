@@ -1251,7 +1251,8 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                     yes: _,
                     no: _,
                 }
-                | super::TextPart::Unknown(_) => significant += 1,
+                | super::TextPart::Unknown(_)
+                | super::TextPart::Repeat(_) => significant += 1,
             }
         }
         let whole = whole && significant == 1 && !literal;
@@ -1292,7 +1293,9 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                     |query| query.capture_parts(yes, members, depth + 1, whole),
                     |query| query.capture_parts(no, members, depth + 1, whole),
                 ),
-                super::TextPart::Unknown(_) => Relationships::unknown(),
+                super::TextPart::Unknown(_) | super::TextPart::Repeat(_) => {
+                    Relationships::unknown()
+                }
             };
             if !self.charge(Self::copy_work(&payload)) {
                 view.unknown = Predicate::True;
@@ -2366,7 +2369,8 @@ impl<'a> RelationshipQuery<'a, '_> {
                     yes: _,
                     no: _,
                 }
-                | super::TextPart::Unknown(_) => return LexicalPreimage::undecided(),
+                | super::TextPart::Unknown(_)
+                | super::TextPart::Repeat(_) => return LexicalPreimage::undecided(),
             }
         }
         match significant {
@@ -2382,9 +2386,11 @@ impl<'a> RelationshipQuery<'a, '_> {
                     this.lexical_output(if taken { yes } else { no }, query, depth + 1)
                 })
             }
-            Some(super::TextPart::Bytes(_) | super::TextPart::Unknown(_)) => {
-                LexicalPreimage::undecided()
-            }
+            Some(
+                super::TextPart::Bytes(_)
+                | super::TextPart::Unknown(_)
+                | super::TextPart::Repeat(_),
+            ) => LexicalPreimage::undecided(),
         }
     }
 

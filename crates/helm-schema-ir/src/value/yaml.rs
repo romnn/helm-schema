@@ -1,5 +1,6 @@
 //! YAML ownership and lexical coverage sealed from the executed output graph.
 
+mod repetition;
 mod spelling;
 pub(crate) use spelling::PayloadShape;
 pub(crate) use spelling::SpellingTransfer;
@@ -242,7 +243,10 @@ impl<'a> PlacedTerm<'a> {
         while let Some((condition, node)) = pending.pop() {
             remaining = remaining.checked_sub(1)?;
             match node.content() {
-                TextPart::Frozen(_) | TextPart::Bytes(_) | TextPart::Unknown(_) => {
+                TextPart::Frozen(_)
+                | TextPart::Bytes(_)
+                | TextPart::Unknown(_)
+                | TextPart::Repeat(_) => {
                     values.push((condition, node));
                 }
                 TextPart::Select { decision, yes, no } => {
@@ -278,6 +282,7 @@ impl<'a> PlacedTerm<'a> {
                 TextPart::Frozen(value) => Some((guard, value)),
                 TextPart::Bytes(_)
                 | TextPart::Unknown(_)
+                | TextPart::Repeat(_)
                 | TextPart::Select {
                     decision: _,
                     yes: _,
@@ -289,7 +294,12 @@ impl<'a> PlacedTerm<'a> {
 
     pub(crate) fn occurrence_guard(&self, id: ObservationId) -> Option<Predicate> {
         match self.node.node().map(OutputNode::content) {
-            Some(TextPart::Frozen(_) | TextPart::Bytes(_) | TextPart::Unknown(_)) => {
+            Some(
+                TextPart::Frozen(_)
+                | TextPart::Bytes(_)
+                | TextPart::Unknown(_)
+                | TextPart::Repeat(_),
+            ) => {
                 return Some(Predicate::True);
             }
             None => return None,
@@ -362,6 +372,7 @@ impl<'a> PlacedTerm<'a> {
         match self.node.node().map(OutputNode::content) {
             Some(TextPart::Frozen(value)) => value.inputs(),
             Some(TextPart::Unknown(inputs)) => inputs.clone(),
+            Some(TextPart::Repeat(repeat)) => repeat.inputs.clone(),
             Some(TextPart::Select {
                 decision: _,
                 yes,
@@ -737,7 +748,8 @@ impl<'a> PlacedDocument<'a> {
         if self.ownership.skeleton.segments.iter().any(|segment| {
             segment.placeholder
                 && consumed <= segment.range.start
-                && segment.range.start < span.start
+                && (segment.range.start < span.start
+                    || (segment.range.start == span.start && zero_width_hole(segment)))
         }) {
             Predicate::False
         } else {
@@ -1391,7 +1403,9 @@ impl LayoutBuilder<'_> {
                     }
                 }
                 TextPart::Bytes(bytes) => self.append(&mut contexts, bytes, false, &node),
-                TextPart::Unknown(_) => self.append(&mut contexts, "00000000", true, &node),
+                TextPart::Unknown(_) | TextPart::Repeat(_) => {
+                    self.append(&mut contexts, "00000000", true, &node);
+                }
             }
         }
         contexts
@@ -2081,10 +2095,10 @@ impl LayoutBuilder<'_> {
                     if repaired.replace_spelling(
                         candidate.piece,
                         &payload.bytes,
-                        SerializerSpelling {
+                        Some(SerializerSpelling {
                             shape,
                             flow_node: payload.flow_node,
-                        },
+                        }),
                     ) {
                         repaired.condition = condition;
                         repairs.push(repaired);
@@ -2097,7 +2111,7 @@ impl LayoutBuilder<'_> {
     }
 
     #[tracing::instrument(skip_all, fields(manifest = matches!(self.output, FileOutput::Manifest)))]
-    fn finish_layout(&mut self, context: LayoutContext) {
+    fn finish_layout(&mut self, mut context: LayoutContext) {
         if matches!(self.output, FileOutput::Text) {
             let removed = marker_ranges(&context.skeleton.text);
             self.seal_layout(CompletedLayout {
@@ -2107,6 +2121,7 @@ impl LayoutBuilder<'_> {
             });
             return;
         }
+        self.place_repetitions(&mut context);
         for context in self.complete_layout(context) {
             self.seal_layout(context);
         }
@@ -2215,7 +2230,7 @@ impl LayoutContext {
         &mut self,
         piece: usize,
         spelling: &str,
-        class: SerializerSpelling,
+        class: Option<SerializerSpelling>,
     ) -> bool {
         let Some(range) = self
             .skeleton
@@ -2273,7 +2288,7 @@ impl LayoutContext {
         let mut terms = self.terms.clone();
         for (index, term) in terms.iter_mut().enumerate() {
             if index == piece {
-                term.serializer = Some(class);
+                term.serializer = class;
             } else if term.start >= range.end {
                 let Some(start) = translate(term.start) else {
                     return false;
@@ -2729,7 +2744,9 @@ fn documents(skeleton: &Skeleton) -> Option<ManifestChunks> {
                     } = *segment;
                     let from = range.start.max(start);
                     let to = range.end.min(end);
-                    (from < to).then(|| SkeletonSegment {
+                    (from < to
+                        || (zero_width_hole(segment) && (start..=end).contains(&range.start)))
+                    .then(|| SkeletonSegment {
                         range: Span::new(from - start, to - start),
                         piece,
                         placeholder,
@@ -2863,7 +2880,7 @@ fn stripped_skeleton(skeleton: &Skeleton, removed: &[Span]) -> Skeleton {
                 } = *segment;
                 let start = translate(range.start);
                 let end = translate(range.end);
-                (start < end).then_some(SkeletonSegment {
+                (start < end || zero_width_hole(segment)).then_some(SkeletonSegment {
                     range: Span::new(start, end),
                     piece,
                     placeholder,
@@ -2871,6 +2888,10 @@ fn stripped_skeleton(skeleton: &Skeleton, removed: &[Span]) -> Skeleton {
             })
             .collect(),
     }
+}
+
+fn zero_width_hole(segment: &SkeletonSegment) -> bool {
+    segment.placeholder && segment.range.start == segment.range.end
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -3560,7 +3581,7 @@ impl<'a> LexicalTransfers<'a> {
                     [yes, no].map(|branch| self.leading_buffer(branch, state, transforms, memo));
                 Self::choice(decision, branches, memo)
             }
-            TextPart::Unknown(_) => States::new(),
+            TextPart::Unknown(_) | TextPart::Repeat(_) => States::new(),
         };
         states.retain(|state, _| state.is_absorbing());
         states
@@ -3625,7 +3646,7 @@ impl<'a> LexicalTransfers<'a> {
                     quoted::literal(BTreeMap::from([(state, Predicate::True)]), &text, memo)
                 })
             }
-            TextPart::Unknown(_) => States::new(),
+            TextPart::Unknown(_) | TextPart::Repeat(_) => States::new(),
             TextPart::Select { decision, yes, no } => {
                 let branches =
                     [yes, no].map(|branch| self.transfer_buffer(branch, state, transforms, memo));
@@ -3675,12 +3696,18 @@ fn quoted_tokens(
     selections: &[SelectedSpan],
     memo: &PredicateMemo,
 ) -> QuotedPrefix {
+    let known_end = owned
+        .skeleton
+        .segments
+        .iter()
+        .find(|segment| zero_width_hole(segment))
+        .map_or(usize::MAX, |segment| segment.range.start);
     let mut prefix = Predicate::True;
     let mut failures = Vec::new();
     let mut consumed = 0;
     let mut boundaries = Vec::new();
     for (index, node) in owned.nodes.iter().enumerate() {
-        if node.span.end <= consumed {
+        if node.span.end <= consumed || node.span.end > known_end {
             continue;
         }
         if let Some(transfer) = serializations

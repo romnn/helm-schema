@@ -863,7 +863,7 @@ impl Query<'_> {
                     let no = self.buffer(no, depth + 1, strip_marker);
                     self.select(decision, yes, no)
                 }
-                TextPart::Unknown(_) => TextShape::unknown(),
+                TextPart::Unknown(_) | TextPart::Repeat(_) => TextShape::unknown(),
             };
             shape = self.concatenate(shape, next);
             if self.prefix_only && shape.prefix.as_ref().is_none_or(|prefix| !prefix.complete) {

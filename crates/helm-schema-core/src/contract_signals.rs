@@ -1171,6 +1171,13 @@ pub enum FailValueRequirement {
     /// render with a truthy `type` OR a legacy truthy `hostPath`, and
     /// conjoining those requirements rejected both documented shapes.
     AnyOf(Vec<Vec<FailValueRequirement>>),
+    /// Applies a requirement when an exact condition holds on the ranged member.
+    When {
+        /// Paths are relative to the member.
+        guard: ConditionalGuard,
+        /// The requirement on that member.
+        requirement: Box<FailValueRequirement>,
+    },
     /// The value must not equal this literal (cilium forbids ranged
     /// `extraEnv` names colliding with its own backoff variables).
     NotEquals(GuardValue),

@@ -709,11 +709,21 @@ enum TextPart {
     Bytes(String),
     Frozen(FrozenValue),
     Unknown(BTreeSet<ValuesPath>),
+    Repeat(Rc<RepeatedOutput>),
     Select {
         decision: Rc<FrozenTest>,
         yes: Rc<TextBuffer>,
         no: Rc<TextBuffer>,
     },
+}
+
+#[derive(Debug)]
+struct RepeatedOutput {
+    /// Zero or more fresh iterations of any of these executed body outputs.
+    bodies: Vec<TextBuffer>,
+    /// One final iteration can emit any of these outputs before leaving the range.
+    breaks: Vec<TextBuffer>,
+    inputs: BTreeSet<ValuesPath>,
 }
 #[derive(Clone, Debug)]
 pub(crate) struct ExecutedSite {

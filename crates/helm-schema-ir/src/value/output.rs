@@ -140,6 +140,7 @@ impl TextBuffer {
                     TextPart::Bytes(_) => {}
                     TextPart::Frozen(value) => inputs.extend(value.inputs()),
                     TextPart::Unknown(paths) => inputs.extend(paths.iter().cloned()),
+                    TextPart::Repeat(repeat) => inputs.extend(repeat.inputs.iter().cloned()),
                     TextPart::Select {
                         decision: _,
                         yes,
@@ -219,6 +220,20 @@ impl TextBuffer {
         self.push(TextPart::Frozen(value).into());
     }
 
+    pub(super) fn suffix_after(&self, entry: &Self) -> Option<Self> {
+        let mut parts = self.parts.iter();
+        for old in &entry.parts {
+            if !parts.next().is_some_and(|new| old.same_part(new)) {
+                return None;
+            }
+        }
+        Some(Self::immutable_text(parts.cloned().collect::<Vec<_>>()))
+    }
+
+    pub(super) fn repeat(&mut self, output: std::rc::Rc<super::RepeatedOutput>) {
+        self.push(TextPart::Repeat(output).into());
+    }
+
     pub(crate) fn exact_text(&self) -> Option<String> {
         TextQuery::default().exact_text(self)
     }
@@ -249,7 +264,10 @@ impl TextRetention {
         if !allowed.is_impossible() {
             for part in &buffer.parts {
                 match part.content() {
-                    TextPart::Bytes(_) | TextPart::Frozen(_) | TextPart::Unknown(_) => {
+                    TextPart::Bytes(_)
+                    | TextPart::Frozen(_)
+                    | TextPart::Unknown(_)
+                    | TextPart::Repeat(_) => {
                         parts.push(part.clone());
                     }
                     TextPart::Select { decision, yes, no } => {
@@ -309,7 +327,9 @@ impl TextQuery {
         let mut domain = Some(super::guard::RuntimeGuard::False);
         for part in &buffer.parts {
             let widened = match part.content() {
-                TextPart::Bytes(_) | TextPart::Frozen(_) => Some(super::guard::RuntimeGuard::False),
+                TextPart::Bytes(_) | TextPart::Frozen(_) | TextPart::Repeat(_) => {
+                    Some(super::guard::RuntimeGuard::False)
+                }
                 TextPart::Unknown(_) => Some(super::guard::RuntimeGuard::True),
                 TextPart::Select { decision, yes, no } => {
                     if decision.coverage != super::Coverage::Exact
@@ -349,7 +369,7 @@ impl TextQuery {
             return *result;
         }
         let result = buffer.parts.iter().any(|part| match part.content() {
-            TextPart::Bytes(_) | TextPart::Frozen(_) => false,
+            TextPart::Bytes(_) | TextPart::Frozen(_) | TextPart::Repeat(_) => false,
             TextPart::Unknown(_) => true,
             TextPart::Select { decision, yes, no } => {
                 decision.coverage != super::Coverage::Exact
@@ -380,7 +400,7 @@ impl TextQuery {
             return *result;
         }
         let result = buffer.parts.iter().any(|part| match part.content() {
-            TextPart::Bytes(_) | TextPart::Frozen(_) => false,
+            TextPart::Bytes(_) | TextPart::Frozen(_) | TextPart::Repeat(_) => false,
             TextPart::Unknown(_) => true,
             TextPart::Select { decision, yes, no } => {
                 if let Some(taken) = active.implies_test(decision) {
@@ -418,7 +438,7 @@ impl TextQuery {
             let text = match part.content() {
                 TextPart::Bytes(bytes) => Some(bytes.clone()),
                 TextPart::Frozen(value) => value.exact_text(),
-                TextPart::Unknown(_) => None,
+                TextPart::Unknown(_) | TextPart::Repeat(_) => None,
                 TextPart::Select {
                     decision: _,
                     yes,
@@ -460,6 +480,9 @@ impl TextPart {
                 matches!(other, Self::Frozen(other) if same_frozen_value(value, other))
             }
             Self::Unknown(inputs) => matches!(other, Self::Unknown(other) if inputs == other),
+            Self::Repeat(output) => {
+                matches!(other, Self::Repeat(other) if std::rc::Rc::ptr_eq(output, other))
+            }
             Self::Select { decision, yes, no } => matches!(
                 other,
                 Self::Select { decision: other, yes: other_yes, no: other_no }

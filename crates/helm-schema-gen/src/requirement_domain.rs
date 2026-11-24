@@ -85,7 +85,11 @@ fn requirement_admits_kind(
         | FailValueRequirement::HelmFalsy
         | FailValueRequirement::FieldHelmFalsy { .. }
         | FailValueRequirement::FieldNotEquals { .. }
-        | FailValueRequirement::NotEquals(_) => true,
+        | FailValueRequirement::NotEquals(_)
+        | FailValueRequirement::When {
+            guard: _,
+            requirement: _,
+        } => true,
         FailValueRequirement::HelmTruthy => kind != JsonValueKind::Null,
         FailValueRequirement::FieldEquals { .. }
         | FailValueRequirement::FieldPresentNotNull { .. }
@@ -159,7 +163,11 @@ fn requirement_integer_range_constraint(
             GuardValue::String(_) | GuardValue::Bool(_) | GuardValue::Null,
         )
         | FailValueRequirement::FieldHelmFalsy { .. }
-        | FailValueRequirement::FieldNotEquals { .. } => Some(IntegerRangeConstraint::Any),
+        | FailValueRequirement::FieldNotEquals { .. }
+        | FailValueRequirement::When {
+            guard: _,
+            requirement: _,
+        } => Some(IntegerRangeConstraint::Any),
         FailValueRequirement::NotSchemaType(rejected) => Some(
             if json_value_kinds_for_schema_type(rejected).contains(&JsonValueKind::Integer) {
                 IntegerRangeConstraint::Maximum(0)

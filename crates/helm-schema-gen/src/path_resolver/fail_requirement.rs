@@ -2,6 +2,7 @@ use super::{
     SchemaNode, Value, ecma_compatible_pattern, empty_schema, guard_value_to_json, is_empty_schema,
     merge_schema_list, optional_leaf_object_path_schema, required_object_path_schema, type_schema,
 };
+use crate::condition_encoding::{AbsenceDefaults, ConditionFragmentCache, ConditionPolarity};
 
 /// Schema for `fail`-branch requirements. Non-member requirements accept
 /// null alongside the demanded type: fail tests routinely sit behind
@@ -460,6 +461,34 @@ fn fail_value_requirement_schema(
                     });
                 }
                 parts.push(node);
+            }
+            FailValueRequirement::When { guard, requirement } => {
+                let mut cache = ConditionFragmentCache::default();
+                let missing = serde_yaml::Value::Null;
+                let absence = AbsenceDefaults {
+                    runtime_defaults: &missing,
+                    dependency_refill: &missing,
+                    dependency_roots: &std::collections::BTreeSet::new(),
+                };
+                if cache.encodes_fully(guard, &[], &missing, absence)
+                    && let Some(condition) = cache
+                        .clauses(
+                            std::slice::from_ref(guard),
+                            &[],
+                            &missing,
+                            absence,
+                            ConditionPolarity::Exact,
+                        )
+                        .pop()
+                {
+                    parts.push(serde_json::json!({
+                        "if": condition.into_value(),
+                        "then": fail_value_requirement_schema(
+                            std::slice::from_ref(requirement.as_ref()),
+                            position,
+                        ),
+                    }));
+                }
             }
             FailValueRequirement::AnyOf(alternatives) => {
                 let arms: Vec<Value> = alternatives

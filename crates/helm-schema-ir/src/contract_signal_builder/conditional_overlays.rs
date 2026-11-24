@@ -251,26 +251,23 @@ pub(super) fn provider_schema_use(
     self_range_guarded: bool,
     source_null_tolerant: bool,
 ) -> Option<ProviderSchemaUse> {
-    // A nil-omitting stringification (Sprig `quote`/`squote` skip nil
-    // operands) of a RANGED member leaf still forces an explicit null
-    // into the slot on a missing source: its use survives — with the
-    // Serialized kind, so slot typing keeps abstaining — solely to carry
-    // provider requiredness to the ranged-member presence synthesis
-    // (traefik's `mountPath: {{ $plugin.mountPath | quote }}`).
-    let nil_omitting_ranged_leaf = contract_use.kind == ValueKind::Serialized
+    // Sprig quotes omit nil. Only an entire plain block value turns
+    // that omission into an explicit YAML null for the provider.
+    let nil_omitting_block_value = contract_use.kind == ValueKind::Serialized
         && contract_use.nil_omitting
-        && values_path_contains_wildcard(&contract_use.source_expr);
+        && contract_use.plain_scalar_placement
+            == helm_schema_core::PlainScalarPlacement::BlockValue;
     if contract_use.source_expr.segments().next().is_none()
         || (matches!(
             contract_use.kind,
             ValueKind::PartialScalar | ValueKind::Serialized
-        ) && !nil_omitting_ranged_leaf)
+        ) && !nil_omitting_block_value)
         || (contract_use.stringified
             && !matches!(
                 contract_use.kind,
                 ValueKind::Scalar | ValueKind::YamlSerialized | ValueKind::TemplatedYamlSerialized
             )
-            && !nil_omitting_ranged_leaf)
+            && !nil_omitting_block_value)
         || contract_use.path.0.is_empty()
     {
         return None;
@@ -290,7 +287,7 @@ pub(super) fn provider_schema_use(
         split_segment: contract_use.split_segment.clone(),
         merge_layers: contract_use.merge_layers.clone(),
         range_key: contract_use.range_key,
-        nil_omitting: contract_use.nil_omitting,
+        nil_omitting: nil_omitting_block_value,
         omitted_members: contract_use
             .omitted_members
             .iter()
@@ -458,6 +455,28 @@ pub(super) fn extend_lowerable_predicate(
                 Some(target_value_path)
             };
             out.push(predicate_to_guard(predicate, target)?);
+        }
+        helm_schema_core::PredicateKind::Or(items) if path_contains_wildcard(target_value_path) => {
+            // Positive alternatives need only a sufficient condition. Keep arms that can be
+            // tested on this member independently of the other members and the document.
+            let alternatives = items
+                .iter()
+                .filter_map(|item| predicate_to_guard(item, None))
+                .filter(|guard| {
+                    let paths = guard.value_paths();
+                    !paths.is_empty()
+                        && paths.iter().all(|path| {
+                            values_path_contains_wildcard(path)
+                                && (path == &target
+                                    || lowerable_guard_path(path, target_value_path).is_some())
+                        })
+                })
+                .collect::<Vec<_>>();
+            if alternatives.is_empty() {
+                out.push(predicate_to_guard(predicate, Some(target_value_path))?);
+            } else {
+                out.push(ConditionalGuard::AnyOf(alternatives.into()));
+            }
         }
         _ => {
             out.push(predicate_to_guard(predicate, Some(target_value_path))?);

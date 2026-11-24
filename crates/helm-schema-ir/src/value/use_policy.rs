@@ -43,6 +43,17 @@ impl<'a> Relationship<'a> {
             capture,
             preimage,
         } = self;
+        // The outer quote skips a nil input. An inner quote may instead leave
+        // an empty string for a later operation to render.
+        let nil_omitting = matches!(
+            preimage.first(),
+            Some(Preimage::Text(text)) if matches!(
+                text.term(),
+                TextTerm::Quote { value }
+                    if value.identity() == Some(source.as_ref())
+                        && value.go_type() == super::kinds::GoType::Unknown
+            )
+        );
         let mut transfer = Transfer {
             result: RelationshipUse {
                 condition,
@@ -53,7 +64,7 @@ impl<'a> Relationship<'a> {
                 strip_marker: false,
                 flow_node: false,
                 stringified: false,
-                nil_omitting: false,
+                nil_omitting,
                 digest: false,
                 capture: None,
                 text_preimage: None,
@@ -250,12 +261,10 @@ impl<'a> Transfer<'a> {
                     self.result.stringified = true;
                 }
             }
-            TextTerm::Quote { value } => {
+            TextTerm::Quote { value: _ } => {
                 self.opaque_text();
                 self.result.kind = crate::ValueKind::Serialized;
                 self.result.stringified = true;
-                self.result.nil_omitting =
-                    super::text::quote_nil_condition(value) != Some(Predicate::False);
             }
             TextTerm::Encoded {
                 value: _,
@@ -399,6 +408,7 @@ fn capture_preimage(
                 value.exact_text()
             }
             super::TextPart::Unknown(_)
+            | super::TextPart::Repeat(_)
             | super::TextPart::Select {
                 decision: _,
                 yes: _,

@@ -1587,7 +1587,7 @@ fn buffer_max_bytes(buffer: &super::TextBuffer, budget: &mut usize) -> Option<us
                 yes,
                 no,
             } => buffer_max_bytes(yes, budget)?.max(buffer_max_bytes(no, budget)?),
-            TextPart::Unknown(_) => return None,
+            TextPart::Unknown(_) | TextPart::Repeat(_) => return None,
         };
         total.checked_add(part)
     })
@@ -1715,7 +1715,7 @@ fn buffer_lacks_affix(
             buffer_lacks_affix(yes, affix, end, budget)
                 && buffer_lacks_affix(no, affix, end, budget)
         }
-        TextPart::Unknown(_) => false,
+        TextPart::Unknown(_) | TextPart::Repeat(_) => false,
     }
 }
 

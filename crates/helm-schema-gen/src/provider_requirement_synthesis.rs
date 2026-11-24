@@ -24,8 +24,8 @@
 use std::collections::BTreeMap;
 
 use helm_schema_core::{
-    ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
-    FailValueRequirement, ProviderSchemaUse, ValueKind, ValuesPath,
+    ConditionalGuard, ContractRequirementImplication, ContractRequirementTarget,
+    ContractSchemaSignals, FailValueRequirement, ProviderSchemaUse, ValueKind, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -63,13 +63,8 @@ pub(crate) fn synthesized_required_source_implications(
             && source_has_non_null_default(values_yaml_doc, value_path)
             && !base_facts.is_nullable
             && evidence.provider_schema_uses.iter().any(|use_| {
-                use_.kind == ValueKind::Scalar
-                    && !use_.is_self_range_collection
-                    && !use_.source_null_tolerant
-                    && use_.merge_layers.is_none()
-                    && !use_.range_key
-                    && use_.outer_guards.is_empty()
-                    && provider_use_rejects_null(provider_resolutions, use_)
+                use_.outer_guards.is_empty()
+                    && provider_use_requires_source(provider_resolutions, use_)
             })
         {
             push_implication(
@@ -129,16 +124,12 @@ pub(crate) fn synthesized_required_source_implications(
             if facts.is_nullable {
                 continue;
             }
-            let renders_into_required_field =
-                overlay.evidence.provider_schema_uses.iter().any(|use_| {
-                    use_.kind == ValueKind::Scalar
-                        && !use_.is_self_range_collection
-                        && !use_.source_null_tolerant
-                        && use_.merge_layers.is_none()
-                        && !use_.range_key
-                        && provider_use_rejects_null(provider_resolutions, use_)
-                });
-            if !renders_into_required_field {
+            if !overlay
+                .evidence
+                .provider_schema_uses
+                .iter()
+                .any(|use_| provider_use_requires_source(provider_resolutions, use_))
+            {
                 continue;
             }
             push_implication(
@@ -235,38 +226,19 @@ pub(crate) fn synthesized_ranged_member_required_implications(
             )
         });
         for (guards, facts, uses) in base_uses.chain(overlay_uses) {
-            // Tolerant render forms emit something else (or nothing) on a
-            // missing source; only the direct scalar hole forces the null.
-            // Self-`default` fallbacks surface as nullability, exactly as
-            // in the direct lane above.
             if facts.is_nullable {
                 continue;
             }
-            let renders_into_required_field = uses.iter().any(|use_| {
-                // A bare scalar hole forces the null directly; a Sprig
-                // `quote`/`squote` render does too — the transform SKIPS
-                // nil operands, emitting nothing where the slot demands a
-                // value (traefik's local-plugin `mountPath`). Every other
-                // serialized form stays tolerant.
-                let null_forcing = match use_.kind {
-                    ValueKind::Scalar => true,
-                    ValueKind::Serialized => use_.nil_omitting,
-                    _ => false,
-                };
-                null_forcing
-                    && !use_.is_self_range_collection
-                    && !use_.source_null_tolerant
-                    && use_.merge_layers.is_none()
-                    && !use_.range_key
-                    && use_.split_segment.is_none()
-                    && provider_use_rejects_null(provider_resolutions, use_)
-            });
-            if !renders_into_required_field {
+            if !uses.iter().any(|use_| {
+                use_.split_segment.is_none()
+                    && provider_use_requires_source(provider_resolutions, use_)
+            }) {
                 continue;
             }
             let mut outer_guards = Vec::new();
-            let mut escapes: Vec<Vec<FailValueRequirement>> = Vec::new();
+            let mut member_guards = Vec::new();
             let mut undecodable = false;
+            let scope_depth = member_scope.segments().len();
             for guard in guards {
                 let paths = guard.value_paths();
                 if paths
@@ -274,68 +246,39 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     .all(|path| path.segments().all(|segment| !segment.is_each_member()))
                 {
                     outer_guards.push(guard.clone());
-                    continue;
-                }
-                let member_field = |path: &helm_schema_core::ValuesPath| {
-                    if path != &member_scope && !path.is_descendant_of(&member_scope) {
-                        return None;
-                    }
-                    let field = path
-                        .segments()
-                        .skip(member_scope.segments().len())
-                        .map(helm_schema_core::Segment::encode_component)
-                        .collect::<Vec<_>>();
-                    (!field.is_empty() && !field.iter().any(|segment| segment == "*"))
-                        .then_some(field)
-                };
-                // A member guard becomes the exact dormant alternative:
-                // an else-arm escapes when its field is truthy, while a
-                // positive arm escapes when its member or tested field is
-                // falsy. Defaulted leaves were already excluded by the
-                // nullability facts above.
-                match guard {
-                    helm_schema_core::ConditionalGuard::Not(inner) => match inner.as_ref() {
-                        helm_schema_core::ConditionalGuard::Truthy { path } => {
-                            match member_field(path) {
-                                Some(field) => {
-                                    escapes.push(vec![FailValueRequirement::FieldHelmTruthy {
-                                        path: field,
-                                    }]);
-                                }
-                                None => undecodable = true,
-                            }
-                        }
-                        _ => undecodable = true,
-                    },
-                    helm_schema_core::ConditionalGuard::Truthy { path }
-                        if path == &member_scope =>
-                    {
-                        escapes.push(vec![FailValueRequirement::HelmFalsy]);
-                    }
-                    helm_schema_core::ConditionalGuard::Truthy { path } => {
-                        match member_field(path) {
-                            Some(field) => {
-                                escapes.push(vec![FailValueRequirement::FieldHelmFalsy {
-                                    path: field,
-                                }]);
-                            }
-                            None => undecodable = true,
-                        }
-                    }
-                    _ => undecodable = true,
+                } else if paths.iter().all(|path| {
+                    (path == &member_scope || path.is_descendant_of(&member_scope))
+                        && path
+                            .segments()
+                            .skip(scope_depth)
+                            .all(|segment| !segment.is_each_member())
+                }) {
+                    member_guards.push(guard.clone().map_value_paths(&mut |path| {
+                        ValuesPath::from_segments(path.segments().skip(scope_depth))
+                    }));
+                } else {
+                    undecodable = true;
+                    break;
                 }
             }
             if undecodable {
                 continue;
             }
-            let field_path: Vec<String> = field_segments.to_vec();
-            let presence = FailValueRequirement::FieldPresentNotNull { path: field_path };
-            let requirements = if escapes.is_empty() {
-                vec![presence]
+            let defaulted_keys = runtime_defaulted_member_keys(
+                runtime_defaults_doc,
+                collection_segments,
+                field_segments,
+            );
+            let presence = FailValueRequirement::FieldPresentNotNull {
+                path: field_segments.to_vec(),
+            };
+            let requirement = if member_guards.is_empty() {
+                presence
             } else {
-                let mut alternatives = escapes;
-                alternatives.push(vec![presence]);
-                vec![FailValueRequirement::AnyOf(alternatives)]
+                FailValueRequirement::When {
+                    guard: ConditionalGuard::AllOf(member_guards.into()),
+                    requirement: Box::new(presence),
+                }
             };
             push_implication(
                 &mut implications,
@@ -344,12 +287,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     outer_guards,
                     // An integer iterable has no members to constrain;
                     // leaving that lane open is the safe direction.
-                    runtime_defaulted_member_keys(
-                        runtime_defaults_doc,
-                        collection_segments,
-                        field_segments,
-                    )
-                    .map_or(
+                    defaulted_keys.map_or(
                         ContractRequirementTarget::Members {
                             allow_integer: true,
                         },
@@ -358,7 +296,7 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                             allow_integer: true,
                         },
                     ),
-                    requirements,
+                    vec![requirement],
                 ),
             );
         }
@@ -398,11 +336,18 @@ fn runtime_defaulted_member_keys(
     (!keys.is_empty()).then_some(keys)
 }
 
-fn provider_use_rejects_null(
+fn provider_use_requires_source(
     provider_resolutions: &ProviderSchemaResolutions,
     provider_use: &ProviderSchemaUse,
 ) -> bool {
-    provider_resolutions.use_rejects_null(provider_use)
+    let eligible = provider_use.kind == ValueKind::Scalar
+        || (provider_use.nil_omitting && provider_use.split_segment.is_none());
+    eligible
+        && !provider_use.is_self_range_collection
+        && !provider_use.source_null_tolerant
+        && provider_use.merge_layers.is_none()
+        && !provider_use.range_key
+        && provider_resolutions.use_rejects_null(provider_use)
 }
 
 /// Keeps proved segment failures on the truthy arm of base provider uses.

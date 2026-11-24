@@ -45,11 +45,10 @@ pub struct ProviderSchemaUse {
     /// its value: a string-only slot then excludes the integer keys of a
     /// non-empty list lane.
     pub range_key: bool,
-    /// Set when the rendered text is a Sprig `quote`/`squote` of the value:
-    /// the transform SKIPS nil operands, so a missing or null source
-    /// renders an explicit YAML null into the slot. Typing still abstains
-    /// (any input quotes); only provider-required presence claims may read
-    /// this flag.
+    /// A nil source emits empty text across this whole plain block value.
+    ///
+    /// The provider receives YAML null, which can require source presence
+    /// without constraining the types Sprig quotes.
     pub nil_omitting: bool,
     /// Literal member keys a guard-scoped `omit` may remove from the
     /// rendered map before the sink reads it: the slot's whole-payload

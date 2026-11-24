@@ -650,6 +650,78 @@ fn nested_marker_removal_does_not_invent_a_resource_identity() {
 }
 
 #[test]
+fn range_boundary_witness_keeps_the_real_suffix_in_its_probe() {
+    let source = indoc::indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              {{- if .Values.probes }}
+              containers:
+              {{- range $_, $probe := .Values.probes }}
+              - name: test
+                image: busybox
+                livenessProbe:
+                  grpc:
+                    service: {{ $probe.grpcService | quote }}
+                    port: 8080
+                readinessProbe:
+                  httpGet:
+                    path: {{ $probe.path | quote }}
+              {{- end }}
+                    port: {{ .Values.readinessPort }}
+              {{- end }}
+    "};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, Some("templates/probe.yaml"), &db);
+    let port = ValuesPath::parse("readinessPort");
+    let mut paths = BTreeSet::new();
+    let memo = helm_schema_core::PredicateMemo::default();
+    for document in execution.placed_documents() {
+        for scalar in document.nodes() {
+            if document.is_key(scalar)
+                || !matches!(
+                    document.kind(scalar),
+                    Some(helm_schema_syntax::YamlNodeKind::Scalar(_))
+                )
+                || !document
+                    .holes(scalar)
+                    .iter()
+                    .any(|term| term.inputs().contains(&port))
+            {
+                continue;
+            }
+            let ancestors =
+                std::iter::successors(document.parent(scalar), |node| document.parent(*node));
+            let mut path = ancestors
+                .filter(|node| document.kind(*node) == Some(helm_schema_syntax::YamlNodeKind::Pair))
+                .filter_map(|pair| {
+                    document
+                        .children(pair)
+                        .iter()
+                        .copied()
+                        .find(|key| document.is_key(*key))
+                        .and_then(|key| document.literal_key(key))
+                })
+                .collect::<Vec<_>>();
+            path.reverse();
+            paths.insert(path.join("."));
+            sim_assert_eq!(have: memo.normalize(document.placement_guard(scalar)), want: Predicate::False);
+        }
+    }
+    sim_assert_eq!(have: paths, want: BTreeSet::from(["spec.template.spec.containers.readinessProbe.httpGet.port".to_owned()]));
+}
+
+#[test]
 fn quote_operation_preserves_the_following_scalar_boundary() -> eyre::Result<()> {
     let source = indoc::indoc! {r#"
         before: {{ .Values.before | quote }}
