@@ -2804,6 +2804,8 @@ impl<'a> LexicalTransfers<'a> {
                 decision: _,
             }
             | super::relationship::ValueOperation::Trim
+            | super::relationship::ValueOperation::SplitLiteral { separator: _ }
+            | super::relationship::ValueOperation::SplitSegment(_)
             | super::relationship::ValueOperation::Numeric(_)
             | super::relationship::ValueOperation::Descriptor { kind_only: _ }
             | super::relationship::ValueOperation::Member(_)

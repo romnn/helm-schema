@@ -1946,9 +1946,7 @@ fn default_before_string_transform_keeps_falsy_primary_spellings() {
     }
 }
 
-/// tempo's jaeger receivers: `regexSplit ":" . -1 | last` extracts the
-/// port suffix of an endpoint string into a Service port slot, so the
-/// accepted endpoints are strings whose LAST `:`-segment is numeric.
+/// A Service port observes the last segment as a plain YAML value.
 #[test]
 fn split_last_segment_into_numeric_slot_requires_numeric_suffix() {
     let src = indoc! {r#"
@@ -1967,13 +1965,17 @@ fn split_last_segment_into_numeric_slot_requires_numeric_suffix() {
     let schema = schema_for_values_yaml(parse_ir(src), Some("endpoint: ~\n"));
     for (instance, want) in [
         (serde_json::json!({ "endpoint": "0.0.0.0:audit" }), false),
+        (serde_json::json!({ "endpoint": "host:" }), false),
         (serde_json::json!({ "endpoint": "0.0.0.0:14250" }), true),
+        (serde_json::json!({ "endpoint": "14250" }), true),
+        (serde_json::json!({ "endpoint": "a:b:0x10" }), true),
+        (serde_json::json!({ "endpoint": "host:16 # ok" }), true),
         (serde_json::json!({ "endpoint": null }), true),
     ] {
-        assert!(
-            schema_accepts_instance(&schema, &instance) == want,
-            "the endpoint's port suffix feeds an integer slot: \
-             instance={instance}; schema={schema}"
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "the endpoint's port suffix feeds an integer slot: instance={instance}; schema={schema}",
         );
     }
 }

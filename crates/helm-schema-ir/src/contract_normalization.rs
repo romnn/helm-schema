@@ -377,6 +377,7 @@ struct RenderSite<'a> {
     resource: Option<&'a ResourceRef>,
     placement: helm_schema_core::PlainScalarPlacement,
     text_preimage: Option<&'a helm_schema_core::TextPreimage>,
+    split_segment: Option<&'a helm_schema_core::SplitSegmentUse>,
     read_condition: Option<&'a helm_schema_core::GuardDnf>,
 }
 
@@ -388,6 +389,7 @@ fn render_site(contract_use: &ContractUse) -> RenderSite<'_> {
         resource: contract_use.resource.as_ref(),
         placement: contract_use.plain_scalar_placement,
         text_preimage: contract_use.text_preimage.as_ref(),
+        split_segment: contract_use.split_segment.as_ref(),
         read_condition: (contract_use.kind == ValueKind::WidenedDependency)
             .then_some(&contract_use.condition),
     }
@@ -429,6 +431,7 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
         .then_with(|| left.resource.cmp(&right.resource))
         .then_with(|| left.text_preimage.cmp(&right.text_preimage))
+        .then_with(|| left.split_segment.cmp(&right.split_segment))
         .then_with(|| {
             left.plain_scalar_placement
                 .cmp(&right.plain_scalar_placement)

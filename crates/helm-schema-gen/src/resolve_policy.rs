@@ -999,7 +999,7 @@ use scalar_preimage::{
     stringified_plain_scalar_provider_preimage, templated_yaml_provider_preimage,
 };
 pub(crate) use scalar_preimage::{
-    schema_covers_strict_plain_scalar_string, split_segment_pattern,
+    schema_covers_strict_plain_scalar_string, split_segment_rejection_pattern,
     strict_plain_scalar_string_schema,
 };
 

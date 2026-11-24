@@ -104,6 +104,7 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         }
         "split" | "splitn" => Ok(split_map(input.function, input.arguments, state)),
         "splitList" => Ok(transfer_split_list(input, state)),
+        "regexSplit" => Ok(transfer_regex_split(input, state)),
         "join" => return transfer_join(input, state),
         "pick" | "omit" => Ok(select_map(input.function, input.arguments, state)),
         "pluck" => Ok(pluck(input.arguments, state)),
@@ -559,6 +560,26 @@ fn transfer_sequence_edge(
         last: _,
     } = input;
 
+    if function == "last"
+        && let Some(super::relationship::Derivation {
+            source,
+            operation: super::relationship::ValueOperation::SplitLiteral { separator },
+        }) = first.operation_preimage()
+    {
+        if let Some(GuardValue::String(text)) = source.value.constant()
+            && let Some(segment) = text.split(separator.as_str()).last()
+        {
+            return Ok(Value::string(segment));
+        }
+        return Ok(Value::scalar(super::ScalarType::String, None).derived(
+            source.clone(),
+            super::relationship::ValueOperation::SplitSegment(helm_schema_core::SplitSegmentUse {
+                separator: separator.clone(),
+                last: true,
+            }),
+        ));
+    }
+
     if let ValueNode::Leaf(Leaf {
         datum: Datum::Strings(slice),
         origin: _,
@@ -689,6 +710,50 @@ fn transfer_split_list(input: TransferInput<'_>, state: &mut State) -> Value {
         .heap
         .allocate(ObjectData::Strings(slots), super::Multiplicity::Singleton);
     Value::strings(backing, length)
+}
+
+fn transfer_regex_split(input: TransferInput<'_>, state: &State) -> Value {
+    let TransferInput {
+        function: _,
+        arguments,
+        influences,
+        first: _,
+        last: _,
+    } = input;
+
+    let [pattern, source, limit] = arguments else {
+        return Value::influenced(influences);
+    };
+    let Some(GuardValue::Int(limit)) = limit.constant() else {
+        return Value::influenced(influences);
+    };
+    let Some(GuardValue::String(pattern)) = pattern.constant().filter(|_| *limit < 0) else {
+        return Value::influenced(influences);
+    };
+    let Ok(parsed) = regex_syntax::Parser::new().parse(pattern) else {
+        return Value::influenced(influences);
+    };
+    let regex_syntax::hir::HirKind::Literal(literal) = parsed.kind() else {
+        return Value::influenced(influences);
+    };
+    let Ok(separator) = std::str::from_utf8(&literal.0) else {
+        return Value::influenced(influences);
+    };
+    // Only literal spellings shared by Go's regexp parser and regex-syntax are proved here.
+    if helm_schema_core::escape_regex_literal(separator) != *pattern {
+        return Value::influenced(influences);
+    }
+    Value::leaf(Datum::Unknown(super::UnknownValue {
+        types: super::TypeCoverage::Sequence,
+        aliases: super::Reach::Bounded(Rc::new(BTreeSet::new())),
+    }))
+    .with_influences(influences)
+    .derived(
+        state.heap.freeze(source),
+        super::relationship::ValueOperation::SplitLiteral {
+            separator: separator.to_owned(),
+        },
+    )
 }
 
 fn transfer_join(input: TransferInput<'_>, state: &mut State) -> Result<Value, TransferDemand> {

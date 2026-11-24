@@ -7,34 +7,41 @@ use super::{
 };
 use crate::schema_node::JsonSchemaType;
 
-/// Preimage of a provider slot observed through ONE separator-delimited
-/// segment of the raw string (tempo's `regexSplit ":" . -1 | last` port
-/// suffix): an integer-typed slot admits exactly the strings whose named
-/// segment spells an integer. Any other slot type abstains — a string
-/// segment leaves the source effectively unconstrained.
+/// Projects an integer slot's proved YAML failures through a selected segment.
 pub(super) fn split_segment_provider_preimage(
     schema: &Value,
     segment: &helm_schema_core::SplitSegmentUse,
 ) -> Option<Value> {
-    let pattern = split_segment_pattern(schema, segment)?;
-    Some(serde_json::json!({ "type": "string", "pattern": pattern }))
+    let pattern = split_segment_rejection_pattern(schema, segment)?;
+    Some(serde_json::json!({ "type": "string", "not": { "pattern": pattern } }))
 }
 
-/// The accepted-source pattern for a slot observed through one separator
-/// segment: only integer-typed slots have a composable segment grammar; any
-/// other slot type abstains.
-pub(crate) fn split_segment_pattern(
+/// Recognizes selected spellings that YAML cannot resolve to an integer.
+pub(crate) fn split_segment_rejection_pattern(
     schema: &Value,
     segment: &helm_schema_core::SplitSegmentUse,
 ) -> Option<String> {
-    if schema_type(schema) != Some("integer") {
+    if schema_type(schema) != Some("integer") || schema.get("nullable") == Some(&Value::Bool(true))
+    {
         return None;
     }
+    let mut characters = segment.separator.chars();
+    let delimiter = characters.next()?;
+    // Keep delimiter matches outside the rejected token and avoid overlapping occurrences.
+    if characters.next().is_some()
+        || delimiter.is_ascii_alphanumeric()
+        || "_./+- \t".contains(delimiter)
+    {
+        return None;
+    }
+    // Blank segments resolve to null, and these bare words cannot enter YAML's numeric resolver.
+    // All other spellings stay open, including YAML indicators and numeric tokens with comments.
+    let rejects_integer = r"[ \t]*([A-Za-z_][A-Za-z0-9_./+-]*[ \t]*)?";
     let separator = helm_schema_core::escape_regex_literal(&segment.separator);
     Some(if segment.last {
-        format!("^([\\s\\S]*{separator})?[+-]?[0-9]+$")
+        format!("(^|{separator}){rejects_integer}$")
     } else {
-        format!("^[+-]?[0-9]+({separator}[\\s\\S]*)?$")
+        format!("^{rejects_integer}($|{separator})")
     })
 }
 

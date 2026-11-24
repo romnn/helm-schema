@@ -598,6 +598,9 @@ impl<'a> Projection<'a, '_> {
                         if policy.capture.is_some() || !policy.output_path.is_empty() {
                             continue;
                         }
+                        if policy.split_segment.is_some() && !whole {
+                            continue;
+                        }
                         if !policy.stringified
                             && !policy.digest
                             && !scalar.get_or_init(|| site.rendered_scalar().is_some())
@@ -625,6 +628,7 @@ impl<'a> Projection<'a, '_> {
                             std::iter::empty(),
                         );
                         row.text_preimage = if whole { policy.text_preimage } else { None };
+                        row.split_segment = policy.split_segment.cloned();
                         row.stringified = true;
                         row.digest = policy.digest;
                         row.nil_omitting = policy.nil_omitting;

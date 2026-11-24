@@ -146,6 +146,7 @@ pub(crate) fn lower_serialized_payload(
         strip_marker,
         flow_node: _,
         text_preimage: _,
+        split_segment: _,
         omitted_members,
     } = payload;
     Guarded {

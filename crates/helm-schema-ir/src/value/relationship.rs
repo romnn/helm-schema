@@ -145,6 +145,10 @@ pub(super) enum ValueOperation {
     Decode(Decoder),
     Format(TextFormat),
     Text(TextTransform),
+    SplitLiteral {
+        separator: String,
+    },
+    SplitSegment(helm_schema_core::SplitSegmentUse),
     Trim,
     Numeric(super::ScalarType),
     Descriptor {
@@ -700,6 +704,14 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         members: &[String],
         depth: usize,
     ) -> Relationships<'a> {
+        if matches!(
+            derivation.operation,
+            ValueOperation::SplitLiteral { separator: _ }
+        ) || !members.is_empty()
+            && matches!(derivation.operation, ValueOperation::SplitSegment(_))
+        {
+            return Relationships::unknown();
+        }
         if let ValueOperation::Pick(_) = &derivation.operation {
             return self.pick(datum, heap, members, depth);
         }
@@ -1581,6 +1593,8 @@ pub(super) fn structural_preimage(preimage: &[Preimage<'_>]) -> bool {
                 }
                 | ValueOperation::Trim
                 | ValueOperation::Text(_)
+                | ValueOperation::SplitLiteral { separator: _ }
+                | ValueOperation::SplitSegment(_)
                 | ValueOperation::Pick(_)
                 | ValueOperation::Merge { overwrite: _ }
                 | ValueOperation::Format(TextFormat::Value | TextFormat::String)
@@ -2101,6 +2115,7 @@ fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
         }
         | ValueOperation::Trim
         | ValueOperation::Text(_)
+        | ValueOperation::SplitSegment(_)
         | ValueOperation::Numeric(_)
         | ValueOperation::Descriptor { kind_only: _ } => MemberPresence::constant(false),
         ValueOperation::Member(_)
@@ -2108,6 +2123,7 @@ fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
         | ValueOperation::Omit(_)
         | ValueOperation::Pick(_)
         | ValueOperation::Decode(_)
+        | ValueOperation::SplitLiteral { separator: _ }
         | ValueOperation::Merge { overwrite: _ } => MemberPresence::unknown(),
     }
 }
@@ -2235,6 +2251,8 @@ impl<'a> RelationshipQuery<'a, '_> {
             }
             | ValueOperation::Decode(_)
             | ValueOperation::Trim
+            | ValueOperation::SplitLiteral { separator: _ }
+            | ValueOperation::SplitSegment(_)
             | ValueOperation::Numeric(_)
             | ValueOperation::Descriptor { kind_only: _ }
             | ValueOperation::Member(_)

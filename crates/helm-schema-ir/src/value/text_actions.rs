@@ -528,6 +528,8 @@ impl Query<'_> {
                 decision: _,
             }
             | ValueOperation::Decode(_)
+            | ValueOperation::SplitLiteral { separator: _ }
+            | ValueOperation::SplitSegment(_)
             | ValueOperation::Member(_)
             | ValueOperation::Omit(_)
             | ValueOperation::Pick(_)

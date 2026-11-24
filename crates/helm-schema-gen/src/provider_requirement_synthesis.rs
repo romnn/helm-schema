@@ -405,13 +405,7 @@ fn provider_use_rejects_null(
     provider_resolutions.use_rejects_null(provider_use)
 }
 
-/// Fail implications for provider slots observed through a SPLIT SEGMENT
-/// of the raw string (tempo's `regexSplit ":" . -1 | last` port suffix):
-/// wherever the source is truthy, its named segment must satisfy the
-/// integer slot. Base provider uses are self-scoped or unconditional by
-/// construction, so the self-truthy guard never over-fires — falsy sources
-/// skip their `with`-scoped render (or render an empty segment the sibling
-/// string-contract arm already governs).
+/// Keeps proved segment failures on the truthy arm of base provider uses.
 #[tracing::instrument(skip_all)]
 pub(crate) fn synthesized_split_segment_implications(
     contract_schema_signals: &ContractSchemaSignals,
@@ -430,7 +424,10 @@ pub(crate) fn synthesized_split_segment_implications(
             let Some(pattern) = provider_resolutions
                 .fragment_for_use(use_)
                 .and_then(|fragment| {
-                    crate::resolve_policy::split_segment_pattern(fragment.schema(), segment)
+                    crate::resolve_policy::split_segment_rejection_pattern(
+                        fragment.schema(),
+                        segment,
+                    )
                 })
             else {
                 continue;
@@ -443,10 +440,7 @@ pub(crate) fn synthesized_split_segment_implications(
                         path: value_path.clone(),
                     }],
                     ContractRequirementTarget::Value,
-                    vec![FailValueRequirement::MatchesPattern {
-                        pattern,
-                        templated: false,
-                    }],
+                    vec![FailValueRequirement::NotMatchesPattern { pattern }],
                 ),
             );
         }

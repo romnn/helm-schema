@@ -1113,6 +1113,12 @@ fn uniq_pipeline_preserves_local_list_items() {
 }
 
 #[test]
+fn last_of_unlimited_regex_split_on_empty_input_is_empty_string() {
+    let result = observe("", r#"regexSplit ":" "" -1 | last"#);
+    sim_assert_eq!(have: result.literals(), want: BTreeSet::from([GuardValue::string("")]));
+}
+
+#[test]
 fn split_list_preserves_exact_segment_sequence() {
     sim_assert_eq!(have: observe("", r#"splitList "." "auth.password""#).sequences(), want: vec![vec![Some(GuardValue::string("auth")), Some(GuardValue::string("password"))]]);
 }

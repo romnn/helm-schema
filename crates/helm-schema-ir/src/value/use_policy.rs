@@ -20,6 +20,7 @@ pub(crate) struct RelationshipUse<'a> {
     pub(crate) nil_omitting: bool,
     pub(crate) digest: bool,
     pub(crate) text_preimage: Option<helm_schema_core::TextPreimage>,
+    pub(crate) split_segment: Option<&'a helm_schema_core::SplitSegmentUse>,
     pub(crate) capture: Option<(&'a Rc<TextBuffer>, &'a super::FrozenValue)>,
 }
 struct Transfer<'a> {
@@ -56,6 +57,7 @@ impl<'a> Relationship<'a> {
                 digest: false,
                 capture: None,
                 text_preimage: None,
+                split_segment: None,
             },
             decoder: None,
             serialized: false,
@@ -64,6 +66,15 @@ impl<'a> Relationship<'a> {
             text_opaque: false,
         };
         for step in preimage {
+            if transfer.result.split_segment.is_some()
+                && !matches!(
+                    step,
+                    Preimage::Operation(edge)
+                        if matches!(edge.operation, ValueOperation::Copy | ValueOperation::Member(_))
+                )
+            {
+                return None;
+            }
             match step {
                 Preimage::TemplateSource(_) => {
                     transfer.result.kind = crate::ValueKind::TemplatedYamlSerialized;
@@ -96,7 +107,7 @@ impl<'a> Relationship<'a> {
 }
 
 impl<'a> Transfer<'a> {
-    fn operation(&mut self, operation: &ValueOperation) -> Option<()> {
+    fn operation(&mut self, operation: &'a ValueOperation) -> Option<()> {
         match operation {
             ValueOperation::Decode(value) if self.decoder.is_none() => {
                 self.opaque_text();
@@ -132,11 +143,23 @@ impl<'a> Transfer<'a> {
                 }
             }
             ValueOperation::Trim => self.trim = true,
+            ValueOperation::SplitSegment(segment)
+                if self.result.kind == crate::ValueKind::Scalar
+                    && self.decoder.is_none()
+                    && !self.trim
+                    && !self.result.stringified
+                    && !self.text_opaque =>
+            {
+                self.result.split_segment = Some(segment);
+                self.result.stringified = true;
+            }
             ValueOperation::Capability {
                 guard: _,
                 decision: _,
             }
             | ValueOperation::Decode(_)
+            | ValueOperation::SplitLiteral { separator: _ }
+            | ValueOperation::SplitSegment(_)
             | ValueOperation::Merge { overwrite: _ } => {
                 return None;
             }
