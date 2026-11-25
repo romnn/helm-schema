@@ -22,7 +22,7 @@ use helm_schema_test_support::acceptance::{
 };
 use lint_adjudication::{
     adjudicate_flip, adjudicate_lint_flip, adjudicate_probe_group, adjudicate_round74_flip,
-    attribute_to_declared_types, chart_recipe, conjoin, declared_types_attribution,
+    attribute_to_declared_types, chart_recipe, declared_types_attribution,
 };
 use lint_probes::{LintSchemas, ScreenedProbe, probe_groups, screen_chart};
 
@@ -4297,8 +4297,8 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     let unread = |value: serde_json::Value| settings("unread", value);
 
     // (baseline, constraint the chart's generation carries under both
-    // policies, document, attribution). A `None` constraint is the chart as
-    // generated. Every document renders (rework8/helm-cells.log).
+    // policies, document, attribution). A `None` constraint uses the generated schema alone.
+    // Every document renders in Helm.
     let (renamed_baseline, renamed_baseline_defs) = not_integer("a");
     let (renamed_chart, renamed_chart_defs) = not_integer("b");
     let cells: Vec<AttributionCell> = vec![
@@ -4327,13 +4327,9 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             },
             Err("/settings/list/0: steps into an array"),
         ),
-        // `size` is read by the Widget sink and typed only by its default.
-        (
-            json!({}),
-            None,
-            settings("size", json!("x")),
-            Err("/settings/size: a template reads `settings.size`"),
-        ),
+        // The Widget renders the string size, which both generated policies accept.
+        // The candidate rejects only the unread member.
+        (json!({}), None, settings("size", json!("x")), Ok(())),
         // The annotate regeneration rejects an unrelated value: the closed
         // root rejects `undeclared`.
         (
@@ -4354,13 +4350,12 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             unread(json!(7)),
             Ok(()),
         ),
-        // Both reject at `size`; the policy's `size` failure is on a read
-        // value.
+        // The baseline rejects `size` while the candidate rejects only the unread member.
         (
             json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
             None,
             settings("size", json!("x")),
-            Err("/settings/size: a template reads `settings.size`"),
+            Ok(()),
         ),
         // Both reject: the baseline's closed root admits only `undeclared`,
         // the annotate regeneration's rejects it.
@@ -4447,6 +4442,17 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             settings("extra", json!([1, 2])),
             Err("the annotate regeneration rejects it"),
         ),
+        (
+            at_settings(draft2020, "extra", at_least_two("integer"), json!({})),
+            Some(at_settings(
+                draft2020,
+                "extra",
+                at_least_two("string"),
+                json!({}),
+            )),
+            settings("extra", json!(["x", "y"])),
+            Ok(()),
+        ),
         // One `not` through renamed definitions: nothing is compared, so the
         // rename changes nothing.
         (
@@ -4477,16 +4483,16 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             Err("the annotate regeneration rejects it"),
         ),
     ];
+    let annotation = DeclaredTypesAnnotation::new(source.path().to_path_buf(), recipe);
     let mut attributions = Vec::new();
     let mut adjudications = Vec::new();
     for (baseline, constraint, document, _) in &cells {
-        let candidate = match constraint {
-            Some(constraint) => conjoin(assert_schema.clone(), constraint),
-            None => assert_schema.clone(),
-        };
-        let profiles = ProfileSchemas::compile(baseline, &candidate, defaults.clone())?;
-        let mut annotation = DeclaredTypesAnnotation::new(source.path().to_path_buf(), recipe);
-        annotation.constraint.clone_from(constraint);
+        let profiles = ProfileSchemas::compile_with_candidate_constraint(
+            baseline,
+            &assert_schema,
+            defaults.clone(),
+            constraint.as_ref(),
+        )?;
         attributions.push(declared_types_attribution(&annotation, &profiles, document));
         adjudications.push(
             adjudicate_flip(&chart, document, &profiles, &kubernetes, Some(&annotation))
@@ -4515,6 +4521,51 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             })
             .collect::<Vec<_>>()
     );
+    Ok(())
+}
+
+#[test]
+fn mixed_dialect_candidate_preserves_tuple_bounds_and_local_references() -> eyre::Result<()> {
+    let tuple = json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$ref": "#/definitions/list",
+        "definitions": {"list": {
+            "type": "array",
+            "items": [{"type": "string"}, {"type": "string"}],
+            "additionalItems": false
+        }},
+    });
+    let contains = json!({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$ref": "#/definitions/list",
+        "definitions": {"list": {
+            "contains": {"type": "string"},
+            "minContains": 2
+        }},
+    });
+    let profiles = ProfileSchemas::compile_with_candidate_constraint(
+        &tuple,
+        &tuple,
+        json!([]),
+        Some(&contains),
+    )?;
+    for (document, expected, keywords) in [
+        (json!(["x"]), (true, false), vec!["contains"]),
+        (json!(["x", "y"]), (true, true), vec![]),
+        (
+            json!(["x", "y", "z"]),
+            (false, false),
+            vec!["additionalItems"],
+        ),
+        (json!(["x", 1]), (false, false), vec!["type", "contains"]),
+    ] {
+        sim_assert_eq!(have: profiles.document_verdicts(&document), want: expected);
+        let (_, errors) = profiles.errors(&document);
+        sim_assert_eq!(
+            have: errors.iter().map(|error| error.keyword.as_str()).collect::<Vec<_>>(),
+            want: keywords
+        );
+    }
     Ok(())
 }
 

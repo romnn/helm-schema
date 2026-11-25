@@ -1061,10 +1061,6 @@ pub struct DeclaredTypesAnnotation {
     pub chart_dir: PathBuf,
     /// The candidate's registry recipe.
     pub recipe: registry::ChartRecipe,
-    /// A schema conjoined to both regenerations: a control's stand-in for a
-    /// constraint the chart's own generation carries under either policy.
-    /// The battery passes none.
-    pub constraint: Option<serde_json::Value>,
     /// Both regenerations, prepared on first use.
     pub prepared: std::sync::OnceLock<Result<RegeneratedChart, String>>,
 }
@@ -1089,7 +1085,7 @@ pub struct PolicySchema {
 }
 
 impl PolicySchema {
-    /// Generates `recipe`'s schema in `session`, conjoined with `constraint`.
+    /// Generates and compiles `recipe`'s schema in `session`.
     ///
     /// # Errors
     ///
@@ -1097,49 +1093,14 @@ impl PolicySchema {
     pub fn generate(
         session: &helm_schema::AnalysisSession,
         recipe: &registry::ChartRecipe,
-        constraint: Option<&serde_json::Value>,
     ) -> Result<Self, String> {
         let policy = recipe.authoring.declared_types;
-        let mut schema = generate::session_schema(session, recipe)
+        let schema = generate::session_schema(session, recipe)
             .map_err(|error| format!("generate the {policy:?} schema: {error:#}"))?;
-        if let Some(constraint) = constraint {
-            schema = conjoin(schema, constraint);
-        }
         let validator = jsonschema::validator_for(&schema)
             .map_err(|error| format!("compile the {policy:?} schema: {error}"))?;
         Ok(Self { schema, validator })
     }
-}
-
-/// `schema` and `constraint` as one schema: both under `allOf`, their
-/// definitions merged at the root so their pointers still resolve,
-/// under the constraint's dialect when it names one.
-#[must_use]
-pub fn conjoin(mut schema: serde_json::Value, constraint: &serde_json::Value) -> serde_json::Value {
-    let mut constraint = constraint.clone();
-    let mut root = serde_json::Map::new();
-    let mut definitions = BTreeMap::<_, serde_json::Map<String, serde_json::Value>>::new();
-    for part in [&mut schema, &mut constraint] {
-        let Some(members) = part.as_object_mut() else {
-            continue;
-        };
-        if let Some(dialect) = members.remove("$schema") {
-            root.insert("$schema".to_string(), dialect);
-        }
-        for keyword in helm_schema_json_schema_walk::DefinitionsKeyword::ALL {
-            if let Some(serde_json::Value::Object(defined)) = members.remove(keyword.as_str()) {
-                definitions.entry(keyword).or_default().extend(defined);
-            }
-        }
-    }
-    for (keyword, definitions) in definitions {
-        root.insert(
-            keyword.as_str().to_string(),
-            serde_json::Value::Object(definitions),
-        );
-    }
-    root.insert("allOf".to_string(), json!([schema, constraint]));
-    serde_json::Value::Object(root)
 }
 
 impl DeclaredTypesAnnotation {
@@ -1150,7 +1111,6 @@ impl DeclaredTypesAnnotation {
         Self {
             chart_dir,
             recipe,
-            constraint: None,
             prepared: std::sync::OnceLock::new(),
         }
     }
@@ -1174,11 +1134,9 @@ impl DeclaredTypesAnnotation {
                         recipe,
                     ))
                 };
-                let constraint = self.constraint.as_ref();
-                let asserted =
-                    PolicySchema::generate(&session(&asserting), &asserting, constraint)?;
+                let asserted = PolicySchema::generate(&session(&asserting), &asserting)?;
                 let annotate_session = session(&annotating);
-                let annotated = PolicySchema::generate(&annotate_session, &annotating, constraint)?;
+                let annotated = PolicySchema::generate(&annotate_session, &annotating)?;
                 Ok(RegeneratedChart {
                     asserted,
                     annotated: annotated.validator,
@@ -1222,6 +1180,8 @@ pub fn attribute_to_declared_types(
 /// failure is compared with another. The error names the first condition
 /// that fails.
 ///
+/// A separate candidate constraint applies under both policies.
+///
 /// # Errors
 ///
 /// Returns the first condition that fails.
@@ -1238,7 +1198,7 @@ pub fn declared_types_attribution(
     if profiles.candidate_schema() != &regenerated.asserted.schema {
         return Err("the candidate is not the assert regeneration".to_string());
     }
-    if !regenerated.annotated.is_valid(document) {
+    if !profiles.accepts_with_candidate_constraint(&regenerated.annotated, document) {
         return Err("the annotate regeneration rejects it".to_string());
     }
     for error in regenerated.asserted.validator.iter_errors(document) {

@@ -335,11 +335,12 @@ pub struct DocumentJudgment {
     pub transition: bool,
 }
 
-/// A baseline and a candidate schema compiled for screening, with the chart's defaults.
+/// Compiled baseline and candidate schemas for screening, with the chart's defaults.
 pub struct ProfileSchemas {
     full: Validator,
     lean: Validator,
     lean_schema: Value,
+    candidate_constraint: Option<Validator>,
     defaults: Value,
     identical: bool,
 }
@@ -356,16 +357,37 @@ impl ProfileSchemas {
         lean_schema: &Value,
         defaults: Value,
     ) -> eyre::Result<Self> {
+        Self::compile_with_candidate_constraint(full_schema, lean_schema, defaults, None)
+    }
+
+    /// Compiles the baseline and candidate, plus an optional independent constraint on the candidate.
+    ///
+    /// Every schema keeps its own dialect and reference scope.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a schema does not compile.
+    pub fn compile_with_candidate_constraint(
+        full_schema: &Value,
+        lean_schema: &Value,
+        defaults: Value,
+        constraint: Option<&Value>,
+    ) -> eyre::Result<Self> {
         let full = jsonschema::validator_for(full_schema)
             .map_err(|error| eyre::eyre!("compile full schema: {error}"))?;
         let lean = jsonschema::validator_for(lean_schema)
             .map_err(|error| eyre::eyre!("compile lean schema: {error}"))?;
+        let candidate_constraint = constraint
+            .map(jsonschema::validator_for)
+            .transpose()
+            .map_err(|error| eyre::eyre!("compile candidate constraint: {error}"))?;
         Ok(Self {
             full,
             lean,
             lean_schema: lean_schema.clone(),
+            candidate_constraint,
             defaults,
-            identical: full_schema == lean_schema,
+            identical: constraint.is_none() && full_schema == lean_schema,
         })
     }
 
@@ -373,23 +395,58 @@ impl ProfileSchemas {
         self.identical
     }
 
-    /// The candidate schema as compiled.
+    /// The candidate's primary schema as compiled.
     #[must_use]
     pub fn candidate_schema(&self) -> &Value {
         &self.lean_schema
     }
 
+    /// Applies the same constraint to the candidate and its annotate counterfactual.
+    pub(super) fn accepts_with_candidate_constraint(
+        &self,
+        validator: &Validator,
+        instance: &Value,
+    ) -> bool {
+        validator.is_valid(instance)
+            && self
+                .candidate_constraint
+                .as_ref()
+                .is_none_or(|constraint| constraint.is_valid(instance))
+    }
+
+    fn candidate_accepts(&self, instance: &Value) -> bool {
+        self.accepts_with_candidate_constraint(&self.lean, instance)
+    }
+
+    fn candidate_validation_errors<'a>(
+        &'a self,
+        instance: &'a Value,
+    ) -> impl Iterator<Item = jsonschema::ValidationError<'a>> {
+        std::iter::once(&self.lean)
+            .chain(&self.candidate_constraint)
+            .flat_map(|validator| validator.iter_errors(instance))
+    }
+
+    fn candidate_errors(&self, instance: &Value) -> Vec<ValuesViolationKey> {
+        self.candidate_validation_errors(instance)
+            .map(|error| ValuesViolationKey::new(&error))
+            .collect()
+    }
+
     /// Whether the baseline and the candidate accept `instance` as given.
     #[must_use]
     pub fn document_verdicts(&self, instance: &Value) -> (bool, bool) {
-        (self.full.is_valid(instance), self.lean.is_valid(instance))
+        (
+            self.full.is_valid(instance),
+            self.candidate_accepts(instance),
+        )
     }
 
     /// How the baseline and the candidate judge `probe` composed over the defaults.
     #[must_use]
     pub fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
         let instance = self.compose(probe);
-        (self.full.is_valid(&instance), self.lean.is_valid(&instance))
+        self.document_verdicts(&instance)
     }
 
     /// Whether screening proposes `probe` for adjudication: the profiles
@@ -412,14 +469,12 @@ impl ProfileSchemas {
     #[must_use]
     #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
     pub fn judge_document(&self, instance: &Value) -> DocumentJudgment {
-        let baseline_accepts = self.full.is_valid(instance);
-        let candidate_accepts = self.lean.is_valid(instance);
+        let (baseline_accepts, candidate_accepts) = self.document_verdicts(instance);
         let transition = baseline_accepts != candidate_accepts
-            || (!candidate_accepts
-                && rejects_for_a_new_reason(
-                    &violations(&self.full, instance),
-                    &violations(&self.lean, instance),
-                ));
+            || (!candidate_accepts && {
+                let (baseline, candidate) = self.errors(instance);
+                rejects_for_a_new_reason(&baseline, &candidate)
+            });
         DocumentJudgment {
             baseline_accepts,
             candidate_accepts,
@@ -431,10 +486,10 @@ impl ProfileSchemas {
     /// transition the candidate rejects; empty otherwise.
     #[must_use]
     pub fn candidate_violations(&self, instance: &Value, transition: bool) -> Vec<String> {
-        if !transition || self.lean.is_valid(instance) {
+        if !transition || self.candidate_accepts(instance) {
             return Vec::new();
         }
-        violation_identities(&self.lean, instance)
+        sorted_violation_identities(&self.candidate_errors(instance))
     }
 
     /// Both schemas' violations of Helm's coalesced `values`.
@@ -485,7 +540,7 @@ impl ProfileSchemas {
     pub fn errors(&self, instance: &Value) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         (
             violations(&self.full, instance),
-            violations(&self.lean, instance),
+            self.candidate_errors(instance),
         )
     }
 
@@ -528,8 +583,7 @@ impl ProfileSchemas {
                 .map(|error| error.to_string())
                 .collect::<Vec<_>>();
             let lean_errors = self
-                .lean
-                .iter_errors(&instance)
+                .candidate_validation_errors(&instance)
                 .map(|error| error.to_string())
                 .collect::<Vec<_>>();
             let full = full_errors.is_empty();
@@ -1201,7 +1255,11 @@ fn synthesized_guard_witness_candidates(
 /// `instance`, sorted and unique: what a rejection's answer is.
 #[must_use]
 pub fn violation_identities(validator: &Validator, instance: &Value) -> Vec<String> {
-    let mut violations = violations(validator, instance)
+    sorted_violation_identities(&violations(validator, instance))
+}
+
+fn sorted_violation_identities(violations: &[ValuesViolationKey]) -> Vec<String> {
+    let mut violations = violations
         .iter()
         .map(ToString::to_string)
         .collect::<Vec<_>>();
