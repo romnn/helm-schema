@@ -60,6 +60,9 @@ field:contract/graph.rs:DependencyValuesRoot.path	X	contract	-	keep		rework2
 field:contract_normalization.rs:PathlessIdentity.predicates	D	borrowed phase projection PathlessIdentity.predicates	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
 field:contract_normalization.rs:PathlessIdentity.source_expr	D	borrowed phase projection PathlessIdentity.source_expr	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
 field:contract_normalization.rs:RenderSite.source_expr	D	borrowed phase projection RenderSite.source_expr	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
+field:contract_signal_builder/conditional_overlays.rs:RowGuardEvidence.paths	K	cached value paths of one canonical projected guard	derived guard projection held for one signal derivation	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:contract_signal_builder/conditional_overlays.rs:RowGuardQueries.evidence	K	memoized target-free predicate projection and path inventory	signal-local cache keyed by structural predicate	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:contract_signal_builder/conditional_overlays.rs:RowGuardQueries.type_tests	K	memoized paths tested for type by one predicate	signal-local cache keyed by structural predicate	keep		step 5b m7u+m7w landing, 2026-11-25	
 field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.fallback_type_hints	X	contract builder	-	keep		rework2	
 field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.guarded_fallback_type_hints	X	contract builder	-	keep		rework2	
 field:contract_signal_builder/contract_rows.rs:ContractPathAccumulator.guarded_type_hints	X	contract builder	-	keep		rework2	
@@ -312,6 +315,10 @@ field:resource_identity.rs:IdentitySource.execution	D	borrowed phase projection 
 field:resource_identity.rs:IdentitySource.root	D	borrowed phase projection IdentitySource.root	pure projection of DocumentExecution	keep		R3b construction root audit, 2026-10-26	
 field:scalar_value.rs:ScalarValueDispatch.arms	R	dispatch arms	sealed view (R2), query (R3b)	R3b	R2	rework2	
 field:static_file_template.rs:StaticTemplateProgram.dot	D	template request	-	keep		rework2	
+field:symbolic/mod.rs:GraphContracts.files	X	per-file phase artifacts exported from one chart render	render graph output containing one contract per source	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:symbolic/mod.rs:GraphContracts.startup	X	phase artifact for render startup and template load failures	render graph output carrying namespace startup contracts	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:symbolic/mod.rs:SymbolicChart.enabled	G	dependency activation region for this instance	instance activation predicate in the render graph	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:symbolic/mod.rs:SymbolicChart.values_path	V	identity of the chart's coalesced input backing	root-relative path of the instance input object	keep		step 5b m7u+m7w landing, 2026-11-25	
 field:symbolic/mod.rs:SymbolicIrContext.analysis_db	X	db handle	-	keep		rework3	
 field:symbolic/mod.rs:SymbolicPolicy.chart_default_strings	X	policy	-	keep		rework2	
 field:symbolic_local_state/mod.rs:ControlOutcome.condition	S	control exit state	fork/join under frozen guard	R3b		rework2	
@@ -344,16 +351,27 @@ field:symbolic_local_state/mod.rs:VariableLocalState.range_member_value	S	scope-
 field:symbolic_local_state/mod.rs:VariableLocalState.scalar_dispatch	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
 field:symbolic_local_state/mod.rs:VariableLocalState.truthy_reduction	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
 field:symbolic_local_state/mod.rs:VariableLocalState.typeof_source	S	scope-undo copy of one local's 13 facts	becomes LocalSlot	R1a		rework2	
+field:value/control.rs:GroupDependencies.inputs	O	transitive input regions observed in the continuation group	dependency regions of the grouped continuation	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/control.rs:GroupDependencies.reads	O	shared read observation set summarized across alternatives	observed reads of the grouped continuation	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/control.rs:GroupDependencies.referenced	V	runtime value references and their possible aliases	grouped continuation values and their reachable references	keep		step 5b m7u+m7w landing, 2026-11-25	
 field:value/control.rs:RangeExits.backedge	V	runtime exits that may enter another iteration	frozen guard over range exits	keep		range-output continuation landing, 2026-11-24	
 field:value/control.rs:RangeExits.completed	V	runtime exits that leave the range and take its suffix	frozen guard over range exits	keep		range-output continuation landing, 2026-11-24	
 field:value/control.rs:RangeExits.continuation	V	the output carried by a stable range backedge	frozen guard over range exits	keep		range-output continuation landing, 2026-11-24	
 field:value/loops.rs:Carried.state	V	Rest post-fixpoint start state widened only at carried locations	private canonical Value/Flow/frame/invocation data	keep		R3b step 6a1 loop transfer audit, 2026-11-17	""
 field:value/loops.rs:CarriedScope.rebound	V	names a range iteration declares afresh, so their outer values are not carried	private canonical Value/Flow/frame/invocation data	keep		R3b step 6a1 rework (binder rebind coverage), 2026-11-18	""
+field:value/mod.rs:Arena.instance_objects	K	instance ownership index keyed by object identity	arena-scoped index from instance object identity to values path	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/mod.rs:Arena.region_paths	K	cache of observed regions keyed by immutable heap generations	arena-scoped memo keyed by immutable heap region identity	keep		step 5b m7u+m7w landing, 2026-11-25	
 field:value/mod.rs:RepeatedOutput.bodies	R	executed body outputs for repeating iterations in the text DAG	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
 field:value/mod.rs:RepeatedOutput.breaks	R	executed body outputs for the final break iteration in the text DAG	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
 field:value/mod.rs:RepeatedOutput.inputs	R	dependencies of the opaque representation of the text DAG term	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
+field:value/namespace.rs:Definition.enabled	G	activation region of a named template binding	activation predicate on a named template binding	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/namespace.rs:Namespace.unknown_sources	G	activation region in which template sources are unresolved	predicate identifying unresolved namespace sources	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/namespace.rs:NamespaceBuild.failures	V	startup terminal outcomes retained during engine setup	terminal interpreter outcomes at namespace construction	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/namespace.rs:NamespaceFailure.enabled	G	activation region of this startup failure	activation predicate on a namespace construction abort	keep		step 5b m7u+m7w landing, 2026-11-25	
 field:value/operations.rs:DecodeSnapshot.heap	D	Heap version captured at serialization.	Operation-local read of the frozen heap.	keep		decoder member-read landing, 2026-11-25	
 field:value/operations.rs:DecodeSnapshot.yaml_inputs	D	Input regions that need a YAML stability proof.	Operation-local accumulation of the decoder guard.	keep		decoder member-read landing, 2026-11-25	
+field:value/operations.rs:Reached.undecided	G	unresolved decisions in the reachable-alias query	frozen decisions selecting references reached by the query	keep		step 5b m7u+m7w landing, 2026-11-25	
+field:value/session.rs:InstanceAssumptions.assuming	V	chart root values retained for discharging assumptions	instance input backing used to discharge default assumptions	keep		step 5b m7u+m7w landing, 2026-11-25	
 variant:value/layers.rs:Base::DecodedInput	R	Detached decoded map backed by a pristine raw input region.	Canonical heap map representation.	keep		decoder member-read landing, 2026-11-25	
 variant:value/loops.rs:Uncovered::Assumption	G	validity assumption a loop pass added beyond its start	canonical correlated runtime guard DAG	keep		R3b step 6a1 rework (state coverage), 2026-11-17	""
 field:value/state.rs:ContinuationKey.arena	K	canonical continuation identity within one runtime arena	stored frame layout plus execution context	keep		R3b construction root audit, 2026-10-26	
