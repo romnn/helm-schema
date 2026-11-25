@@ -1039,7 +1039,7 @@ fn comparison_invocation(mut state: State, arguments: &[Value], negated: bool) -
     if accepted == Predicate::False {
         return super::kinds::validate_type_predicate(state, Value::nil(), accepted);
     }
-    let value = comparison_result(&state, &arguments, negated, &mut budget);
+    let value = comparison_result(&mut state, &arguments, negated, &mut budget);
     super::kinds::validate_type_predicate(state, value, accepted)
 }
 
@@ -1336,7 +1336,7 @@ impl super::control::Reconvergent for ComparisonExit {
 }
 
 fn comparison_result(
-    state: &State,
+    state: &mut State,
     arguments: &[Value],
     negated: bool,
     budget: &mut ComparisonBudget,
@@ -1358,7 +1358,7 @@ fn comparison_result(
 }
 
 fn comparison_preimage(
-    state: &State,
+    state: &mut State,
     left: &Value,
     right: &Value,
     negated: bool,
@@ -1369,11 +1369,9 @@ fn comparison_preimage(
     consumed_comparison_preimage(state, &left, &right, negated, budget)
 }
 
-/// Compares consumed operands arm by arm, each under its own outcome. Consumption is deep, so the
-/// arms are not consumed again: a captured text that still holds the branch it was captured under
-/// would re-expand into that whole branch under the unchanged path.
+/// Keep the operand's decisions on the result and in scope for queries of a frozen leaf.
 fn consumed_comparison_preimage(
-    state: &State,
+    state: &mut State,
     left: &Value,
     right: &Value,
     negated: bool,
@@ -1384,45 +1382,58 @@ fn consumed_comparison_preimage(
         return unknown_comparison(state, left, right);
     }
     budget.remaining -= 1;
-    if let ValueNode::Select { decision, yes, no } = left.node.as_ref() {
-        return Value::select(
-            Rc::clone(decision),
-            consumed_comparison_preimage(
-                state,
-                &yes.under(decision, true),
-                &right.under(decision, true),
-                negated,
-                budget,
-            ),
-            consumed_comparison_preimage(
-                state,
-                &no.under(decision, false),
-                &right.under(decision, false),
-                negated,
-                budget,
-            ),
-        );
+    let Some(decision) = comparison_selector(left, right) else {
+        return comparison_value(state, left, right, negated);
+    };
+    let mut compare_arm = |state: &mut State, taken| {
+        consumed_comparison_preimage(
+            state,
+            comparison_arm(left, &decision, taken),
+            comparison_arm(right, &decision, taken),
+            negated,
+            budget,
+        )
+    };
+    if let Some(taken) = decision.constant_outcome().or_else(|| {
+        state
+            .heap
+            .arena
+            .path_guard(&state.active)
+            .implies_test(&decision)
+    }) {
+        return compare_arm(state, taken);
     }
-    if let ValueNode::Select { decision, yes, no } = right.node.as_ref() {
-        return Value::select(
-            Rc::clone(decision),
-            consumed_comparison_preimage(
-                state,
-                &left.under(decision, true),
-                &yes.under(decision, true),
-                negated,
-                budget,
-            ),
-            consumed_comparison_preimage(
-                state,
-                &left.under(decision, false),
-                &no.under(decision, false),
-                negated,
-                budget,
-            ),
-        );
+
+    let depth = state.active.len();
+    comparison_push(state, Rc::clone(&decision), true);
+    let yes = compare_arm(state, true);
+    state.active.truncate(depth);
+    comparison_push(state, Rc::clone(&decision), false);
+    let no = compare_arm(state, false);
+    state.active.truncate(depth);
+
+    Value::select(decision, yes, no)
+}
+
+fn comparison_arm<'a>(operand: &'a Value, selected: &super::FrozenTest, taken: bool) -> &'a Value {
+    match operand.node.as_ref() {
+        ValueNode::Select { decision, yes, no } if decision.id == selected.id => {
+            if taken {
+                yes
+            } else {
+                no
+            }
+        }
+        ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _,
+        }
+        | ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => operand,
     }
-    comparison_value(state, left, right, negated)
 }
 
 fn unknown_comparison_arguments(state: &State, arguments: &[Value]) -> Value {

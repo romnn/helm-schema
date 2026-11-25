@@ -317,7 +317,7 @@ impl Observation {
 }
 
 #[derive(Debug)]
-struct NoProvider;
+pub(super) struct NoProvider;
 
 impl helm_schema_core::ResourceSchemaOracle for NoProvider {
     fn schema_fragment_for_use(

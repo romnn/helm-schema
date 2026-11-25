@@ -47,10 +47,15 @@ impl ExecutedObservation {
         let mut when_true = Vec::new();
         for site in self.subject_sites() {
             observed = true;
-            if !site.coverage_exact() || site.condition().contains_approximation() {
+            let condition = site.condition();
+            if !site.coverage_exact() || condition.contains_approximation() {
                 return None;
             }
-            for alternative in site.value().alternatives() {
+            let alternatives = site.value().alternatives();
+            if alternatives.is_empty() {
+                return None;
+            }
+            for alternative in alternatives {
                 if !alternative.coverage_exact() || alternative.condition().contains_approximation()
                 {
                     return None;
@@ -58,16 +63,15 @@ impl ExecutedObservation {
                 let Some(GuardValue::Bool(truth)) = alternative.value().literal() else {
                     return None;
                 };
-                let condition = Predicate::all(vec![
-                    site.condition().clone(),
-                    alternative.condition().clone(),
-                ])
-                .normalize_boolean();
-                coverage.push(condition.clone());
                 if *truth {
-                    when_true.push(condition);
+                    when_true.push(Predicate::all(vec![
+                        condition.clone(),
+                        alternative.condition().clone(),
+                    ]));
                 }
             }
+            // Exact alternatives already partition the site's value.
+            coverage.push(condition);
         }
         let normal_coverage = Predicate::Or(
             self.execution
@@ -1950,7 +1954,7 @@ fn helper_conditions_preserve_stringified_trimmed_local_values() {
 }
 
 #[test]
-fn helper_output_equality_decodes_a_versioned_boolean_dispatch() {
+fn helper_output_equality_decodes_a_versioned_boolean_dispatch() -> eyre::Result<()> {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -1983,10 +1987,31 @@ fn helper_output_equality_decodes_a_versioned_boolean_dispatch() {
         &mut seen,
     );
 
-    assert!(
-        result.exact_truth().is_some(),
-        "the complete helper dispatch must produce an exact equality predicate: {result:#?}"
-    );
+    let predicate = result
+        .exact_truth()
+        .ok_or_eyre("the versioned helper dispatch must decide equality exactly")?;
+    crate::tests::guard_oracle::assert_helm_verdicts(
+        &predicate,
+        &[
+            (
+                serde_json::json!({"l7Proxy": true, "envoy": {}, "upgradeCompatibility": "1.15"}),
+                false,
+            ),
+            (
+                serde_json::json!({"l7Proxy": true, "envoy": {}, "upgradeCompatibility": "1.16"}),
+                true,
+            ),
+            (serde_json::json!({"l7Proxy": true, "envoy": {}}), true),
+            (
+                serde_json::json!({"l7Proxy": true, "envoy": {"enabled": false}}),
+                false,
+            ),
+            (
+                serde_json::json!({"l7Proxy": false, "envoy": {"enabled": true}}),
+                false,
+            ),
+        ],
+    )
 }
 
 #[test]
@@ -2083,7 +2108,9 @@ fn helper_scalar_output_retains_known_arms_beside_an_unknown_arm() {
 }
 
 #[test]
-fn helper_scalar_output_combines_structural_and_projected_known_arms() {
+fn helper_scalar_output_combines_structural_and_projected_known_arms() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::assert_helm_verdicts;
+
     let mut defines = DefineIndex::new();
     defines.add_file_source(
         "<inline:0>",
@@ -2102,48 +2129,101 @@ fn helper_scalar_output_combines_structural_and_projected_known_arms() {
         "#},
     );
     let analysis_db = IrAnalysisDb::new(&defines);
-    let context = helper_context(&analysis_db);
-    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
-    let expr = single_expr(r#"eq (include "feature.mixed" .) "true""#);
-    let mut seen = HashSet::new();
+    let signals = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(
+            r#"{{ if eq (include "feature.mixed" .) "true" }}{{ fail "selected helper arm" }}{{ end }}"#,
+        )
+        .finalize()
+        .into_schema_signals();
+    let schema = helm_schema_gen::generate_values_schema(helm_schema_gen::ValuesSchemaInput::new(
+        &signals,
+        &super::expr_eval::NoProvider,
+    ));
+    let validator = jsonschema::validator_for(&schema)?;
+    for (values, renders) in [
+        (serde_json::json!({"feature": {"explicit": true}}), false),
+        (serde_json::json!({"feature": {"explicit": "true"}}), false),
+        (serde_json::json!({"feature": {"static": true}}), false),
+        (
+            serde_json::json!({"feature": {"explicit": false, "static": true}}),
+            true,
+        ),
+        (
+            serde_json::json!({"feature": {"explicit": " true ", "static": true}}),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&values), want: renders, "{values}");
+    }
 
-    let result = helper_result_from_expr_with_fragment_locals(
-        &expr,
-        &HashMap::new(),
-        Some(&root_bindings),
-        None,
-        context,
-        &mut seen,
-    );
-    let explicit_is_null = Predicate::from(Guard::Eq {
-        path: helm_schema_core::ValuesPath::parse("feature.explicit"),
-        value: GuardValue::Null,
-    });
-    let explicit_is_true = Predicate::Or(vec![
-        Predicate::from(Guard::Eq {
-            path: helm_schema_core::ValuesPath::parse("feature.explicit"),
-            value: GuardValue::Bool(true),
-        }),
-        Predicate::from(Guard::MatchesPattern {
-            path: helm_schema_core::ValuesPath::parse("feature.explicit"),
-            pattern: "^true$".to_string(),
-            templated: false,
-        }),
-    ]);
-    let want = Predicate::Or(vec![
-        Predicate::all(vec![explicit_is_null.negated(), explicit_is_true]),
-        Predicate::all(vec![
-            explicit_is_null,
-            Predicate::truthy_path("feature.static"),
-        ]),
-    ])
-    .normalize_boolean();
+    let dynamic = serde_json::json!({"feature": {"dynamic": true}});
+    let explicit_false = serde_json::json!({"feature": {"explicit": false, "static": true}});
+    for comparison in ["eq", "ne"] {
+        let result = helper_result_from_expr_with_fragment_locals(
+            &single_expr(&format!(
+                r#"{comparison} (include "feature.mixed" .) "true""#
+            )),
+            &HashMap::new(),
+            None,
+            None,
+            &analysis_db,
+            &mut HashSet::new(),
+        );
+        sim_assert_eq!(have: result.exact_truth(), want: None);
+        assert_helm_verdicts(
+            &result.when_true(),
+            &[
+                (dynamic.clone(), false),
+                (explicit_false.clone(), comparison == "ne"),
+            ],
+        )?;
+    }
+    Ok(())
+}
 
-    sim_assert_eq!(
-        have: result.when_true(),
-        want: want,
-        "the scalar summary must keep disjoint known arms from both semantic projections"
+#[test]
+fn quoted_helper_equality_keeps_partial_matches_one_sided() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::assert_helm_verdicts;
+
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.quote" -}}
+            {{- if .Values.enabled -}}
+            {{- replace "a" "b" (quote .Values.x) -}}
+            {{- else -}}
+            "c"
+            {{- end -}}
+            {{- end -}}
+        "#},
     );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let evaluate = |expression| {
+        helper_result_from_expr_with_fragment_locals(
+            &single_expr(expression),
+            &HashMap::new(),
+            None,
+            None,
+            &analysis_db,
+            &mut HashSet::new(),
+        )
+    };
+    let different = evaluate(r#"ne (include "feature.quote" .) "\"b\"""#);
+    assert_helm_verdicts(
+        &different.when_true(),
+        &[
+            (serde_json::json!({"enabled": true, "x": "a"}), false),
+            (serde_json::json!({"enabled": true, "x": "b"}), false),
+            (serde_json::json!({"enabled": false, "x": "b"}), true),
+        ],
+    )?;
+    let equal = evaluate(r#"eq (include "feature.quote" .) "\"b\"""#);
+    assert_helm_verdicts(
+        &equal.when_true(),
+        &[(serde_json::json!({"enabled": true, "x": "b"}), true)],
+    )?;
+    Ok(())
 }
 
 #[test]

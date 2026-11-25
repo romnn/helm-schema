@@ -329,7 +329,8 @@ pub(super) fn lexical_preimage(
     let frozen = state.heap.freeze(value);
     let inputs = state.heap.arena.input_objects.borrow();
     let mut query = super::relationship::RelationshipQuery::new(&inputs, 512);
-    query.lexical_preimage(&frozen, pattern)
+    let ambient = state.heap.arena.path_guard(&state.active);
+    query.lexical_preimage(&frozen, pattern, &ambient)
 }
 
 /// Compares through the constraint's exact version language, lifted to the version's inputs.

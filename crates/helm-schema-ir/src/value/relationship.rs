@@ -11,7 +11,7 @@ use helm_schema_core::{Guard, GuardValue, Predicate, PredicateMemo, ValuesPath};
 
 use super::{
     Coverage, Datum, Field, FrozenValue, HeapVersion, InputBacking, Leaf, ObjectData, Remainder,
-    Value, ValueNode, scalar_value::ScalarContent,
+    Value, ValueNode, guard::RuntimeGuard, scalar_value::ScalarContent,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -2152,6 +2152,7 @@ impl<'a> RelationshipQuery<'a, '_> {
         &mut self,
         frozen: &'a FrozenValue,
         pattern: &helm_schema_core::ValuePattern,
+        ambient: &RuntimeGuard,
     ) -> Option<LexicalPreimage> {
         let query = LexicalQuery {
             matched: pattern.clone(),
@@ -2159,7 +2160,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             scalars: Vec::new(),
             complementary: true,
         };
-        let preimage = self.lexical_value(&frozen.value, &query, 0);
+        let preimage = self.lexical_value(&frozen.value, &query, ambient, 0);
         (self.remaining > 0).then_some(preimage)
     }
 
@@ -2167,6 +2168,7 @@ impl<'a> RelationshipQuery<'a, '_> {
         &mut self,
         value: &'a Value,
         query: &LexicalQuery,
+        ambient: &RuntimeGuard,
         depth: usize,
     ) -> LexicalPreimage {
         if depth >= 128 || !self.charge(1) {
@@ -2174,8 +2176,8 @@ impl<'a> RelationshipQuery<'a, '_> {
         }
         let (datum, origin) = match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => {
-                return self.lexical_choice(decision, &mut |this, taken| {
-                    this.lexical_value(if taken { yes } else { no }, query, depth + 1)
+                return self.lexical_choice(decision, ambient, &mut |this, taken| {
+                    this.lexical_value(if taken { yes } else { no }, query, ambient, depth + 1)
                 });
             }
             ValueNode::Leaf(Leaf { datum, origin }) => (datum, origin),
@@ -2215,7 +2217,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             };
         }
         if let Datum::Text(text) = datum {
-            return self.lexical_text(text.term(), query, depth);
+            return self.lexical_text(text.term(), query, ambient, depth);
         }
         let Some(derivation) = origin.derivation.as_deref() else {
             return LexicalPreimage::undecided();
@@ -2226,7 +2228,13 @@ impl<'a> RelationshipQuery<'a, '_> {
                 super::lexical::text_preimage(transform, &query.unmatched),
             ),
             ValueOperation::Format(TextFormat::Value) => {
-                return self.lexical_printed(query, &derivation.source, Some("<nil>"), depth);
+                return self.lexical_printed(
+                    query,
+                    &derivation.source,
+                    Some("<nil>"),
+                    ambient,
+                    depth,
+                );
             }
             // `%s` spells other kinds with a diagnostic, so only the string identity lifts.
             ValueOperation::Format(TextFormat::String) => (
@@ -2247,7 +2255,14 @@ impl<'a> RelationshipQuery<'a, '_> {
             | ValueOperation::Merge { overwrite: _ } => return LexicalPreimage::undecided(),
         };
         // A text transform's operand is a string: no other kind reaches its output.
-        self.lexical_source(query, lifted, Vec::new(), &derivation.source, depth)
+        self.lexical_source(
+            query,
+            lifted,
+            Vec::new(),
+            &derivation.source,
+            ambient,
+            depth,
+        )
     }
 
     /// An exact choice selects its arms' answers; certified subsets add what holds on either
@@ -2255,39 +2270,35 @@ impl<'a> RelationshipQuery<'a, '_> {
     fn lexical_choice(
         &mut self,
         decision: &Rc<super::FrozenTest>,
+        ambient: &RuntimeGuard,
         arm: &mut dyn FnMut(&mut Self, bool) -> LexicalPreimage,
     ) -> LexicalPreimage {
-        let approximate = decision.when_true.contains_approximation()
-            || decision.when_false.contains_approximation();
-        let mut arms = Vec::with_capacity(2);
-        for taken in [true, false] {
-            match self.decisions.get(&decision.id) {
-                Some(selected) if *selected != taken => continue,
-                Some(_) => return arm(self, taken),
-                None => {}
-            }
-            self.decisions.insert(decision.id, taken);
-            arms.push((taken, arm(self, taken)));
-            self.decisions.remove(&decision.id);
+        if let Some(taken) = self
+            .decisions
+            .get(&decision.id)
+            .copied()
+            .or_else(|| ambient.implies_test(decision))
+        {
+            return arm(self, taken);
         }
-        let [(_, on_true), (_, on_false)] = match arms.as_slice() {
-            [(true, on_true), (false, on_false)] => [(true, on_true), (false, on_false)],
-            _ => return LexicalPreimage::undecided(),
-        };
+        self.decisions.insert(decision.id, true);
+        let on_true = arm(self, true);
+        self.decisions.insert(decision.id, false);
+        let on_false = arm(self, false);
+        self.decisions.remove(&decision.id);
+
         let both =
             |left: &Predicate, right: &Predicate| Predicate::all(vec![left.clone(), right.clone()]);
         let mut matched = vec![both(&on_true.matched, &on_false.matched)];
         let mut unmatched = vec![both(&on_true.unmatched, &on_false.unmatched)];
-        let exact = match decision.coverage {
-            _ if approximate => false,
-            Coverage::Exact | Coverage::CertifiedPartial => {
-                matched.push(both(&decision.when_true, &on_true.matched));
-                matched.push(both(&decision.when_false, &on_false.matched));
-                unmatched.push(both(&decision.when_true, &on_true.unmatched));
-                unmatched.push(both(&decision.when_false, &on_false.unmatched));
-                decision.coverage == Coverage::Exact && on_true.exact && on_false.exact
-            }
-            Coverage::Partial => false,
+        let exact = if let Some([when_true, when_false]) = decision.certified_guards() {
+            matched.push(both(when_true, &on_true.matched));
+            matched.push(both(when_false, &on_false.matched));
+            unmatched.push(both(when_true, &on_true.unmatched));
+            unmatched.push(both(when_false, &on_false.unmatched));
+            decision.coverage == Coverage::Exact && on_true.exact && on_false.exact
+        } else {
+            false
         };
         LexicalPreimage {
             matched: self.predicates.normalize(Predicate::Or(matched)),
@@ -2302,6 +2313,7 @@ impl<'a> RelationshipQuery<'a, '_> {
         &mut self,
         term: &'a super::text::TextTerm,
         query: &LexicalQuery,
+        ambient: &RuntimeGuard,
         depth: usize,
     ) -> LexicalPreimage {
         let graph = match term {
@@ -2310,7 +2322,7 @@ impl<'a> RelationshipQuery<'a, '_> {
                 strip_marker: _,
             } => graph,
             super::text::TextTerm::Quote { value } => {
-                return self.lexical_quote(query, value, depth);
+                return self.lexical_quote(query, value, ambient, depth);
             }
             super::text::TextTerm::Resolved {
                 term: _,
@@ -2340,13 +2352,14 @@ impl<'a> RelationshipQuery<'a, '_> {
                 newline: _,
             } => return LexicalPreimage::undecided(),
         };
-        self.lexical_output(graph, query, depth)
+        self.lexical_output(graph, query, ambient, depth)
     }
 
     fn lexical_output(
         &mut self,
         graph: &'a super::TextBuffer,
         query: &LexicalQuery,
+        ambient: &RuntimeGuard,
         depth: usize,
     ) -> LexicalPreimage {
         if depth >= 128 || !self.charge(1) {
@@ -2379,11 +2392,11 @@ impl<'a> RelationshipQuery<'a, '_> {
             // A template action prints nil as `<no value>`; Helm erases that only in the final
             // file.
             Some(super::TextPart::Frozen(value)) => {
-                self.lexical_printed(query, value, Some("<no value>"), depth)
+                self.lexical_printed(query, value, Some("<no value>"), ambient, depth)
             }
             Some(super::TextPart::Select { decision, yes, no }) => {
-                self.lexical_choice(decision, &mut |this, taken| {
-                    this.lexical_output(if taken { yes } else { no }, query, depth + 1)
+                self.lexical_choice(decision, ambient, &mut |this, taken| {
+                    this.lexical_output(if taken { yes } else { no }, query, ambient, depth + 1)
                 })
             }
             Some(
@@ -2401,6 +2414,7 @@ impl<'a> RelationshipQuery<'a, '_> {
         query: &LexicalQuery,
         source: &'a FrozenValue,
         nil_spelling: Option<&str>,
+        ambient: &RuntimeGuard,
         depth: usize,
     ) -> LexicalPreimage {
         let strings = (
@@ -2417,7 +2431,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             Some(scalars)
         });
         let Some(Some(scalars)) = scalars else {
-            return self.lexical_source(query, strings, Vec::new(), source, depth);
+            return self.lexical_source(query, strings, Vec::new(), source, ambient, depth);
         };
         let (Some(matched), Some(unmatched)) = strings else {
             return LexicalPreimage::undecided();
@@ -2431,6 +2445,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             (Some(exact(matched)), Some(exact(unmatched))),
             scalars,
             source,
+            ambient,
             depth,
         )
     }
@@ -2441,6 +2456,7 @@ impl<'a> RelationshipQuery<'a, '_> {
         &mut self,
         query: &LexicalQuery,
         source: &'a FrozenValue,
+        ambient: &RuntimeGuard,
         depth: usize,
     ) -> LexicalPreimage {
         let Some(mut words) = super::lexical::finite_words(&query.matched) else {
@@ -2458,18 +2474,27 @@ impl<'a> RelationshipQuery<'a, '_> {
             };
             printed.insert(content.to_owned());
         }
+        let matched = super::lexical::word_language(&printed);
+        // Only a complete language gives the nonmatching spellings by complement.
+        let unmatched = if query.complementary {
+            helm_schema_core::ValuePattern::Not(Box::new(matched.clone()))
+        } else {
+            helm_schema_core::ValuePattern::AnyOf(Vec::new())
+        };
         let printed_query = LexicalQuery {
-            matched: super::lexical::word_language(&printed),
-            unmatched: helm_schema_core::ValuePattern::Not(Box::new(
-                super::lexical::word_language(&printed),
-            )),
+            matched,
+            unmatched,
             scalars: Vec::new(),
             complementary: query.complementary,
         };
         // Sprig `quote` drops nil (it quotes to the empty string), so no quoted word spells it.
-        let mut lifted = self.lexical_printed(&printed_query, source, None, depth);
+        let mut lifted = self.lexical_printed(&printed_query, source, None, ambient, depth);
         if nil {
-            let nil_matched = self.lexical_nil(source, depth);
+            let Some(nil_matched) = self.lexical_nil(source, ambient, depth) else {
+                lifted.unmatched = Predicate::False;
+                lifted.exact = false;
+                return lifted;
+            };
             lifted.matched = Predicate::Or(vec![lifted.matched, nil_matched.clone()]);
             lifted.unmatched = Predicate::all(vec![lifted.unmatched, nil_matched.negated()]);
         }
@@ -2477,19 +2502,20 @@ impl<'a> RelationshipQuery<'a, '_> {
     }
 
     /// The inputs on which a value is nil, decided only for a direct input.
-    fn lexical_nil(&mut self, source: &'a FrozenValue, depth: usize) -> Predicate {
+    fn lexical_nil(
+        &mut self,
+        source: &'a FrozenValue,
+        ambient: &RuntimeGuard,
+        depth: usize,
+    ) -> Option<Predicate> {
         let query = LexicalQuery {
             matched: helm_schema_core::ValuePattern::AnyOf(Vec::new()),
             unmatched: helm_schema_core::ValuePattern::Any,
             scalars: vec![GuardValue::Null],
             complementary: true,
         };
-        let nil = self.lexical_value(&source.value, &query, depth + 1);
-        if nil.exact {
-            nil.matched
-        } else {
-            Predicate::False
-        }
+        let nil = self.lexical_value(&source.value, &query, ambient, depth + 1);
+        nil.exact.then_some(nil.matched)
     }
 
     fn lexical_source(
@@ -2501,6 +2527,7 @@ impl<'a> RelationshipQuery<'a, '_> {
         ),
         scalars: Vec<GuardValue>,
         source: &'a FrozenValue,
+        ambient: &RuntimeGuard,
         depth: usize,
     ) -> LexicalPreimage {
         let nothing = || super::lexical::Lexical {
@@ -2515,7 +2542,7 @@ impl<'a> RelationshipQuery<'a, '_> {
             unmatched: unmatched.pattern,
             scalars,
         };
-        self.lexical_value(&source.value, &lifted, depth + 1)
+        self.lexical_value(&source.value, &lifted, ambient, depth + 1)
     }
 }
 
