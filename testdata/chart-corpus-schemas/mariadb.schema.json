@@ -6,222 +6,18 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more"
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+3more"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "namespaceOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "passwordUpdateJob": {}
-              },
-              "required": [
-                "passwordUpdateJob"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "passwordUpdateJob": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "passwordUpdateJob"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override mariadb.fullname",
+          "fullnameOverride": {
+            "description": "String to fully override mariadb.fullname",
             "type": "string"
           }
         }
@@ -249,25 +45,436 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+3more"
           },
           {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more"
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override mariadb.fullname",
+          "nameOverride": {
+            "description": "String to partially override mariadb.fullname",
             "type": "string"
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/when~1commonLabels+commonLabels=null~1then~1any~1else~1commonLabels"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/when~1commonLabels+commonLabels=null~1then~1any~1else~1commonLabels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "passwordUpdateJob": {
+            "additionalProperties": {},
+            "properties": {
+              "previousPasswords": {
+                "additionalProperties": {},
+                "properties": {
+                  "rootPassword": {
+                    "description": "Previous root password (set if the password secret was already changed)",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "passwordUpdateJob": {}
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "tags": {
+                          "properties": {
+                            "bitnami-common": {
+                              "not": {
+                                "enum": [
+                                  false
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "bitnami-common"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tags"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "tags": {
+                            "properties": {
+                              "bitnami-common": {}
+                            },
+                            "required": [
+                              "bitnami-common"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tags"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
+                            }
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
+                              },
+                              {
+                                "not": {
+                                  "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "passwordUpdateJob": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "passwordUpdateJob"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "definitions": {
+    "constrains/commonLabels": {
+      "properties": {
+        "commonLabels": {
+          "pattern": "\\{\\{",
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels+commonLabels=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "commonLabels": {}
+            },
+            "required": [
+              "commonLabels"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "commonLabels": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "commonLabels"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+      }
+    },
+    "constrains/commonLabels:helm-no-template-actions": {
+      "not": {
+        "properties": {
+          "commonLabels": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          }
+        },
+        "required": [
+          "commonLabels"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/commonLabels@2": {
+      "properties": {
+        "commonLabels": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -313,12 +520,34 @@
         },
         {
           "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1commonLabels"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels@2"
         },
         {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
         },
         {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
         }
       ]
     },
@@ -389,13 +618,24 @@
       ],
       "type": "object"
     },
-    "constrains/passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+1more": {
+    "constrains/passwordUpdateJob.enabled:t+passwordUpdateJob.previousPasswords.existingSecret:t+3more": {
       "allOf": [
+        {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+          }
+        },
         {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword:t"
         },
         {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          "not": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          }
         },
         {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
@@ -403,36 +643,36 @@
       ]
     },
     "constrains/passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+      }
     },
     "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@2": {
-      "not": {
-        "properties": {
-          "passwordUpdateJob": {
-            "properties": {
-              "previousPasswords": {
-                "properties": {
-                  "existingSecret": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "existingSecret"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "previousPasswords"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "passwordUpdateJob"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "existingSecret": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "existingSecret"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
     },
     "constrains/passwordUpdateJob.previousPasswords.rootPassword:t": {
       "properties": {
@@ -461,6 +701,87 @@
       ],
       "type": "object"
     },
+    "constrains/tags.bitnami-common=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      }
+    },
+    "constrains/tags.bitnami-common=false@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-common=true": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -485,6 +806,17 @@
           "const": true
         }
       ]
+    },
+    "when/commonLabels+commonLabels=null/then/any/else/commonLabels": {
+      "else": {
+        "not": {
+          "$ref": "#/definitions/constrains~1commonLabels@2"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+      },
+      "then": true
     }
   },
   "properties": {
@@ -498,12 +830,7 @@
       "description": "Default Kubernetes cluster domain"
     },
     "common": {
-      "additionalProperties": {},
       "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
         "global": {}
       },
       "type": "object"
@@ -633,52 +960,6 @@
     },
     "tags": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "bitnami-common": {}
-                    },
-                    "required": [
-                      "bitnami-common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

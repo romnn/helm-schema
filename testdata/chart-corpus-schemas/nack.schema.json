@@ -304,6 +304,134 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "namespaced": {
+          "description": "restrict the controller to only watch resources in it's current namespace",
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbacRules"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1rbacRules"
+          },
+          {
+            "$ref": "#/definitions/constrains~1jetstream.nats.credentials:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1jetstream"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "properties": {
+                  "nats": {
+                    "additionalProperties": {},
+                    "description": "NATS URL",
+                    "properties": {
+                      "credentials": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "properties": {
+                  "nats": {
+                    "additionalProperties": {},
+                    "description": "NATS URL",
+                    "properties": {
+                      "credentials": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "secret": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "rbacRules": {
+          "description": "Rules to be applied to ClusterRole or Role\nSet as a string so that it can be templated to allow further customization",
+          "type": "string"
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -395,7 +523,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-9"
+                "$ref": "#/definitions/constrains~1group-3"
               },
               {
                 "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
@@ -414,20 +542,23 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-7"
+                "$ref": "#/definitions/constrains~1group-1"
               },
               {
-                "$ref": "#/definitions/constrains~1group-5"
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-7"
+                "$ref": "#/definitions/constrains~1group-1"
               },
               {
-                "$ref": "#/definitions/constrains~1group-6"
+                "$ref": "#/definitions/constrains~1jetstream.image"
               },
               {
                 "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
@@ -437,30 +568,64 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-7"
+                "$ref": "#/definitions/constrains~1rbacRules"
               },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
               {
                 "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image@4"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-7"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.additionalArgs@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-9"
+                "$ref": "#/definitions/constrains~1group-3"
               },
               {
                 "$ref": "#/definitions/constrains~1jetstream.image"
@@ -479,64 +644,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-10"
+                "$ref": "#/definitions/constrains~1group-0"
               },
               {
-                "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
               },
               {
-                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.image@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.image@4"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-10"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.additionalArgs"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.controlLoop:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.controlLoop:t@2"
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
               }
             ]
           },
@@ -546,17 +660,23 @@
                 "$ref": "#/definitions/constrains~1group-0"
               },
               {
-                "$ref": "#/definitions/constrains~1group-3"
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.image"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-0"
+                "$ref": "#/definitions/constrains~1group-1"
               },
               {
-                "$ref": "#/definitions/constrains~1group-5"
+                "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
               }
             ]
           },
@@ -997,134 +1117,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "namespaced": {
-          "description": "restrict the controller to only watch resources in it's current namespace",
-          "type": "boolean"
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1jetstream.image"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbacRules"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1rbacRules"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream+jetstream.image+jetstream=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jetstream"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jetstream": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1rbacRules"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream.nats.credentials:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1jetstream"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "description": "NATS URL",
-                    "properties": {
-                      "credentials": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "description": "NATS URL",
-                    "properties": {
-                      "credentials": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "secret": {
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "rbacRules": {
-          "description": "Rules to be applied to ClusterRole or Role\nSet as a string so that it can be templated to allow further customization",
-          "type": "string"
-        }
-      }
     }
   ],
   "definitions": {
@@ -1169,7 +1161,13 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-10"
+          "$ref": "#/definitions/constrains~1jetstream"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1rbacRules"
         },
         {
           "$ref": "#/definitions/constrains~1group-2"
@@ -1179,20 +1177,30 @@
     "constrains/group-1": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1jetstream"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream+jetstream=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1rbacRules"
+          "$ref": "#/definitions/constrains~1group-3"
         },
         {
           "$ref": "#/definitions/constrains~1group-2"
         }
       ]
     },
-    "constrains/group-10": {
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.image@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
+        }
+      ]
+    },
+    "constrains/group-3": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1jetstream"
@@ -1202,92 +1210,6 @@
         },
         {
           "$ref": "#/definitions/constrains~1rbacRules"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.controlLoop:t"
-        }
-      ]
-    },
-    "constrains/group-2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-8"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
-        }
-      ]
-    },
-    "constrains/group-3": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
-        }
-      ]
-    },
-    "constrains/group-4": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.image"
-        }
-      ]
-    },
-    "constrains/group-5": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-6"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null"
-        }
-      ]
-    },
-    "constrains/group-6": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1jetstream.pullPolicy@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream+jetstream=null"
-        }
-      ]
-    },
-    "constrains/group-7": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-10"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-8"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@2"
-        }
-      ]
-    },
-    "constrains/group-8": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1jetstream.image+jetstream.image=null@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1jetstream.image@3"
-        }
-      ]
-    },
-    "constrains/group-9": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-10"
         },
         {
           "$ref": "#/definitions/constrains~1jetstream.additionalArgs+jetstream.additionalArgs=null@2"
@@ -1414,30 +1336,6 @@
           },
           "required": [
             "additionalArgs"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "jetstream"
-      ],
-      "type": "object"
-    },
-    "constrains/jetstream.controlLoop:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jetstream.controlLoop:t@2"
-      }
-    },
-    "constrains/jetstream.controlLoop:t@2": {
-      "properties": {
-        "jetstream": {
-          "properties": {
-            "controlLoop": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "controlLoop"
           ],
           "type": "object"
         }

@@ -4,70 +4,6 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1installCRDs+installCRDs=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1installCRDs:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "eck-operator-crds": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "eck-operator-crds"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -81,6 +17,19 @@
               "serviceAccount"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
           },
           {
             "allOf": [
@@ -208,6 +157,141 @@
             }
           },
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceMonitor.caMountDirectory"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+nameOverride+nameOverride:t"
+                              }
+                            ]
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory"
+                              },
+                              {
+                                "anyOf": [
+                                  {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t@2"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more@2"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+nameOverride+nameOverride:t"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1serviceMonitor.caMountDirectory"
+                        }
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more@2"
+                              }
+                            ]
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory@2"
+                              },
+                              {
+                                "anyOf": [
+                                  {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more@2"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+nameOverride+nameOverride:t"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t@2"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "properties": {
               "telemetry": {
                 "enum": [
@@ -230,6 +314,24 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1global.manifestGen:t"
+                }
+              }
+            ]
           },
           {
             "not": {
@@ -258,20 +360,48 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
               },
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1global.manifestGen:t"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kubeAPIServerIP": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kubeAPIServerIP"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeAPIServerIP": {
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kubeAPIServerIP"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "kubeAPIServerIP": {}
+                      },
+                      "required": [
+                        "kubeAPIServerIP"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
               }
             ]
           },
@@ -332,50 +462,10 @@
           {
             "allOf": [
               {
-                "not": {
-                  "anyOf": [
-                    {
-                      "properties": {
-                        "managedNamespaces": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "managedNamespaces"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "not": {
-                        "properties": {
-                          "managedNamespaces": {}
-                        },
-                        "required": [
-                          "managedNamespaces"
-                        ],
-                        "type": "object"
-                      }
-                    }
-                  ]
-                }
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
               },
               {
-                "not": {
-                  "properties": {
-                    "managedNamespaces": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "managedNamespaces"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+                "$ref": "#/definitions/constrains~1config+config.metrics.secureMode+config.policies+config.policies.passwords+2more"
               }
             ]
           },
@@ -542,16 +632,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1config+config.metrics.secureMode+config.policies+config.policies.passwords+3more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1config.policies"
               },
               {
@@ -642,7 +722,7 @@
                 "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
               },
               {
                 "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
@@ -652,41 +732,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1config.policies+config.policies?"
+                "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
               },
               {
-                "$ref": "#/definitions/constrains~1config"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
               }
             ]
           },
@@ -730,27 +782,486 @@
             "type": "object"
           },
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1extraObjects@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1extraObjects:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1extraObjects@3"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1managedNamespaces=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1managedNamespaces@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1managedNamespaces@3"
+                }
+              ]
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1replicaCount"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.enableLeaderElection:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1replicaCount"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.enableLeaderElection:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1replicaCount"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.enableLeaderElection:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1replicaCount"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.enableLeaderElection:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1replicaCount"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.enableLeaderElection:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+              }
+            ]
+          },
+          {
             "else": {
               "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more~1else~1webhook"
             },
             "if": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "enableLeaderElection": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "enableLeaderElection"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1config.enableLeaderElection:t@2"
             },
             "then": {
               "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more~1else~1webhook"
@@ -777,6 +1288,47 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1config"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1config+config.policies"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?@2"
+              }
+            ]
           }
         ]
       },
@@ -784,14 +1336,71 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1installCRDs=false"
+          },
+          {
+            "not": {
+              "properties": {
+                "eck-operator-crds": {
+                  "$ref": "#/definitions/constrains~1nameOverride@2"
+                }
+              },
+              "required": [
+                "eck-operator-crds"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "eck-operator-crds": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "eck-operator-crds"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "not": {
-              "$ref": "#/definitions/constrains~1extraObjects@2"
+              "$ref": "#/definitions/constrains~1extraObjects@4"
             }
           },
           {
-            "$ref": "#/definitions/constrains~1extraObjects@3"
+            "$ref": "#/definitions/constrains~1extraObjects@5"
           },
           {
             "$ref": "#/definitions/constrains~1extraObjects:t"
@@ -818,15 +1427,13 @@
           {
             "allOf": [
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1extraObjects@2"
-                }
+                "$ref": "#/definitions/constrains~1extraObjects@2"
               },
               {
                 "$ref": "#/definitions/constrains~1extraObjects:t"
               },
               {
-                "$ref": "#/definitions/constrains~1extraObjects@3"
+                "$ref": "#/definitions/constrains~1extraObjects@5"
               },
               {
                 "$ref": "#/definitions/constrains~1extraObjects:helm-no-template-actions"
@@ -839,7 +1446,7 @@
                 "$ref": "#/definitions/constrains~1extraObjects:t"
               },
               {
-                "$ref": "#/definitions/constrains~1extraObjects@2"
+                "$ref": "#/definitions/constrains~1extraObjects@4"
               },
               {
                 "$ref": "#/definitions/constrains~1extraObjects:helm-no-template-actions"
@@ -882,7 +1489,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1extraObjects@2"
+            "$ref": "#/definitions/constrains~1extraObjects@4"
           },
           {
             "$ref": "#/definitions/constrains~1extraObjects:t"
@@ -911,7 +1518,7 @@
             "$ref": "#/definitions/when~1config.metrics.secureMode.tls.insecureSkipVerify:t~1then~1config.metrics.secureMode.tls+config.metrics.secureMode.tls.insecureSkipVerify?+3more~1else~1any"
           },
           {
-            "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t"
+            "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
@@ -1000,7 +1607,7 @@
       "if": {
         "else": true,
         "if": {
-          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
         },
         "then": {
           "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
@@ -1017,6 +1624,19 @@
               "null",
               "object"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
           }
         }
       }
@@ -1090,13 +1710,44 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?+1more"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1config+config.metrics.secureMode+config.policies+config.policies.passwords+2more"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "image": {
-            "type": "object"
+          "config": {
+            "additionalProperties": {},
+            "description": "config values for the operator.",
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "properties": {
+                  "secureMode": {
+                    "additionalProperties": {},
+                    "description": "secureMode contains the options for enabling and configuring RBAC and TLS/HTTPs for the metrics endpoint.",
+                    "properties": {
+                      "tls": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1131,50 +1782,6 @@
                 "properties": {
                   "passwords": {
                     "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1config+config.metrics.secureMode+config.policies+config.policies.passwords+3more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "description": "config values for the operator.",
-            "properties": {
-              "metrics": {
-                "additionalProperties": {},
-                "properties": {
-                  "secureMode": {
-                    "additionalProperties": {},
-                    "description": "secureMode contains the options for enabling and configuring RBAC and TLS/HTTPs for the metrics endpoint.",
-                    "properties": {
-                      "tls": {
-                        "type": "object"
-                      }
-                    }
                   }
                 }
               }
@@ -1246,13 +1853,23 @@
       "if": {
         "allOf": [
           {
-            "else": {
-              "$ref": "#/definitions/constrains~1installCRDs+installCRDs=null"
-            },
+            "else": true,
             "if": {
-              "$ref": "#/definitions/constrains~1installCRDs:t"
+              "$ref": "#/definitions/constrains~1installCRDs=false@2"
             },
-            "then": true
+            "then": {
+              "properties": {
+                "installCRDs": {
+                  "enum": [
+                    true
+                  ]
+                }
+              },
+              "required": [
+                "installCRDs"
+              ],
+              "type": "object"
+            }
           },
           {
             "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
@@ -1269,6 +1886,19 @@
                 "type": "string"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1installCRDs=false"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "eck-operator-crds": {
+            "type": "object"
           }
         }
       }
@@ -1313,6 +1943,17 @@
     }
   ],
   "definitions": {
+    "constrains/caMountDirectory": {
+      "properties": {
+        "caMountDirectory": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "caMountDirectory"
+      ],
+      "type": "object"
+    },
     "constrains/config": {
       "properties": {
         "config": {
@@ -1324,11 +1965,8 @@
       ],
       "type": "object"
     },
-    "constrains/config+config.metrics.secureMode+config.policies+config.policies.passwords+3more": {
+    "constrains/config+config.metrics.secureMode+config.policies+config.policies.passwords+2more": {
       "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?+1more"
-        },
         {
           "allOf": [
             {
@@ -1338,6 +1976,19 @@
               "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
+        }
+      ]
+    },
+    "constrains/config+config.policies": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1config.policies"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config.policies?"
         }
       ]
     },
@@ -1372,6 +2023,19 @@
       ]
     },
     "constrains/config+config.policies+config.policies.passwords+config.policies.passwords?": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1config"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+config.policies"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?@2"
+        }
+      ]
+    },
+    "constrains/config+config.policies+config.policies.passwords+config.policies.passwords?@2": {
       "anyOf": [
         {
           "not": {
@@ -1379,28 +2043,39 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1config.policies?"
+          "$ref": "#/definitions/constrains~1config.policies.passwords?"
         },
         {
-          "$ref": "#/definitions/constrains~1config.policies.passwords?"
+          "$ref": "#/definitions/constrains~1config.policies?"
         },
         {
           "$ref": "#/definitions/constrains~1config.policies.passwords"
         }
       ]
     },
-    "constrains/config+config.policies+config.policies.passwords+config.policies.passwords?+1more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1config.policies+config.policies?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1config+config.policies+config.policies.passwords+config.policies.passwords?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1config"
+    "constrains/config.enableLeaderElection:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.enableLeaderElection:t@2"
+      }
+    },
+    "constrains/config.enableLeaderElection:t@2": {
+      "properties": {
+        "config": {
+          "properties": {
+            "enableLeaderElection": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "enableLeaderElection"
+          ],
+          "type": "object"
         }
-      ]
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
     },
     "constrains/config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more": {
       "allOf": [
@@ -1409,11 +2084,172 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t"
+            "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t@2"
           }
         },
         {
           "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+        }
+      ]
+    },
+    "constrains/config.metrics+config.metrics.secureMode+config.metrics.secureMode.tls+5more@2": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?@2"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls=null"
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@3"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1nameOverride"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls@2"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls@3"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t@2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify:t"
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+nameOverride+nameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?@2"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@3"
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1nameOverride"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls@3"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t@2"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1488,83 +2324,60 @@
       ],
       "type": "object"
     },
+    "constrains/config.metrics.secureMode.tls": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls@3"
+      }
+    },
     "constrains/config.metrics.secureMode.tls+config.metrics.secureMode.tls=null": {
+      "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
+    },
+    "constrains/config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2": {
       "anyOf": [
         {
-          "properties": {
-            "config": {
-              "properties": {
-                "metrics": {
-                  "properties": {
-                    "secureMode": {
-                      "properties": {
-                        "tls": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "secureMode"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "metrics"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "config"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls=null"
         },
         {
-          "not": {
-            "properties": {
-              "config": {
-                "properties": {
-                  "metrics": {
-                    "properties": {
-                      "secureMode": {
-                        "properties": {
-                          "tls": {}
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "secureMode"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metrics"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls@2"
         }
       ]
     },
+    "constrains/config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+      }
+    },
+    "constrains/config.metrics.secureMode.tls+nameOverride+nameOverride:t": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride"
+            },
+            {
+              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls"
+        }
+      ]
+    },
+    "constrains/config.metrics.secureMode.tls.caMountDirectory": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory@2"
+      }
+    },
     "constrains/config.metrics.secureMode.tls.caMountDirectory:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.caMountDirectory:t@2"
+      }
+    },
+    "constrains/config.metrics.secureMode.tls.caMountDirectory:t@2": {
       "properties": {
         "config": {
           "properties": {
@@ -1607,7 +2420,82 @@
       ],
       "type": "object"
     },
+    "constrains/config.metrics.secureMode.tls.caMountDirectory@2": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "properties": {
+                    "tls": {
+                      "$ref": "#/definitions/constrains~1caMountDirectory"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.metrics.secureMode.tls.insecureSkipVerify:t": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "properties": {
+                    "tls": {
+                      "$ref": "#/definitions/constrains~1insecureSkipVerify:t"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
     "constrains/config.metrics.secureMode.tls.insecureSkipVerify?": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?@2"
+      }
+    },
+    "constrains/config.metrics.secureMode.tls.insecureSkipVerify?@2": {
       "properties": {
         "config": {
           "properties": {
@@ -1619,6 +2507,113 @@
                       "required": [
                         "insecureSkipVerify"
                       ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.metrics.secureMode.tls=null": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "properties": {
+                    "tls": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "secureMode"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
+    "constrains/config.metrics.secureMode.tls@2": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "secureMode": {
+                    "properties": {
+                      "tls": {}
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secureMode"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/config.metrics.secureMode.tls@3": {
+      "properties": {
+        "config": {
+          "properties": {
+            "metrics": {
+              "properties": {
+                "secureMode": {
+                  "properties": {
+                    "tls": {
                       "type": "object"
                     }
                   },
@@ -1663,16 +2658,6 @@
         "config"
       ],
       "type": "object"
-    },
-    "constrains/config.policies+config.policies?": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1config.policies?"
-        },
-        {
-          "$ref": "#/definitions/constrains~1config.policies"
-        }
-      ]
     },
     "constrains/config.policies.passwords": {
       "properties": {
@@ -1747,7 +2732,36 @@
       ],
       "type": "object"
     },
+    "constrains/config.validateStorageClass:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1config.validateStorageClass:t@2"
+      }
+    },
+    "constrains/config.validateStorageClass:t@2": {
+      "properties": {
+        "config": {
+          "properties": {
+            "validateStorageClass": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "validateStorageClass"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
+    },
     "constrains/createClusterScopedResources:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
+      }
+    },
+    "constrains/createClusterScopedResources:t@2": {
       "properties": {
         "createClusterScopedResources": {
           "$ref": "#/definitions/t"
@@ -1757,19 +2771,6 @@
         "createClusterScopedResources"
       ],
       "type": "object"
-    },
-    "constrains/eck-operator-crds.nameOverride": {
-      "not": {
-        "properties": {
-          "eck-operator-crds": {
-            "$ref": "#/definitions/constrains~1nameOverride"
-          }
-        },
-        "required": [
-          "eck-operator-crds"
-        ],
-        "type": "object"
-      }
     },
     "constrains/eck-operator-crds.nameOverride:t": {
       "properties": {
@@ -1797,13 +2798,11 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1extraObjects@2"
+            "$ref": "#/definitions/constrains~1extraObjects@4"
           }
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1extraObjects@3"
-          }
+          "$ref": "#/definitions/constrains~1extraObjects@3"
         }
       ]
     },
@@ -1830,6 +2829,16 @@
       "type": "object"
     },
     "constrains/extraObjects@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1extraObjects@4"
+      }
+    },
+    "constrains/extraObjects@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1extraObjects@5"
+      }
+    },
+    "constrains/extraObjects@4": {
       "properties": {
         "extraObjects": {
           "type": "array"
@@ -1840,7 +2849,7 @@
       ],
       "type": "object"
     },
-    "constrains/extraObjects@3": {
+    "constrains/extraObjects@5": {
       "properties": {
         "extraObjects": {
           "type": "object"
@@ -1881,6 +2890,74 @@
       ],
       "type": "object"
     },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1config.validateStorageClass:t"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null@2"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1config.enableLeaderElection:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1replicaCount"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+        }
+      ]
+    },
     "constrains/insecureSkipVerify:t": {
       "properties": {
         "insecureSkipVerify": {
@@ -1892,38 +2969,17 @@
       ],
       "type": "object"
     },
-    "constrains/installCRDs+installCRDs=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "installCRDs": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "installCRDs"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "installCRDs": {}
-            },
-            "required": [
-              "installCRDs"
-            ],
-            "type": "object"
-          }
-        }
-      ]
+    "constrains/installCRDs=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1installCRDs=false@2"
+      }
     },
-    "constrains/installCRDs:t": {
+    "constrains/installCRDs=false@2": {
       "properties": {
         "installCRDs": {
-          "$ref": "#/definitions/t"
+          "enum": [
+            false
+          ]
         }
       },
       "required": [
@@ -1932,6 +2988,11 @@
       "type": "object"
     },
     "constrains/kubeAPIServerIP:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
+      }
+    },
+    "constrains/kubeAPIServerIP:t@2": {
       "properties": {
         "kubeAPIServerIP": {
           "$ref": "#/definitions/t"
@@ -1943,6 +3004,11 @@
       "type": "object"
     },
     "constrains/managedNamespaceSelector:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
+      }
+    },
+    "constrains/managedNamespaceSelector:t@2": {
       "properties": {
         "managedNamespaceSelector": {
           "$ref": "#/definitions/t"
@@ -1953,7 +3019,32 @@
       ],
       "type": "object"
     },
+    "constrains/managedNamespaces": {
+      "not": {
+        "$ref": "#/definitions/constrains~1managedNamespaces@3"
+      }
+    },
+    "constrains/managedNamespaces+managedNamespaces=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaces=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1managedNamespaces@2"
+        }
+      ]
+    },
+    "constrains/managedNamespaces+managedNamespaces=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1managedNamespaces+managedNamespaces=null"
+      }
+    },
     "constrains/managedNamespaces:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+      }
+    },
+    "constrains/managedNamespaces:t@2": {
       "properties": {
         "managedNamespaces": {
           "$ref": "#/definitions/t"
@@ -1964,16 +3055,45 @@
       ],
       "type": "object"
     },
-    "constrains/nameOverride": {
+    "constrains/managedNamespaces=null": {
       "properties": {
-        "nameOverride": {
-          "type": "string"
+        "managedNamespaces": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "nameOverride"
+        "managedNamespaces"
       ],
       "type": "object"
+    },
+    "constrains/managedNamespaces@2": {
+      "not": {
+        "properties": {
+          "managedNamespaces": {}
+        },
+        "required": [
+          "managedNamespaces"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/managedNamespaces@3": {
+      "properties": {
+        "managedNamespaces": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "managedNamespaces"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride": {
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@2"
+      }
     },
     "constrains/nameOverride:t": {
       "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -1986,6 +3106,37 @@
       },
       "required": [
         "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/replicaCount": {
+      "properties": {
+        "replicaCount": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 1,
+              "type": "integer"
+            },
+            {
+              "pattern": "^\\+?([1-9][0-9]{1,17}|[2-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[2-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[2-7])$",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "replicaCount"
       ],
       "type": "object"
     },
@@ -2002,6 +3153,17 @@
       ],
       "type": "object"
     },
+    "constrains/serviceMonitor.caMountDirectory": {
+      "properties": {
+        "serviceMonitor": {
+          "$ref": "#/definitions/constrains~1caMountDirectory"
+        }
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
     "constrains/serviceMonitor.enabled:t": {
       "properties": {
         "serviceMonitor": {
@@ -2014,6 +3176,11 @@
       "type": "object"
     },
     "constrains/serviceMonitor.insecureSkipVerify:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t@2"
+      }
+    },
+    "constrains/serviceMonitor.insecureSkipVerify:t@2": {
       "properties": {
         "serviceMonitor": {
           "$ref": "#/definitions/constrains~1insecureSkipVerify:t"
@@ -2025,9 +3192,14 @@
       "type": "object"
     },
     "constrains/softMultiTenancy.enabled:t": {
-      "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+      "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
     },
     "constrains/softMultiTenancy.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+      }
+    },
+    "constrains/softMultiTenancy.enabled:t@3": {
       "properties": {
         "softMultiTenancy": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -2039,9 +3211,14 @@
       "type": "object"
     },
     "constrains/webhook.enabled:t": {
-      "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+      "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
     },
     "constrains/webhook.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+      }
+    },
+    "constrains/webhook.enabled:t@3": {
       "properties": {
         "webhook": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -2120,21 +3297,21 @@
           {
             "else": true,
             "if": {
-              "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t"
+              "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t@2"
             },
             "then": {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
+                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?@2"
                 },
                 {
                   "not": {
-                    "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                    "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
                   }
                 },
                 {
                   "not": {
-                    "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                    "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
                   }
                 }
               ]
@@ -2143,39 +3320,7 @@
         ]
       },
       "if": {
-        "properties": {
-          "config": {
-            "properties": {
-              "metrics": {
-                "properties": {
-                  "secureMode": {
-                    "properties": {
-                      "tls": {
-                        "$ref": "#/definitions/constrains~1insecureSkipVerify:t"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "secureMode"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "metrics"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify:t"
       },
       "then": {
         "allOf": [
@@ -2185,23 +3330,21 @@
           {
             "else": {
               "else": {
-                "not": {
-                  "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
-                }
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls.insecureSkipVerify?"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+                "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
               },
               "then": true
             },
             "if": {
-              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null"
+              "$ref": "#/definitions/constrains~1config.metrics.secureMode.tls+config.metrics.secureMode.tls=null@2"
             },
             "then": true
           },
           {
             "not": {
-              "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t"
+              "$ref": "#/definitions/constrains~1serviceMonitor.insecureSkipVerify:t@2"
             }
           }
         ]
@@ -2216,12 +3359,12 @@
                 "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
               },
               "then": true
             },
             "if": {
-              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
             },
             "then": {
               "else": {
@@ -2229,14 +3372,14 @@
                   "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1webhook"
                 },
                 "if": {
-                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
+                  "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
                 },
                 "then": {
                   "$ref": "#/definitions/constrains~1webhook.enabled:t"
                 }
               },
               "if": {
-                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
               },
               "then": true
             }
@@ -2250,12 +3393,12 @@
                 "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects+webhook"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
               },
               "then": true
             },
             "if": {
-              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+              "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
             },
             "then": {
               "else": {
@@ -2263,49 +3406,33 @@
                   "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects+webhook"
                 },
                 "if": {
-                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
+                  "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
                 },
                 "then": {
                   "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1extraObjects"
                 }
               },
               "if": {
-                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+                "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
               },
               "then": true
             }
           }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
         },
         "then": {
           "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
         }
       },
       "if": {
-        "properties": {
-          "config": {
-            "properties": {
-              "validateStorageClass": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "validateStorageClass"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1config.validateStorageClass:t@2"
       },
       "then": {
         "else": true,
         "if": {
-          "$ref": "#/definitions/constrains~1createClusterScopedResources:t"
+          "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
         },
         "then": {
           "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
@@ -2319,14 +3446,14 @@
             "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
           },
           "then": {
             "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
           }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
         },
         "then": {
           "else": {
@@ -2336,13 +3463,13 @@
               },
               {
                 "not": {
-                  "$ref": "#/definitions/constrains~1managedNamespaces:t"
+                  "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
                 }
               }
             ]
           },
           "if": {
-            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
           },
           "then": {
             "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1softMultiTenancy.enabled:t"
@@ -2358,14 +3485,14 @@
             "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
           },
           "then": {
             "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1extraObjects+softMultiTenancy.enabled:t"
           }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t"
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
         },
         "then": {
           "else": {
@@ -2373,14 +3500,14 @@
               "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects"
             },
             "if": {
-              "$ref": "#/definitions/constrains~1managedNamespaces:t"
+              "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
             },
             "then": {
               "$ref": "#/definitions/constrains~1extraObjects"
             }
           },
           "if": {
-            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t"
+            "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
           },
           "then": {
             "$ref": "#/definitions/when~1managedNamespaces:t~1then~1any~1else~1extraObjects+softMultiTenancy.enabled:t"
@@ -2393,7 +3520,7 @@
         "$ref": "#/definitions/when~1softMultiTenancy.enabled:t~1then~1any~1else~1extraObjects"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1managedNamespaces:t"
+        "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
       },
       "then": true
     },
@@ -2402,7 +3529,7 @@
         "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1managedNamespaces:t"
+        "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
       },
       "then": true
     },
@@ -2411,7 +3538,7 @@
         "$ref": "#/definitions/constrains~1extraObjects"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
       },
       "then": true
     },
@@ -2420,7 +3547,7 @@
         "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1extraObjects"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
       },
       "then": true
     },
@@ -2429,7 +3556,7 @@
         "$ref": "#/definitions/constrains~1webhook.enabled:t"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@2"
+        "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
       },
       "then": true
     },
@@ -2438,7 +3565,7 @@
         "$ref": "#/definitions/constrains~1extraObjects"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1webhook.enabled:t@2"
+        "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
       },
       "then": true
     }

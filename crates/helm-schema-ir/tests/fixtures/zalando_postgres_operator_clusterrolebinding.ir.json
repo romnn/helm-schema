@@ -232,6 +232,22 @@
             "alternatives": [
               [
                 {
+                  "path": "fullnameOverride",
+                  "type": "truthy"
+                },
+                {
+                  "path": "serviceAccount.name",
+                  "type": "not"
+                },
+                {
+                  "path": "fullnameOverride",
+                  "pattern": "^(?:[\\x30-\\x39\\x41-\\x5a\\x61-\\x7a](?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a])*)$",
+                  "templated": false,
+                  "type": "matches_pattern"
+                }
+              ],
+              [
+                {
                   "path": "serviceAccount.name",
                   "type": "truthy"
                 },

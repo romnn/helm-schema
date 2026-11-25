@@ -1,6 +1,158 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "tags": {
+                      "properties": {
+                        "bitnami-common": {
+                          "not": {
+                            "enum": [
+                              false
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "bitnami-common"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tags"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "tags": {
+                        "properties": {
+                          "bitnami-common": {}
+                        },
+                        "required": [
+                          "bitnami-common"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tags"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "tags": {
+                      "properties": {
+                        "bitnami-common": {
+                          "enum": [
+                            true
+                          ]
+                        }
+                      },
+                      "required": [
+                        "bitnami-common"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tags"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1sentinel.enabled!=0+sentinel.enabled=true"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "architecture": {
+                          "enum": [
+                            "replication"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "architecture"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1sentinel.enabled!=0+sentinel.enabled=true"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    }
+  ],
+  "definitions": {
+    "constrains/sentinel.enabled!=0+sentinel.enabled=true": {
+      "properties": {
+        "sentinel": {
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "minProperties": 1,
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "const": 0
+                  },
+                  "type": "number"
+                },
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "const": true
+                }
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "sentinel"
+      ],
+      "type": "object"
+    }
+  },
   "properties": {
     "architecture": {
       "anyOf": [
@@ -25,12 +177,7 @@
       "description": "Kubernetes cluster domain name"
     },
     "common": {
-      "additionalProperties": {},
       "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
         "global": {}
       },
       "type": "object"
@@ -137,74 +284,6 @@
     },
     "tags": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "anyOf": [
-                        {
-                          "minProperties": 1,
-                          "type": "object"
-                        },
-                        {
-                          "not": {
-                            "const": 0
-                          },
-                          "type": "number"
-                        },
-                        {
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        {
-                          "minItems": 1,
-                          "type": "array"
-                        },
-                        {
-                          "const": true
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "bitnami-common": {}
-                    },
-                    "required": [
-                      "bitnami-common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

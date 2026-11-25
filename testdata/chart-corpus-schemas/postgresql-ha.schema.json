@@ -4,189 +4,7 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1witness.create:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "String to fully override common.names.namespace",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1witness.create:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.fullname template (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1witness.create:t@2"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1witness.labels@3"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1witness.labels@3"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1witness.labels"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1witness.labels@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1witness.labels=null"
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1witness.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1witness.labels"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1witness.labels@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1witness.labels=null"
-                    }
-                  ]
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1witness.create:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1witness.create:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1witness.create:t@2"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
           {
             "properties": {
               "witness": {
@@ -199,6 +17,125 @@
               "witness"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1witness.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1witness.labels+witness.labels=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1witness.labels@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1witness.labels"
+              },
+              {
+                "$ref": "#/definitions/constrains~1witness.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
           },
           {
             "not": {
@@ -222,7 +159,7 @@
             "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1witness.create:t"
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true+witness.create:t"
           }
         ]
       },
@@ -231,6 +168,53 @@
         "properties": {
           "fullnameOverride": {
             "description": "String to fully override common.names.fullname template",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true+witness.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true+witness.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "String to fully override common.names.namespace",
             "type": "string"
           }
         }
@@ -265,6 +249,48 @@
       ],
       "type": "object"
     },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-1"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
+        },
+        {
+          "$ref": "#/definitions/constrains~1witness.labels@2"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1witness.create:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1witness.labels"
+        },
+        {
+          "$ref": "#/definitions/constrains~1witness.labels+witness.labels=null"
+        }
+      ]
+    },
     "constrains/nameOverride": {
       "properties": {
         "nameOverride": {
@@ -277,11 +303,6 @@
       "type": "object"
     },
     "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-      }
-    },
-    "constrains/nameOverride:t@2": {
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
@@ -292,25 +313,18 @@
       ],
       "type": "object"
     },
-    "constrains/namespaceOverride+namespaceOverride:t": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+    "constrains/namespaceOverride": {
+      "not": {
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
           }
         },
-        {
-          "properties": {
-            "namespaceOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        }
-      ]
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      }
     },
     "constrains/namespaceOverride:t": {
       "properties": {
@@ -323,10 +337,70 @@
       ],
       "type": "object"
     },
-    "constrains/witness.create:t": {
-      "$ref": "#/definitions/constrains~1witness.create:t@2"
+    "constrains/tags.bitnami-common=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      }
     },
-    "constrains/witness.create:t@2": {
+    "constrains/tags.bitnami-common=false+tags.bitnami-common=true+witness.create:t": {
+      "allOf": [
+        {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1witness.create:t"
+        }
+      ]
+    },
+    "constrains/tags.bitnami-common=false@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-common=true": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/witness.create:t": {
       "properties": {
         "witness": {
           "properties": {
@@ -346,74 +420,78 @@
       "type": "object"
     },
     "constrains/witness.labels": {
+      "properties": {
+        "witness": {
+          "properties": {
+            "labels": {
+              "pattern": "\\{\\{",
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "witness"
+      ],
+      "type": "object"
+    },
+    "constrains/witness.labels+witness.labels=null": {
       "not": {
-        "properties": {
-          "witness": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "witness": {
+                  "properties": {
+                    "labels": {}
+                  },
+                  "required": [
+                    "labels"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "witness"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "labels": {
-                "pattern": "\\{\\{",
-                "type": "string"
+              "witness": {
+                "properties": {
+                  "labels": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "labels"
+              "witness"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "witness"
-        ],
-        "type": "object"
+        ]
       }
     },
     "constrains/witness.labels:helm-no-template-actions": {
-      "properties": {
-        "witness": {
-          "properties": {
-            "labels": {
-              "$ref": "#/definitions/helm-no-template-actions"
-            }
-          },
-          "required": [
-            "labels"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "witness"
-      ],
-      "type": "object"
-    },
-    "constrains/witness.labels=null": {
-      "properties": {
-        "witness": {
-          "properties": {
-            "labels": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "labels"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "witness"
-      ],
-      "type": "object"
-    },
-    "constrains/witness.labels@2": {
       "not": {
         "properties": {
           "witness": {
             "properties": {
               "labels": {
-                "type": "string"
+                "$ref": "#/definitions/helm-no-template-actions"
               }
             },
             "required": [
@@ -428,24 +506,24 @@
         "type": "object"
       }
     },
-    "constrains/witness.labels@3": {
-      "not": {
-        "properties": {
-          "witness": {
-            "properties": {
-              "labels": {}
-            },
-            "required": [
-              "labels"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "witness"
-        ],
-        "type": "object"
-      }
+    "constrains/witness.labels@2": {
+      "properties": {
+        "witness": {
+          "properties": {
+            "labels": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "witness"
+      ],
+      "type": "object"
     },
     "helm-no-template-actions": {
       "anyOf": [
@@ -515,12 +593,7 @@
       "description": "Kubernetes Cluster Domain"
     },
     "common": {
-      "additionalProperties": {},
       "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
         "global": {}
       },
       "type": "object"
@@ -578,52 +651,6 @@
     },
     "tags": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "bitnami-common": {}
-                    },
-                    "required": [
-                      "bitnami-common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

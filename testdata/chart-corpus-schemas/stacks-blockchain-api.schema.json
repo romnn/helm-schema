@@ -4,32 +4,1498 @@
   "allOf": [
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.ingress.secrets:t"
-            },
-            {
-              "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain:t~1then~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null~1else~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain=..."
-            },
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.ingress.enabled:t"
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "apiWriter": {}
+              },
+              "required": [
+                "apiWriter"
+              ],
+              "type": "object"
             }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.ingress.secrets:t"
+          },
+          {
+            "properties": {
+              "apiWriter": {
+                "enum": [
+                  null
+                ]
+              }
             },
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.ingress.enabled:t"
+            "required": [
+              "apiWriter"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-20"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-17"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-17"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1apiWriter.workloadType"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-17"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-14"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-14"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-14"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-18"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels@2"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels@3"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture=replication+postgresql.commonLabels+14more"
+          },
+          {
+            "$ref": "#/definitions/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+9more~1else~1any"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "stacks-blockchain": {
+            "additionalProperties": {},
+            "description": "Stacks Blockchain Subchart",
+            "properties": {
+              "ingress": {
+                "description": "stacks-blockchain ingress parameters\nref: http://kubernetes.io/docs/user-guide/ingress/",
+                "type": "object"
+              }
             }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "description": "Postgresql Subchart",
+          "type": [
+            "null",
+            "object"
           ]
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "tags": {
+                    "properties": {
+                      "bitnami-common": {
+                        "not": {
+                          "enum": [
+                            false
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "bitnami-common"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tags"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "tags": {
+                      "properties": {
+                        "bitnami-common": {}
+                      },
+                      "required": [
+                        "bitnami-common"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tags"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Postgresql Subchart",
+            "properties": {
+              "readReplicas": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override common.names.fullname",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
+              },
+              {
+                "else": {
+                  "else": {
+                    "else": {
+                      "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+                    },
+                    "then": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
+                        }
+                      ]
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "postgresql": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+2more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "description": "Postgresql Subchart",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.bitcoin-core+6more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "stacks-blockchain": {
+            "additionalProperties": {},
+            "description": "Stacks Blockchain Subchart",
+            "properties": {
+              "bitcoin-core": {
+                "description": "Bitcoin Core Subchart",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1stacks-blockchain.bitcoin-core.enabled=false~1then~1stacks-blockchain+stacks-blockchain.bitcoin-core.enabled=true+2more~1else~1tags.hirosystems-bitcoin-core=false+tags.hirosystems-bitcoin-core=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.bitcoin-core+6more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "stacks-blockchain": {
+            "additionalProperties": {},
+            "description": "Stacks Blockchain Subchart",
+            "properties": {
+              "bitcoin-core": {
+                "additionalProperties": {},
+                "description": "Bitcoin Core Subchart",
+                "properties": {
+                  "ingress": {
+                    "description": "bitcoin-core ingress parameters\nref: http://kubernetes.io/docs/user-guide/ingress/",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+5more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Postgresql Subchart",
+            "properties": {
+              "nameOverride": {
+                "description": "String to partially override common.names.fullname template (will maintain the release name)",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "stacks-blockchain": {
+          "description": "Stacks Blockchain Subchart",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "stacks-blockchain": {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              }
+            },
+            "required": [
+              "stacks-blockchain"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "stacks-blockchain": {
+                "$ref": "#/definitions/constrains~1ingress.secrets:t"
+              }
+            },
+            "required": [
+              "stacks-blockchain"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+9more~1else~1any"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -60,854 +1526,139 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-postgresql"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-postgresql:t@2"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "description": "Postgresql Subchart",
-            "properties": {
-              "readReplicas": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/when~1tags.bitnami-postgresql:t~1then~1postgresql+postgresql.architecture=replication+postgresql.enabled+1more~1else~1tags.bitnami-postgresql+tags.bitnami-postgresql=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "description": "Postgresql Subchart",
-            "properties": {
-              "nameOverride": {
-                "description": "String to partially override common.names.fullname template (will maintain the release name)",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "stacks-blockchain": {
-            "additionalProperties": {},
-            "description": "Stacks Blockchain Subchart",
-            "properties": {
-              "bitcoin-core": {
-                "description": "Bitcoin Core Subchart",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override common.names.fullname",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "postgresql": {
-          "description": "Postgresql Subchart",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-postgresql+tags.bitnami-postgresql=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+5more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+5more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-postgresql:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "properties": {
-                "postgresql": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
-                }
-              },
-              "required": [
-                "postgresql"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "postgresql": {
-                  "$ref": "#/definitions/constrains~1nameOverride!=null"
-                }
-              },
-              "required": [
-                "postgresql"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "stacks-blockchain": {
-            "additionalProperties": {},
-            "description": "Stacks Blockchain Subchart",
             "properties": {
-              "ingress": {
-                "description": "stacks-blockchain ingress parameters\nref: http://kubernetes.io/docs/user-guide/ingress/",
+              "stacks-blockchain": {
+                "properties": {
+                  "bitcoin-core": {
+                    "allOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "ingress": {}
+                              },
+                              "required": [
+                                "ingress"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "ingress": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "ingress"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "bitcoin-core"
+                ],
                 "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "else": {
-            "else": {
-              "allOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+4more"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+4more"
-                }
-              ]
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-postgresql:t"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+2more"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+2more"
-                }
-              ]
-            }
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null~1else~1any"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-postgresql:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1postgresql.architecture=replication~1then~1postgresql+postgresql.architecture+postgresql.architecture=null~1else~1any"
-          }
-        }
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.architecture!=null"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.name",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "apiWriter": {}
-              },
-              "required": [
-                "apiWriter"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "apiWriter": {
-                "enum": [
-                  null
-                ]
               }
             },
             "required": [
-              "apiWriter"
+              "stacks-blockchain"
             ],
             "type": "object"
           },
           {
-            "allOf": [
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels=null"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1apiWriter+apiWriter.workloadType+apiWriter.workloadType=null"
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1commonLabels@3"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1commonLabels=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1commonLabels:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1commonLabels@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1commonLabels"
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.bitcoin-core+6more"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "properties": {
+                "stacks-blockchain": {
+                  "properties": {
+                    "bitcoin-core": {
+                      "properties": {
+                        "enabled": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
                         }
-                      ]
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
                     }
-                  ]
+                  },
+                  "required": [
+                    "bitcoin-core"
+                  ],
+                  "type": "object"
                 }
               },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1apiWriter+apiWriter.workloadType+apiWriter.workloadType=null"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "else": {
-              "$ref": "#/definitions/when~1stacks-blockchain.enabled:t~1then~1stacks-blockchain.bitcoin-core.enabled+4more~1else~1stacks-blockchain+tags.hirosystems-stacks-blockchain+2more"
+              "required": [
+                "stacks-blockchain"
+              ],
+              "type": "object"
             },
-            "if": {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled:t"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1stacks-blockchain.enabled:t~1then~1any~1else~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null+3more"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "stacks-blockchain": {
-            "additionalProperties": {},
-            "description": "Stacks Blockchain Subchart",
-            "properties": {
-              "bitcoin-core": {
-                "additionalProperties": {},
-                "description": "Bitcoin Core Subchart",
-                "properties": {
-                  "ingress": {
-                    "description": "bitcoin-core ingress parameters\nref: http://kubernetes.io/docs/user-guide/ingress/",
-                    "type": "object"
-                  }
+            {
+              "properties": {
+                "stacks-blockchain": {
+                  "properties": {
+                    "bitcoin-core": {
+                      "properties": {
+                        "ingress": {
+                          "properties": {
+                            "secrets": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "secrets"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "bitcoin-core"
+                  ],
+                  "type": "object"
                 }
-              }
+              },
+              "required": [
+                "stacks-blockchain"
+              ],
+              "type": "object"
             }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "stacks-blockchain": {
-          "description": "Stacks Blockchain Subchart",
-          "type": [
-            "null",
-            "object"
           ]
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "stacks-blockchain": {
-            "description": "Stacks Blockchain Subchart",
-            "type": "object"
-          }
-        }
+        },
+        "then": false
       }
     },
     {
@@ -930,35 +1681,113 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/when~1stacks-blockchain.enabled:t~1then~1stacks-blockchain.bitcoin-core.enabled+4more~1else~1stacks-blockchain+tags.hirosystems-stacks-blockchain+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/when~1stacks-blockchain.enabled:t~1then~1any~1else~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
-            }
-          ]
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.name",
+            "type": "string"
+          }
         }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "String to fully override common.names.namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+5more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Postgresql Subchart",
+            "properties": {
+              "fullnameOverride": {
+                "description": "String to fully override common.names.fullname template",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false+2more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture=replication+postgresql.commonLabels+14more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "stacks-blockchain": {
+            "description": "Stacks Blockchain Subchart",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/when~1stacks-blockchain.bitcoin-core.enabled=false~1then~1stacks-blockchain+stacks-blockchain.bitcoin-core.enabled=true+2more~1else~1tags.hirosystems-bitcoin-core=false+tags.hirosystems-bitcoin-core=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -992,170 +1821,37 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/when~1tags.bitnami-postgresql:t~1then~1postgresql+postgresql.architecture=replication+postgresql.enabled+1more~1else~1tags.bitnami-postgresql+tags.bitnami-postgresql=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "description": "Postgresql Subchart",
-            "properties": {
-              "fullnameOverride": {
-                "description": "String to fully override common.names.fullname template",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false"
-              },
-              {
-                "properties": {
-                  "tags": {
-                    "properties": {
-                      "bitnami-postgresql": {
-                        "enum": [
-                          true
-                        ]
-                      }
-                    },
-                    "required": [
-                      "bitnami-postgresql"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tags"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "tags": {
-                        "properties": {
-                          "bitnami-postgresql": {
-                            "not": {
-                              "enum": [
-                                false
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "bitnami-postgresql"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tags"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-postgresql"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=true"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "postgresql": {
-                "$ref": "#/definitions/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "description": "Postgresql Subchart",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1apiWriter.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "String to fully override common.names.namespace",
-            "type": "string"
-          }
-        }
-      }
     }
   ],
   "definitions": {
-    "constrains/apiWriter+apiWriter.workloadType+apiWriter.workloadType=null": {
+    "constrains/apiWriter.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+      }
+    },
+    "constrains/apiWriter.enabled:t@2": {
+      "properties": {
+        "apiWriter": {
+          "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "apiWriter"
+      ],
+      "type": "object"
+    },
+    "constrains/apiWriter.workloadType": {
+      "properties": {
+        "apiWriter": {
+          "$ref": "#/definitions/constrains~1workloadType"
+        }
+      },
+      "required": [
+        "apiWriter"
+      ],
+      "type": "object"
+    },
+    "constrains/apiWriter.workloadType+apiWriter.workloadType=null": {
       "anyOf": [
         {
           "properties": {
@@ -1186,90 +1882,12 @@
             ],
             "type": "object"
           }
-        },
-        {
-          "properties": {
-            "apiWriter": {
-              "$ref": "#/definitions/constrains~1workloadType"
-            }
-          },
-          "required": [
-            "apiWriter"
-          ],
-          "type": "object"
         }
       ]
     },
-    "constrains/apiWriter.enabled:t": {
-      "properties": {
-        "apiWriter": {
-          "$ref": "#/definitions/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "apiWriter"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture": {
-      "properties": {
-        "architecture": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture!=null": {
-      "properties": {
-        "architecture": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture+architecture=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1architecture=null"
-        },
-        {
-          "not": {
-            "properties": {
-              "architecture": {}
-            },
-            "required": [
-              "architecture"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null@2": {
+    "constrains/apiWriter.workloadType+apiWriter.workloadType=null@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1architecture+architecture=null"
-      }
-    },
-    "constrains/architecture+architecture=null@3": {
-      "not": {
-        "allOf": [
-          {
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1architecture+architecture=null"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
       }
     },
     "constrains/architecture=null": {
@@ -1285,26 +1903,10 @@
       ],
       "type": "object"
     },
-    "constrains/architecture=replication": {
-      "properties": {
-        "architecture": {
-          "enum": [
-            "replication"
-          ]
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
     "constrains/commonLabels": {
       "not": {
         "properties": {
-          "commonLabels": {
-            "pattern": "\\{\\{",
-            "type": "string"
-          }
+          "commonLabels": {}
         },
         "required": [
           "commonLabels"
@@ -1312,7 +1914,24 @@
         "type": "object"
       }
     },
+    "constrains/commonLabels+commonLabels=null": {
+      "not": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1commonLabels"
+          },
+          {
+            "$ref": "#/definitions/constrains~1commonLabels=null"
+          }
+        ]
+      }
+    },
     "constrains/commonLabels:helm-no-template-actions": {
+      "not": {
+        "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions@2"
+      }
+    },
+    "constrains/commonLabels:helm-no-template-actions@2": {
       "properties": {
         "commonLabels": {
           "$ref": "#/definitions/helm-no-template-actions"
@@ -1325,16 +1944,19 @@
     },
     "constrains/commonLabels:t": {
       "not": {
-        "properties": {
-          "commonLabels": {
-            "$ref": "#/definitions/t"
-          }
-        },
-        "required": [
-          "commonLabels"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1commonLabels:t@2"
       }
+    },
+    "constrains/commonLabels:t@2": {
+      "properties": {
+        "commonLabels": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
     },
     "constrains/commonLabels=null": {
       "properties": {
@@ -1350,28 +1972,27 @@
       "type": "object"
     },
     "constrains/commonLabels@2": {
-      "not": {
-        "properties": {
-          "commonLabels": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "commonLabels"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "commonLabels": {
+          "pattern": "\\{\\{",
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
     },
     "constrains/commonLabels@3": {
-      "not": {
-        "properties": {
-          "commonLabels": {}
-        },
-        "required": [
-          "commonLabels"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "commonLabels": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
     },
     "constrains/enabled": {
       "properties": {
@@ -1412,39 +2033,23 @@
       ],
       "type": "object"
     },
-    "constrains/enabled+enabled=null": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1enabled"
-              }
-            },
-            {
-              "properties": {
-                "enabled": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
           "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=false": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            false
+          ]
         }
       },
       "required": [
@@ -1469,21 +2074,6 @@
       "not": {
         "$ref": "#/definitions/constrains~1fullnameOverride@2"
       }
-    },
-    "constrains/fullnameOverride!=null": {
-      "properties": {
-        "fullnameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
     },
     "constrains/fullnameOverride:t": {
       "not": {
@@ -1511,6 +2101,249 @@
         "fullnameOverride"
       ],
       "type": "object"
+    },
+    "constrains/group-0": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.commonLabels:helm-no-template-actions"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.commonLabels@4"
+        }
+      ]
+    },
+    "constrains/group-10": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+        }
+      ]
+    },
+    "constrains/group-11": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-14"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-17"
+        }
+      ]
+    },
+    "constrains/group-12": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-17"
+        }
+      ]
+    },
+    "constrains/group-13": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1apiWriter.workloadType"
+        }
+      ]
+    },
+    "constrains/group-14": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/group-15": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-17"
+        }
+      ]
+    },
+    "constrains/group-16": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1apiWriter.workloadType"
+        }
+      ]
+    },
+    "constrains/group-17": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
+        }
+      ]
+    },
+    "constrains/group-18": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1apiWriter.workloadType+apiWriter.workloadType=null"
+        }
+      ]
+    },
+    "constrains/group-19": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1apiWriter.enabled:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-20"
+        }
+      ]
+    },
+    "constrains/group-2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+        }
+      ]
+    },
+    "constrains/group-20": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1commonLabels:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1commonLabels@3"
+        }
+      ]
+    },
+    "constrains/group-3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-5"
+        }
+      ]
+    },
+    "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
+        }
+      ]
+    },
+    "constrains/group-6": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        }
+      ]
+    },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture@2"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false"
+        }
+      ]
     },
     "constrains/ingress.enabled:t": {
       "properties": {
@@ -1547,36 +2380,6 @@
         "$ref": "#/definitions/constrains~1nameOverride@2"
       }
     },
-    "constrains/nameOverride!=null": {
-      "properties": {
-        "nameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/nameOverride+nameOverride:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-      }
-    },
     "constrains/nameOverride:t": {
       "not": {
         "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -1604,25 +2407,18 @@
       ],
       "type": "object"
     },
-    "constrains/namespaceOverride+namespaceOverride:t": {
-      "anyOf": [
-        {
-          "properties": {
-            "namespaceOverride": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "namespaceOverride"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+    "constrains/namespaceOverride": {
+      "not": {
+        "properties": {
+          "namespaceOverride": {
+            "type": "string"
           }
-        }
-      ]
+        },
+        "required": [
+          "namespaceOverride"
+        ],
+        "type": "object"
+      }
     },
     "constrains/namespaceOverride:t": {
       "properties": {
@@ -1639,7 +2435,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
           }
         },
         {
@@ -1647,222 +2443,239 @@
         }
       ]
     },
-    "constrains/postgresql+postgresql.architecture+postgresql.architecture=null+2more": {
+    "constrains/postgresql+postgresql.architecture=replication+postgresql.commonLabels+14more": {
       "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.architecture"
-        }
-      ]
-    },
-    "constrains/postgresql+postgresql.architecture+postgresql.architecture=null+4more": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql+tags.bitnami-postgresql=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.architecture"
-        }
-      ]
-    },
-    "constrains/postgresql+postgresql.architecture+postgresql.architecture=null+5more": {
-      "anyOf": [
-        {
-          "allOf": [
+          "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.architecture@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false+2more"
             }
           ]
         },
         {
-          "allOf": [
+          "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+              "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1group-1"
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false"
+                }
+              ]
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride"
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-0"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-0"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1group-1"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.commonLabels"
+                }
+              ]
             }
           ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.architecture"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/postgresql+postgresql.enabled+postgresql.enabled=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "postgresql": {
-                "type": "object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "postgresql": {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
         }
       ]
     },
@@ -1871,65 +2684,51 @@
         "$ref": "#/definitions/constrains~1postgresql.architecture@2"
       }
     },
-    "constrains/postgresql.architecture!=null": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture!=null"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
     "constrains/postgresql.architecture+postgresql.architecture=null": {
-      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@2": {
-      "anyOf": [
-        {
-          "properties": {
-            "postgresql": {
-              "$ref": "#/definitions/constrains~1architecture=null"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+      }
+    },
+    "constrains/postgresql.architecture+postgresql.architecture=null@3": {
+      "not": {
+        "anyOf": [
+          {
             "properties": {
               "postgresql": {
-                "properties": {
-                  "architecture": {}
-                },
-                "required": [
-                  "architecture"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1architecture=null"
               }
             },
             "required": [
               "postgresql"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "postgresql": {
+                  "properties": {
+                    "architecture": {}
+                  },
+                  "required": [
+                    "architecture"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "postgresql"
+              ],
+              "type": "object"
+            }
           }
-        }
-      ]
-    },
-    "constrains/postgresql.architecture+postgresql.architecture=null@3": {
-      "not": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+        ]
       }
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@4": {
-      "not": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-      }
-    },
-    "constrains/postgresql.architecture+postgresql.architecture=null@5": {
       "properties": {
         "postgresql": {
           "allOf": [
@@ -1937,7 +2736,22 @@
               "type": "object"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1architecture=null"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "architecture": {}
+                    },
+                    "required": [
+                      "architecture"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
             }
           ]
         }
@@ -1948,12 +2762,72 @@
       "type": "object"
     },
     "constrains/postgresql.architecture=replication": {
-      "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+      }
+    },
+    "constrains/postgresql.architecture=replication+postgresql.enabled=false+5more": {
+      "allOf": [
+        {
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1tags.bitnami-postgresql=false~1then~1tags.bitnami-postgresql=true~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1tags.bitnami-postgresql=false~1then~1tags.bitnami-postgresql=true~1else~1any"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  }
+                ]
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+        }
+      ]
     },
     "constrains/postgresql.architecture=replication@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture=replication"
+          "properties": {
+            "architecture": {
+              "enum": [
+                "replication"
+              ]
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1964,7 +2838,88 @@
     "constrains/postgresql.architecture@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture"
+          "properties": {
+            "architecture": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.commonLabels": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
+      }
+    },
+    "constrains/postgresql.commonLabels+postgresql.commonLabels=null": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
+      }
+    },
+    "constrains/postgresql.commonLabels+postgresql.commonLabels=null@2": {
+      "properties": {
+        "postgresql": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels=null"
+                }
+              ]
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.commonLabels:helm-no-template-actions": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1commonLabels:helm-no-template-actions@2"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.commonLabels@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.commonLabels@4"
+      }
+    },
+    "constrains/postgresql.commonLabels@3": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1commonLabels@2"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.commonLabels@4": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1commonLabels@3"
         }
       },
       "required": [
@@ -2003,6 +2958,88 @@
         }
       ]
     },
+    "constrains/postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=true"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+2more": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "tags": {
+                  "properties": {
+                    "bitnami-postgresql": {
+                      "not": {
+                        "enum": [
+                          false
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "bitnami-postgresql"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tags"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "tags": {
+                    "properties": {
+                      "bitnami-postgresql": {}
+                    },
+                    "required": [
+                      "bitnami-postgresql"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tags"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=true"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+        }
+      ]
+    },
     "constrains/postgresql.enabled+postgresql.enabled!=true": {
       "anyOf": [
         {
@@ -2021,10 +3058,31 @@
         }
       ]
     },
-    "constrains/postgresql.enabled:t": {
+    "constrains/postgresql.enabled=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+      }
+    },
+    "constrains/postgresql.enabled=false@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled=false"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.enabled=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+      }
+    },
+    "constrains/postgresql.enabled=true@2": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1enabled=true"
         }
       },
       "required": [
@@ -2088,44 +3146,271 @@
       ],
       "type": "object"
     },
-    "constrains/stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null": {
-      "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-    },
-    "constrains/stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null+2more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-        }
-      ]
-    },
-    "constrains/stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2": {
+    "constrains/stacks-blockchain+stacks-blockchain.bitcoin-core+6more": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "stacks-blockchain": {
-                "type": "object"
-              }
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false"
             },
-            "required": [
-              "stacks-blockchain"
-            ],
-            "type": "object"
-          }
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false"
+            }
+          ]
         },
         {
-          "properties": {
-            "stacks-blockchain": {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
             }
-          },
-          "required": [
-            "stacks-blockchain"
-          ],
-          "type": "object"
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.ingress.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false"
+            }
+          ]
         }
       ]
     },
@@ -2202,31 +3487,17 @@
         }
       ]
     },
-    "constrains/stacks-blockchain.bitcoin-core.enabled+1more@3": {
-      "properties": {
-        "stacks-blockchain": {
-          "properties": {
-            "bitcoin-core": {
-              "$ref": "#/definitions/constrains~1enabled+enabled=null"
-            }
-          },
-          "required": [
-            "bitcoin-core"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "stacks-blockchain"
-      ],
-      "type": "object"
+    "constrains/stacks-blockchain.bitcoin-core.enabled=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false@2"
+      }
     },
-    "constrains/stacks-blockchain.bitcoin-core.enabled:t": {
+    "constrains/stacks-blockchain.bitcoin-core.enabled=false@2": {
       "properties": {
         "stacks-blockchain": {
           "properties": {
             "bitcoin-core": {
-              "$ref": "#/definitions/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled=false"
             }
           },
           "required": [
@@ -2241,6 +3512,11 @@
       "type": "object"
     },
     "constrains/stacks-blockchain.bitcoin-core.enabled=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+      }
+    },
+    "constrains/stacks-blockchain.bitcoin-core.enabled=true@2": {
       "properties": {
         "stacks-blockchain": {
           "properties": {
@@ -2328,6 +3604,32 @@
         }
       ]
     },
+    "constrains/stacks-blockchain.enabled+stacks-blockchain.enabled!=false+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+        }
+      ]
+    },
+    "constrains/stacks-blockchain.enabled+stacks-blockchain.enabled!=false+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled+stacks-blockchain.enabled!=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false"
+        }
+      ]
+    },
     "constrains/stacks-blockchain.enabled+stacks-blockchain.enabled!=true": {
       "anyOf": [
         {
@@ -2346,10 +3648,15 @@
         }
       ]
     },
-    "constrains/stacks-blockchain.enabled:t": {
+    "constrains/stacks-blockchain.enabled=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false@2"
+      }
+    },
+    "constrains/stacks-blockchain.enabled=false@2": {
       "properties": {
         "stacks-blockchain": {
-          "$ref": "#/definitions/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled=false"
         }
       },
       "required": [
@@ -2358,6 +3665,11 @@
       "type": "object"
     },
     "constrains/stacks-blockchain.enabled=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+      }
+    },
+    "constrains/stacks-blockchain.enabled=true@2": {
       "properties": {
         "stacks-blockchain": {
           "$ref": "#/definitions/constrains~1enabled=true"
@@ -2368,70 +3680,23 @@
       ],
       "type": "object"
     },
-    "constrains/stacks-blockchain.ingress.enabled:t": {
-      "properties": {
-        "stacks-blockchain": {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t"
-        }
-      },
-      "required": [
-        "stacks-blockchain"
-      ],
-      "type": "object"
-    },
-    "constrains/stacks-blockchain.ingress.secrets:t": {
-      "properties": {
-        "stacks-blockchain": {
-          "$ref": "#/definitions/constrains~1ingress.secrets:t"
-        }
-      },
-      "required": [
-        "stacks-blockchain"
-      ],
-      "type": "object"
-    },
-    "constrains/tags.bitnami-postgresql": {
+    "constrains/tags.bitnami-common=false": {
       "not": {
-        "properties": {
-          "tags": {
-            "properties": {
-              "bitnami-postgresql": {}
-            },
-            "required": [
-              "bitnami-postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tags"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       }
     },
-    "constrains/tags.bitnami-postgresql+tags.bitnami-postgresql=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql"
-        }
-      ]
-    },
-    "constrains/tags.bitnami-postgresql:t": {
-      "$ref": "#/definitions/constrains~1tags.bitnami-postgresql:t@2"
-    },
-    "constrains/tags.bitnami-postgresql:t@2": {
+    "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
           "properties": {
-            "bitnami-postgresql": {
-              "$ref": "#/definitions/t"
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
             }
           },
           "required": [
-            "bitnami-postgresql"
+            "bitnami-common"
           ],
           "type": "object"
         }
@@ -2441,13 +3706,44 @@
       ],
       "type": "object"
     },
-    "constrains/tags.bitnami-postgresql=null": {
+    "constrains/tags.bitnami-common=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "constrains/tags.bitnami-common=true@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-postgresql=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+      }
+    },
+    "constrains/tags.bitnami-postgresql=false@2": {
       "properties": {
         "tags": {
           "properties": {
             "bitnami-postgresql": {
               "enum": [
-                null
+                false
               ]
             }
           },
@@ -2462,24 +3758,31 @@
       ],
       "type": "object"
     },
-    "constrains/tags.hirosystems-bitcoin-core": {
+    "constrains/tags.bitnami-postgresql=true": {
       "not": {
-        "properties": {
-          "tags": {
-            "properties": {
-              "hirosystems-bitcoin-core": {}
-            },
-            "required": [
-              "hirosystems-bitcoin-core"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tags"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
       }
+    },
+    "constrains/tags.bitnami-postgresql=true@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-postgresql": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-postgresql"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
     },
     "constrains/tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core!=false": {
       "anyOf": [
@@ -2507,59 +3810,38 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core"
+          "not": {
+            "properties": {
+              "tags": {
+                "properties": {
+                  "hirosystems-bitcoin-core": {}
+                },
+                "required": [
+                  "hirosystems-bitcoin-core"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tags"
+            ],
+            "type": "object"
+          }
         }
       ]
     },
-    "constrains/tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core"
-        }
-      ]
+    "constrains/tags.hirosystems-bitcoin-core=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false@2"
+      }
     },
-    "constrains/tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core"
-        }
-      ]
-    },
-    "constrains/tags.hirosystems-bitcoin-core:t": {
-      "properties": {
-        "tags": {
-          "properties": {
-            "hirosystems-bitcoin-core": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "hirosystems-bitcoin-core"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "tags"
-      ],
-      "type": "object"
-    },
-    "constrains/tags.hirosystems-bitcoin-core=null": {
+    "constrains/tags.hirosystems-bitcoin-core=false@2": {
       "properties": {
         "tags": {
           "properties": {
             "hirosystems-bitcoin-core": {
               "enum": [
-                null
+                false
               ]
             }
           },
@@ -2595,29 +3877,26 @@
       ],
       "type": "object"
     },
-    "constrains/tags.hirosystems-stacks-blockchain": {
-      "not": {
-        "properties": {
-          "tags": {
-            "properties": {
-              "hirosystems-stacks-blockchain": {}
-            },
-            "required": [
-              "hirosystems-stacks-blockchain"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tags"
-        ],
-        "type": "object"
-      }
-    },
     "constrains/tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain!=false": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain"
+          "not": {
+            "properties": {
+              "tags": {
+                "properties": {
+                  "hirosystems-stacks-blockchain": {}
+                },
+                "required": [
+                  "hirosystems-stacks-blockchain"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tags"
+            ],
+            "type": "object"
+          }
         },
         {
           "properties": {
@@ -2644,55 +3923,18 @@
         }
       ]
     },
-    "constrains/tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain:t+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=null"
-        }
-      ]
+    "constrains/tags.hirosystems-stacks-blockchain=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false@2"
+      }
     },
-    "constrains/tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=null"
-        }
-      ]
-    },
-    "constrains/tags.hirosystems-stacks-blockchain:t": {
-      "properties": {
-        "tags": {
-          "properties": {
-            "hirosystems-stacks-blockchain": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "hirosystems-stacks-blockchain"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "tags"
-      ],
-      "type": "object"
-    },
-    "constrains/tags.hirosystems-stacks-blockchain=null": {
+    "constrains/tags.hirosystems-stacks-blockchain=false@2": {
       "properties": {
         "tags": {
           "properties": {
             "hirosystems-stacks-blockchain": {
               "enum": [
-                null
+                false
               ]
             }
           },
@@ -2831,192 +4073,361 @@
         }
       ]
     },
-    "values/common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
-        "global": {}
-      },
-      "type": "object"
-    },
     "values/nameOverride": {
       "description": "String to partially override common.names.name"
     },
     "values/namespaceOverride": {
       "description": "String to fully override common.names.namespace"
     },
-    "when/postgresql.architecture=replication/then/postgresql+postgresql.architecture+postgresql.architecture=null/else/any": {
+    "when/postgresql.architecture=replication/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+9more/else/any": {
       "else": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
-          }
-        ]
+        "$ref": "#/definitions/when~1stacks-blockchain.enabled=false~1then~1stacks-blockchain.enabled=true~1else~1tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+        "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
       },
       "then": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+        "else": {
+          "else": {
+            "else": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1tags.bitnami-postgresql=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more~1else~1any"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                },
+                "then": {
+                  "else": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1tags.hirosystems-stacks-blockchain=true~1else~1any"
+                      }
+                    ]
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1tags.bitnami-postgresql=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more~1else~1any"
+                  }
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more~1else~1any"
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+                },
+                {
+                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more~1else~1any"
+                }
+              ]
             }
           },
-          {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null"
+          "if": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1stacks-blockchain.enabled=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more~1else~1tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true"
           }
-        ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+        },
+        "then": {
+          "else": {
+            "$ref": "#/definitions/when~1stacks-blockchain.enabled=false~1then~1stacks-blockchain.enabled=true~1else~1tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1stacks-blockchain.enabled=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more~1else~1tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true"
+          }
+        }
       }
     },
-    "when/stacks-blockchain.enabled:t/then/any/else/stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null+3more": {
+    "when/postgresql.commonLabels+postgresql.commonLabels=null/then/any/else/postgresql.commonLabels": {
       "else": {
-        "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain:t~1then~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null~1else~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain=..."
+        "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled:t"
+        "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
       },
       "then": true
     },
-    "when/stacks-blockchain.enabled:t/then/stacks-blockchain.bitcoin-core.enabled+4more/else/stacks-blockchain+tags.hirosystems-stacks-blockchain+2more": {
+    "when/stacks-blockchain.bitcoin-core.enabled=false/then/stacks-blockchain+stacks-blockchain.bitcoin-core.enabled=true+2more/else/tags.hirosystems-bitcoin-core=false+tags.hirosystems-bitcoin-core=true": {
       "else": {
         "else": {
           "else": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain=null"
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1tags.hirosystems-stacks-blockchain=true~1else~1any"
               },
-              {
-                "anyOf": [
+              "if": {
+                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false@2"
+              },
+              "then": {
+                "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=null"
+                    "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core"
+                    "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1tags.hirosystems-stacks-blockchain=true~1else~1any"
                   }
                 ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
               }
-            ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1tags.hirosystems-bitcoin-core=false~1then~1tags.hirosystems-bitcoin-core=true~1else~1any"
+            }
           },
           "if": {
-            "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain:t"
+            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false@2"
           },
           "then": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core=null"
+                "$ref": "#/definitions/when~1tags.hirosystems-bitcoin-core=false~1then~1tags.hirosystems-bitcoin-core=true~1else~1any"
               },
               {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
+                "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
               }
             ]
           }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core:t"
+          "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
         },
         "then": {
+          "$ref": "#/definitions/when~1stacks-blockchain.enabled=false~1then~1stacks-blockchain.enabled=true~1else~1tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled=true@2"
+          },
+          {
+            "$ref": "#/definitions/when~1stacks-blockchain.enabled=false~1then~1stacks-blockchain.enabled=true~1else~1tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true"
+          }
+        ]
+      }
+    },
+    "when/stacks-blockchain.enabled=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more/else/tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true": {
+      "else": {
+        "else": {
           "else": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null+2more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
-              }
-            ]
+            "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain:t"
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
           },
           "then": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
               },
               {
-                "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
+                "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
               }
             ]
           }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
         }
       },
       "if": {
-        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled:t"
+        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+          },
+          {
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
+          }
+        ]
+      }
+    },
+    "when/stacks-blockchain.enabled=false/then/stacks-blockchain.enabled=true/else/tags.hirosystems-stacks-blockchain=false+tags.hirosystems-stacks-blockchain=true": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1tags.hirosystems-stacks-blockchain=true~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=false@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1stacks-blockchain.enabled=true@2"
+      }
+    },
+    "when/tags.bitnami-common=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+          },
+          {
+            "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
+          }
+        ]
+      }
+    },
+    "when/tags.bitnami-common=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1tags.bitnami-postgresql=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "else": {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core+tags.hirosystems-bitcoin-core=null"
+              "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
             },
             {
-              "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
+              "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true"
             }
           ]
         },
         "if": {
-          "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core:t"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1stacks-blockchain.bitcoin-core.enabled+1more@3"
+          "$ref": "#/definitions/when~1tags.bitnami-postgresql=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
         }
       }
     },
-    "when/tags.bitnami-postgresql:t/then/postgresql+postgresql.architecture=replication+postgresql.enabled+1more/else/tags.bitnami-postgresql+tags.bitnami-postgresql=null": {
+    "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "when/tags.bitnami-postgresql=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more/else/any": {
       "else": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.bitnami-postgresql+tags.bitnami-postgresql=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-          }
-        ]
+        "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql:t@2"
+        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+      },
+      "then": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
+        }
+      }
+    },
+    "when/tags.bitnami-postgresql=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+      },
+      "then": {
+        "else": {
+          "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1tags.hirosystems-stacks-blockchain=true~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1tags.hirosystems-stacks-blockchain=false~1then~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more~1else~1any"
+        }
+      }
+    },
+    "when/tags.bitnami-postgresql=false/then/tags.bitnami-postgresql=true/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=false@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-postgresql=true@2"
+      }
+    },
+    "when/tags.hirosystems-bitcoin-core=false/then/tags.hirosystems-bitcoin-core=true/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=false@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.hirosystems-bitcoin-core=true"
+      }
+    },
+    "when/tags.hirosystems-stacks-blockchain=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+1more/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false@2"
       },
       "then": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
+            "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
           },
           {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+            "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
           }
         ]
       }
     },
-    "when/tags.hirosystems-stacks-blockchain:t/then/stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null/else/tags.hirosystems-stacks-blockchain+tags.hirosystems-stacks-blockchain=...": {
-      "else": {
-        "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null+2more"
-      },
+    "when/tags.hirosystems-stacks-blockchain=false/then/tags.hirosystems-stacks-blockchain=true/else/any": {
+      "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain:t"
+        "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=false@2"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1stacks-blockchain+stacks-blockchain.enabled+stacks-blockchain.enabled=null"
+        "$ref": "#/definitions/constrains~1tags.hirosystems-stacks-blockchain=true"
       }
     }
   },
@@ -3072,7 +4483,10 @@
       "description": "RBAC configuration"
     },
     "common": {
-      "$ref": "#/definitions/values~1common"
+      "properties": {
+        "global": {}
+      },
+      "type": "object"
     },
     "commonAnnotations": {
       "description": "Annotations to add to all deployed objects"
@@ -3110,202 +4524,6 @@
     },
     "postgresql": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture=replication"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture=replication"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture=replication"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture=replication"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1architecture=replication"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1architecture"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture=replication"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1architecture"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1architecture!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
-                }
-              ]
-            },
-            "then": false
-          }
-        }
-      ],
       "description": "Postgresql Subchart",
       "properties": {
         "architecture": {
@@ -3325,7 +4543,10 @@
           "description": "PostgreSQL architecture (`standalone` or `replication`)"
         },
         "common": {
-          "$ref": "#/definitions/values~1common"
+          "properties": {
+            "global": {}
+          },
+          "type": "object"
         },
         "commonLabels": {
           "description": "Add labels to all the deployed resources"
@@ -3365,7 +4586,10 @@
           "description": "Bitcoin Core Subchart",
           "properties": {
             "common": {
-              "$ref": "#/definitions/values~1common"
+              "properties": {
+                "global": {}
+              },
+              "type": "object"
             },
             "commonLabels": {
               "description": "Labels to add to all deployed objects"
@@ -3393,7 +4617,10 @@
           }
         },
         "common": {
-          "$ref": "#/definitions/values~1common"
+          "properties": {
+            "global": {}
+          },
+          "type": "object"
         },
         "commonLabels": {
           "description": "Labels to add to all deployed objects"

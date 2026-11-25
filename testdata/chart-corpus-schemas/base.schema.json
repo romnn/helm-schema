@@ -3,6 +3,45 @@
   "additionalProperties": {},
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "_internal_defaults_do_not_set": {
+          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1global+global=null@2"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -16,44 +55,47 @@
             ]
           },
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.resourceScope+global.resourceScope=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.resourceScope"
+              },
+              {
+                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+              }
+            ]
+          },
+          {
             "else": {
               "allOf": [
                 {
                   "not": {
-                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
                   }
                 },
                 {
-                  "not": {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "resourceScope": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "resourceScope"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
+                  "$ref": "#/definitions/constrains~1global.resourceScope"
                 },
                 {
-                  "properties": {
-                    "global": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
+                  "$ref": "#/definitions/constrains~1global"
                 },
                 {
                   "$ref": "#/definitions/constrains~1global.resourceScope+global.resourceScope=null"
@@ -83,7 +125,7 @@
                     }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
+                    "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
                   },
                   {
                     "properties": {
@@ -119,53 +161,15 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "_internal_defaults_do_not_set": {
-          "description": "\"_internal_defaults_do_not_set\" is a workaround for Helm limitations. Users should NOT set \"._internal_defaults_do_not_set\" explicitly, but rather directly set the fields internally.\nFor instance, instead of `--set _internal_defaults_do_not_set.foo=bar``, just set `--set foo=bar`.",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1global+global=null@2"
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1global+global=null"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
     }
   ],
   "definitions": {
     "constrains/_internal_defaults_do_not_set": {
+      "not": {
+        "$ref": "#/definitions/constrains~1_internal_defaults_do_not_set@2"
+      }
+    },
+    "constrains/_internal_defaults_do_not_set@2": {
       "properties": {
         "_internal_defaults_do_not_set": {
           "type": "object"
@@ -209,6 +213,17 @@
       ],
       "type": "object"
     },
+    "constrains/global": {
+      "properties": {
+        "global": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
     "constrains/global+global=null": {
       "anyOf": [
         {
@@ -240,6 +255,32 @@
     "constrains/global+global=null@2": {
       "not": {
         "$ref": "#/definitions/constrains~1global+global=null"
+      }
+    },
+    "constrains/global+global=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global+global=null"
+      }
+    },
+    "constrains/global.resourceScope": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "resourceScope": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "resourceScope"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
       }
     },
     "constrains/global.resourceScope+global.resourceScope=null": {

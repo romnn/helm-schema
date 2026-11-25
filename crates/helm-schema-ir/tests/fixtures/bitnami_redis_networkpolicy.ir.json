@@ -443,6 +443,42 @@
     },
     {
       "condition": [
+        [
+          {
+            "path": "fullnameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "namespaceOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "fullnameOverride",
+            "pattern": "^(?:[\\x30-\\x39\\x41-\\x5a\\x61-\\x7a](?:[\\x20\\x2d-\\x39\\x3d\\x41-\\x5b\\x5d\\x5f\\x61-\\x7a])*)$",
+            "templated": false,
+            "type": "matches_pattern"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "metadata",
+        "namespace"
+      ],
+      "plain_scalar_placement": "BlockValue",
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "namespaceOverride",
+      "stringified": true
+    },
+    {
+      "condition": [
         []
       ],
       "kind": "WidenedDependency",

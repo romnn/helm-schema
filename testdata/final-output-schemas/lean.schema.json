@@ -23,88 +23,20 @@
     }
   ],
   "definitions": {
-    "constrains/enabled!=0+enabled=true": {
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "minProperties": 1,
-              "type": "object"
-            },
-            {
-              "not": {
-                "const": 0
-              },
-              "type": "number"
-            },
-            {
-              "minLength": 1,
-              "type": "string"
-            },
-            {
-              "minItems": 1,
-              "type": "array"
-            },
-            {
-              "const": true
-            }
-          ]
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled+enabled=null": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+    "constrains/enabled=false": {
+      "not": {
+        "properties": {
+          "enabled": {
+            "enum": [
+              false
+            ]
           }
         },
-        {
-          "properties": {
-            "enabled": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/replicas": {
-      "properties": {
-        "replicas": {
-          "type": "array"
-        }
-      },
-      "required": [
-        "replicas"
-      ],
-      "type": "object"
-    },
-    "constrains/replicas@2": {
-      "properties": {
-        "replicas": {
-          "type": "object"
-        }
-      },
-      "required": [
-        "replicas"
-      ],
-      "type": "object"
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      }
     },
     "values/replicas/allOf/not/object": {
       "allOf": [
@@ -334,29 +266,20 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1replicas@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1enabled=false"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1replicas@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
+                "properties": {
+                  "replicas": {
+                    "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -371,29 +294,20 @@
         },
         {
           "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1replicas"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1enabled=false"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1replicas"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
+                "properties": {
+                  "replicas": {
+                    "type": "array"
                   }
-                ]
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
               }
             ]
           },
@@ -413,21 +327,7 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled!=0+enabled=true"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1enabled=false"
           },
           "then": {
             "additionalProperties": {},

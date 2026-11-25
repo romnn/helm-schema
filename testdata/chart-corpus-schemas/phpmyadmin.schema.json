@@ -4,61 +4,58 @@
   "allOf": [
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mariadb": {
-            "additionalProperties": {},
-            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
-            "properties": {
-              "nameOverride": {
-                "description": "String to partially override mariadb.fullname",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more"
+            "else": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/when~1tags.phpmyadmin-database=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+1more~1else~1any"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/when~1tags.phpmyadmin-database=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+1more~1else~1any"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                    }
+                  ]
+                }
               },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
+              "if": {
+                "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+tags.bitnami-common=true~1else~1any"
               }
-            ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB=false"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+tags.bitnami-common=true~1else~1any"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+                }
+              ]
+            }
           },
           {
-            "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
           }
         ]
       },
@@ -70,7 +67,18 @@
             "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
             "properties": {
               "passwordUpdateJob": {
-                "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "previousPasswords": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "rootPassword": {
+                        "description": "Previous root password (set if the password secret was already changed)",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -79,29 +87,12 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
           }
         ]
       },
@@ -129,61 +120,16 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.tls:t"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Ingress configuration",
-            "properties": {
-              "hostname": {
-                "description": "When the ingress is enabled, a host pointing to this will be created",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1ingress.secrets:t"
           },
           {
             "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.tls:t"
+            "$ref": "#/definitions/constrains~1ingress.tls:t@2"
           }
         ]
       },
@@ -205,461 +151,6 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mariadb": {
-            "additionalProperties": {},
-            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "description": "String to fully override mariadb.fullname",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "properties": {
-                "mariadb": {
-                  "properties": {
-                    "nameOverride": {
-                      "not": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "nameOverride"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mariadb"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "mariadb": {
-                  "properties": {
-                    "passwordUpdateJob": {
-                      "properties": {
-                        "enabled": {
-                          "not": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "passwordUpdateJob"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mariadb"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "mariadb": {
-                  "properties": {
-                    "passwordUpdateJob": {
-                      "properties": {
-                        "previousPasswords": {
-                          "properties": {
-                            "existingSecret": {
-                              "not": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            }
-                          },
-                          "required": [
-                            "existingSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "previousPasswords"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "passwordUpdateJob"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mariadb"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "mariadb": {
-                  "properties": {
-                    "fullnameOverride": {
-                      "not": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mariadb"
-              ],
-              "type": "object"
-            },
-            {
-              "properties": {
-                "mariadb": {
-                  "properties": {
-                    "passwordUpdateJob": {
-                      "properties": {
-                        "previousPasswords": {
-                          "properties": {
-                            "rootPassword": {
-                              "not": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            }
-                          },
-                          "required": [
-                            "rootPassword"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "previousPasswords"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "passwordUpdateJob"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mariadb"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "db": {
-                "properties": {
-                  "bundleTestDB": {
-                    "enum": [
-                      true
-                    ]
-                  }
-                },
-                "required": [
-                  "bundleTestDB"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "db"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
-              },
-              {
-                "properties": {
-                  "tags": {
-                    "properties": {
-                      "phpmyadmin-database": {
-                        "enum": [
-                          true
-                        ]
-                      }
-                    },
-                    "required": [
-                      "phpmyadmin-database"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tags"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
-                  },
-                  {
-                    "properties": {
-                      "tags": {
-                        "properties": {
-                          "phpmyadmin-database": {
-                            "not": {
-                              "enum": [
-                                false
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "phpmyadmin-database"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tags"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mariadb": {
-            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "mariadb": {
-          "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1db.bundleTestDB:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mariadb": {
-            "additionalProperties": {},
-            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
-            "properties": {
-              "namespaceOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.tls:t"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.fullname template (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
@@ -670,7 +161,7 @@
             }
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
           }
         ]
       },
@@ -689,6 +180,957 @@
                   "null",
                   "object"
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.nameOverride+mariadb.nameOverride:t@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1mariadb.namespaceOverride+mariadb.namespaceOverride:t"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.rootPassword+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@3"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@3"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.nameOverride+mariadb.nameOverride:t@2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1group-1"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1group-1"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1group-1"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "mariadb": {
+                            "properties": {
+                              "passwordUpdateJob": {
+                                "properties": {
+                                  "previousPasswords": {
+                                    "properties": {
+                                      "password": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "password"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "previousPasswords"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "passwordUpdateJob"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "mariadb"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1group-1"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@3"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=''"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword+1more"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=null"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+4more"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+6more"
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more@2"
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more"
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+4more"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more@2"
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more"
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+6more"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "mariadb": {
+              "properties": {
+                "commonLabels": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "commonLabels"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+2more"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "mariadb": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB=false+db.bundleTestDB=true+mariadb.passwordUpdateJob.enabled:t+6more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "namespaceOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+1more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+2more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "passwordUpdateJob": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "mariadb": {
+          "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+            }
+          },
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  }
+                ]
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-0"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1group-0"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.hostname"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
+                      }
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.secrets:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.certManager:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB=false+db.bundleTestDB=true+mariadb.passwordUpdateJob.enabled:t+6more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "nameOverride": {
+                "description": "String to partially override mariadb.fullname",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+            }
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1any~1else~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+            },
+            "then": true
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Ingress configuration",
+            "properties": {
+              "hostname": {
+                "description": "When the ingress is enabled, a host pointing to this will be created",
+                "type": "string"
               }
             }
           }
@@ -745,7 +1187,7 @@
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+            "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
@@ -790,130 +1232,30 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
-                }
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1ingress+ingress.annotations+9more"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.hostname"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.certManager:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issuer'?+1more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.tls:t"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more"
-                  }
-                ]
-              }
-            ]
+            "$ref": "#/definitions/constrains~1db.bundleTestDB=false+db.bundleTestDB=true+mariadb.passwordUpdateJob.enabled:t+6more"
           },
           {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
           }
         ]
       },
-      "then": false
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "additionalProperties": {},
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "description": "String to fully override mariadb.fullname",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -1022,6 +1364,271 @@
         }
       ]
     },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@3": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+1more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.phpmyadmin-database+tags.phpmyadmin-database!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+7more"
+      }
+    },
     "constrains/db.bundleTestDB+db.bundleTestDB!=true": {
       "anyOf": [
         {
@@ -1052,78 +1659,91 @@
         }
       ]
     },
-    "constrains/db.bundleTestDB+db.bundleTestDB=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1db.bundleTestDB"
-        },
-        {
-          "properties": {
-            "db": {
-              "properties": {
-                "bundleTestDB": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "bundleTestDB"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "db"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/db.bundleTestDB+db.bundleTestDB=null+mariadb.passwordUpdateJob.enabled:t+5more": {
-      "allOf": [
-        {
-          "else": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-              }
-            ]
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB=null"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-        }
-      ]
-    },
-    "constrains/db.bundleTestDB:t": {
+    "constrains/db.bundleTestDB=false": {
       "properties": {
         "db": {
           "properties": {
             "bundleTestDB": {
-              "$ref": "#/definitions/t"
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bundleTestDB"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "db"
+      ],
+      "type": "object"
+    },
+    "constrains/db.bundleTestDB=false+db.bundleTestDB=true+mariadb.passwordUpdateJob.enabled:t+6more": {
+      "allOf": [
+        {
+          "else": {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1tags.phpmyadmin-database=false~1then~1tags.phpmyadmin-database=true~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1tags.phpmyadmin-database=false~1then~1tags.phpmyadmin-database=true~1else~1any"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  }
+                ]
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1db.bundleTestDB=false"
+          },
+          "then": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1db.bundleTestDB=true"
+              }
+            ]
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB=true": {
+      "properties": {
+        "db": {
+          "properties": {
+            "bundleTestDB": {
+              "enum": [
+                true
+              ]
             }
           },
           "required": [
@@ -1162,21 +1782,87 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
+          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
+          "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+          "$ref": "#/definitions/constrains~1ingress.secrets:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+        }
+      ]
+    },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+11more@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1db.bundleTestDB+db.bundleTestDB!=false+db.bundleTestDB!=true+4more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.rootPassword+2more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.fullnameOverride+mariadb.fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.nameOverride+mariadb.nameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.namespaceOverride+mariadb.namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
         }
       ]
     },
     "constrains/ingress+ingress.annotations+5more": {
       "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.tls:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.secrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.annotations"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
+            }
+          ]
+        },
         {
           "allOf": [
             {
@@ -1192,40 +1878,10 @@
               "$ref": "#/definitions/constrains~1ingress.certManager:t"
             },
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-              }
+              "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.tls:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.secrets:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.annotations"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.tls:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.certManager:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.secrets:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1ingress.tls:t"
-              }
+              "$ref": "#/definitions/constrains~1ingress.tls:t@2"
             }
           ]
         }
@@ -1245,7 +1901,7 @@
           "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
         },
         {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more@2"
@@ -1260,9 +1916,7 @@
                 "$ref": "#/definitions/constrains~1ingress.existingSecretName:t@2"
               },
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                }
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
               },
               {
                 "allOf": [
@@ -1270,7 +1924,7 @@
                     "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                    "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
@@ -1286,7 +1940,7 @@
                     "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                    "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more@2"
@@ -1304,7 +1958,7 @@
                     "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                    "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1ingress+ingress.annotations+5more"
@@ -1372,6 +2026,26 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1ingress.hostname@8"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname@14"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname@7"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1ingress.hostname@6"
             },
             {
@@ -1402,20 +2076,169 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@8"
+              "$ref": "#/definitions/constrains~1ingress.hostname@2"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@14"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname@14"
+              "$ref": "#/definitions/constrains~1ingress.hostname"
             },
             {
-              "$ref": "#/definitions/constrains~1ingress.hostname@7"
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "hostname": {
+                          "anyOf": [
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 2,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 3,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 5,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 3,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": true,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                },
+                                true
+                              ],
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            {
+                              "additionalItems": false,
+                              "items": [
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
+                                }
+                              ],
+                              "minItems": 2,
+                              "type": "array"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "hostname"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@10"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
             }
           ]
         },
@@ -1426,6 +2249,9 @@
             },
             {
               "$ref": "#/definitions/constrains~1ingress.hostname"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
             },
             {
               "anyOf": [
@@ -1582,9 +2408,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
             }
           ]
         },
@@ -1595,6 +2418,9 @@
             },
             {
               "$ref": "#/definitions/constrains~1ingress.hostname"
+            },
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
             },
             {
               "anyOf": [
@@ -1779,230 +2605,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@12"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@11"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@3"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.hostname@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@7"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress.hostname@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@13"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
-            },
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "ingress": {
-                      "properties": {
-                        "hostname": {
-                          "anyOf": [
-                            {
-                              "additionalItems": true,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                },
-                                true
-                              ],
-                              "minItems": 2,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": false,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                }
-                              ],
-                              "minItems": 3,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": false,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                }
-                              ],
-                              "minItems": 4,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": true,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                },
-                                true
-                              ],
-                              "minItems": 5,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": true,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                },
-                                true
-                              ],
-                              "minItems": 3,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": true,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                },
-                                true
-                              ],
-                              "minItems": 4,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": false,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                }
-                              ],
-                              "minItems": 1,
-                              "type": "array"
-                            },
-                            {
-                              "additionalItems": false,
-                              "items": [
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1string;pattern-x20-x@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null~1anyOf~1object+string;pattern-x20-x"
-                                }
-                              ],
-                              "minItems": 2,
-                              "type": "array"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "hostname"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ingress"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@10"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.hostname@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
-                }
-              ]
             }
           ]
         },
@@ -2120,6 +2722,58 @@
                       ]
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1ingress.hostname"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@12"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@11"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@3"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1ingress.hostname@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1ingress.hostname+ingress.hostname=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1ingress+ingress.hostname+ingress.hostname=null@2"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.hostname@7"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress.hostname@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1ingress+ingress.hostname"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1ingress.hostname@13"
                 }
               ]
             }
@@ -2550,9 +3204,6 @@
     "constrains/ingress.annotations+ingress.annotations.'cert-manager.io/cluster-issuer'?+1more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?@2"
@@ -2561,6 +3212,9 @@
               "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
         }
       ]
     },
@@ -2598,6 +3252,11 @@
         }
       ]
     },
+    "constrains/ingress.annotations+ingress.annotations=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+      }
+    },
     "constrains/ingress.annotations+ingress.enabled:t+ingress.existingSecretName:t+2more": {
       "allOf": [
         {
@@ -2607,7 +3266,7 @@
           "$ref": "#/definitions/constrains~1ingress.existingSecretName:t"
         },
         {
-          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
         },
         {
           "not": {
@@ -2615,7 +3274,7 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1ingress.tls:t"
+          "$ref": "#/definitions/constrains~1ingress.tls:t@2"
         }
       ]
     },
@@ -2652,6 +3311,11 @@
       "type": "object"
     },
     "constrains/ingress.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress.enabled:t@2"
+      }
+    },
+    "constrains/ingress.enabled:t@2": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1enabled:t"
@@ -3205,6 +3869,11 @@
       "type": "object"
     },
     "constrains/ingress.tls:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+      }
+    },
+    "constrains/ingress.tls:t@2": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1tls:t"
@@ -3212,6 +3881,352 @@
       },
       "required": [
         "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more": {
+      "anyOf": [
+        {
+          "properties": {
+            "mariadb": {
+              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password=null"
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "mariadb": {
+              "properties": {
+                "passwordUpdateJob": {
+                  "properties": {
+                    "previousPasswords": {
+                      "properties": {
+                        "password": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      },
+                      "required": [
+                        "password"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "previousPasswords"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "mariadb": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password=null"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "mariadb": {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password"
+              }
+            },
+            "required": [
+              "mariadb"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=''"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword+1more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@2"
+        }
+      ]
+    },
+    "constrains/mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more"
+      }
+    },
+    "constrains/mariadb+mariadb.passwordUpdateJob.previousPasswords.rootPassword+2more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "mariadb": {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword"
+              }
+            },
+            "required": [
+              "mariadb"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "mariadb": {
+              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword=null"
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "mariadb": {
+              "allOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword=null"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "mariadb": {
+              "properties": {
+                "passwordUpdateJob": {
+                  "properties": {
+                    "previousPasswords": {
+                      "properties": {
+                        "rootPassword": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      },
+                      "required": [
+                        "rootPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "previousPasswords"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/mariadb+mariadb.passwordUpdateJob.previousPasswords.rootPassword+2more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.rootPassword+2more"
+      }
+    },
+    "constrains/mariadb.commonLabels": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+      }
+    },
+    "constrains/mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+        }
+      ]
+    },
+    "constrains/mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more"
+      }
+    },
+    "constrains/mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+6more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t+4more"
+        }
+      ]
+    },
+    "constrains/mariadb.commonLabels+mariadb.commonLabels=null": {
+      "properties": {
+        "mariadb": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "commonLabels": {}
+                    },
+                    "required": [
+                      "commonLabels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "commonLabels": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "commonLabels"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.commonLabels:helm-no-template-actions": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "commonLabels": {
+              "$ref": "#/definitions/helm-no-template-actions"
+            }
+          },
+          "required": [
+            "commonLabels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.commonLabels@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+      }
+    },
+    "constrains/mariadb.commonLabels@3": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "commonLabels": {
+              "pattern": "\\{\\{",
+              "type": "string"
+            }
+          },
+          "required": [
+            "commonLabels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.commonLabels@4": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "commonLabels": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "commonLabels"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
       ],
       "type": "object"
     },
@@ -3234,160 +4249,13 @@
       ],
       "type": "object"
     },
-    "constrains/mariadb.fullnameOverride+mariadb.fullnameOverride:t+mariadb.nameOverride+6more": {
+    "constrains/mariadb.fullnameOverride+mariadb.fullnameOverride:t": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
         }
       ]
     },
@@ -3395,6 +4263,19 @@
       "not": {
         "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
       }
+    },
+    "constrains/mariadb.fullnameOverride:t+mariadb.nameOverride+mariadb.nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
+        }
+      ]
     },
     "constrains/mariadb.fullnameOverride:t@2": {
       "properties": {
@@ -3416,8 +4297,29 @@
       "type": "object"
     },
     "constrains/mariadb.nameOverride": {
+      "properties": {
+        "mariadb": {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.nameOverride+mariadb.nameOverride:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.nameOverride:t"
+        }
+      ]
+    },
+    "constrains/mariadb.nameOverride+mariadb.nameOverride:t@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1mariadb.nameOverride@2"
+        "$ref": "#/definitions/constrains~1mariadb.nameOverride+mariadb.nameOverride:t"
       }
     },
     "constrains/mariadb.nameOverride:t": {
@@ -3436,37 +4338,33 @@
       ],
       "type": "object"
     },
-    "constrains/mariadb.nameOverride@2": {
-      "properties": {
-        "mariadb": {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        }
-      },
-      "required": [
-        "mariadb"
-      ],
-      "type": "object"
-    },
-    "constrains/mariadb.namespaceOverride": {
-      "not": {
-        "properties": {
-          "mariadb": {
-            "properties": {
-              "namespaceOverride": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "namespaceOverride"
-            ],
-            "type": "object"
+    "constrains/mariadb.namespaceOverride+mariadb.namespaceOverride:t": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mariadb.namespaceOverride:t"
           }
         },
-        "required": [
-          "mariadb"
-        ],
-        "type": "object"
-      }
+        {
+          "properties": {
+            "mariadb": {
+              "properties": {
+                "namespaceOverride": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "namespaceOverride"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mariadb"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/mariadb.namespaceOverride:t": {
       "properties": {
@@ -3488,6 +4386,63 @@
       "type": "object"
     },
     "constrains/mariadb.passwordUpdateJob.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.enabled:t+2more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/mariadb.passwordUpdateJob.enabled:t+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          }
+        }
+      ]
+    },
+    "constrains/mariadb.passwordUpdateJob.enabled:t@2": {
       "properties": {
         "mariadb": {
           "properties": {
@@ -3506,51 +4461,131 @@
       ],
       "type": "object"
     },
-    "constrains/mariadb.passwordUpdateJob.enabled:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-        }
-      ]
-    },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+      }
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.replicationPassword": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@3"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.replicationPassword+1more": {
+      "properties": {
+        "mariadb": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.replicationPassword"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.replicationPassword=null"
+                }
+              ]
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.replicationPassword=''": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "replicationPassword": {
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  },
+                  "required": [
+                    "replicationPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.replicationPassword=null": {
+      "properties": {
+        "mariadb": {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.replicationPassword=null"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.replicationPassword@2": {
       "not": {
         "properties": {
           "mariadb": {
-            "properties": {
-              "passwordUpdateJob": {
-                "properties": {
-                  "previousPasswords": {
-                    "properties": {
-                      "existingSecret": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "existingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "previousPasswords"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "passwordUpdateJob"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.replicationPassword"
           }
         },
         "required": [
@@ -3559,7 +4594,82 @@
         "type": "object"
       }
     },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.replicationPassword@3": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "replicationPassword": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "replicationPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "rootPassword": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "rootPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2": {
       "properties": {
         "mariadb": {
           "properties": {
@@ -3630,6 +4740,168 @@
       ],
       "type": "object"
     },
+    "constrains/passwordUpdateJob.previousPasswords.password": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "password": {}
+              },
+              "required": [
+                "password"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.password=null": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "password": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "password"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.replicationPassword": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "replicationPassword": {}
+              },
+              "required": [
+                "replicationPassword"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.replicationPassword=null": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "replicationPassword": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "replicationPassword"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.rootPassword": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "rootPassword": {}
+              },
+              "required": [
+                "rootPassword"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
+    "constrains/passwordUpdateJob.previousPasswords.rootPassword=null": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "rootPassword": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "rootPassword"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
     "constrains/secrets:t": {
       "properties": {
         "secrets": {
@@ -3641,15 +4913,15 @@
       ],
       "type": "object"
     },
-    "constrains/tags.phpmyadmin-database": {
+    "constrains/tags.bitnami-common": {
       "not": {
         "properties": {
           "tags": {
             "properties": {
-              "phpmyadmin-database": {}
+              "bitnami-common": {}
             },
             "required": [
-              "phpmyadmin-database"
+              "bitnami-common"
             ],
             "type": "object"
           }
@@ -3660,25 +4932,158 @@
         "type": "object"
       }
     },
-    "constrains/tags.phpmyadmin-database+tags.phpmyadmin-database:t+1more": {
+    "constrains/tags.bitnami-common!=false": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "not": {
+                "enum": [
+                  false
+                ]
+              }
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-common+tags.bitnami-common!=false": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.phpmyadmin-database"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common!=false"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.phpmyadmin-database:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=null"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common"
         }
       ]
     },
-    "constrains/tags.phpmyadmin-database:t": {
+    "constrains/tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common!=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+        }
+      ]
+    },
+    "constrains/tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+      }
+    },
+    "constrains/tags.bitnami-common=false": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-common=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "constrains/tags.bitnami-common=true@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.phpmyadmin-database+tags.phpmyadmin-database!=false": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "tags": {
+                "properties": {
+                  "phpmyadmin-database": {}
+                },
+                "required": [
+                  "phpmyadmin-database"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tags"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "tags": {
+              "properties": {
+                "phpmyadmin-database": {
+                  "not": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "phpmyadmin-database"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tags"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/tags.phpmyadmin-database=false": {
       "properties": {
         "tags": {
           "properties": {
             "phpmyadmin-database": {
-              "$ref": "#/definitions/t"
+              "enum": [
+                false
+              ]
             }
           },
           "required": [
@@ -3692,13 +5097,13 @@
       ],
       "type": "object"
     },
-    "constrains/tags.phpmyadmin-database=null": {
+    "constrains/tags.phpmyadmin-database=true": {
       "properties": {
         "tags": {
           "properties": {
             "phpmyadmin-database": {
               "enum": [
-                null
+                true
               ]
             }
           },
@@ -3723,6 +5128,36 @@
         "tls"
       ],
       "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/constrains~1ingress+ingress.hostname~1null,boolean,number"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -3749,31 +5184,77 @@
         }
       ]
     },
-    "values/common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
-        "global": {}
-      },
-      "type": "object"
-    },
     "when/ingress.annotations+ingress.annotations=null/then/any/else/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
       "else": {
-        "else": {
-          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-        },
-        "then": true
+        "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
       },
       "if": {
         "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
       },
       "then": true
+    },
+    "when/mariadb.commonLabels+mariadb.commonLabels=null/then/any/else/mariadb.commonLabels": {
+      "else": {
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
+      },
+      "then": true
+    },
+    "when/tags.bitnami-common=false/then/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+tags.bitnami-common=true/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1any~1else~1mariadb.commonLabels"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1any~1else~1mariadb.commonLabels"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+          }
+        ]
+      }
+    },
+    "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "when/tags.phpmyadmin-database=false/then/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+1more/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1any~1else~1mariadb.commonLabels"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=false"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1any~1else~1mariadb.commonLabels"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=true"
+          }
+        ]
+      }
+    },
+    "when/tags.phpmyadmin-database=false/then/tags.phpmyadmin-database=true/else/any": {
+      "else": true,
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=false"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.phpmyadmin-database=true"
+      }
     }
   },
   "properties": {
@@ -3793,7 +5274,10 @@
       "description": "Override default container command (useful when using custom images)"
     },
     "common": {
-      "$ref": "#/definitions/values~1common"
+      "properties": {
+        "global": {}
+      },
+      "type": "object"
     },
     "commonAnnotations": {
       "description": "Add annotations to all the deployed resources"
@@ -3861,12 +5345,12 @@
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1secrets:t"
+                      "$ref": "#/definitions/constrains~1existingSecretName:t"
                     }
                   },
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1existingSecretName:t"
+                      "$ref": "#/definitions/constrains~1secrets:t"
                     }
                   },
                   {
@@ -3998,7 +5482,10 @@
       "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
       "properties": {
         "common": {
-          "$ref": "#/definitions/values~1common"
+          "properties": {
+            "global": {}
+          },
+          "type": "object"
         },
         "commonLabels": {
           "description": "Common labels to add to all MariaDB resources (sub-charts are not considered)"

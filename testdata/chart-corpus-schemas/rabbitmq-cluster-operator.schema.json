@@ -6,44 +6,19 @@
       "if": {
         "anyOf": [
           {
-            "properties": {
-              "msgTopologyOperator": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "msgTopologyOperator"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true+2more"
           },
           {
-            "not": {
-              "properties": {
-                "msgTopologyOperator": {}
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               },
-              "required": [
-                "msgTopologyOperator"
-              ],
-              "type": "object"
-            }
+              {
+                "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true"
+              }
+            ]
           }
         ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "properties": {
-          "msgTopologyOperator": {
-            "$ref": "#/definitions/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "msgTopologyOperator"
-        ],
-        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -58,44 +33,243 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "msgTopologyOperator": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "msgTopologyOperator"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1msgTopologyOperator.image+msgTopologyOperator.image=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "msgTopologyOperator": {}
+              },
+              "required": [
+                "msgTopologyOperator"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true+2more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1msgTopologyOperator.image+msgTopologyOperator.image=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "definitions": {
-    "constrains/enabled:t": {
+    "constrains/msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true": {
       "properties": {
-        "enabled": {
-          "$ref": "#/definitions/t"
+        "msgTopologyOperator": {
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "minProperties": 1,
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "const": 0
+                  },
+                  "type": "number"
+                },
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "const": true
+                }
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
       },
       "required": [
-        "enabled"
+        "msgTopologyOperator"
       ],
       "type": "object"
     },
-    "t": {
-      "anyOf": [
+    "constrains/msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true+2more": {
+      "allOf": [
         {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
           },
-          "type": "number"
+          "then": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+          }
         },
         {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
+          "$ref": "#/definitions/constrains~1msgTopologyOperator.enabled!=0+msgTopologyOperator.enabled=true"
         }
       ]
+    },
+    "constrains/msgTopologyOperator.image+msgTopologyOperator.image=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "msgTopologyOperator": {
+                "properties": {
+                  "image": {}
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "msgTopologyOperator"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "msgTopologyOperator": {
+              "properties": {
+                "image": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "msgTopologyOperator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/tags.bitnami-common=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      }
+    },
+    "constrains/tags.bitnami-common=false@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-common=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "constrains/tags.bitnami-common=true@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
     }
   },
   "properties": {
@@ -106,12 +280,7 @@
       "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/"
     },
     "common": {
-      "additionalProperties": {},
       "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
         "global": {}
       },
       "type": "object"
@@ -138,52 +307,15 @@
     },
     "msgTopologyOperator": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled:t"
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "enabled": {
           "description": "Deploy RabbitMQ Messaging Topology Operator as part of the installation\nBitnami RabbitMQ Messaging Topology Operator image\nref: https://hub.docker.com/r/bitnami/rmq-messaging-topology-operator/tags/"
         },
         "image": {
-          "additionalProperties": {}
+          "additionalProperties": {},
+          "properties": {
+            "tag": {}
+          }
         }
       },
       "type": "object"
@@ -194,52 +326,6 @@
     "rabbitmqImage": {},
     "tags": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "bitnami-common": {}
-                    },
-                    "required": [
-                      "bitnami-common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

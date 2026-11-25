@@ -4,79 +4,10 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1resources.service=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1resources.service"
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1resources.service:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "resources": {
-            "additionalProperties": {},
-            "description": "Configure K8s resources",
-            "properties": {
-              "service": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1env:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1env+env=null@3"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1env+env=null@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1resources.service:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "env": {
-            "additionalProperties": {},
-            "description": "Configure environment variables for the image proxy server\nsee https://docs.imgproxy.net/configuration",
-            "properties": {
-              "IMGPROXY_PROMETHEUS_BIND": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1resources=null"
+          },
           {
             "allOf": [
               {
@@ -90,89 +21,49 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND@2"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND"
-                            },
-                            {
                               "anyOf": [
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
-                                    },
-                                    {
-                                      "anyOf": [
-                                        {
-                                          "allOf": [
-                                            {
-                                              "not": {
-                                                "$ref": "#/definitions/constrains~1env+env=null"
-                                              }
-                                            },
-                                            {
-                                              "anyOf": [
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1resources.service:t"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1env:t@2"
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "not": {
-                                                        "$ref": "#/definitions/constrains~1env:t"
-                                                      }
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1env+env=null"
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
                                 {
                                   "allOf": [
                                     {
                                       "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
                                     },
                                     {
-                                      "not": {
-                                        "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
-                                      }
+                                      "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND@2"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1env+env.IMGPROXY_PROMETHEUS_BIND:t+env:t+env=null+resources+resources.service+4more"
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "properties": {
+                                "env": {
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "env"
+                              ],
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1env+env.IMGPROXY_PROMETHEUS_BIND:t+env:t+env=null+resources+resources.service+4more"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1env"
                             }
                           ]
                         }
@@ -183,6 +74,11 @@
               },
               {
                 "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    }
+                  },
                   {
                     "allOf": [
                       {
@@ -203,14 +99,28 @@
                     ]
                   },
                   {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                    }
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1resources.service:t@2"
+                      }
+                    ]
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+1more"
+                        "$ref": "#/definitions/constrains~1env:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1env+env=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1env"
                       },
                       {
                         "$ref": "#/definitions/constrains~1resources.service:t@2"
@@ -220,9 +130,6 @@
                 ]
               }
             ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1resources=null"
           },
           {
             "not": {
@@ -304,6 +211,78 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1resources.service=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1resources.service"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1resources.service:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "resources": {
+            "additionalProperties": {},
+            "description": "Configure K8s resources",
+            "properties": {
+              "service": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1env:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1env+env=null@3"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1env+env=null@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1resources.service:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "env": {
+            "additionalProperties": {},
+            "description": "Configure environment variables for the image proxy server\nsee https://docs.imgproxy.net/configuration",
+            "properties": {
+              "IMGPROXY_PROMETHEUS_BIND": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -397,6 +376,91 @@
     }
   ],
   "definitions": {
+    "constrains/env": {
+      "not": {
+        "properties": {
+          "env": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "env"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/env+env.IMGPROXY_PROMETHEUS_BIND:t+env:t+env=null+resources+resources.service+4more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1env+env=null"
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1resources.service:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1env:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1env:t"
+                              }
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1env+env=null"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1resources+resources.service+resources.service.type+resources.service.type=null+2more"
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1env.IMGPROXY_PROMETHEUS_BIND:t"
+              }
+            }
+          ]
+        }
+      ]
+    },
     "constrains/env+env=null": {
       "$ref": "#/definitions/constrains~1env+env=null@2"
     },
@@ -850,10 +914,7 @@
   "properties": {
     "env": {
       "additionalProperties": {},
-      "description": "Configure environment variables for the image proxy server\nsee https://docs.imgproxy.net/configuration",
-      "properties": {
-        "IMGPROXY_PROMETHEUS_BIND": {}
-      }
+      "description": "Configure environment variables for the image proxy server\nsee https://docs.imgproxy.net/configuration"
     },
     "fullnameOverride": {},
     "global": {},
@@ -934,18 +995,7 @@
           "type": "object"
         },
         "service": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {},
-            "externalTrafficPolicy": {},
-            "loadBalancerIP": {},
-            "loadBalancerSourceRanges": {
-              "description": "- 192.168.1.1/24\n- 10.0.0.1/20"
-            },
-            "nodePort": {},
-            "port": {},
-            "type": {}
-          }
+          "additionalProperties": {}
         }
       },
       "type": "object"

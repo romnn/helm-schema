@@ -496,18 +496,6 @@
         }
       ]
     },
-    "values/'grafana.ini'.'auth.azuread'": {
-      "additionalProperties": {},
-      "properties": {
-        "client_secret": {}
-      }
-    },
-    "values/'grafana.ini'.'auth.basic'": {
-      "additionalProperties": {},
-      "properties": {
-        "password": {}
-      }
-    },
     "when/persistence.enabled:t/then/persistence.existingClaim:t+persistence.type=StatefulSet+3more/else/any": {
       "else": {
         "$ref": "#/definitions/constrains~1useStatefulSet:t"
@@ -662,87 +650,7 @@
     },
     "grafana.ini": {
       "additionalProperties": {},
-      "description": "Grafana's primary configuration\nNOTE: values in map will be converted to ini format\nref: http://docs.grafana.org/installation/configuration/",
-      "properties": {
-        "admin_password": {},
-        "auth.azuread": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.basic": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.basic'"
-        },
-        "auth.generic_oauth": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.github": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.gitlab": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.google": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.grafana_com": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.grafananet": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "auth.ldap": {
-          "additionalProperties": {},
-          "properties": {
-            "bind_password": {}
-          }
-        },
-        "auth.okta": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.azuread'"
-        },
-        "azure": {
-          "additionalProperties": {},
-          "properties": {
-            "user_identity_client_secret": {}
-          }
-        },
-        "basic_auth_password": {},
-        "bind_password": {},
-        "client_secret": {},
-        "database": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.basic'"
-        },
-        "external_image_storage.s3": {
-          "additionalProperties": {},
-          "properties": {
-            "secret_key": {}
-          }
-        },
-        "ha_redis_password": {},
-        "metrics": {
-          "additionalProperties": {},
-          "properties": {
-            "basic_auth_password": {}
-          }
-        },
-        "password": {},
-        "secret_key": {},
-        "security": {
-          "additionalProperties": {},
-          "properties": {
-            "admin_password": {},
-            "secret_key": {}
-          }
-        },
-        "smtp": {
-          "$ref": "#/definitions/values~1'grafana.ini'.'auth.basic'"
-        },
-        "unified_alerting": {
-          "additionalProperties": {},
-          "properties": {
-            "ha_redis_password": {}
-          }
-        },
-        "user_identity_client_secret": {}
-      }
+      "description": "Grafana's primary configuration\nNOTE: values in map will be converted to ini format\nref: http://docs.grafana.org/installation/configuration/"
     },
     "headlessService": {
       "description": "Create a headless service for the deployment"

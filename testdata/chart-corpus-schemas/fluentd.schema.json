@@ -95,6 +95,100 @@
             "$ref": "#/definitions/constrains~1aggregator=null"
           },
           {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "tags": {
+                          "properties": {
+                            "bitnami-common": {
+                              "not": {
+                                "enum": [
+                                  false
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "bitnami-common"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tags"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "tags": {
+                            "properties": {
+                              "bitnami-common": {}
+                            },
+                            "required": [
+                              "bitnami-common"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tags"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "tags": {
+                          "properties": {
+                            "bitnami-common": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          },
+                          "required": [
+                            "bitnami-common"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tags"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1aggregator.ingress.enabled:t"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "$ref": "#/definitions/constrains~1aggregator"
           }
         ]
@@ -380,12 +474,7 @@
       "description": "Cluster Domain"
     },
     "common": {
-      "additionalProperties": {},
       "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
         "global": {}
       },
       "type": "object"
@@ -421,52 +510,6 @@
     },
     "tags": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "bitnami-common": {}
-                    },
-                    "required": [
-                      "bitnami-common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

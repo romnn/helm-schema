@@ -137,6 +137,34 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "description": "Fill the name of secret if you want to use your own TLS certificates.\nThe secret should contains keys named by \"tls.certFile\" - the certificate, \"tls.keyFile\" - the private key, \"tls.caCertFile\" - the certificate of CA and \"tls.dhParamsFile\" - the dh parameter file\nSupports templates like \"{{ .Release.Name }}-tls\"\nThis secret will be generated using files from certs folder if the secretName is not set and redis.tlsPort is set\nsecretName: tls-secret",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
       },
       "then": {
@@ -210,534 +238,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
-              },
-              {
                 "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t+redis.tlsPort:t+3more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy+haproxy=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1rbac+rbac=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "not": {
-                            "allOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more@2"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more"
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1haproxy.enabled:t"
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1haproxy.enabled:t"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis+redis=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.metrics+haproxy.metrics=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tls+tls=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1rbac+rbac=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t+redis.tlsPort:t+3more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.metrics.serviceMonitor+haproxy.metrics.serviceMonitor=null"
-              },
-              {
-                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.readOnly+haproxy.readOnly=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1any"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis+redis=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.networkPolicy+haproxy.networkPolicy=null"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "sentinel": {}
-              },
-              "required": [
-                "sentinel"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount+haproxy.serviceAccount=null"
-              },
-              {
-                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "sentinel": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "sentinel"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.readOnly+haproxy.readOnly=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tls+tls=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount+haproxy.serviceAccount=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "else": {
-                  "else": {
-                    "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
-                  },
-                  "then": {
-                    "allOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null"
-                      }
-                    ]
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
-                },
-                "then": {
-                  "else": {
-                    "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null+tls.secretName:t"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
-                  },
-                  "then": {
-                    "allOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null+tls.secretName:t"
-                      }
-                    ]
-                  }
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy+haproxy=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.networkPolicy+haproxy.networkPolicy=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.metrics+haproxy.metrics=null"
-              },
-              {
-                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.metrics.serviceMonitor+haproxy.metrics.serviceMonitor=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
@@ -977,80 +484,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "networkPolicy": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "service": {
-                    "description": "Service for HAProxy",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "readOnly": {
-                    "description": "Enable read-only redis-slaves",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
               }
             ]
           },
@@ -1126,10 +563,80 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "haproxy": {
+                "additionalProperties": {},
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
+                "properties": {
+                  "networkPolicy": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "haproxy": {
+                "additionalProperties": {},
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
+                "properties": {
+                  "service": {
+                    "description": "Service for HAProxy",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "haproxy": {
+                "additionalProperties": {},
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
+                "properties": {
+                  "readOnly": {
+                    "description": "Enable read-only redis-slaves",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/definitions/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1any"
           },
           {
-            "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+            "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
           }
         ]
       },
@@ -1185,6 +692,1021 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t+redis.tlsPort:t+3more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy+haproxy=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbac+rbac=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis+redis=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.metrics+haproxy.metrics=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tls+tls=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1rbac+rbac=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t+haproxy.serviceAccount.create:t+redis.tlsPort:t+3more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.metrics.serviceMonitor+haproxy.metrics.serviceMonitor=null"
+              },
+              {
+                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.readOnly+haproxy.readOnly=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1sentinel.auth:t~1then~1sentinel.existingSecret:t~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis+redis=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.networkPolicy+haproxy.networkPolicy=null"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "sentinel": {}
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount+haproxy.serviceAccount=null"
+              },
+              {
+                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "sentinel": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "sentinel"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.readOnly+haproxy.readOnly=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls+tls=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount+haproxy.serviceAccount=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null"
+                      }
+                    ]
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null+tls.secretName:t"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1haproxy.service+haproxy.service.type+haproxy.service.type=null+tls.secretName:t"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1sentinel.existingSecret@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.password"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1fullnameOverride"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1nameOverride:t"
+                              }
+                            ]
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                              },
+                              {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                                  },
+                                  {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tls.secretName"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1tls.secretName@3"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1tls.secretName:t@2"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1tls.secretName:t@3"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1redis.tlsPort:t"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more@2"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.create:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+serviceAccount.create:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "not": {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1fullnameOverride:t+haproxy.enabled:t+haproxy.serviceAccount.create:t+9more@2"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
+                            }
+                          ]
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.enabled:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t"
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1group-6"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t+redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.networkPolicy+haproxy.networkPolicy=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy+haproxy=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.metrics+haproxy.metrics=null"
+              },
+              {
+                "$ref": "#/definitions/when~1redis.tlsPort:t~1then~1sentinel.auth:t+sentinel.existingSecret:t+tls.secretName:t~1else~1any@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.metrics.serviceMonitor+haproxy.metrics.serviceMonitor=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -1250,34 +1772,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1redis.tlsPort:t+sentinel.auth:t+sentinel.existingSecret:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "description": "Fill the name of secret if you want to use your own TLS certificates.\nThe secret should contains keys named by \"tls.certFile\" - the certificate, \"tls.keyFile\" - the private key, \"tls.caCertFile\" - the certificate of CA and \"tls.dhParamsFile\" - the dh parameter file\nSupports templates like \"{{ .Release.Name }}-tls\"\nThis secret will be generated using files from certs folder if the secretName is not set and redis.tlsPort is set\nsecretName: tls-secret",
-            "type": "object"
-          }
-        }
-      }
     }
   ],
   "definitions": {
@@ -1300,17 +1794,6 @@
       },
       "required": [
         "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/existingSecret": {
-      "properties": {
-        "existingSecret": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "existingSecret"
       ],
       "type": "object"
     },
@@ -1338,10 +1821,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              "$ref": "#/definitions/constrains~1fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             }
           ]
         }
@@ -1376,16 +1859,6 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
                               "$ref": "#/definitions/constrains~1haproxy.metrics.serviceMonitor.disableAPICheck:t"
                             },
                             {
@@ -1400,6 +1873,16 @@
                           "not": {
                             "$ref": "#/definitions/constrains~1haproxy.metrics.serviceMonitor.disableAPICheck:t"
                           }
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -1414,7 +1897,7 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+redis.tlsPort:t+1more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/definitions/constrains~1tls.secretName:t@3"
@@ -1423,10 +1906,10 @@
           "$ref": "#/definitions/constrains~1redis.tlsPort:t"
         },
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+          "$ref": "#/definitions/constrains~1fullnameOverride"
         },
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -1441,6 +1924,72 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.password@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
             },
             {
@@ -1451,85 +2000,19 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.password"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              "$ref": "#/definitions/constrains~1nameOverride@2"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
             },
             {
-              "$ref": "#/definitions/constrains~1sentinel.password"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.password"
+              "$ref": "#/definitions/constrains~1sentinel.password@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1sentinel.password"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
@@ -1547,13 +2030,13 @@
           "$ref": "#/definitions/constrains~1tls.secretName:t@3"
         },
         {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        },
+        {
           "$ref": "#/definitions/constrains~1redis.tlsPort:t"
         },
         {
           "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
@@ -1566,13 +2049,13 @@
           "$ref": "#/definitions/constrains~1tls.secretName:t@3"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        {
           "$ref": "#/definitions/constrains~1redis.tlsPort:t"
         },
         {
           "$ref": "#/definitions/constrains~1fullnameOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
@@ -1599,10 +2082,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-5"
+              "$ref": "#/definitions/constrains~1group-7"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1group-1"
@@ -1612,10 +2095,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-5"
+              "$ref": "#/definitions/constrains~1group-7"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1group-1"
@@ -1630,49 +2113,11 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
               },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
               {
                 "not": {
                   "allOf": [
@@ -1684,12 +2129,50 @@
                     }
                   ]
                 }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
               }
             ]
           }
@@ -1702,7 +2185,7 @@
           "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/definitions/constrains~1tls.secretName:t@3"
@@ -1721,7 +2204,7 @@
           "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -1755,12 +2238,6 @@
     },
     "constrains/group-0": {
       "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount.name@10"
-        },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.name@11"
         },
@@ -1800,8 +2277,24 @@
         }
       ]
     },
+    "constrains/group-10": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+        }
+      ]
+    },
     "constrains/group-2": {
       "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-5"
+        },
         {
           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+redis.tlsPort:t+1more@2"
         },
@@ -1809,10 +2302,13 @@
           "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+redis.tlsPort:t+tls.secretName:t"
         },
         {
-          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
+          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
         }
       ]
     },
@@ -1823,10 +2319,39 @@
         },
         {
           "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
         }
       ]
     },
     "constrains/group-4": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride:t+redis.tlsPort:t+1more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t+redis.tlsPort:t+tls.secretName:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-6"
+        }
+      ]
+    },
+    "constrains/group-6": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+haproxy.metrics.enabled:t+4more"
@@ -1842,19 +2367,42 @@
         }
       ]
     },
-    "constrains/group-5": {
+    "constrains/group-7": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t"
+          "$ref": "#/definitions/constrains~1redis.tlsPort:t+tls.secretName+tls.secretName:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t"
+          "$ref": "#/definitions/constrains~1sentinel.auth:t+sentinel.existingSecret+sentinel.existingSecret:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1haproxy.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1haproxy.serviceAccount.create:t@2"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1redis.tlsPort:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1sentinel.auth:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tls.secretName:t@2"
         }
       ]
     },
@@ -2451,30 +2999,22 @@
       "type": "object"
     },
     "constrains/nameOverride": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
+      "not": {
+        "$ref": "#/definitions/constrains~1nameOverride@2"
+      }
     },
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride"
+          "$ref": "#/definitions/constrains~1nameOverride@2"
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
+              "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             }
           ]
         }
@@ -2484,7 +3024,7 @@
       "not": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1nameOverride"
+            "$ref": "#/definitions/constrains~1nameOverride@2"
           },
           {
             "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -2511,6 +3051,17 @@
       "properties": {
         "nameOverride": {
           "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "nameOverride"
+      ],
+      "type": "object"
+    },
+    "constrains/nameOverride@2": {
+      "properties": {
+        "nameOverride": {
+          "type": "string"
         }
       },
       "required": [
@@ -2595,26 +3146,7 @@
           "$ref": "#/definitions/constrains~1tls.secretName:t@2"
         },
         {
-          "not": {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "secretName": {
-                    "pattern": "\\{\\{",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "secretName"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1tls.secretName@4"
         },
         {
           "$ref": "#/definitions/constrains~1redis.tlsPort:t"
@@ -2627,23 +3159,7 @@
           "$ref": "#/definitions/constrains~1tls.secretName:t@2"
         },
         {
-          "properties": {
-            "tls": {
-              "properties": {
-                "secretName": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "secretName"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "tls"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1tls.secretName"
         },
         {
           "$ref": "#/definitions/constrains~1redis.tlsPort:t"
@@ -2680,29 +3196,10 @@
           "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
         },
         {
-          "$ref": "#/definitions/constrains~1sentinel.auth:t"
+          "$ref": "#/definitions/constrains~1sentinel.existingSecret@2"
         },
         {
-          "not": {
-            "properties": {
-              "sentinel": {
-                "properties": {
-                  "existingSecret": {
-                    "pattern": "\\{\\{",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "existingSecret"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "sentinel"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1sentinel.auth:t"
         }
       ]
     },
@@ -2712,18 +3209,10 @@
           "$ref": "#/definitions/constrains~1sentinel.existingSecret:t"
         },
         {
-          "properties": {
-            "sentinel": {
-              "$ref": "#/definitions/constrains~1existingSecret"
-            }
-          },
-          "required": [
-            "sentinel"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1sentinel.auth:t"
         },
         {
-          "$ref": "#/definitions/constrains~1sentinel.auth:t"
+          "$ref": "#/definitions/constrains~1sentinel.existingSecret"
         }
       ]
     },
@@ -2748,6 +3237,28 @@
       ],
       "type": "object"
     },
+    "constrains/sentinel.existingSecret": {
+      "not": {
+        "properties": {
+          "sentinel": {
+            "properties": {
+              "existingSecret": {
+                "pattern": "\\{\\{",
+                "type": "string"
+              }
+            },
+            "required": [
+              "existingSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "sentinel"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/sentinel.existingSecret:t": {
       "not": {
         "$ref": "#/definitions/constrains~1sentinel.existingSecret:t@2"
@@ -2764,7 +3275,31 @@
       ],
       "type": "object"
     },
+    "constrains/sentinel.existingSecret@2": {
+      "properties": {
+        "sentinel": {
+          "properties": {
+            "existingSecret": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "existingSecret"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "sentinel"
+      ],
+      "type": "object"
+    },
     "constrains/sentinel.password": {
+      "not": {
+        "$ref": "#/definitions/constrains~1sentinel.password@2"
+      }
+    },
+    "constrains/sentinel.password@2": {
       "properties": {
         "sentinel": {
           "properties": {
@@ -2785,6 +3320,12 @@
     },
     "constrains/serviceAccount+serviceAccount.name+serviceAccount.name:t": {
       "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@10"
+        },
         {
           "$ref": "#/definitions/constrains~1group-0"
         },
@@ -2949,6 +3490,12 @@
               }
             ]
           }
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@10"
         },
         {
           "$ref": "#/definitions/constrains~1group-0"
@@ -4263,6 +4810,11 @@
         }
       ]
     },
+    "constrains/tls.secretName": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.secretName@3"
+      }
+    },
     "constrains/tls.secretName:t": {
       "$ref": "#/definitions/constrains~1tls.secretName:t@3"
     },
@@ -4277,6 +4829,50 @@
           "properties": {
             "secretName": {
               "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "secretName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.secretName@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tls.secretName@4"
+      }
+    },
+    "constrains/tls.secretName@3": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "secretName": {
+              "pattern": "\\{\\{",
+              "type": "string"
+            }
+          },
+          "required": [
+            "secretName"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.secretName@4": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "secretName": {
+              "type": "string"
             }
           },
           "required": [
@@ -4725,61 +5321,42 @@
       "allOf": [
         {
           "if": {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1auth:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1existingSecret:t"
-                  },
+                "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/definitions/constrains~1existingSecret"
+                      "properties": {
+                        "password": {}
+                      },
+                      "required": [
+                        "password"
+                      ],
+                      "type": "object"
                     }
+                  },
+                  {
+                    "properties": {
+                      "password": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "password"
+                    ],
+                    "type": "object"
                   }
                 ]
               },
               {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "password": {}
-                          },
-                          "required": [
-                            "password"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "password": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "password"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1auth:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1existingSecret:t"
-                    }
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1auth:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1existingSecret:t"
+                }
               }
             ]
           },

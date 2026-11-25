@@ -8,6 +8,19 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "anyOf": [
                   {
                     "not": {
@@ -52,25 +65,14 @@
                 ]
               },
               {
-                "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
+                "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+3more~1else~1any"
               }
             ]
           },
           {
-            "not": {
-              "properties": {
-                "keeper": {}
-              },
-              "required": [
-                "keeper"
-              ],
-              "type": "object"
-            }
-          },
-          {
             "allOf": [
               {
-                "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
+                "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+3more~1else~1any"
               },
               {
                 "anyOf": [
@@ -135,6 +137,142 @@
             ]
           },
           {
+            "not": {
+              "properties": {
+                "keeper": {}
+              },
+              "required": [
+                "keeper"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1keeper.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1keeper.enabled:t"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "commonLabels": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "commonLabels"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "commonLabels": {
+                          "pattern": "\\{\\{",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "commonLabels"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "commonLabels": {
+                        "$ref": "#/definitions/helm-no-template-actions"
+                      }
+                    },
+                    "required": [
+                      "commonLabels"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "commonLabels": {}
+                      },
+                      "required": [
+                        "commonLabels"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "commonLabels": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "commonLabels"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1keeper.enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "properties": {
               "keeper": {
                 "enum": [
@@ -153,7 +291,64 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more~1else~1any"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "else": {
+                  "$ref": "#/definitions/constrains~1global+global=null@2"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global+global=null@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1global+global=null"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global+global=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1global.apiVersions:t~1then~1apiVersions+apiVersions=null+global+global.apiVersions+global=null+3more~1else~1any"
       },
       "then": {
         "allOf": [
@@ -192,28 +387,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1global+global=null"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1keeper.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
     }
   ],
   "definitions": {
@@ -224,6 +397,21 @@
     },
     "constrains/apiVersions+apiVersions=null": {
       "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1apiVersions"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+          }
+        }
+      ]
+    },
+    "constrains/apiVersions+apiVersions=null+global+global=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1global+global=null"
+        },
         {
           "$ref": "#/definitions/constrains~1apiVersions"
         },
@@ -338,6 +526,11 @@
         }
       ]
     },
+    "constrains/global+global=null@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1global+global=null"
+      }
+    },
     "constrains/global.apiVersions+global.apiVersions=null": {
       "anyOf": [
         {
@@ -373,6 +566,11 @@
       ]
     },
     "constrains/keeper.enabled:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
+      }
+    },
+    "constrains/keeper.enabled:t@2": {
       "properties": {
         "keeper": {
           "properties": {
@@ -390,6 +588,92 @@
         "keeper"
       ],
       "type": "object"
+    },
+    "constrains/tags.bitnami-common=false": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      }
+    },
+    "constrains/tags.bitnami-common=false@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.bitnami-common=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "constrains/tags.bitnami-common=true@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
     },
     "t": {
       "anyOf": [
@@ -416,14 +700,33 @@
         }
       ]
     },
-    "when/global.apiVersions:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null+1more/else/any": {
+    "when/apiVersions+apiVersions=null/then/global+global.apiVersions+global=null/else/any": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1global+global=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1apiVersions"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
+      }
+    },
+    "when/global.apiVersions:t/then/apiVersions+apiVersions=null+global+global.apiVersions+global=null+3more/else/any": {
       "else": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1keeper.enabled:t"
+            "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1apiVersions+apiVersions=null+tags.bitnami-common=true~1else~1any"
           },
           {
             "not": {
@@ -454,54 +757,56 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1keeper.enabled:t"
+            "$ref": "#/definitions/constrains~1keeper.enabled:t@2"
           },
           {
             "else": {
               "else": {
                 "else": {
                   "else": {
-                    "else": {
-                      "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null"
-                    },
-                    "if": {
-                      "$ref": "#/definitions/constrains~1global+global=null"
-                    },
-                    "then": {
-                      "$ref": "#/definitions/constrains~1apiVersions"
-                    }
+                    "$ref": "#/definitions/when~1apiVersions+apiVersions=null~1then~1global+global.apiVersions+global=null~1else~1any"
                   },
                   "if": {
-                    "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
                   },
                   "then": {
-                    "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/when~1apiVersions+apiVersions=null~1then~1global+global.apiVersions+global=null~1else~1any"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                      }
+                    ]
                   }
                 },
                 "if": {
                   "$ref": "#/definitions/constrains~1global.apiVersions+global.apiVersions=null"
                 },
                 "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1apiVersions"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1global+global=null"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null@2"
+                  "else": {
+                    "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null+global+global=null"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null+global+global=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
                       }
-                    }
-                  ]
+                    ]
+                  }
                 }
               },
               "if": {
                 "$ref": "#/definitions/constrains~1global+global=null"
               },
               "then": {
-                "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
+                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1apiVersions+apiVersions=null+tags.bitnami-common=true~1else~1any"
               }
             },
             "if": {
@@ -510,7 +815,22 @@
             "then": {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
+                  "else": {
+                    "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1global+global.apiVersions+global.apiVersions=null+global=null"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                      }
+                    ]
+                  }
                 },
                 {
                   "not": {
@@ -524,6 +844,24 @@
                 }
               ]
             }
+          }
+        ]
+      }
+    },
+    "when/tags.bitnami-common=false/then/apiVersions+apiVersions=null+tags.bitnami-common=true/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1apiVersions+apiVersions=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
           }
         ]
       }
@@ -556,12 +894,7 @@
       "description": "Override default container command (useful when using custom images)"
     },
     "common": {
-      "additionalProperties": {},
       "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
         "global": {}
       },
       "type": "object"
@@ -772,52 +1105,6 @@
     "startupProbe": {},
     "tags": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "bitnami-common": {}
-                    },
-                    "required": [
-                      "bitnami-common"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "bitnami-common": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "bitnami-common"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

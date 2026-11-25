@@ -3,167 +3,15 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+      "additionalProperties": {},
+      "properties": {
+        "valkey-cluster": {
+          "additionalProperties": {},
+          "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
+          "properties": {
+            "common": {
+              "type": "object"
             }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "$ref": "#/definitions/constrains~1fullnameOverride"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha+postgresql-ha.enabled+postgresql-ha.enabled=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.namespaceOverride:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql-ha.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.witness.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.namespaceOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql-ha": {
-            "$ref": "#/definitions/constrains~1namespaceOverride"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1global.postgresql"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global+global.postgresql+global.postgresql!=null+global.postgresql=null+2more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
-                "properties": {
-                  "postgresql": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "properties": {
-              "passwordUpdateJob": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.namespaceOverride:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.namespaceOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "$ref": "#/definitions/constrains~1namespaceOverride"
           }
         }
       }
@@ -183,45 +31,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1valkey-cluster.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1valkey-cluster"
-          },
-          {
-            "$ref": "#/definitions/constrains~1valkey-cluster.enabled+valkey-cluster.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "valkey-cluster": {
-            "additionalProperties": {},
-            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
-            "properties": {
-              "service": {
-                "description": "Valkey Service properties for standalone mode.",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "postgresql-ha": {
-                "$ref": "#/definitions/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "postgresql-ha"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1postgresql-ha.enabled=true@2"
           },
           {
             "allOf": [
@@ -270,41 +80,6 @@
         "properties": {
           "postgresql-ha": {
             "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1global+global.postgresql+global.postgresql!=null+global.postgresql.auth+14more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
-                "properties": {
-                  "postgresql": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "auth": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "username": {
-                            "description": "Name for a custom user to create (overrides `auth.username`)",
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -324,6 +99,33 @@
     {
       "additionalProperties": {},
       "properties": {
+        "valkey": {
+          "additionalProperties": {},
+          "description": "Valkey and [Valkey cluster](#valkey-cluster) cannot be enabled at the same time.",
+          "properties": {
+            "common": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "additionalProperties": {},
+          "properties": {
+            "common": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
         "valkey-cluster": {
           "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
           "type": [
@@ -335,830 +137,100 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1valkey-cluster.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1valkey-cluster+valkey-cluster.enabled+valkey-cluster.enabled=null"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1valkey-cluster.enabled:t"
-        },
-        "then": {
-          "$ref": "#/definitions/constrains~1valkey-cluster.fullnameOverride:t"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "valkey-cluster": {
-            "additionalProperties": {},
-            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/definitions/constrains~1fullnameOverride~1string;string-to-fully-override"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1group-3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
-                "properties": {
-                  "postgresql": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "auth": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "$ref": "#/definitions/constrains~1nameOverride"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1postgresql-ha"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql-ha.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql-ha.enabled+postgresql-ha.enabled=null"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql-ha": {
-            "additionalProperties": {},
-            "properties": {
-              "witness": {
-                "description": "ref: https://hub.docker.com/r/bitnami/postgresql/tags/",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "valkey-cluster": {
-                "$ref": "#/definitions/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "valkey-cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1valkey-cluster.enabled"
-                  },
-                  {
-                    "properties": {
-                      "valkey-cluster": {
-                        "$ref": "#/definitions/constrains~1enabled!=true"
-                      }
-                    },
-                    "required": [
-                      "valkey-cluster"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1valkey-cluster.enabled"
-                  },
-                  {
-                    "properties": {
-                      "valkey-cluster": {
-                        "$ref": "#/definitions/constrains~1enabled!=false"
-                      }
-                    },
-                    "required": [
-                      "valkey-cluster"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "valkey-cluster": {
-            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "postgresql-ha": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "properties": {
-              "gatewayAPI": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "gatewayAPI"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "gatewayAPI": {}
-              },
-              "required": [
-                "gatewayAPI"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.rules:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "service": {
-                        "properties": {
-                          "ssh": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "ssh"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "service"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "service": {
-                          "properties": {
-                            "ssh": {}
-                          },
-                          "required": [
-                            "ssh"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.rules:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
+                "$ref": "#/definitions/constrains~1postgresql-ha.enabled=false"
               },
               {
                 "not": {
-                  "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.parentRefs:t"
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
                 }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "postgresql": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1global.postgresql.auth.username=null"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1global.postgresql.auth.username@2"
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global+global.postgresql+global.postgresql!=null+global.postgresql.auth+14more"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.auth!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.rules:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "properties": {
-                  "ssh": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "postgresql": {
-                    "allOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1global.postgresql.auth@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.postgresql.auth=null"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "postgresql"
-                ],
-                "type": "object"
               },
               {
-                "$ref": "#/definitions/constrains~1group-3"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql-ha.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1valkey.enabled=false"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "postgresql": {
-                    "allOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1global.postgresql@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1global.postgresql=null"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "postgresql"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1postgresql-ha.enabled=false"
               },
               {
-                "$ref": "#/definitions/constrains~1global.postgresql"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                "$ref": "#/definitions/constrains~1postgresql-ha.enabled=true"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
+                "not": {
+                  "$ref": "#/definitions/constrains~1valkey-cluster.enabled=false"
+                }
               },
               {
-                "$ref": "#/definitions/constrains~1global+global.postgresql+global.postgresql!=null+global.postgresql=null+2more"
+                "$ref": "#/definitions/constrains~1valkey.enabled=false"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
               }
             ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
+          },
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled"
-                  },
-                  {
-                    "properties": {
-                      "postgresql": {
-                        "$ref": "#/definitions/constrains~1enabled!=false"
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1postgresql-ha.enabled=false"
               },
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled"
-                  },
-                  {
-                    "properties": {
-                      "postgresql": {
-                        "$ref": "#/definitions/constrains~1enabled!=true"
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "not": {
+                  "$ref": "#/definitions/constrains~1valkey-cluster.enabled=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql-ha.enabled=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1valkey.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1valkey-cluster.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
               }
             ]
           },
           {
-            "properties": {
-              "postgresql": {
-                "$ref": "#/definitions/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1valkey-cluster+valkey-cluster.enabled+valkey-cluster.enabled=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1valkey-cluster.nameOverride:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1valkey-cluster.fullnameOverride:t"
-              }
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1valkey-cluster.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1valkey-cluster.nameOverride:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1valkey-cluster.fullnameOverride:t"
-              }
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "valkey-cluster": {
-            "additionalProperties": {},
-            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/definitions/constrains~1nameOverride~1string;string-to-partially-override"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gatewayAPI": {
-                "additionalProperties": {},
-                "description": "See docs/gateway-api.md for full guidance.",
-                "properties": {
-                  "core": {
-                    "type": "object"
-                  }
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1valkey.enabled=false"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql-ha.enabled=false"
                 }
               }
-            }
+            ]
           },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gatewayAPI": {
-                "additionalProperties": {},
-                "description": "See docs/gateway-api.md for full guidance.",
-                "properties": {
-                  "core": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tcpRoute": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
           {
             "allOf": [
               {
@@ -1224,115 +296,118 @@
     },
     {
       "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha+postgresql-ha.enabled+postgresql-ha.enabled=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.fullnameOverride:t"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql-ha.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.witness.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.fullnameOverride:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql-ha": {
-            "$ref": "#/definitions/constrains~1fullnameOverride"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            "$ref": "#/definitions/constrains~1valkey-cluster.enabled=true"
           },
           {
-            "$ref": "#/definitions/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1gatewayAPI.enabled:t"
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1valkey-cluster.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey-cluster": {
+                        "$ref": "#/definitions/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "valkey-cluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1valkey-cluster.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey-cluster": {
+                        "$ref": "#/definitions/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "valkey-cluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": "string"
+          "valkey-cluster": {
+            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
+            "type": "object"
           }
         }
       }
     },
     {
-      "if": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha+postgresql-ha.enabled+postgresql-ha.enabled=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.nameOverride:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1postgresql-ha.fullnameOverride:t"
-              }
-            }
+      "additionalProperties": {},
+      "properties": {
+        "postgresql-ha": {
+          "type": [
+            "null",
+            "object"
           ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql-ha.enabled:t"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.witness.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.nameOverride:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1postgresql-ha.fullnameOverride:t"
-              }
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql-ha": {
-            "$ref": "#/definitions/constrains~1nameOverride"
-          }
         }
       }
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/definitions/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/definitions/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           },
           {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+            "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
           }
         ]
       },
@@ -1340,16 +415,19 @@
         "additionalProperties": {},
         "properties": {
           "postgresql": {
-            "additionalProperties": {},
-            "properties": {
-              "passwordUpdateJob": {
-                "additionalProperties": {},
-                "properties": {
-                  "previousPasswords": {
-                    "type": "object"
-                  }
-                }
-              }
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql-ha": {
+          "additionalProperties": {},
+          "properties": {
+            "common": {
+              "type": "object"
             }
           }
         }
@@ -1357,52 +435,6 @@
     }
   ],
   "definitions": {
-    "constrains/core.tcpRoute.enabled:t": {
-      "properties": {
-        "core": {
-          "properties": {
-            "tcpRoute": {
-              "$ref": "#/definitions/constrains~1enabled:t"
-            }
-          },
-          "required": [
-            "tcpRoute"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "core"
-      ],
-      "type": "object"
-    },
-    "constrains/core.tcpRoute.parentRefs:t": {
-      "properties": {
-        "core": {
-          "properties": {
-            "tcpRoute": {
-              "properties": {
-                "parentRefs": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "parentRefs"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "tcpRoute"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "core"
-      ],
-      "type": "object"
-    },
     "constrains/enabled": {
       "properties": {
         "enabled": {}
@@ -1442,42 +474,12 @@
       ],
       "type": "object"
     },
-    "constrains/enabled+enabled=null": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/enabled+enabled=null@2": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1enabled"
-          }
-        },
-        {
-          "properties": {
-            "enabled": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "constrains/enabled:t": {
+    "constrains/enabled=false": {
       "properties": {
         "enabled": {
-          "$ref": "#/definitions/t"
+          "enum": [
+            false
+          ]
         }
       },
       "required": [
@@ -1498,1456 +500,6 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride": {
-      "additionalProperties": {},
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/definitions/constrains~1fullnameOverride~1string;string-to-fully-override"
-        }
-      }
-    },
-    "constrains/fullnameOverride!=null": {
-      "properties": {
-        "fullnameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1witness.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1witness.create:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1witness.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "not": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-1"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-1"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
-          },
-          {
-            "$ref": "#/definitions/constrains~1witness.labels+witness.labels=null"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1witness.create:t"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1witness.labels@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1witness.labels"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1witness.create:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1witness.labels:helm-no-template-actions"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1witness.labels+witness.labels=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1witness.labels@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1witness.labels"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "constrains/fullnameOverride/string;string-to-fully-override": {
-      "description": "String to fully override common.names.fullname template",
-      "type": "string"
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t@2": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/fullnameOverride@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@3"
-      }
-    },
-    "constrains/fullnameOverride@3": {
-      "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/gatewayAPI.core.tcpRoute.enabled:t": {
-      "properties": {
-        "gatewayAPI": {
-          "$ref": "#/definitions/constrains~1core.tcpRoute.enabled:t"
-        }
-      },
-      "required": [
-        "gatewayAPI"
-      ],
-      "type": "object"
-    },
-    "constrains/gatewayAPI.core.tcpRoute.parentRefs:t": {
-      "properties": {
-        "gatewayAPI": {
-          "$ref": "#/definitions/constrains~1core.tcpRoute.parentRefs:t"
-        }
-      },
-      "required": [
-        "gatewayAPI"
-      ],
-      "type": "object"
-    },
-    "constrains/gatewayAPI.core.tcpRoute.rules:t": {
-      "not": {
-        "properties": {
-          "gatewayAPI": {
-            "properties": {
-              "core": {
-                "properties": {
-                  "tcpRoute": {
-                    "properties": {
-                      "rules": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "rules"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tcpRoute"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "core"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "gatewayAPI"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/gatewayAPI.enabled:t": {
-      "properties": {
-        "gatewayAPI": {
-          "$ref": "#/definitions/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "gatewayAPI"
-      ],
-      "type": "object"
-    },
-    "constrains/global+global.postgresql+global.postgresql!=null+global.postgresql.auth+14more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1postgresql.auth"
-              }
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1global.postgresql.auth.username+global.postgresql.auth.username!=null+4more"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.postgresql.auth.username+global.postgresql.auth.username!=null+4more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global+global.postgresql+global.postgresql!=null+global.postgresql=null+2more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.postgresql.auth.username+global.postgresql.auth.username!=null+4more"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/global+global.postgresql+global.postgresql!=null+global.postgresql=null+2more": {
-      "not": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.postgresql?"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.postgresql@3"
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "postgresql": {
-                        "not": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "postgresql"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1global.postgresql?"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql=null"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.global.postgresql@2"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "constrains/global.postgresql": {
-      "not": {
-        "$ref": "#/definitions/constrains~1global.postgresql@3"
-      }
-    },
-    "constrains/global.postgresql.auth": {
-      "not": {
-        "$ref": "#/definitions/constrains~1global.postgresql.auth@3"
-      }
-    },
-    "constrains/global.postgresql.auth+global.postgresql.auth!=null+global.postgresql.auth=null+2more": {
-      "not": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1global.postgresql.auth?"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql.auth@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql.auth=null"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "$ref": "#/definitions/constrains~1postgresql.auth!=null"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.postgresql.auth@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.postgresql.auth?"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "constrains/global.postgresql.auth.username": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "postgresql": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "username": {
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "username"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global.postgresql.auth.username+global.postgresql.auth.username!=null+4more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1global.postgresql.auth.username?"
-            },
-            {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "postgresql": {
-                      "properties": {
-                        "auth": {
-                          "properties": {
-                            "username": {
-                              "not": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            }
-                          },
-                          "required": [
-                            "username"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "auth"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "postgresql"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1global.postgresql.auth.username:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "postgresql": {
-                  "$ref": "#/definitions/constrains~1global.postgresql.auth.username:t"
-                }
-              },
-              "required": [
-                "postgresql"
-              ],
-              "type": "object"
-            },
-            {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username?"
-                  }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.postgresql.auth.username=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1global.postgresql.auth.username@2"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/global.postgresql.auth.username:t": {
-      "properties": {
-        "global": {
-          "properties": {
-            "postgresql": {
-              "properties": {
-                "auth": {
-                  "properties": {
-                    "username": {
-                      "$ref": "#/definitions/t"
-                    }
-                  },
-                  "required": [
-                    "username"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "auth"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql.auth.username=null": {
-      "properties": {
-        "global": {
-          "properties": {
-            "postgresql": {
-              "properties": {
-                "auth": {
-                  "properties": {
-                    "username": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "username"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "auth"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql.auth.username?": {
-      "properties": {
-        "global": {
-          "properties": {
-            "postgresql": {
-              "properties": {
-                "auth": {
-                  "required": [
-                    "username"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "auth"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql.auth.username@2": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "postgresql": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "username": {}
-                    },
-                    "required": [
-                      "username"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global.postgresql.auth=null": {
-      "properties": {
-        "global": {
-          "properties": {
-            "postgresql": {
-              "properties": {
-                "auth": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "auth"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql.auth?": {
-      "properties": {
-        "global": {
-          "properties": {
-            "postgresql": {
-              "required": [
-                "auth"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql.auth@2": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "postgresql": {
-                "properties": {
-                  "auth": {}
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global.postgresql.auth@3": {
-      "properties": {
-        "global": {
-          "$ref": "#/definitions/constrains~1postgresql.auth"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql=null": {
-      "properties": {
-        "global": {
-          "properties": {
-            "postgresql": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql?": {
-      "properties": {
-        "global": {
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/global.postgresql@2": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "postgresql": {}
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/global.postgresql@3": {
-      "properties": {
-        "global": {
-          "$ref": "#/definitions/constrains~1postgresql"
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "constrains/group-0": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth"
-        }
-      ]
-    },
-    "constrains/group-1": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        }
-      ]
-    },
-    "constrains/group-2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1namespaceOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-        }
-      ]
-    },
-    "constrains/group-3": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth!=null+global.postgresql.auth=null+2more"
-        }
-      ]
-    },
-    "constrains/group-4": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1global.postgresql"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.global.postgresql"
-        }
-      ]
-    },
-    "constrains/nameOverride": {
-      "additionalProperties": {},
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/definitions/constrains~1nameOverride~1string;string-to-partially-override"
-        }
-      }
-    },
-    "constrains/nameOverride!=null": {
-      "properties": {
-        "nameOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride/string;string-to-partially-override": {
-      "description": "String to partially override common.names.fullname template (will maintain the release name)",
-      "type": "string"
-    },
-    "constrains/nameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-      }
-    },
-    "constrains/nameOverride:t@2": {
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/nameOverride@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1nameOverride@3"
-      }
-    },
-    "constrains/nameOverride@3": {
-      "properties": {
-        "nameOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "nameOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride": {
-      "additionalProperties": {},
-      "properties": {
-        "namespaceOverride": {
-          "description": "String to fully override common.names.namespace",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/namespaceOverride!=null": {
-      "properties": {
-        "namespaceOverride": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride+namespaceOverride:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1namespaceOverride@3"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
-          }
-        }
-      ]
-    },
-    "constrains/namespaceOverride:t": {
-      "properties": {
-        "namespaceOverride": {
-          "$ref": "#/definitions/t"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/namespaceOverride@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1namespaceOverride@3"
-      }
-    },
-    "constrains/namespaceOverride@3": {
-      "properties": {
-        "namespaceOverride": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "namespaceOverride"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.enabled!=null": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "enabled": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.enabled:t": {
-      "properties": {
-        "passwordUpdateJob": {
-          "$ref": "#/definitions/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret!=null": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "previousPasswords": {
-              "properties": {
-                "existingSecret": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "existingSecret"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "previousPasswords"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
-      }
-    },
-    "constrains/passwordUpdateJob.previousPasswords.existingSecret:t@2": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "previousPasswords": {
-              "properties": {
-                "existingSecret": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "existingSecret"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "previousPasswords"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.postgresPassword!=null": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "previousPasswords": {
-              "properties": {
-                "postgresPassword": {
-                  "not": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "postgresPassword"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "previousPasswords"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/passwordUpdateJob.previousPasswords.postgresPassword:t": {
-      "properties": {
-        "passwordUpdateJob": {
-          "properties": {
-            "previousPasswords": {
-              "properties": {
-                "postgresPassword": {
-                  "$ref": "#/definitions/t"
-                }
-              },
-              "required": [
-                "postgresPassword"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "previousPasswords"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "passwordUpdateJob"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql": {
-      "properties": {
-        "postgresql": {
-          "type": "object"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql+postgresql.enabled+postgresql.enabled:t+postgresql.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled:t"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1postgresql"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled=null"
-        }
-      ]
-    },
-    "constrains/postgresql+postgresql.enabled+postgresql.enabled=null+3more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1postgresql"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled=null"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-        }
-      ]
-    },
-    "constrains/postgresql-ha": {
-      "not": {
-        "properties": {
-          "postgresql-ha": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "postgresql-ha"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/postgresql-ha+postgresql-ha.enabled+postgresql-ha.enabled=null+1more": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql-ha.enabled+postgresql-ha.enabled=null"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql-ha.witness.create:t@2"
-        }
-      ]
-    },
     "constrains/postgresql-ha.enabled": {
       "not": {
         "properties": {
@@ -2961,10 +513,10 @@
         "type": "object"
       }
     },
-    "constrains/postgresql-ha.enabled+postgresql-ha.enabled=null": {
+    "constrains/postgresql-ha.enabled=false": {
       "properties": {
         "postgresql-ha": {
-          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+          "$ref": "#/definitions/constrains~1enabled=false"
         }
       },
       "required": [
@@ -2972,103 +524,19 @@
       ],
       "type": "object"
     },
-    "constrains/postgresql-ha.enabled:t": {
+    "constrains/postgresql-ha.enabled=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql-ha.enabled=true@2"
+      }
+    },
+    "constrains/postgresql-ha.enabled=true@2": {
       "properties": {
         "postgresql-ha": {
-          "$ref": "#/definitions/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled=true"
         }
       },
       "required": [
         "postgresql-ha"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql-ha.fullnameOverride:t": {
-      "properties": {
-        "postgresql-ha": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        }
-      },
-      "required": [
-        "postgresql-ha"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql-ha.nameOverride:t": {
-      "properties": {
-        "postgresql-ha": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        }
-      },
-      "required": [
-        "postgresql-ha"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql-ha.namespaceOverride:t": {
-      "properties": {
-        "postgresql-ha": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        }
-      },
-      "required": [
-        "postgresql-ha"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql-ha.witness.create:t": {
-      "$ref": "#/definitions/constrains~1postgresql-ha.witness.create:t@2"
-    },
-    "constrains/postgresql-ha.witness.create:t@2": {
-      "properties": {
-        "postgresql-ha": {
-          "$ref": "#/definitions/constrains~1witness.create:t"
-        }
-      },
-      "required": [
-        "postgresql-ha"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.auth": {
-      "properties": {
-        "postgresql": {
-          "properties": {
-            "auth": {
-              "type": "object"
-            }
-          },
-          "required": [
-            "auth"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.auth!=null": {
-      "properties": {
-        "postgresql": {
-          "properties": {
-            "auth": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "auth"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "postgresql"
       ],
       "type": "object"
     },
@@ -3085,10 +553,10 @@
         "type": "object"
       }
     },
-    "constrains/postgresql.enabled+postgresql.enabled=null": {
+    "constrains/postgresql.enabled=false": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+          "$ref": "#/definitions/constrains~1enabled=false"
         }
       },
       "required": [
@@ -3096,42 +564,15 @@
       ],
       "type": "object"
     },
-    "constrains/postgresql.enabled:t": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.fullnameOverride:t": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.global.postgresql": {
+    "constrains/postgresql.enabled=true": {
       "not": {
-        "$ref": "#/definitions/constrains~1postgresql.global.postgresql@2"
+        "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
       }
     },
-    "constrains/postgresql.global.postgresql.auth": {
-      "not": {
-        "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth@2"
-      }
-    },
-    "constrains/postgresql.global.postgresql.auth@2": {
+    "constrains/postgresql.enabled=true@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth@3"
+          "$ref": "#/definitions/constrains~1enabled=true"
         }
       },
       "required": [
@@ -3139,173 +580,28 @@
       ],
       "type": "object"
     },
-    "constrains/postgresql.global.postgresql@2": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1global.postgresql@3"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.nameOverride:t": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.namespaceOverride:t": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.passwordUpdateJob.enabled!=null": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled!=null"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.passwordUpdateJob.enabled:t": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.passwordUpdateJob.enabled:t+2more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-        }
-      ]
-    },
-    "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret!=null"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-    },
-    "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
+    "constrains/tags.bitnami-common=false": {
       "not": {
         "properties": {
-          "postgresql": {
-            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
-          }
-        },
-        "required": [
-          "postgresql"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword!=null"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t": {
-      "properties": {
-        "postgresql": {
-          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
-        }
-      },
-      "required": [
-        "postgresql"
-      ],
-      "type": "object"
-    },
-    "constrains/service+service=null": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
+          "tags": {
             "properties": {
-              "service": {}
+              "bitnami-common": {
+                "enum": [
+                  false
+                ]
+              }
             },
             "required": [
-              "service"
+              "bitnami-common"
             ],
             "type": "object"
           }
-        }
-      ]
-    },
-    "constrains/valkey-cluster": {
-      "not": {
-        "properties": {
-          "valkey-cluster": {
-            "type": "object"
-          }
         },
         "required": [
-          "valkey-cluster"
+          "tags"
         ],
         "type": "object"
       }
-    },
-    "constrains/valkey-cluster+valkey-cluster.enabled+valkey-cluster.enabled=null": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1valkey-cluster"
-        },
-        {
-          "$ref": "#/definitions/constrains~1valkey-cluster.enabled+valkey-cluster.enabled=null"
-        }
-      ]
     },
     "constrains/valkey-cluster.enabled": {
       "not": {
@@ -3320,10 +616,10 @@
         "type": "object"
       }
     },
-    "constrains/valkey-cluster.enabled+valkey-cluster.enabled=null": {
+    "constrains/valkey-cluster.enabled=false": {
       "properties": {
         "valkey-cluster": {
-          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+          "$ref": "#/definitions/constrains~1enabled=false"
         }
       },
       "required": [
@@ -3331,32 +627,10 @@
       ],
       "type": "object"
     },
-    "constrains/valkey-cluster.enabled:t": {
+    "constrains/valkey-cluster.enabled=true": {
       "properties": {
         "valkey-cluster": {
-          "$ref": "#/definitions/constrains~1enabled:t"
-        }
-      },
-      "required": [
-        "valkey-cluster"
-      ],
-      "type": "object"
-    },
-    "constrains/valkey-cluster.fullnameOverride:t": {
-      "properties": {
-        "valkey-cluster": {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        }
-      },
-      "required": [
-        "valkey-cluster"
-      ],
-      "type": "object"
-    },
-    "constrains/valkey-cluster.nameOverride:t": {
-      "properties": {
-        "valkey-cluster": {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1enabled=true"
         }
       },
       "required": [
@@ -3377,216 +651,18 @@
         "type": "object"
       }
     },
-    "constrains/witness.create:t": {
-      "properties": {
-        "witness": {
-          "properties": {
-            "create": {
-              "$ref": "#/definitions/t"
-            }
-          },
-          "required": [
-            "create"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "witness"
-      ],
-      "type": "object"
-    },
-    "constrains/witness.labels": {
+    "constrains/valkey.enabled=false": {
       "not": {
         "properties": {
-          "witness": {
-            "properties": {
-              "labels": {
-                "pattern": "\\{\\{",
-                "type": "string"
-              }
-            },
-            "required": [
-              "labels"
-            ],
-            "type": "object"
+          "valkey": {
+            "$ref": "#/definitions/constrains~1enabled=false"
           }
         },
         "required": [
-          "witness"
+          "valkey"
         ],
         "type": "object"
       }
-    },
-    "constrains/witness.labels+witness.labels=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "witness": {
-                    "properties": {
-                      "labels": {}
-                    },
-                    "required": [
-                      "labels"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "witness"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "witness": {
-                  "properties": {
-                    "labels": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "labels"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "witness"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/witness.labels:helm-no-template-actions": {
-      "properties": {
-        "witness": {
-          "properties": {
-            "labels": {
-              "$ref": "#/definitions/helm-no-template-actions"
-            }
-          },
-          "required": [
-            "labels"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "witness"
-      ],
-      "type": "object"
-    },
-    "constrains/witness.labels@2": {
-      "not": {
-        "properties": {
-          "witness": {
-            "properties": {
-              "labels": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "labels"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "witness"
-        ],
-        "type": "object"
-      }
-    },
-    "helm-no-template-actions": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/definitions/helm-no-template-actions"
-          },
-          "propertyNames": {
-            "not": {
-              "pattern": "\\{\\{"
-            }
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "pattern": "\\{\\{"
-          },
-          "type": "string"
-        },
-        {
-          "type": [
-            "null",
-            "boolean",
-            "number"
-          ]
-        },
-        {
-          "items": {
-            "$ref": "#/definitions/helm-no-template-actions"
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
-    },
-    "values/postgresql-ha.common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
-        "global": {}
-      },
-      "type": "object"
-    },
-    "values/postgresql-ha.fullnameOverride": {
-      "description": "String to fully override common.names.fullname template"
-    },
-    "values/postgresql-ha.nameOverride": {
-      "description": "String to partially override common.names.fullname template (will maintain the release name)"
-    },
-    "values/postgresql-ha.namespaceOverride": {
-      "description": "String to fully override common.names.namespace"
     }
   },
   "properties": {
@@ -3627,116 +703,6 @@
     "fullnameOverride": {},
     "gatewayAPI": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "core": {
-                            "properties": {
-                              "tcpRoute": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "tcpRoute"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "core"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "core": {
-                              "properties": {
-                                "tcpRoute": {}
-                              },
-                              "required": [
-                                "tcpRoute"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "core"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "core": {}
-                          },
-                          "required": [
-                            "core"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "core": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "core"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1core.tcpRoute.enabled:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1core.tcpRoute.parentRefs:t"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "description": "See docs/gateway-api.md for full guidance.",
       "properties": {
         "core": {
@@ -3767,8 +733,7 @@
         "enabled": {
           "description": "Enable deployment of Gateway API resources"
         }
-      },
-      "type": "object"
+      }
     },
     "gitea": {},
     "global": {
@@ -3828,272 +793,16 @@
     },
     "postgresql": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+5more"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1namespaceOverride!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled!=null"
-                }
-              ]
-            },
-            "then": false
-          }
-        }
-      ],
       "properties": {
-        "auth": {
-          "additionalProperties": {},
-          "description": "Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#setting-the-root-password-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-on-first-run\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#creating-a-database-user-on-first-run",
-          "properties": {
-            "username": {
-              "description": "Name for a custom user to create"
-            }
-          }
-        },
-        "common": {
-          "$ref": "#/definitions/values~1postgresql-ha.common"
-        },
-        "commonLabels": {
-          "description": "Add labels to all the deployed resources"
-        },
-        "enabled": {
-          "description": "Enable PostgreSQL"
-        },
-        "fullnameOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.fullnameOverride"
-        },
         "global": {
-          "additionalProperties": {},
-          "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
-          "properties": {
-            "postgresql": {
-              "additionalProperties": {},
-              "properties": {
-                "auth": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "username": {
-                      "description": "Name for a custom user to create (overrides `auth.username`)"
-                    }
-                  }
-                },
-                "fullnameOverride": {
-                  "description": "Full chart name (overrides `fullnameOverride`)"
-                }
-              }
-            }
-          }
-        },
-        "nameOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.nameOverride"
-        },
-        "namespaceOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.namespaceOverride"
-        },
-        "passwordUpdateJob": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "Enable password update job"
-            },
-            "previousPasswords": {
-              "additionalProperties": {},
-              "properties": {
-                "existingSecret": {
-                  "description": "Name of a secret containing the previous passwords (set if the password secret was already changed)\nConfigure Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
-                },
-                "password": {
-                  "description": "Previous password (set if the password secret was already changed)"
-                },
-                "postgresPassword": {
-                  "description": "Previous postgres password (set if the password secret was already changed)"
-                },
-                "replicationPassword": {
-                  "description": "Previous replication password (set if the password secret was already changed)"
-                }
-              }
-            }
-          }
+          "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value"
         }
       }
     },
     "postgresql-ha": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "properties": {
-                    "witness": {
-                      "properties": {
-                        "create": {
-                          "not": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "witness"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1namespaceOverride!=null"
-                },
-                {
-                  "properties": {
-                    "witness": {
-                      "properties": {
-                        "labels": {
-                          "not": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "labels"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "witness"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
-                }
-              ]
-            },
-            "then": false
-          }
-        }
-      ],
       "properties": {
-        "common": {
-          "$ref": "#/definitions/values~1postgresql-ha.common"
-        },
-        "commonLabels": {
-          "description": "Common labels to add to all resources (sub-charts are not considered). Evaluated as a template"
-        },
-        "enabled": {
-          "description": "Enable PostgreSQL HA"
-        },
-        "fullnameOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.fullnameOverride"
-        },
-        "global": {},
-        "nameOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.nameOverride"
-        },
-        "namespaceOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.namespaceOverride"
-        },
-        "witness": {
-          "additionalProperties": {},
-          "description": "ref: https://hub.docker.com/r/bitnami/postgresql/tags/",
-          "properties": {
-            "create": {
-              "description": "Create PostgreSQL witness nodes"
-            },
-            "labels": {
-              "description": "Labels to add to the StatefulSet. Evaluated as template"
-            }
-          }
-        }
+        "global": {}
       }
     },
     "preExtraInitContainers": {
@@ -4150,158 +859,14 @@
       "additionalProperties": {},
       "description": "Valkey and [Valkey cluster](#valkey-cluster) cannot be enabled at the same time.",
       "properties": {
-        "apiVersions": {
-          "description": "Override Kubernetes API versions reported by .Capabilities"
-        },
-        "common": {
-          "$ref": "#/definitions/values~1postgresql-ha.common"
-        },
-        "commonLabels": {
-          "description": "Labels to add to all deployed objects"
-        },
-        "enabled": {
-          "description": "Enable valkey standalone or replicated"
-        },
-        "fullnameOverride": {
-          "description": "String to fully override common.names.fullname"
-        },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "apiVersions": {}
-          }
-        },
-        "nameOverride": {
-          "description": "String to partially override common.names.fullname"
-        },
-        "namespaceOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.namespaceOverride"
-        },
-        "replica": {
-          "additionalProperties": {},
-          "properties": {
-            "autoscaling": {
-              "additionalProperties": {},
-              "description": "ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
-              "properties": {
-                "vpa": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "Enable VPA"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "sentinel": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "Use Valkey Sentinel on Valkey pods.\nIMPORTANT: this will disable the primary and replicas services and\ncreate a single Valkey service exposing both the Valkey and Sentinel ports\nBitnami Valkey Sentinel image version\nref: https://hub.docker.com/r/bitnami/valkey-sentinel/tags/"
-            }
-          }
-        }
+        "global": {}
       }
     },
     "valkey-cluster": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null@2"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride!=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride!=null"
-                }
-              ]
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service=null"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled:t"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
       "properties": {
-        "common": {
-          "$ref": "#/definitions/values~1postgresql-ha.common"
-        },
-        "commonLabels": {
-          "description": "Labels to add to all deployed objects"
-        },
-        "enabled": {
-          "description": "Enable valkey cluster"
-        },
-        "fullnameOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.fullnameOverride"
-        },
-        "global": {},
-        "nameOverride": {
-          "$ref": "#/definitions/values~1postgresql-ha.nameOverride"
-        },
-        "service": {
-          "additionalProperties": {},
-          "description": "Valkey Service properties for standalone mode.",
-          "properties": {
-            "labels": {
-              "description": "Additional labels for valkey service"
-            }
-          }
-        }
+        "global": {}
       }
     }
   },
