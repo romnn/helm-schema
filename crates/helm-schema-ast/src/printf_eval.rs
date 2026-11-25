@@ -16,9 +16,11 @@ pub enum PrintfVerb {
     String,
     /// An integer operand rendered in base ten.
     Decimal,
+    /// An operand rendered with Go's default formatting.
+    Value,
 }
 
-/// Parses `%s`, `%d`, and `%%`, declining flags, widths, indexes, and other verbs.
+/// Parses `%s`, `%d`, `%v`, and `%%`, declining flags, widths, indexes, and other verbs.
 #[must_use]
 #[expect(
     clippy::indexing_slicing,
@@ -39,24 +41,16 @@ pub fn parse_supported_printf_format(format: &str) -> Option<Vec<PrintfPart<'_>>
             parts.push(PrintfPart::Literal(format.get(literal_start..index)?));
         }
 
-        match *bytes.get(index + 1)? {
-            b'%' => {
-                parts.push(PrintfPart::Literal("%"));
-                index += 2;
-                literal_start = index;
-            }
-            b's' | b'd' => {
-                let verb = if bytes[index + 1] == b's' {
-                    PrintfVerb::String
-                } else {
-                    PrintfVerb::Decimal
-                };
-                parts.push(PrintfPart::Substitution(verb));
-                index += 2;
-                literal_start = index;
-            }
+        let part = match *bytes.get(index + 1)? {
+            b'%' => PrintfPart::Literal("%"),
+            b's' => PrintfPart::Substitution(PrintfVerb::String),
+            b'd' => PrintfPart::Substitution(PrintfVerb::Decimal),
+            b'v' => PrintfPart::Substitution(PrintfVerb::Value),
             _ => return None,
-        }
+        };
+        parts.push(part);
+        index += 2;
+        literal_start = index;
     }
 
     if literal_start < format.len() {

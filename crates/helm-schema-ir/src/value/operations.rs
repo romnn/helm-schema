@@ -1301,46 +1301,62 @@ fn transfer_print(input: TransferInput<'_>, state: &State) -> Value {
 }
 
 fn transfer_printf(input: TransferInput<'_>, state: &State) -> Value {
-    let Some(GuardValue::String(format)) = input.first.constant() else {
-        return Value::influenced(input.influences);
+    use super::kinds::GoType;
+    use super::relationship::{TextFormat, ValueOperation};
+    use helm_schema_ast::{PrintfPart, PrintfVerb, parse_supported_printf_format};
+
+    let TransferInput {
+        function: _,
+        arguments,
+        influences,
+        first,
+        last: _,
+    } = input;
+
+    let Some(GuardValue::String(format)) = first.constant() else {
+        return Value::influenced(influences);
     };
-    let Some(parts) = helm_schema_ast::parse_supported_printf_format(format) else {
-        return Value::influenced(input.influences);
+    let Some(parts) = parse_supported_printf_format(format) else {
+        return Value::influenced(influences);
     };
     let mut graph = super::TextBuffer::default();
-    let mut arguments = input.arguments.iter().skip(1);
+    let mut arguments = arguments.iter().skip(1);
     for part in parts {
         match part {
-            helm_schema_ast::PrintfPart::Literal(text) => graph.bytes(text),
-            helm_schema_ast::PrintfPart::Substitution(verb) => {
+            PrintfPart::Literal(text) => graph.bytes(text),
+            PrintfPart::Substitution(verb) => {
                 let Some(value) = arguments.next() else {
-                    return Value::influenced(input.influences);
+                    return Value::influenced(influences);
                 };
                 let frozen = state.heap.freeze(value);
                 match (verb, frozen.go_type()) {
-                    (helm_schema_ast::PrintfVerb::String, super::kinds::GoType::String)
-                    | (
-                        helm_schema_ast::PrintfVerb::Decimal,
-                        super::kinds::GoType::Int
-                        | super::kinds::GoType::Int64
-                        | super::kinds::GoType::Uint64,
-                    ) => {
+                    (PrintfVerb::String | PrintfVerb::Value, GoType::String)
+                    | (PrintfVerb::Decimal, GoType::Int | GoType::Int64 | GoType::Uint64) => {
                         if let Some(text) = scalar_text(value) {
                             graph.bytes(&text);
                         } else {
                             graph.emit(frozen);
                         }
                     }
-                    (helm_schema_ast::PrintfVerb::String, _) => {
+                    (PrintfVerb::String, _) => {
                         graph.emit(state.heap.freeze(&printf_string(value, state)));
                     }
-                    _ => return Value::influenced(input.influences),
+                    (PrintfVerb::Value, _) => {
+                        let formatted = scalar_text(&frozen.value).map_or_else(
+                            || Value::scalar(super::ScalarType::String, None),
+                            |text| Value::string(&text),
+                        );
+                        let formatted =
+                            formatted.derived(frozen, ValueOperation::Format(TextFormat::Value));
+                        graph.emit(state.heap.freeze(&formatted));
+                    }
+                    (PrintfVerb::Decimal, _) => return Value::influenced(influences),
                 }
             }
         }
     }
     if arguments.next().is_some() {
-        return Value::influenced(input.influences);
+        return Value::influenced(influences);
     }
     super::text::capture(&graph, false)
 }

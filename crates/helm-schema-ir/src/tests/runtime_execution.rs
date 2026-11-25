@@ -3712,12 +3712,30 @@ fn printf_renders_exact_typed_semver_components() {
 fn printf_exact_rendering_only_accepts_supported_string_formats() {
     for (source, expected) in [
         (r#"{{ printf "prefix-%s-%%" "x" }}"#, Some("prefix-x-%")),
+        (
+            r#"{{ printf "%v/%v/%v/%%" "80" 80 false }}"#,
+            Some("80/80/false/%"),
+        ),
+        (r#"{{ printf "%v" nil }}"#, Some("<nil>")),
+        (r#"{{ printf "%2v" "x" }}"#, None),
+        (r#"{{ printf "%#v" "x" }}"#, None),
+        (r#"{{ printf "%[1]v" "x" }}"#, None),
+        (r#"{{ printf "%v" }}"#, None),
+        (r#"{{ printf "%v" "x" 80 }}"#, None),
         (r#"{{ printf "%d" "x" }}"#, None),
         (r#"{{ printf "literal" "unused" }}"#, None),
         (r#"{{ printf "%s-%s" "x" }}"#, None),
     ] {
         sim_assert_eq!(have: texts(source), want: vec![expected.map(str::to_owned)], "{source}");
     }
+}
+
+#[test]
+fn plain_printf_value_reads_slice_slot_before_later_sort() {
+    sim_assert_eq!(
+        have: texts(r#"{{ $s := toStrings (list "bad" "80") }}{{ $slot := index $s 0 }}{{ $before := printf "%v" $slot }}{{ $_ := sortAlpha $s }}{{ $before }}|{{ printf "%v" $slot }}"#),
+        want: vec![Some("bad|80".to_owned())]
+    );
 }
 
 impl DocumentExecution {

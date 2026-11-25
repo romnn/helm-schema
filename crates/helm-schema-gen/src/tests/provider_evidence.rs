@@ -1582,6 +1582,50 @@ fn provider_required_field_requires_direct_source_leaf() {
     );
 }
 
+#[test]
+#[ignore = "selected printf %v operand does not yet reach the Service port provider row; see transfer/handoff.md"]
+fn plain_printf_value_backprojects_guarded_service_port() {
+    let source = indoc! {r#"
+        {{- if .Values.svc.enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+            - name: http
+              port: {{ printf "%v" .Values.svc.port }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        svc:
+          enabled: false
+          port: 80
+    "};
+    let provider = Chain::new(vec![Box::new(
+        KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
+            .with_cache_dir(bundle_cache_dir())
+            .with_allow_download(false),
+    )]);
+    let signals = schema_signals_for(parse_ir(source));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &provider)
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
+    );
+
+    let verdicts = [
+        (true, serde_json::json!(80)),
+        (true, serde_json::json!("80")),
+        (true, serde_json::json!("bad")),
+        (false, serde_json::json!("bad")),
+    ]
+    .map(|(enabled, port)| {
+        let instance = serde_json::json!({ "svc": { "enabled": enabled, "port": port } });
+        schema_accepts_instance(&schema, &instance)
+    });
+    sim_assert_eq!(have: verdicts, want: [true, true, false, true]);
+}
+
 /// An unconditional direct hole has the same provider-required presence
 /// contract as a guarded one: deleting the source still renders an explicit
 /// null into the required slot.
