@@ -352,6 +352,9 @@ field:value/loops.rs:CarriedScope.rebound	V	names a range iteration declares afr
 field:value/mod.rs:RepeatedOutput.bodies	R	executed body outputs for repeating iterations in the text DAG	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
 field:value/mod.rs:RepeatedOutput.breaks	R	executed body outputs for the final break iteration in the text DAG	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
 field:value/mod.rs:RepeatedOutput.inputs	R	dependencies of the opaque representation of the text DAG term	canonical text DAG representation	keep		range-output continuation landing, 2026-11-24	
+field:value/operations.rs:DecodeSnapshot.heap	D	Heap version captured at serialization.	Operation-local read of the frozen heap.	keep		decoder member-read landing, 2026-11-25	
+field:value/operations.rs:DecodeSnapshot.yaml_inputs	D	Input regions that need a YAML stability proof.	Operation-local accumulation of the decoder guard.	keep		decoder member-read landing, 2026-11-25	
+variant:value/layers.rs:Base::DecodedInput	R	Detached decoded map backed by a pristine raw input region.	Canonical heap map representation.	keep		decoder member-read landing, 2026-11-25	
 variant:value/loops.rs:Uncovered::Assumption	G	validity assumption a loop pass added beyond its start	canonical correlated runtime guard DAG	keep		R3b step 6a1 rework (state coverage), 2026-11-17	""
 field:value/state.rs:ContinuationKey.arena	K	canonical continuation identity within one runtime arena	stored frame layout plus execution context	keep		R3b construction root audit, 2026-10-26	
 field:value/control.rs:LoopPass.backedge	V	one range body pass: exits that continue to the next iteration	private canonical Value/Flow/frame/invocation data	keep		R3b step 6a1 loop transfer audit, 2026-11-17	""
