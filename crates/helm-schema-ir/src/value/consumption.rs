@@ -144,6 +144,42 @@ pub(crate) struct ConsumptionKey {
 }
 
 impl Consumption {
+    pub(super) fn opaque_document_member_host(&self) -> Option<(&ValuesPath, bool, &RuntimeGuard)> {
+        let Self {
+            path,
+            domain,
+            guard,
+            activation,
+            scope: _,
+            scope_identity: _,
+            binder,
+        } = self;
+        let ConsumptionDomain::Known {
+            preimage:
+                FailValueRequirement::MemberHost {
+                    handled_kinds,
+                    complete_domain: true,
+                },
+            requires_presence,
+        } = domain
+        else {
+            return None;
+        };
+        if !activation.is_empty()
+            || !binder.is_empty()
+            || guard.is_input_exact()
+            || !path.segments().all(|segment| segment.literal().is_some())
+        {
+            return None;
+        }
+        let allows_nil = match (handled_kinds.as_slice(), requires_presence) {
+            ([], true) => false,
+            ([kind], false) if kind == "null" => true,
+            _ => return None,
+        };
+        Some((path, allows_nil, guard))
+    }
+
     pub(super) fn restrict_to(&mut self, guards: &[Guard]) {
         self.activation.extend_from_slice(guards);
     }

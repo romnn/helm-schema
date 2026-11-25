@@ -1711,20 +1711,11 @@ fn capture_map_argument(
     failures: &mut Vec<Predicate>,
 ) -> bool {
     let condition = read.condition.clone();
-    let invalid = Predicate::from(helm_schema_core::Guard::TypeIs {
-        path: read.path.clone(),
-        schema_type: "object".to_owned(),
-    })
-    .negated();
-    failures.push(Predicate::all(vec![
+    failures.push(map_argument_failure(
+        &read.path,
+        allows_nil,
         condition.clone(),
-        invalid,
-        if allows_nil {
-            super::kinds::input_nil_predicate(&read.path).negated()
-        } else {
-            Predicate::True
-        },
-    ]));
+    ));
     let mut ranged = crate::range_modes::RangeModes::default();
     if read
         .path
@@ -1788,6 +1779,60 @@ fn capture_map_argument(
         });
     }
     true
+}
+
+fn map_argument_failure(
+    path: &helm_schema_core::ValuesPath,
+    allows_nil: bool,
+    condition: Predicate,
+) -> Predicate {
+    let invalid = Predicate::from(helm_schema_core::Guard::TypeIs {
+        path: path.clone(),
+        schema_type: "object".to_owned(),
+    })
+    .negated();
+    Predicate::all(vec![
+        condition,
+        invalid,
+        if allows_nil {
+            super::kinds::input_nil_predicate(path).negated()
+        } else {
+            Predicate::True
+        },
+    ])
+}
+
+/// A raw host demand can already own the failure even when its individual occurrences reach
+/// through opaque choices. Join those occurrences before projecting their input condition.
+fn covered_opaque_host_failures(arena: &super::Arena, exits: &[Exit]) -> Vec<Predicate> {
+    use super::guard::RuntimeGuard;
+
+    let mut grouped = BTreeMap::new();
+    for (path, allows_nil, guard) in exits
+        .iter()
+        .flat_map(|exit| exit.state.consumptions.iter())
+        .filter_map(Consumption::opaque_document_member_host)
+    {
+        let joined = grouped
+            .entry((path, allows_nil))
+            .or_insert(RuntimeGuard::False);
+        *joined = arena.union_runtime_guards(joined, guard);
+    }
+    grouped
+        .into_iter()
+        .filter(|(_, guard)| guard.is_input_exact() && !guard.is_impossible())
+        .filter_map(|((path, allows_nil), guard)| {
+            let test = arena.budget_test(guard);
+            if test.coverage != super::Coverage::Exact || test.when_true.contains_approximation() {
+                return None;
+            }
+            Some(map_argument_failure(
+                path,
+                allows_nil,
+                test.when_true.clone(),
+            ))
+        })
+        .collect()
 }
 
 #[tracing::instrument(
@@ -1909,27 +1954,27 @@ impl DocumentExecution {
                 consumption.freeze(&mut requirement_work, &mut requirement_guards)
             })
             .collect();
-        let observed_type_failures = execution.capture_read_facts();
+        let mut observed_type_failures = execution.capture_read_facts();
         let aborted = execution.abort_predicate();
-        let aborted = execution.exits.first().map_or(aborted.clone(), |exit| {
-            exit.state
-                .heap
-                .arena
-                .predicate_memo
-                .normalize(Predicate::all(vec![
-                    aborted,
-                    Predicate::Or(observed_type_failures).negated(),
-                ]))
-        });
-        if aborted != Predicate::False {
-            execution
-                .observed_facts
-                .captures
-                .insert(crate::observed_facts::FailCapture {
-                    conjunction: helm_schema_core::Conjunction::new([aborted]),
-                    ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::observed_facts::CaptureKind::Fail,
-                });
+        if aborted != Predicate::False
+            && let Some(exit) = execution.exits.first()
+        {
+            let arena = &exit.state.heap.arena;
+            observed_type_failures.extend(covered_opaque_host_failures(arena, &execution.exits));
+            let residual = arena.predicate_memo.normalize(Predicate::all(vec![
+                aborted,
+                Predicate::Or(observed_type_failures).negated(),
+            ]));
+            if residual != Predicate::False {
+                execution
+                    .observed_facts
+                    .captures
+                    .insert(crate::observed_facts::FailCapture {
+                        conjunction: helm_schema_core::Conjunction::new([residual]),
+                        ranged: crate::range_modes::RangeModes::default(),
+                        kind: crate::observed_facts::CaptureKind::Fail,
+                    });
+            }
         }
         execution
     }
