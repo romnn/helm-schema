@@ -15,9 +15,25 @@ pub(super) struct NamespaceId {
 
 pub(super) struct Namespace {
     id: NamespaceId,
-    definitions: BTreeMap<String, Rc<ParsedProgram>>,
+    definitions: BTreeMap<String, Vec<Definition>>,
     inventory: DefinitionInventory,
-    unknown_sources: bool,
+    unknown_sources: helm_schema_core::Predicate,
+}
+
+struct Definition {
+    program: Rc<ParsedProgram>,
+    enabled: helm_schema_core::Predicate,
+    empty: bool,
+}
+
+impl Clone for Definition {
+    fn clone(&self) -> Self {
+        Self {
+            program: Rc::clone(&self.program),
+            enabled: self.enabled.clone(),
+            empty: self.empty,
+        }
+    }
 }
 
 impl std::fmt::Debug for Namespace {
@@ -36,6 +52,7 @@ impl std::fmt::Debug for Namespace {
 pub(super) struct NamespaceFailure {
     pub(super) source_path: String,
     pub(super) reason: DefinitionError,
+    enabled: helm_schema_core::Predicate,
 }
 
 #[derive(Clone, Debug)]
@@ -65,20 +82,31 @@ impl Arena {
 
 impl Namespace {
     pub(super) fn same_source_names(&self, source: &str) -> Vec<&str> {
-        if self.unknown_sources {
+        if self.unknown_sources != helm_schema_core::Predicate::False {
             return Vec::new();
         }
         self.definitions
-            .iter()
-            .filter_map(|(name, program)| (program.source() == source).then_some(name.as_str()))
+            .keys()
+            .filter_map(|name| {
+                self.program_source(name)
+                    .filter(|body| *body == source)
+                    .map(|_| name.as_str())
+            })
             .collect()
     }
 
     pub(super) fn program_source(&self, name: &str) -> Option<&str> {
-        (!self.unknown_sources)
-            .then(|| self.definitions.get(name))
-            .flatten()
-            .map(|program| program.source())
+        if self.unknown_sources != helm_schema_core::Predicate::False {
+            return None;
+        }
+        let definitions = self.definitions.get(name)?;
+        let definition = definitions
+            .iter()
+            .rev()
+            .find(|definition| !definition.empty)
+            .or_else(|| definitions.first())?;
+        (definition.enabled == helm_schema_core::Predicate::True)
+            .then(|| definition.program.source())
     }
 
     pub(super) fn id(&self) -> NamespaceId {
@@ -95,6 +123,15 @@ impl Namespace {
         inventory: DefinitionInventory,
         arena: &Arena,
     ) -> NamespaceBuild {
+        Self::from_chart_sources(sources, inventory, &[], arena)
+    }
+
+    pub(super) fn from_chart_sources(
+        sources: Vec<Rc<ParsedTemplateSource>>,
+        inventory: DefinitionInventory,
+        charts: &[crate::SymbolicChart],
+        arena: &Arena,
+    ) -> NamespaceBuild {
         // A fresh source at the same logical path replaces the old file's entire declaration roster.
         let mut by_name = BTreeMap::new();
         for source in sources {
@@ -106,11 +143,18 @@ impl Namespace {
             id: arena.namespace_id(),
             definitions: BTreeMap::new(),
             inventory,
-            unknown_sources: false,
+            unknown_sources: helm_schema_core::Predicate::False,
         };
         let mut failures = Vec::new();
         for source in sources {
-            namespace.add_source(&source, &mut failures);
+            let enabled = charts
+                .iter()
+                .filter(|chart| source.name.starts_with(&format!("{}/", chart.namespace)))
+                .max_by_key(|chart| chart.namespace.len())
+                .map_or(helm_schema_core::Predicate::True, |chart| {
+                    chart.enabled.clone()
+                });
+            namespace.add_source(&source, &enabled, &mut failures);
         }
         NamespaceBuild {
             namespace: Rc::new(namespace),
@@ -123,17 +167,22 @@ impl Namespace {
             id: arena.namespace_id(),
             definitions: self.definitions.clone(),
             inventory: self.inventory,
-            unknown_sources: self.unknown_sources,
+            unknown_sources: self.unknown_sources.clone(),
         };
         let mut failures = Vec::new();
-        namespace.add_source(source, &mut failures);
+        namespace.add_source(source, &helm_schema_core::Predicate::True, &mut failures);
         NamespaceBuild {
             namespace: Rc::new(namespace),
             failures,
         }
     }
 
-    fn add_source(&mut self, source: &ParsedTemplateSource, failures: &mut Vec<NamespaceFailure>) {
+    fn add_source(
+        &mut self,
+        source: &ParsedTemplateSource,
+        enabled: &helm_schema_core::Predicate,
+        failures: &mut Vec<NamespaceFailure>,
+    ) {
         let ParsedTemplateSource {
             name,
             root,
@@ -142,11 +191,19 @@ impl Namespace {
             inventory,
             error,
         } = source;
-        self.unknown_sources |= *inventory == DefinitionInventory::Unknown;
+        if *inventory == DefinitionInventory::Unknown {
+            tracing::debug!(target: "helm_schema_ir::counters", source = name, "unknown namespace source inventory");
+            self.unknown_sources = helm_schema_core::Predicate::Or(vec![
+                self.unknown_sources.clone(),
+                enabled.clone(),
+            ])
+            .normalize_boolean();
+        }
         if let Some(reason) = error {
             failures.push(NamespaceFailure {
                 source_path: root.source_path().unwrap_or(name).to_string(),
                 reason: reason.clone(),
+                enabled: enabled.clone(),
             });
         }
         let root = ParsedDefinition {
@@ -160,25 +217,110 @@ impl Namespace {
             syntactically_empty,
         } in declarations.iter().cloned().chain(std::iter::once(root))
         {
-            // Across separate parses even an earlier whitespace body survives an empty replacement.
-            if !syntactically_empty || !self.definitions.contains_key(&name) {
-                self.definitions.insert(name, program);
-            }
+            self.definitions.entry(name).or_default().push(Definition {
+                program,
+                enabled: enabled.clone(),
+                empty: syntactically_empty,
+            });
         }
     }
 
     pub(super) fn resolve(&self, name: &str, state: State) -> Vec<TemplateLookup> {
-        let resolution = if self.unknown_sources {
-            TemplateResolution::Unknown
-        } else if let Some(program) = self.definitions.get(name) {
-            TemplateResolution::Found(Rc::clone(program))
-        } else {
-            match self.inventory {
+        let mut lookups = Vec::new();
+        let mut pending = vec![state];
+        if self.unknown_sources != helm_schema_core::Predicate::False {
+            let mut known = Vec::new();
+            for state in pending {
+                let test = state.heap.arena.decision(
+                    self.unknown_sources.clone(),
+                    self.unknown_sources.negated(),
+                    super::Coverage::Exact,
+                );
+                let unknown = state.fork(Rc::clone(&test), true);
+                if !unknown.path_is_infeasible() {
+                    lookups.push(TemplateLookup {
+                        state: unknown,
+                        resolution: TemplateResolution::Unknown,
+                    });
+                }
+                let state = state.fork(test, false);
+                if !state.path_is_infeasible() {
+                    known.push(state);
+                }
+            }
+            pending = known;
+        }
+        if let Some(definitions) = self.definitions.get(name) {
+            for definition in definitions
+                .iter()
+                .rev()
+                .filter(|definition| !definition.empty)
+                .chain(definitions.iter().filter(|definition| definition.empty))
+            {
+                if definition.enabled == helm_schema_core::Predicate::False {
+                    continue;
+                }
+                let mut absent = Vec::new();
+                for state in pending {
+                    if definition.enabled == helm_schema_core::Predicate::True {
+                        lookups.push(TemplateLookup {
+                            state,
+                            resolution: TemplateResolution::Found(Rc::clone(&definition.program)),
+                        });
+                        continue;
+                    }
+                    let test = state.heap.arena.decision(
+                        definition.enabled.clone(),
+                        definition.enabled.negated(),
+                        super::Coverage::Exact,
+                    );
+                    match state
+                        .heap
+                        .arena
+                        .path_guard(&state.active)
+                        .implies_test(&test)
+                    {
+                        Some(true) => {
+                            lookups.push(TemplateLookup {
+                                state,
+                                resolution: TemplateResolution::Found(Rc::clone(
+                                    &definition.program,
+                                )),
+                            });
+                            continue;
+                        }
+                        Some(false) => {
+                            absent.push(state);
+                            continue;
+                        }
+                        None => {}
+                    }
+                    let present = state.fork(Rc::clone(&test), true);
+                    if !present.path_is_infeasible() {
+                        lookups.push(TemplateLookup {
+                            state: present,
+                            resolution: TemplateResolution::Found(Rc::clone(&definition.program)),
+                        });
+                    }
+                    let state = state.fork(test, false);
+                    if !state.path_is_infeasible() {
+                        absent.push(state);
+                    }
+                }
+                pending = absent;
+                if pending.is_empty() {
+                    break;
+                }
+            }
+        }
+        lookups.extend(pending.into_iter().map(|state| TemplateLookup {
+            state,
+            resolution: match self.inventory {
                 DefinitionInventory::Complete => TemplateResolution::Missing,
                 DefinitionInventory::Unknown => TemplateResolution::Unknown,
-            }
-        };
-        vec![TemplateLookup { state, resolution }]
+            },
+        }));
+        lookups
     }
 }
 
@@ -190,15 +332,39 @@ impl NamespaceBuild {
             failures,
         } = self;
         state.namespace = namespace;
-        let flow = if let Some(failure) = failures.first() {
-            tracing::debug!(source = failure.source_path, error = %failure.reason, "template namespace parse abort");
-            Flow::Abort(AbortReason::TemplateParse)
-        } else {
-            Flow::Normal(Normal {
-                value: Value::nil(),
-            })
-        };
-        vec![Exit { state, flow }]
+        let mut exits = Vec::new();
+        let mut pending = Some(state);
+        for failure in failures {
+            let Some(state) = pending.take() else {
+                break;
+            };
+            let test = state.heap.arena.decision(
+                failure.enabled.clone(),
+                failure.enabled.negated(),
+                super::Coverage::Exact,
+            );
+            let abort = state.fork(Rc::clone(&test), true);
+            if !abort.path_is_infeasible() {
+                tracing::debug!(source = failure.source_path, error = %failure.reason, "template namespace parse abort");
+                exits.push(Exit {
+                    state: abort,
+                    flow: Flow::Abort(AbortReason::TemplateParse),
+                });
+            }
+            let state = state.fork(test, false);
+            if !state.path_is_infeasible() {
+                pending = Some(state);
+            }
+        }
+        if let Some(state) = pending {
+            exits.push(Exit {
+                state,
+                flow: Flow::Normal(Normal {
+                    value: Value::nil(),
+                }),
+            });
+        }
+        exits
     }
 }
 

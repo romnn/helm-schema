@@ -476,13 +476,27 @@ fn evaluated_leaf_scalar_is_not_rederived_from_its_structural_source() {
 }
 
 #[test]
-fn unknown_decision_keeps_both_leaves_and_proves_no_strict_operand() {
+fn unknown_decision_keeps_both_leaves_and_only_rejects_if_both_fail() -> eyre::Result<()> {
+    use crate::tests::guard_oracle::predicate_holds;
+    use serde_json::json;
+
     let prefix = r#"{{ $_ := .Values.choose }}{{ $cfg := .Values.first }}{{ if eq (randAlphaNum 1) "a" }}{{ $cfg = .Values.second }}{{ end }}"#;
     let read = observe(prefix, "$cfg");
     sim_assert_eq!(have: read.paths(), want: paths(&["first", "second"]));
     assert!(read.truth().is_none());
     let strict = observe(prefix, r#"hasKey $cfg "key""#);
-    sim_assert_eq!(have: strict.kinds(), want: BTreeSet::new());
+    sim_assert_eq!(have: strict.kinds(), want: BTreeSet::from([CaptureKind::Fail]));
+    // At least one Helm 4.2.3 render succeeds when either operand is a map.
+    for (first, second, aborts) in [
+        (json!(7), json!(7), true),
+        (json!(7), json!({}), false),
+        (json!({}), json!(7), false),
+        (json!({}), json!({}), false),
+    ] {
+        let values = json!({"first": first, "second": second});
+        sim_assert_eq!(have: predicate_holds(&strict.abort, &values)?, want: aborts, "{values}");
+    }
+    Ok(())
 }
 
 /// `b64enc $value` consumes whichever binding leaf the decision selected: `a` while

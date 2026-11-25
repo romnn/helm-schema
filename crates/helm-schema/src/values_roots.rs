@@ -55,24 +55,6 @@ impl ValuesRoots {
         );
         roots
     }
-
-    pub(crate) fn string_defaults_for_prefix(&self, prefix: &[String]) -> BTreeMap<String, String> {
-        self.string_defaults
-            .iter()
-            .filter_map(|(path, value)| {
-                let segments = helm_schema_core::split_value_path(path);
-                segments
-                    .strip_prefix(prefix)
-                    .filter(|relative| !relative.is_empty())
-                    .map(|relative| {
-                        (
-                            helm_schema_core::join_value_path(relative.iter().cloned()),
-                            value.clone(),
-                        )
-                    })
-            })
-            .collect()
-    }
 }
 
 fn collect_values_facts(

@@ -1249,74 +1249,42 @@ fn dependency_activation_guards_subchart_contract_uses() -> eyre::Result<()> {
             .any(|use_| use_.path.0 == ["data".to_string(), "enabled".to_string()]),
         "expected the enabled value to retain its placed output use, got {uses:#?}"
     );
+    // Helm v4.2.3 (`processDependencyTags`, then `processDependencyConditions`): the first
+    // condition holding a boolean decides, then a tag holding `true` enables and one holding
+    // `false` disables; with neither the dependency stays enabled.
+    let expected = enablement(&[
+        &[eq("kid.enabled", true)],
+        &[
+            ne("kid.enabled", true),
+            ne("kid.enabled", false),
+            eq("global.kidEnabled", true),
+        ],
+        &[
+            ne("kid.enabled", true),
+            ne("kid.enabled", false),
+            ne("global.kidEnabled", true),
+            ne("global.kidEnabled", false),
+            eq("tags.observability", true),
+        ],
+        &[
+            ne("kid.enabled", true),
+            ne("kid.enabled", false),
+            ne("global.kidEnabled", true),
+            ne("global.kidEnabled", false),
+            ne("tags.observability", false),
+        ],
+    ]);
     assert!(
-        uses.iter().any(|use_| {
-            use_.condition.guard_conjunctions().iter().any(|guards| {
-                guards.as_slice()
-                    == [Guard::Truthy {
-                        path: helm_schema_core::ValuesPath::parse("kid.enabled"),
-                    }]
-                    .as_slice()
-            })
-        }),
-        "expected first condition activation branch, got {uses:#?}"
-    );
-    assert!(
-        uses.iter().any(|use_| {
-            use_.condition.guard_conjunctions().iter().any(|guards| {
-                guards.as_slice()
-                    == [
-                        Guard::Truthy {
-                            path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
-                        },
-                        Guard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
-                        },
-                    ]
-                    .as_slice()
-            })
-        }),
-        "expected second condition branch guarded by first-condition absence, got {uses:#?}"
-    );
-    assert!(
-        uses.iter().any(|use_| {
-            use_.condition.guard_conjunctions().iter().any(|guards| {
-                guards.as_slice()
-                    == [
-                        Guard::Truthy {
-                            path: helm_schema_core::ValuesPath::parse("tags.observability"),
-                        },
-                        Guard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
-                        },
-                        Guard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
-                        },
-                    ]
-                    .as_slice()
-            })
-        }),
-        "expected tag activation branch guarded by condition absence, got {uses:#?}"
-    );
-    assert!(
-        uses.iter().any(|use_| {
-            use_.condition.guard_conjunctions().iter().any(|guards| {
-                guards.as_slice()
-                    == [
-                        Guard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("global.kidEnabled"),
-                        },
-                        Guard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("kid.enabled"),
-                        },
-                        Guard::Absent {
-                            path: helm_schema_core::ValuesPath::parse("tags.observability"),
-                        },
-                    ]
-                    .as_slice()
-            })
-        }),
-        "expected default-active branch when no activation values exist, got {uses:#?}"
+        uses.iter().any(|use_| use_
+            .condition
+            .disjuncts()
+            .iter()
+            .all(|conjunction| conjunction.contains(&expected)))
+            && every_conjunction_reads(
+                &uses,
+                &["kid.enabled", "global.kidEnabled", "tags.observability"]
+            ),
+        "expected every template use under Helm's enablement of kid, got {uses:#?}"
     );
 
     Ok(())
@@ -1397,36 +1365,34 @@ fn nested_dependency_activation_carries_the_ancestor_conditions() -> eyre::Resul
         .cloned()
         .collect::<Vec<_>>();
 
+    // The leaf renders only while both levels are enabled, each by Helm's own rule.
+    let expected = enablement(&[
+        &[eq("mid.enabled", true), eq("mid.leaf.enabled", true)],
+        &[
+            eq("mid.enabled", true),
+            ne("mid.leaf.enabled", true),
+            ne("mid.leaf.enabled", false),
+        ],
+        &[
+            ne("mid.enabled", true),
+            ne("mid.enabled", false),
+            eq("mid.leaf.enabled", true),
+        ],
+        &[
+            ne("mid.enabled", true),
+            ne("mid.enabled", false),
+            ne("mid.leaf.enabled", true),
+            ne("mid.leaf.enabled", false),
+        ],
+    ]);
     assert!(
-        uses.iter().any(|use_| {
-            use_.condition.guard_conjunctions().iter().any(|guards| {
-                guards.as_slice()
-                    == [
-                        Guard::Truthy {
-                            path: helm_schema_core::ValuesPath::parse("mid.enabled"),
-                        },
-                        Guard::Truthy {
-                            path: helm_schema_core::ValuesPath::parse("mid.leaf.enabled"),
-                        },
-                    ]
-                    .as_slice()
-            })
-        }),
-        "expected the both-conditions-truthy activation branch, got {uses:#?}"
-    );
-    assert!(
-        uses.iter().all(|use_| {
-            use_.condition.guard_conjunctions().iter().all(|guards| {
-                guards.iter().any(|guard| {
-                    matches!(
-                        guard,
-                        Guard::Truthy { path } | Guard::Absent { path }
-                            if path.encode() == "mid.enabled"
-                    )
-                })
-            })
-        }),
-        "every activation branch must carry the ancestor's condition, got {uses:#?}"
+        uses.iter().any(|use_| use_
+            .condition
+            .disjuncts()
+            .iter()
+            .all(|conjunction| conjunction.contains(&expected)))
+            && every_conjunction_reads(&uses, &["mid.enabled", "mid.leaf.enabled"]),
+        "every use must carry the ancestor's and its own enablement, got {uses:#?}"
     );
     Ok(())
 }
@@ -2093,4 +2059,52 @@ fn tpl_executes_only_the_selected_chart_authored_default_program() -> eyre::Resu
     );
 
     Ok(())
+}
+
+fn eq(path: &str, value: bool) -> Guard {
+    Guard::Eq {
+        path: helm_schema_core::ValuesPath::parse(path),
+        value: helm_schema_core::GuardValue::Bool(value),
+    }
+}
+
+fn ne(path: &str, value: bool) -> Guard {
+    Guard::NotEq {
+        path: helm_schema_core::ValuesPath::parse(path),
+        value: helm_schema_core::GuardValue::Bool(value),
+    }
+}
+
+/// The predicate under which one of the guard sets holds.
+fn enablement(sets: &[&[Guard]]) -> helm_schema_core::Predicate {
+    helm_schema_core::Predicate::Or(
+        sets.iter()
+            .map(|set| {
+                helm_schema_core::Predicate::all(
+                    set.iter()
+                        .cloned()
+                        .map(helm_schema_core::Predicate::from)
+                        .collect(),
+                )
+            })
+            .collect(),
+    )
+}
+
+/// Whether every conjunction of every template use reads all `paths`: a simplified form of an
+/// enablement still decides on each of its controls.
+fn every_conjunction_reads(uses: &[helm_schema_ir::ContractUse], paths: &[&str]) -> bool {
+    uses.iter()
+        .filter(|use_| use_.kind != ValueKind::WidenedDependency)
+        .all(|use_| {
+            use_.condition.disjuncts().iter().all(|conjunction| {
+                let read = conjunction
+                    .iter()
+                    .flat_map(helm_schema_core::Predicate::value_paths)
+                    .collect::<std::collections::BTreeSet<_>>();
+                paths
+                    .iter()
+                    .all(|path| read.contains(&helm_schema_core::ValuesPath::parse(path)))
+            })
+        })
 }

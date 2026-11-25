@@ -1463,7 +1463,9 @@ fn disabled_ancestor_tree() -> eyre::Result<VfsPath> {
 /// document (`round8-f1-evidence/rework1/tree.sh`): with `kid` disabled,
 /// `kid.gc: null` and `kid.al: null`/`5` render; `kid.gc: 5` and
 /// `kid.und: null` abort in the first pass; `kid: null` aborts. With `kid`
-/// active, `kid.al: 5` aborts while rendering.
+/// active, `kid.al: 5` aborts while rendering. Only a boolean `kidEnabled: false`
+/// disables `kid`, and an active `kid` that is not a table aborts with `type
+/// mismatch on kid` (step-5b receipts `kid-null/`).
 #[test]
 #[expect(
     clippy::too_many_lines,
@@ -1504,33 +1506,6 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
         .collect::<Vec<_>>();
     sim_assert_eq!(have: have, want: want);
     sim_assert_eq!(have: schema, want: share_expected_conditions(json!({
-        "definitions": {
-            "t": {
-                "anyOf": [
-                    {
-                        "const": true
-                    },
-                    {
-                        "not": {
-                            "const": 0
-                        },
-                        "type": "number"
-                    },
-                    {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    {
-                        "minItems": 1,
-                        "type": "array"
-                    },
-                    {
-                        "minProperties": 1,
-                        "type": "object"
-                    }
-                ]
-            }
-        },
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
@@ -1711,47 +1686,19 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
                             ]
                         },
                         {
-                            "anyOf": [
-                                {
-                                    "properties": {
-                                        "kidEnabled": {
-                                            "$ref": "#/definitions/t"
-                                        }
-                                    },
-                                    "required": [
-                                        "kidEnabled"
-                                    ],
-                                    "type": "object"
+                            "not": {
+                                "properties": {
+                                    "kidEnabled": {
+                                        "enum": [
+                                            false
+                                        ]
+                                    }
                                 },
-                                {
-                                    "anyOf": [
-                                        {
-                                            "not": {
-                                                "properties": {
-                                                    "kidEnabled": {}
-                                                },
-                                                "required": [
-                                                    "kidEnabled"
-                                                ],
-                                                "type": "object"
-                                            }
-                                        },
-                                        {
-                                            "properties": {
-                                                "kidEnabled": {
-                                                    "enum": [
-                                                        null
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "kidEnabled"
-                                            ],
-                                            "type": "object"
-                                        }
-                                    ]
-                                }
-                            ]
+                                "required": [
+                                    "kidEnabled"
+                                ],
+                                "type": "object"
+                            }
                         }
                     ]
                 },
@@ -1784,6 +1731,19 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
                         }
                     }
                 }
+            },
+            {
+                "if": {
+                    "$ref": "#/definitions/helm-condition-0"
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "kid": {
+                            "type": "object"
+                        }
+                    }
+                }
             }
         ],
         "properties": {
@@ -1791,7 +1751,11 @@ fn disabled_ancestor_preserves_declared_dependency_null() -> eyre::Result<()> {
             "kid": {
                 "additionalProperties": {},
                 "properties": {
-                    "al": {},
+                    "al": {
+                        "properties": {
+                            "global": {}
+                        }
+                    },
                     "gc": {
                         "additionalProperties": {},
                         "properties": {

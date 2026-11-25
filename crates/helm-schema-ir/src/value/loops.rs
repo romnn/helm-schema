@@ -85,9 +85,12 @@ impl Carried {
                         let after = end.heap.version.field(&object, &key);
                         let mut inputs = field_inputs(state, &before);
                         inputs.extend(field_inputs(end, &after));
-                        state
-                            .heap
-                            .write(&object, &key, Field::Present(Value::influenced(inputs)));
+                        let values = field_values(&before)
+                            .into_iter()
+                            .chain(field_values(&after))
+                            .collect::<Vec<_>>();
+                        let summary = summary_value(inputs, super::heap::values_reach(&values));
+                        state.heap.write(&object, &key, Field::Present(summary));
                     }
                 }
                 Uncovered::Fields { object, keys: _ } | Uncovered::Object(object) => {
@@ -236,7 +239,10 @@ fn changed_objects(start: &State, end: &State) -> BTreeSet<ObjectId> {
 fn object_uncovered(start: &State, end: &State, object: ObjectId) -> Option<Uncovered> {
     let before = start.heap.version.object(&object);
     if let Some(before) = &before
-        && let ObjectData::Widened { inputs } = &before.data
+        && let ObjectData::Widened {
+            inputs,
+            reachable: _,
+        } = &before.data
         && inputs.contains(&ValuesPath::default())
     {
         // The top summary covers every storage.
@@ -262,9 +268,12 @@ fn object_uncovered(start: &State, end: &State, object: ObjectId) -> Option<Unco
         return None;
     }
     match (&before.data, &after.data) {
-        (ObjectData::Widened { inputs }, _) => object_inputs(end, &object, &after)
+        // A summary covers later contents that depend on its inputs and reference only what it
+        // may reference.
+        (ObjectData::Widened { inputs, reachable }, _) => (object_inputs(end, &object, &after)
             .is_none_or(|after_inputs| !after_inputs.is_subset(inputs))
-            .then_some(Uncovered::Object(object)),
+            || !reach_covers(reachable, &super::heap::data_reach(&after.data)))
+        .then_some(Uncovered::Object(object)),
         (
             ObjectData::Map {
                 fields: before_fields,
@@ -316,6 +325,14 @@ fn object_uncovered(start: &State, end: &State, object: ObjectId) -> Option<Unco
     }
 }
 
+fn reach_covers(have: &Reach, needed: &Reach) -> bool {
+    match (have, needed) {
+        (Reach::Top, _) => true,
+        (Reach::Bounded(_), Reach::Top) => false,
+        (Reach::Bounded(have), Reach::Bounded(needed)) => needed.is_subset(have),
+    }
+}
+
 /// Raises `object` in `state` to a widened map over both states' contents; `top`, or contents
 /// whose inputs exceed the allowance, add the root path, so the result covers every later
 /// storage.
@@ -331,14 +348,17 @@ fn widen_object(state: &mut State, end: &State, object: &ObjectId, top: bool) {
     };
     let mut inputs = object_inputs(state, object, &before)
         .unwrap_or_else(|| BTreeSet::from([ValuesPath::default()]));
+    let mut reachable = super::heap::data_reach(&before.data);
     if let Some(after) = end.heap.version.object(object) {
         inputs.extend(
             object_inputs(end, object, &after)
                 .unwrap_or_else(|| BTreeSet::from([ValuesPath::default()])),
         );
+        reachable = reachable.union(&super::heap::data_reach(&after.data));
     }
     if top {
         inputs.insert(ValuesPath::default());
+        reachable = super::Reach::Top;
     }
     // The join abstracts the state; it is not a read of the program, so it records none.
     let revision = state.heap.arena.snapshot();
@@ -349,6 +369,7 @@ fn widen_object(state: &mut State, end: &State, object: &ObjectId, top: bool) {
             multiplicity: before.multiplicity,
             data: ObjectData::Widened {
                 inputs: Rc::new(inputs),
+                reachable,
             },
         },
     );
@@ -383,8 +404,8 @@ fn field_inputs(state: &State, field: &Field) -> BTreeSet<ValuesPath> {
     }
 }
 
-/// A summary of both values at a carried binding: no identity, aliasing anything, influenced by
-/// every input either reaches (ADR 0072 §6).
+/// A summary of both values at a carried binding: no identity, referencing what either value
+/// references, influenced by every input either reaches (ADR 0072 §6).
 fn summary(
     start: &State,
     before: Option<&Value>,
@@ -394,10 +415,42 @@ fn summary(
 ) -> Value {
     let mut inputs = before.map_or_else(BTreeSet::new, |value| start.heap.freeze(value).inputs());
     inputs.extend(after.map_or_else(BTreeSet::new, |value| end.heap.freeze(value).inputs()));
-    if top {
+    // An exhausted summary may reference anything the remaining iterations allocate.
+    let aliases = if top {
         inputs.insert(ValuesPath::default());
+        Reach::Top
+    } else {
+        super::heap::values_reach(before.into_iter().chain(after))
+    };
+    summary_value(inputs, aliases)
+}
+
+fn summary_value(inputs: BTreeSet<ValuesPath>, aliases: Reach) -> Value {
+    Value::with_influences(
+        Value::leaf(super::Datum::Unknown(super::UnknownValue {
+            types: super::TypeCoverage::Unresolved,
+            aliases,
+        })),
+        inputs,
+    )
+}
+
+/// The values a field may hold.
+fn field_values(field: &Field) -> Vec<Value> {
+    let mut values = Vec::new();
+    let mut pending = vec![field];
+    while let Some(field) = pending.pop() {
+        match field {
+            Field::Absent | Field::Unknown => {}
+            Field::Present(value) => values.push(value.clone()),
+            Field::Select {
+                decision: _,
+                yes,
+                no,
+            } => pending.extend([yes.as_ref(), no.as_ref()]),
+        }
     }
-    Value::influenced(inputs)
+    values
 }
 
 fn field_covers(before: &Field, end: &State, after: &Field) -> bool {
@@ -412,21 +465,24 @@ fn value_covers(before: Option<&Value>, end: &State, after: Option<&Value>) -> b
     match (before, after) {
         (None, None) => true,
         (Some(before), Some(after)) if before == after => true,
-        (Some(before), Some(after)) => summary_inputs(before).is_some_and(|have| {
-            have.contains(&ValuesPath::default()) || end.heap.freeze(after).inputs().is_subset(have)
+        (Some(before), Some(after)) => summary_inputs(before).is_some_and(|(have, aliases)| {
+            let referenced = reach_covers(aliases, &super::heap::values_reach([after]));
+            referenced
+                && (have.contains(&ValuesPath::default())
+                    || end.heap.freeze(after).inputs().is_subset(have))
         }),
         (None, Some(_)) | (Some(_), None) => false,
     }
 }
 
-/// The influences of a summary: a value with no identity that may alias anything.
-fn summary_inputs(value: &Value) -> Option<&BTreeSet<ValuesPath>> {
+/// The influences and references of a summary: a value with no identity.
+fn summary_inputs(value: &Value) -> Option<(&BTreeSet<ValuesPath>, &Reach)> {
     match value.node.as_ref() {
         ValueNode::Leaf(super::Leaf {
             datum:
                 super::Datum::Unknown(super::UnknownValue {
                     types: super::TypeCoverage::Unresolved,
-                    aliases: Reach::Top,
+                    aliases,
                 }),
             origin:
                 super::Origin {
@@ -434,7 +490,7 @@ fn summary_inputs(value: &Value) -> Option<&BTreeSet<ValuesPath>> {
                     identity: None,
                     influences,
                 },
-        }) => Some(influences),
+        }) => Some((influences, aliases)),
         ValueNode::Leaf(_)
         | ValueNode::Select {
             decision: _,

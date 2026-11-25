@@ -55,7 +55,7 @@ mod work;
 mod write_certificate;
 mod write_footprint;
 pub(crate) mod yaml;
-pub(crate) use session::project_documents;
+pub(crate) use session::{project_chart_documents, project_documents};
 pub(crate) use site_index::Observation;
 #[cfg(test)]
 pub(crate) use tests::execute_documents;
@@ -402,19 +402,38 @@ struct Arena {
     next_namespace: Cell<u64>,
     next_invocation: Cell<u64>,
     aggregate_summary: Cell<Option<u64>>,
+    /// Objects that existed when the executing chart instance's run of files began; the
+    /// allocation bound counts only that instance's own allocations (ADR 0072 §10).
+    instance_object_base: Cell<usize>,
+    /// How many analysis assumptions the render has made; a chart instance whose file made one
+    /// holds them until its run of files ends.
+    assumptions_made: Cell<u64>,
     input_objects: RefCell<BTreeMap<ValuesPath, InputBacking>>,
     input_paths: RefCell<Rc<input_paths::InputPaths>>,
     /// The analysis's Boolean normalization cache; results equal uncached normalization.
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
     requirement_scope: RefCell<String>,
-    requirement_identity: consumption::RequirementScope,
+    /// The fold scope of the requirements the executing chart instance records: each
+    /// instance's failures prove a rejection on their own, so instances fold apart.
+    requirement_identity: RefCell<consumption::RequirementScope>,
     /// Whether any object has a layered remainder; reads skip derivation until one does.
     layered: Cell<bool>,
     /// The object a `deepCopy` allocates for each copied map member, by (copy, key, alternative).
     copy_children: RefCell<BTreeMap<(ObjectId, String, u32), ObjectId>>,
     /// The storage each derived object starts from: the baseline of a join that lacks it.
     derived: RefCell<BTreeMap<ObjectId, Rc<ObjectVersion>>>,
+    /// The render-context objects each chart instance owns (its root, Chart, Files and
+    /// Subcharts maps), by the values path the instance's `.Values` is bound to.
+    instance_objects: RefCell<BTreeMap<ObjectId, ValuesPath>>,
+    /// The host objects no template can write (see [`hosts::writable`]): an unknown writer leaves
+    /// them, and everything they hold, as they are.
+    read_only_objects: RefCell<BTreeSet<ObjectId>>,
+    /// The input regions of observed heap versions, by input generation and version ordinals.
+    region_paths: RefCell<AHashMap<RegionKey, Rc<BTreeSet<ValuesPath>>>>,
 }
+
+/// An observed region's input generation and heap version ordinals.
+type RegionKey = (u64, Vec<u64>);
 
 #[derive(Clone, Debug)]
 struct Heap {
@@ -484,6 +503,8 @@ enum ObjectData {
     },
     Widened {
         inputs: Rc<BTreeSet<ValuesPath>>,
+        /// The objects its unknown contents may reference.
+        reachable: Reach,
     },
 }
 

@@ -451,7 +451,8 @@ impl Executor<'_> {
         } else {
             1
         };
-        for operand in invocation.operands.iter().step_by(stride) {
+        let mut opaque = Vec::new();
+        for (index, operand) in invocation.operands.iter().enumerate().step_by(stride) {
             let value = state.consumed(&operand.value);
             if let ValueNode::Select {
                 decision,
@@ -459,6 +460,12 @@ impl Executor<'_> {
                 no: _,
             } = value.node.as_ref()
             {
+                // A join selector no input predicate describes refines no fact on either side:
+                // the operand stands for both arms instead of forking the path.
+                if decision.is_opaque_choice() {
+                    opaque.push((index, value.clone()));
+                    continue;
+                }
                 let mut result = super::ExitBuffer::default();
                 for taken in [true, false] {
                     let branch = state.fork(Rc::clone(decision), taken);
@@ -473,7 +480,19 @@ impl Executor<'_> {
                 return result.finish();
             }
         }
-        Self::transfer_invocation(invocation, state, remaining)
+        if opaque.is_empty() {
+            return Self::transfer_invocation(invocation, state, remaining);
+        }
+        let mut summarized = invocation.clone();
+        for (index, value) in opaque {
+            if let Some(operand) = summarized.operands.get_mut(index) {
+                operand.value = super::heap::unknown_member(
+                    std::slice::from_ref(&value),
+                    state.heap.freeze(&value).inputs(),
+                );
+            }
+        }
+        Self::transfer_invocation(&summarized, state, remaining)
     }
     #[tracing::instrument(skip_all)]
     fn transfer_invocation(
@@ -721,8 +740,9 @@ fn transfer_values(
         Err(TransferDemand::Choice(decision)) => {
             lift_value_choice(invocation, state, remaining, queries, &decision)
         }
+        // An aborting call yields no value: nothing flows from it.
         Err(TransferDemand::Abort(reason)) => ValuePlan {
-            value: Value::unknown(),
+            value: super::heap::unknown_member(&[], std::collections::BTreeSet::new()),
             normal: constant_value_test(state, false),
             failures: std::collections::BTreeMap::from([(
                 reason,
@@ -747,7 +767,7 @@ fn lift_value_choice(
         });
         let plan = if state.path_is_infeasible() {
             ValuePlan {
-                value: Value::unknown(),
+                value: super::heap::unknown_member(&[], std::collections::BTreeSet::new()),
                 normal: constant_value_test(state, false),
                 failures: std::collections::BTreeMap::default(),
             }

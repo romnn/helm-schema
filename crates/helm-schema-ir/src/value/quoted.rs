@@ -52,20 +52,26 @@ pub(super) enum LexicalState {
     FlowPlainColon,
     FlowPlainDash,
     FlowPlainDashes,
+    TruncatableStart,
+    TruncatableWord,
 }
 
 impl LexicalState {
     pub(super) fn step(self, character: char) -> Option<Self> {
-        use LexicalState::{
-            BlockInvalid, Closed, ClosedCollection, CollectionInvalid, Directive, DirectiveInvalid,
-            Double, Escape, FlowEmptyStart, FlowEnd, FlowPlain, FlowPlainColon, FlowPlainDash,
-            FlowPlainDashes, FlowPlainStart, FlowSequenceWord, FoldedDouble, Hex1, Hex2, Hex3,
-            Hex4, Invalid, Plain, PlainColon, PlainDash, PlainDashes, PlainStart, Separated,
-            Single, SingleEnd, Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7,
-            Unicode8,
-        };
         if self.is_absorbing() {
             return Some(self);
+        }
+        if matches!(self, Self::TruncatableStart | Self::TruncatableWord) {
+            // Every nonempty byte prefix must leave the same plain-word state.
+            let plain = if self == Self::TruncatableStart {
+                Self::PlainStart
+            } else {
+                Self::Plain
+            };
+            return (character.is_ascii()
+                && (self != Self::TruncatableStart || character.is_ascii_alphanumeric())
+                && plain.step(character) == Some(Self::Plain))
+            .then_some(Self::TruncatableWord);
         }
         if let Some(block) = self.flow_plain_as_block() {
             let next = block.step(character)?;
@@ -76,6 +82,18 @@ impl LexicalState {
                 None => Some(next),
             };
         }
+        self.step_block(character)
+    }
+
+    fn step_block(self, character: char) -> Option<Self> {
+        use LexicalState::{
+            BlockInvalid, Closed, ClosedCollection, CollectionInvalid, Directive, DirectiveInvalid,
+            Double, Escape, FlowEmptyStart, FlowEnd, FlowPlain, FlowPlainColon, FlowPlainDash,
+            FlowPlainDashes, FlowPlainStart, FlowSequenceWord, FoldedDouble, Hex1, Hex2, Hex3,
+            Hex4, Invalid, Plain, PlainColon, PlainDash, PlainDashes, PlainStart, Separated,
+            Single, SingleEnd, Surrogate3, Unicode4, Unicode5, Unicode5Max, Unicode6, Unicode7,
+            Unicode8,
+        };
         // Removing Helm's marker cannot change any transition in this alphabet.
         if character == '<' || !alphabet().any(|allowed| allowed == character) {
             return None;
@@ -105,8 +123,19 @@ impl LexicalState {
                 Plain
             }
             // Flow plain states never reach here: they delegate to their block twins above.
-            Directive | PlainStart | PlainDash | PlainDashes | Plain | PlainColon
-            | FlowPlainStart | FlowPlain | FlowPlainColon | FlowPlainDash | FlowPlainDashes => {
+            Directive
+            | PlainStart
+            | PlainDash
+            | PlainDashes
+            | Plain
+            | PlainColon
+            | FlowPlainStart
+            | FlowPlain
+            | FlowPlainColon
+            | FlowPlainDash
+            | FlowPlainDashes
+            | Self::TruncatableStart
+            | Self::TruncatableWord => {
                 return None;
             }
             Double => match character {
@@ -201,6 +230,36 @@ impl LexicalState {
         )
     }
 
+    /// State certified for a prefix-preserving edit of a truncatable word.
+    pub(super) fn edited_word_end(self, transform: &TextTransform) -> Option<Self> {
+        let preserves_word = match transform {
+            TextTransform::Truncate(width) => *width > 0,
+            TextTransform::TrimPrefix(affix) | TextTransform::TrimSuffix(affix) => {
+                // This affix cannot erase the entire word.
+                affix
+                    .chars()
+                    .next()
+                    .is_none_or(|first| Self::TruncatableStart.step(first).is_none())
+            }
+            TextTransform::Upper
+            | TextTransform::Lower
+            | TextTransform::Replace { from: _, to: _ }
+            | TextTransform::Cut(_)
+            | TextTransform::RegexReplace {
+                pattern: _,
+                replacement: _,
+            } => false,
+        };
+        if !preserves_word {
+            return None;
+        }
+        match self {
+            Self::PlainStart | Self::Plain => Some(Self::Plain),
+            Self::TruncatableStart | Self::TruncatableWord => Some(Self::TruncatableWord),
+            _ => None,
+        }
+    }
+
     pub(super) fn is_unterminated(self) -> bool {
         match self {
             Self::PlainStart
@@ -222,7 +281,9 @@ impl LexicalState {
             | Self::ClosedCollection
             | Self::CollectionInvalid
             | Self::BlockInvalid
-            | Self::Invalid => false,
+            | Self::Invalid
+            | Self::TruncatableStart
+            | Self::TruncatableWord => false,
             Self::Double
             | Self::FlowEmptyStart
             | Self::FlowSequenceWord
@@ -295,6 +356,16 @@ static STATES: std::sync::LazyLock<Vec<LexicalState>> = std::sync::LazyLock::new
     states
 });
 
+fn lexical_states(start: LexicalState) -> &'static [LexicalState] {
+    match start {
+        LexicalState::TruncatableStart | LexicalState::TruncatableWord => &[
+            LexicalState::TruncatableStart,
+            LexicalState::TruncatableWord,
+        ],
+        _ => &STATES,
+    }
+}
+
 type Languages = BTreeMap<LexicalState, String>;
 pub(super) type States = BTreeMap<LexicalState, Predicate>;
 type Cache<K, V> = RefCell<BTreeMap<K, Rc<V>>>;
@@ -341,7 +412,7 @@ fn mapped_languages(
                 transforms: transforms.to_vec(),
             },
             || {
-                STATES
+                lexical_states(start)
                     .iter()
                     .copied()
                     .filter_map(|end| {
@@ -547,7 +618,9 @@ fn scalar_boundary(state: LexicalState) -> Option<LexicalState> {
         | LexicalState::Unicode6
         | LexicalState::Unicode7
         | LexicalState::Unicode8
-        | LexicalState::Surrogate3 => None,
+        | LexicalState::Surrogate3
+        | LexicalState::TruncatableStart
+        | LexicalState::TruncatableWord => None,
     }
 }
 
@@ -789,8 +862,9 @@ fn preimage_language(
     suffixes: &[&str],
     transforms: &[TextTransform],
 ) -> Option<String> {
+    let states = lexical_states(start);
     let mut edges = BTreeMap::<(usize, usize), String>::new();
-    for (from, state) in STATES.iter().enumerate() {
+    for (from, state) in states.iter().enumerate() {
         let mut targets = BTreeMap::<LexicalState, Vec<char>>::new();
         for character in alphabet() {
             let next = if transforms.is_empty() {
@@ -804,23 +878,23 @@ fn preimage_language(
             }
         }
         for (next, characters) in targets {
-            let to = STATES.binary_search(&next).ok()?;
+            let to = states.binary_search(&next).ok()?;
             edges.insert(
                 (from, to),
                 helm_schema_core::regex_character_class(characters)?,
             );
         }
     }
-    let entry = STATES.len();
+    let entry = states.len();
     let exit = entry + 1;
     edges.insert(
-        (entry, STATES.iter().position(|state| *state == start)?),
+        (entry, states.iter().position(|state| *state == start)?),
         String::new(),
     );
     if suffixes.is_empty() {
         return None;
     }
-    for (index, state) in STATES.iter().enumerate() {
+    for (index, state) in states.iter().enumerate() {
         if suffixes
             .iter()
             .all(|suffix| suffix.chars().try_fold(*state, LexicalState::step) == Some(end))
@@ -835,7 +909,7 @@ fn preimage_language(
             .collect(),
         start: entry,
         end: exit,
-        states: STATES.len(),
+        states: states.len(),
     }
     .eliminate()
     .map(|text| format!("^(?:{text})$"))

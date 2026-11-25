@@ -137,7 +137,8 @@ fn conditional_and_unknown_writers_never_keep_original_input_proofs() -> eyre::R
     )
     .ok_or_eyre("conditional input join missing")?;
     sim_assert_eq!(have: raw_format_inputs(&Value::input(ValuesPath::parse("x")), &joined), want: Vec::<RawFormatInput>::new());
-    crate::value::operations::invalidate(&mut initial);
+    // An unknown write that reaches every object.
+    crate::value::operations::invalidate_all(&mut initial);
     sim_assert_eq!(have: raw_format_inputs(&Value::input(ValuesPath::parse("fresh")), &initial), want: Vec::<RawFormatInput>::new());
     Ok(())
 }

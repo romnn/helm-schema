@@ -52,6 +52,7 @@ fn cached_empty_map_exhausts_at_the_cold_traversal_boundary() {
 fn cached_provenance_cannot_change_persistent_widened_contents() -> eyre::Result<()> {
     let mut state = State::new(Value::nil());
     let map = state.heap.map(Remainder::Closed);
+    let map_id = state.map_target(&map).ok_or_eyre("map missing")?;
     let frozen = state.heap.freeze(&map);
     let mut cold = state.heap.fork();
     let mut warm = state.heap.fork();
@@ -61,8 +62,10 @@ fn cached_provenance_cannot_change_persistent_widened_contents() -> eyre::Result
     let cold_id = cold.allocate(ObjectData::Strings(slots.clone()), Multiplicity::Singleton);
     assert!(!observe(&frozen, false, 65_536).exhausted);
     let warm_id = warm.allocate(ObjectData::Strings(slots), Multiplicity::Singleton);
+    // The summary keeps the map its slots reference.
     let expected = ObjectData::Widened {
         inputs: Rc::new(BTreeSet::from([ValuesPath::default()])),
+        reachable: crate::value::Reach::Bounded(Rc::new(BTreeSet::from([map_id]))),
     };
     sim_assert_eq!(have: &cold.version.object(&cold_id).ok_or_eyre("cold object missing")?.data, want: &expected);
     sim_assert_eq!(have: &warm.version.object(&warm_id).ok_or_eyre("warm object missing")?.data, want: &expected);
@@ -242,7 +245,10 @@ fn unknown_data(
     shape: usize,
 ) -> eyre::Result<ObjectData> {
     Ok(match shape {
-        0 => ObjectData::Widened { inputs },
+        0 => ObjectData::Widened {
+            inputs,
+            reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
+        },
         1 => ObjectData::Map {
             fields: Rc::default(),
             remainder: Remainder::Unknown { inputs },

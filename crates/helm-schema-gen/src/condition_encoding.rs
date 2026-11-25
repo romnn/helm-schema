@@ -5,7 +5,7 @@ use std::sync::Arc;
 use helm_schema_core::{
     CanonicalGuardComponents, CollectionDomain, CollectionQuantifier, ConditionalGuard,
     GuardConjunction, GuardPrefix, GuardValue, RequirementCondition, RequirementConditionNode,
-    RequirementDecision, ValuePattern, ValuesPath,
+    RequirementDecision, Segment, ValuePattern, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -2092,6 +2092,110 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         return None;
     }
     evaluate_known_guard_on_values(guard, values_yaml_doc)
+}
+
+/// Whether the guard's truth on the remaining inputs is independent of this
+/// dependency member being filled or deleted by coalescing.
+pub(crate) fn guard_ignores_default_presence(
+    guard: &ConditionalGuard,
+    path: &ValuesPath,
+    values_yaml_doc: &YamlValue,
+    runtime_defaults: &YamlValue,
+) -> bool {
+    if path.segments().any(Segment::is_each_member)
+        || !matches!(
+            yaml_value_at_path(values_yaml_doc, path),
+            Some(YamlValue::String(_) | YamlValue::Bool(_) | YamlValue::Number(_))
+        )
+    {
+        return false;
+    }
+    let cofactor = |values: &YamlValue| {
+        specialize_dependency_guard(guard, path, values)
+            .filter(|predicate| !predicate.contains_approximation())
+            .map(helm_schema_core::Predicate::normalize_boolean)
+    };
+    let Some(omitted) = cofactor(&YamlValue::Null) else {
+        return false;
+    };
+    if cofactor(values_yaml_doc).as_ref() != Some(&omitted)
+        || cofactor(runtime_defaults).as_ref() != Some(&omitted)
+    {
+        return false;
+    }
+    let null_leaf = path
+        .segments()
+        .rev()
+        .try_fold(YamlValue::Null, |value, segment| {
+            let key = YamlValue::String(segment.literal()?.to_owned());
+            Some(YamlValue::Mapping(serde_yaml::Mapping::from_iter([(
+                key, value,
+            )])))
+        });
+    null_leaf.is_some_and(|document| cofactor(&document).as_ref() == Some(&omitted))
+}
+
+fn specialize_dependency_guard(
+    guard: &ConditionalGuard,
+    subject: &ValuesPath,
+    values: &YamlValue,
+) -> Option<helm_schema_core::Predicate> {
+    use helm_schema_core::Predicate;
+    let paths = guard.value_paths();
+    if paths
+        .iter()
+        .all(|path| path == subject || path.is_descendant_of(subject))
+    {
+        return evaluate_guard_on_values(guard, values).map(|holds| {
+            if holds {
+                Predicate::True
+            } else {
+                Predicate::False
+            }
+        });
+    }
+    if paths.iter().all(|path| {
+        path != subject && !path.is_descendant_of(subject) && !subject.is_descendant_of(path)
+    }) {
+        return Some(guard.predicate());
+    }
+    let specialize = |guard| specialize_dependency_guard(guard, subject, values);
+    match guard {
+        ConditionalGuard::Not(inner) => Some(specialize(inner.as_ref())?.negated()),
+        ConditionalGuard::AllOf(parts) | ConditionalGuard::AnyOf(parts) => {
+            let parts = parts.iter().map(specialize).collect::<Option<Vec<_>>>()?;
+            Some(if matches!(guard, ConditionalGuard::AllOf(_)) {
+                Predicate::all(parts)
+            } else {
+                Predicate::Or(parts)
+            })
+        }
+        ConditionalGuard::Decision(graph) => {
+            let mut nodes = vec![Predicate::False, Predicate::True];
+            for RequirementDecision {
+                test,
+                when_true,
+                when_false,
+            } in graph.decisions()
+            {
+                let test = specialize(test)?;
+                let yes = nodes.get(*when_true)?;
+                let no = nodes.get(*when_false)?;
+                nodes.push(if test == Predicate::True || yes == no {
+                    yes.clone()
+                } else if test == Predicate::False {
+                    no.clone()
+                } else {
+                    Predicate::Or(vec![
+                        Predicate::all(vec![test.clone(), yes.clone()]),
+                        Predicate::all(vec![test.negated(), no.clone()]),
+                    ])
+                });
+            }
+            nodes.get(graph.root()).cloned()
+        }
+        _ => None,
+    }
 }
 
 fn evaluate_known_guard_on_values(

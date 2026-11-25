@@ -58,6 +58,8 @@ impl Store {
                                         multiplicity: previous.multiplicity,
                                         data: ObjectData::Widened {
                                             inputs: Rc::clone(inputs),
+                                            // The writer may store any reached reference.
+                                            reachable: Reach::Bounded(Rc::clone(objects)),
                                         },
                                     }),
                                 );
@@ -112,18 +114,17 @@ fn write_field(
                     tracing::debug_span!(target: "helm_schema_ir::counters::heap_store", "object_widened", reason = "field_count").in_scope(|| {});
                     storage.data = ObjectData::Widened {
                         inputs: Rc::new(super::heap_snapshot::data_inputs(parent, &storage.data)),
+                        reachable: super::heap::data_reach(&storage.data),
                     };
                 }
             }
-            ObjectData::Widened { inputs } => {
+            ObjectData::Widened { inputs, reachable } => {
                 storage.data = ObjectData::Map {
                     fields: Rc::new(super::ObjectFields::from_iter([(
                         key.to_owned(),
                         field.clone(),
                     )])),
-                    remainder: Remainder::Unknown {
-                        inputs: Rc::clone(inputs),
-                    },
+                    remainder: super::layers::unknown_members(inputs, reachable),
                 };
             }
             ObjectData::Strings(_) | ObjectData::Opaque { reachable: _ } => {}
@@ -196,15 +197,29 @@ fn join_object(
             )
             .unwrap_or_else(|_| ObjectData::Widened {
                 inputs: Rc::new(BTreeSet::from([ValuesPath::default()])),
+                reachable: super::heap::data_reach(&yes_object.data)
+                    .union(&super::heap::data_reach(&no_object.data)),
             });
             if budget.is_exhausted() {
                 data = ObjectData::Widened {
                     inputs: Rc::new(BTreeSet::from([ValuesPath::default()])),
+                    reachable: super::heap::data_reach(&yes_object.data)
+                        .union(&super::heap::data_reach(&no_object.data)),
                 };
             }
-            if let ObjectData::Widened { inputs } = &mut data {
+            if let ObjectData::Widened {
+                inputs,
+                reachable: _,
+            } = &mut data
+            {
                 for (branch, storage) in [(yes, &yes_object), (no, &no_object)] {
-                    if !matches!(storage.data, ObjectData::Widened { inputs: _ }) {
+                    if !matches!(
+                        storage.data,
+                        ObjectData::Widened {
+                            inputs: _,
+                            reachable: _,
+                        }
+                    ) {
                         let added = FrozenValue::object_inputs(branch, object, storage, budget);
                         if !added.is_subset(inputs) {
                             Rc::make_mut(inputs).extend(added);

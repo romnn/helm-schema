@@ -16,7 +16,8 @@ use serde_yaml::Value as YamlValue;
 
 use crate::condition_encoding::{
     AbsenceDefaults, ConditionFragmentCache, ConditionPolarity, EncodedConditionPlan,
-    EncodedConjunction, evaluate_guard_set_on_values, input_path_present_condition,
+    EncodedConjunction, evaluate_guard_set_on_values, guard_ignores_default_presence,
+    input_path_present_condition,
 };
 use crate::emission_report::{LintDocument, LintOutcome, LintWithdrawal};
 use crate::lint_validators::{ConstraintValidator, LintValidators};
@@ -47,6 +48,8 @@ struct FloorPrefixFacts {
 struct DependencyBoundaryKey {
     anchor: ValuesPath,
     roots: BTreeSet<Vec<String>>,
+    composed: usize,
+    runtime: usize,
 }
 
 #[derive(Default)]
@@ -154,7 +157,7 @@ impl LintDecidingContext {
 struct FailingLintProofDocuments<'a> {
     raw: Option<&'a Value>,
     floor: Vec<&'a Value>,
-    dependency_boundaries: &'a BTreeSet<Vec<String>>,
+    dependency_boundaries: Option<GuardEncoding<'a>>,
 }
 
 struct LintProofConstraint<'a> {
@@ -597,12 +600,9 @@ impl<'a> UncoalescedRootGate<'a> {
         let Some(partitions) = partition_lint_verdicts(graph, &instances, observe) else {
             return Vec::new();
         };
-        let no_boundaries = BTreeSet::new();
-        let dependency_boundaries = if then_value == Value::Bool(false) {
-            encoding.absence.dependency_roots
-        } else {
-            &no_boundaries
-        };
+        let dependency_boundaries = (then_value == Value::Bool(false)
+            && !encoding.absence.dependency_roots.is_empty())
+        .then_some(encoding);
         let mut emissions = LintProofEmissions::default();
         for partition in partitions {
             let verdict = partition.context.join(&extras);
@@ -689,7 +689,7 @@ impl<'a> UncoalescedRootGate<'a> {
                 .collect::<Vec<_>>()
                 .into()
         };
-        if lint_document.is_none() && failing.dependency_boundaries.is_empty() {
+        if lint_document.is_none() && failing.dependency_boundaries.is_none() {
             emissions.kept.push(LintRequirement {
                 guards: row_with(graph.clone()),
                 then_value: then_value.clone(),
@@ -767,13 +767,9 @@ impl<'a> UncoalescedRootGate<'a> {
         failing: &FailingLintProofDocuments<'_>,
     ) -> LintDecidingContext {
         let mut context = LintDecidingContext::default();
-        if !failing.dependency_boundaries.is_empty() {
-            context.boundaries = self.collect_dependency_boundaries(
-                raw,
-                anchor,
-                std::iter::once(guard),
-                failing.dependency_boundaries,
-            );
+        if let Some(encoding) = failing.dependency_boundaries {
+            context.boundaries =
+                self.collect_dependency_boundaries(raw, anchor, std::iter::once(guard), encoding);
         }
         let keep_floor_guard = !failing.floor.is_empty() && holds_on(guard, floor_yaml);
         for document in failing
@@ -967,7 +963,7 @@ impl<'a> UncoalescedRootGate<'a> {
             &mut coalesced_instances,
         );
         let mut deciding_paths = if then_value == Value::Bool(false) {
-            self.dependency_boundary_paths(&anchor, guard_row, encoding.absence.dependency_roots)
+            self.dependency_boundary_paths(&anchor, guard_row, encoding)
         } else {
             BTreeSet::new()
         };
@@ -1039,6 +1035,59 @@ impl<'a> UncoalescedRootGate<'a> {
         kept
     }
 
+    /// Flat proofs already share their disjunction in the schema. An arm
+    /// can relax only the presence tests imposed by its siblings.
+    pub(crate) fn terminal_omission_alternatives(
+        &self,
+        ancestor: &[String],
+        guards: &GuardConjunction,
+        encoding: GuardEncoding<'_>,
+    ) -> Vec<GuardConjunction> {
+        if self.uncoalesced_root.is_none() || encoding.absence.dependency_roots.is_empty() {
+            return Vec::new();
+        }
+        let Some((index, ConditionalGuard::AnyOf(arms))) = guards
+            .iter()
+            .enumerate()
+            .find(|(_, guard)| matches!(guard, ConditionalGuard::AnyOf(_)))
+        else {
+            return Vec::new();
+        };
+        let anchor = ValuesPath::from_segments(
+            ancestor
+                .iter()
+                .map(|segment| Segment::from_encoded_component(segment)),
+        );
+        let joint = self.dependency_boundary_paths(&anchor, guards, encoding);
+        if joint.is_empty() {
+            return Vec::new();
+        }
+        let mut independent = Vec::new();
+        for arm in arms.iter() {
+            let mut row = guards
+                .iter()
+                .enumerate()
+                .filter(|(offset, _)| *offset != index)
+                .map(|(_, guard)| guard.clone())
+                .collect::<Vec<_>>();
+            if let ConditionalGuard::AllOf(members) = arm {
+                row.extend(members.iter().cloned());
+            } else {
+                row.push(arm.clone());
+            }
+            let row = GuardConjunction::from(row);
+            let boundaries = self.dependency_boundary_paths(&anchor, &row, encoding);
+            if joint.iter().any(|path| {
+                !boundaries
+                    .iter()
+                    .any(|kept| kept == path || kept.is_descendant_of(path))
+            }) {
+                independent.push(row);
+            }
+        }
+        independent
+    }
+
     /// The inputs whose absence can select a dependency refill or a default
     /// omitted from raw lint values, independently of the defaults' liveness.
     ///
@@ -1051,8 +1100,9 @@ impl<'a> UncoalescedRootGate<'a> {
         &self,
         anchor: &ValuesPath,
         guards: &GuardConjunction,
-        dependency_roots: &BTreeSet<Vec<String>>,
+        encoding: GuardEncoding<'_>,
     ) -> BTreeSet<ValuesPath> {
+        let dependency_roots = encoding.absence.dependency_roots;
         let Some(raw) = self
             .uncoalesced_root
             .filter(|_| !dependency_roots.is_empty())
@@ -1062,26 +1112,21 @@ impl<'a> UncoalescedRootGate<'a> {
         let Some(((prefix, extras), (_, floor))) =
             guards.canonical_parts().zip(self.lint_floor.as_ref())
         else {
-            let boundaries =
-                self.collect_dependency_boundaries(raw, anchor, guards, dependency_roots);
+            let boundaries = self.collect_dependency_boundaries(raw, anchor, guards, encoding);
             return dependency_boundary_leaves(boundaries.iter());
         };
-        let extra_boundaries =
-            self.collect_dependency_boundaries(raw, anchor, extras, dependency_roots);
+        let extra_boundaries = self.collect_dependency_boundaries(raw, anchor, extras, encoding);
         let facts = self.floor_prefix_facts(prefix, floor);
         let mut cached = facts.dependency_boundaries.borrow_mut();
         let boundaries = cached
             .entry(DependencyBoundaryKey {
                 anchor: anchor.clone(),
                 roots: dependency_roots.clone(),
+                composed: std::ptr::from_ref(encoding.values_yaml_doc).addr(),
+                runtime: std::ptr::from_ref(encoding.absence.runtime_defaults).addr(),
             })
             .or_insert_with(|| {
-                self.collect_dependency_boundaries(
-                    raw,
-                    anchor,
-                    prefix.canonical().iter(),
-                    dependency_roots,
-                )
+                self.collect_dependency_boundaries(raw, anchor, prefix.canonical().iter(), encoding)
             });
         dependency_boundary_leaves(boundaries.union(&extra_boundaries))
     }
@@ -1091,30 +1136,38 @@ impl<'a> UncoalescedRootGate<'a> {
         raw: &Value,
         anchor: &ValuesPath,
         guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
-        dependency_roots: &BTreeSet<Vec<String>>,
+        encoding: GuardEncoding<'_>,
     ) -> BTreeSet<ValuesPath> {
-        let mut candidates = BTreeSet::new();
-        for guard in guards {
-            candidates.extend(guard.value_paths());
-            collect_tested_keys(guard, &mut candidates);
-        }
         let mut boundaries = BTreeSet::new();
-        for path in candidates {
-            let segments = path.segments().collect::<Vec<_>>();
-            for root in dependency_roots {
-                let root_path = ValuesPath::from_segments(root.iter().cloned().map(Segment::from));
-                if path != root_path && !path.is_descendant_of(&root_path) {
-                    continue;
+        for guard in guards {
+            let mut paths = guard.value_paths();
+            collect_tested_keys(guard, &mut paths);
+            for path in &paths {
+                let mut under_dependency = false;
+                for root in encoding.absence.dependency_roots {
+                    let root = ValuesPath::from_segments(root.iter().cloned().map(Segment::from));
+                    if path != &root && !path.is_descendant_of(&root) {
+                        continue;
+                    }
+                    under_dependency = true;
+                    // A missing dependency root can be recreated before template execution.
+                    if anchor != &root && !anchor.is_descendant_of(&root) {
+                        boundaries.insert(root);
+                    }
                 }
-                // A supplied table is observed directly; a missing or null
-                // dependency root can be recreated before template execution.
-                if anchor != &root_path && !anchor.is_descendant_of(&root_path) {
-                    boundaries.insert(root_path);
-                }
-                if presence_at(raw, &segments) != Presence::Value
-                    && presence_at(self.coalesced_defaults, &segments) == Presence::Value
-                {
-                    boundaries.insert(path.clone());
+                if under_dependency {
+                    let segments = path.segments().collect::<Vec<_>>();
+                    if presence_at(raw, &segments) != Presence::Value
+                        && presence_at(self.coalesced_defaults, &segments) == Presence::Value
+                        && !guard_ignores_default_presence(
+                            guard,
+                            path,
+                            encoding.values_yaml_doc,
+                            encoding.absence.runtime_defaults,
+                        )
+                    {
+                        boundaries.insert(path.clone());
+                    }
                 }
             }
         }

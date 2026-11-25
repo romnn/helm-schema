@@ -9,9 +9,8 @@ use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::local_crd_projection::collect_static_crd_universe;
 use super::manifest_contract::{
-    DefineCorpus, ManifestContractAnalysis, activation_predicate,
-    collect_manifest_contract_for_chart, helm_enabled_guard_sets,
-    optional_dependency_helpers_for_chart,
+    ManifestContractAnalysis, activation_predicate, collect_manifest_contract_for_charts,
+    helm_enabled_guard_sets,
 };
 use super::values_seed::seed_top_level_values_yaml_keys;
 use crate::chart;
@@ -36,35 +35,24 @@ pub(crate) fn analyze_charts(
     let mut contract = ContractIr::default();
     let mut local_schema_universe = collect_static_crd_universe(charts)?;
     seed_dependency_control_hints(charts, &mut contract);
-    let define_corpus = DefineCorpus::build(charts, &parsed_defines);
     let dependency_global_ownership = chart::build_dependency_global_ownership(charts)?;
-    for chart in charts {
-        if chart.is_library {
-            continue;
-        }
-        let symbolic_context = SymbolicIrContext::with_parsed_policy(
-            &parsed_defines,
-            SymbolicPolicy {
-                chart_default_strings: values_roots
-                    .string_defaults_for_prefix(&chart.values_prefix),
-                kubernetes_version: kubernetes_version.map(str::to_string),
-                static_root_strings: chart.static_root_strings.clone(),
-            },
-        );
-        let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, &define_corpus);
-        let ManifestContractAnalysis {
-            contract: manifest_contract,
-            local_resource_schemas,
-        } = collect_manifest_contract_for_chart(
-            chart,
-            &symbolic_context,
-            &optional_helpers,
-            &define_corpus,
-        )?;
-        contract.append(manifest_contract);
-        for resource_schema in local_resource_schemas {
-            local_schema_universe.insert_resource_schema(resource_schema);
-        }
+    // One Helm render over every chart instance: chart-authored strings and `.Chart` metadata
+    // are keyed by root-relative paths and instance roots.
+    let symbolic_context = SymbolicIrContext::with_parsed_policy(
+        &parsed_defines,
+        SymbolicPolicy {
+            chart_default_strings: values_roots.string_defaults.clone(),
+            kubernetes_version: kubernetes_version.map(str::to_string),
+            static_root_strings: std::collections::BTreeMap::new(),
+        },
+    );
+    let ManifestContractAnalysis {
+        contract: manifest_contract,
+        local_resource_schemas,
+    } = collect_manifest_contract_for_charts(charts, &symbolic_context)?;
+    contract.append(manifest_contract);
+    for resource_schema in local_resource_schemas {
+        local_schema_universe.insert_resource_schema(resource_schema);
     }
 
     // Helm coalesces a values table for EVERY loaded dependency instance,

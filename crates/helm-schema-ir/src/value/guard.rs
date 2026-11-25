@@ -804,6 +804,15 @@ impl FrozenTest {
         .then_some([&self.when_true, &self.when_false])
     }
 
+    /// Whether this selects between joined paths that no input predicate tells apart: its sides
+    /// differ only in the runtime path that reached them.
+    pub(super) fn is_opaque_choice(&self) -> bool {
+        self.runtime.is_some()
+            && self.coverage != Coverage::Exact
+            && self.when_true == Predicate::False
+            && self.when_false == Predicate::False
+    }
+
     pub(super) fn possible_predicate(&self, taken: bool) -> Predicate {
         if self.coverage == Coverage::Exact {
             if taken {
@@ -1823,6 +1832,18 @@ fn tail_edges(tail: &[&PathLink], kept: impl Fn(LinkKind) -> bool) -> Vec<Decisi
 }
 
 impl Arena {
+    /// The test that every assumption link of `path` holds, or `None` when it has none.
+    pub(super) fn assumption_test(&self, path: &Path) -> Option<Rc<FrozenTest>> {
+        let links = path.links();
+        let edges = tail_edges(&links, |kind| kind == LinkKind::Assume);
+        if edges.is_empty() {
+            return None;
+        }
+        let mut store = self.guards.borrow_mut();
+        let guard = store.conjunction(&edges, &self.next_decision);
+        Some(self.guard_test(&mut store, guard))
+    }
+
     /// Conjoins one edge to a guard, under its own allowance (ADR 0072 §10).
     pub(super) fn conjoin_edge(&self, guard: &RuntimeGuard, edge: &DecisionEdge) -> RuntimeGuard {
         let mut store = self.guards.borrow_mut();

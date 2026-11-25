@@ -21,8 +21,8 @@ use conditional_overlays::{
     collapse_layered_truthy_gates, collect_paths_with_descendants, extend_lowerable_predicate,
     hard_negation_paths, lowerable_conditional_guard_set, lowerable_conditional_guard_subset,
     member_local_truthy_selector, path_contains_wildcard, predicate_is_structural_ancestor_guard,
-    predicate_tests_source_type, predicate_to_guard, provider_schema_use,
-    range_guard_is_iteration_ancestor, ranged_member_parent, terminal_clause_guard,
+    predicate_to_guard, provider_schema_use, range_guard_is_iteration_ancestor,
+    ranged_member_parent, terminal_clause_guard,
 };
 use contract_rows::{
     ContractPathAccumulator, MemberAccessConditions, PathSchemaFactsAccumulator,

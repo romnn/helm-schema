@@ -385,7 +385,13 @@ fn persistent_store_summary_field_retention_widens_only_its_object() -> eyre::Re
             .version
             .object(&target)
             .ok_or_eyre("summary map missing")?;
-        if matches!(stored.data, ObjectData::Widened { inputs: _ }) {
+        if matches!(
+            stored.data,
+            ObjectData::Widened {
+                inputs: _,
+                reachable: _,
+            }
+        ) {
             widened = true;
             break;
         }
@@ -449,7 +455,7 @@ fn persistent_store_coverage_diff_visits_only_changed_explicit_objects() -> eyre
     sim_assert_eq!(have: visited, want: BTreeSet::new());
     assert!(epoch.store.is_fallback(&target));
     let fallback = epoch.store.object(&target).ok_or_eyre("fallback missing")?;
-    sim_assert_eq!(have: &fallback.data, want: &ObjectData::Widened { inputs });
+    sim_assert_eq!(have: &fallback.data, want: &ObjectData::Widened { inputs, reachable: crate::value::Reach::Top });
     Ok(())
 }
 
@@ -470,6 +476,7 @@ fn persistent_store_explicit_and_epoch_views_match_sparse_point_lookups() -> eyr
                     object,
                     ObjectData::Widened {
                         inputs: Rc::clone(inputs),
+                        reachable: crate::value::Reach::Top,
                     },
                 );
             }

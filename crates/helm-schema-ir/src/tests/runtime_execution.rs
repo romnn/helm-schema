@@ -397,15 +397,15 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
         );
     }
 
-    super::operations::invalidate(&mut state);
+    // An unknown write that reaches every object.
+    super::operations::invalidate_all(&mut state);
     let object = state
         .heap
         .version
         .object(&saved_id)
         .ok_or_eyre("saved object missing")?;
-    let ObjectData::Widened { inputs } = &object.data else {
-        eyre::bail!("invalidation retained an exact object");
-    };
+    let inputs =
+        widened_inputs(&object.data).ok_or_eyre("invalidation retained an exact object")?;
     let shared_inputs = Rc::clone(inputs);
     sim_assert_eq!(have: shared_inputs.len(), want: 256);
     for object in state
@@ -415,9 +415,8 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
         .into_iter()
         .filter_map(|id| state.heap.version.object(&id))
     {
-        let ObjectData::Widened { inputs } = &object.data else {
-            eyre::bail!("invalidation retained an exact object");
-        };
+        let inputs =
+            widened_inputs(&object.data).ok_or_eyre("invalidation retained an exact object")?;
         assert!(Rc::ptr_eq(&shared_inputs, inputs));
     }
 
@@ -459,9 +458,7 @@ fn invalidation_shares_inputs_and_preserves_frozen_objects() -> eyre::Result<()>
         if id == saved_id {
             continue;
         }
-        let ObjectData::Widened { inputs } = &object.data else {
-            eyre::bail!("peer recovered an exact object");
-        };
+        let inputs = widened_inputs(&object.data).ok_or_eyre("peer recovered an exact object")?;
         assert!(Rc::ptr_eq(&shared_inputs, inputs));
     }
     let old = frozen
@@ -517,6 +514,7 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
                 multiplicity: Multiplicity::Singleton,
                 data: ObjectData::Widened {
                     inputs: Rc::clone(&yes_inputs),
+                    reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
                 },
             },
         );
@@ -527,6 +525,7 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
                 multiplicity: Multiplicity::Singleton,
                 data: ObjectData::Widened {
                     inputs: Rc::clone(&no_inputs),
+                    reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
                 },
             },
         );
@@ -542,7 +541,11 @@ fn joining_widened_objects_shares_the_union_of_branch_inputs() -> eyre::Result<(
             .version
             .object(&id)
             .ok_or_eyre("joined object missing")?;
-        let ObjectData::Widened { inputs } = &object.data else {
+        let ObjectData::Widened {
+            inputs,
+            reachable: _,
+        } = &object.data
+        else {
             eyre::bail!("join recovered an exact object");
         };
         sim_assert_eq!(have: inputs.as_ref(), want: &yes_inputs.union(&no_inputs).cloned().collect());
@@ -1227,6 +1230,7 @@ fn widened_heap_join_keeps_both_sides_transitive_input_dependencies() -> eyre::R
                 inputs: Rc::new(BTreeSet::from([helm_schema_core::ValuesPath::parse(
                     "lost",
                 )])),
+                reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
             },
         },
     );
@@ -1584,6 +1588,28 @@ mod render_session {
     use helm_schema_ast::DefineIndex;
     use helm_schema_core::Predicate;
     use test_util::prelude::sim_assert_eq;
+
+    /// Sprig's path normalization leaves the next file's input guard intact.
+    #[test]
+    fn clean_preserves_inputs_across_files() {
+        let db = IrAnalysisDb::new(&DefineIndex::new());
+        let sources = [
+            SymbolicTemplate {
+                source: r#"{{ if .Values.stop }}{{ fail "stopped" }}{{ end }}"#,
+                source_path: "chart/templates/a-check.yaml",
+            },
+            SymbolicTemplate {
+                source: r#"{{ $_ := clean "etc/conf/../tls" }}"#,
+                source_path: "chart/templates/z-path.yaml",
+            },
+        ];
+        let execution = execute_documents(&sources, &db);
+        assert!(
+            execution
+                .iter()
+                .any(|document| { document.abort_predicate() == Predicate::truthy_path("stop") })
+        );
+    }
 
     #[test]
     fn reverse_lexical_file_order_preserves_the_writer_before_the_reader() {
@@ -2625,6 +2651,7 @@ mod conditional_input_backing_laws {
                 multiplicity: crate::value::Multiplicity::Singleton,
                 data: ObjectData::Widened {
                     inputs: Rc::new(input.inputs()),
+                    reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
                 },
             },
         );
@@ -3744,5 +3771,23 @@ impl DocumentExecution {
         &self,
     ) -> impl Iterator<Item = crate::value::yaml::PlacedDocument<'_>> {
         self.placement.inspection_documents()
+    }
+}
+
+/// The input set of a widened object; `None` for exact storage.
+fn widened_inputs(
+    data: &super::ObjectData,
+) -> Option<&std::rc::Rc<std::collections::BTreeSet<helm_schema_core::ValuesPath>>> {
+    match data {
+        super::ObjectData::Widened {
+            inputs,
+            reachable: _,
+        } => Some(inputs),
+        super::ObjectData::Map {
+            fields: _,
+            remainder: _,
+        }
+        | super::ObjectData::Strings(_)
+        | super::ObjectData::Opaque { reachable: _ } => None,
     }
 }

@@ -103,6 +103,7 @@ impl Store {
                 multiplicity,
                 data: ObjectData::Widened {
                     inputs: Rc::clone(inputs),
+                    reachable: super::Reach::Top,
                 },
             })
         };

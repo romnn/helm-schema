@@ -52,7 +52,10 @@ pub(super) struct ObjectRegions {
 impl From<&ObjectData> for ObjectRegions {
     fn from(data: &ObjectData) -> Self {
         match data {
-            ObjectData::Widened { inputs }
+            ObjectData::Widened {
+                inputs,
+                reachable: _,
+            }
             | ObjectData::Map {
                 fields: _,
                 remainder: Remainder::Unknown { inputs },
@@ -60,9 +63,20 @@ impl From<&ObjectData> for ObjectRegions {
                 original: true,
                 inputs: (!inputs.is_empty()).then(|| Rc::clone(inputs)),
             },
+            // Unknown members keep the regions they depend on.
             ObjectData::Map {
                 fields: _,
-                remainder: Remainder::Open | Remainder::Layered(_),
+                remainder: Remainder::Layered(layers),
+            } => Self {
+                original: true,
+                inputs: layers
+                    .unknown_inputs()
+                    .filter(|inputs| !inputs.is_empty())
+                    .map(Rc::clone),
+            },
+            ObjectData::Map {
+                fields: _,
+                remainder: Remainder::Open,
             } => Self {
                 original: true,
                 inputs: None,
@@ -273,7 +287,26 @@ pub(super) fn project(
     roots: &[&HeapVersion],
     reads: &mut super::read_set::ReadSet,
 ) {
-    for path in paths(inputs, roots) {
+    // Every continuation of a file observes the same joined heaps; their regions are found once.
+    let key = (
+        inputs.id(),
+        roots.iter().map(|root| root.id.ordinal).collect::<Vec<_>>(),
+    );
+    let arena = roots.first().and_then(|root| root.arena.upgrade());
+    let cached = arena
+        .as_ref()
+        .and_then(|arena| arena.region_paths.borrow().get(&key).cloned());
+    let found = cached.unwrap_or_else(|| {
+        let found = Rc::new(paths(inputs, roots));
+        if let Some(arena) = &arena {
+            arena
+                .region_paths
+                .borrow_mut()
+                .insert(key, Rc::clone(&found));
+        }
+        found
+    });
+    for path in found.iter().cloned() {
         reads.insert(super::RuntimeRead {
             path,
             condition: condition.clone(),

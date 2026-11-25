@@ -448,8 +448,24 @@ fn parameter_nil(expected: GoType) -> Option<super::Value> {
 
 pub(super) fn refined_parameter(value: &super::Value, expected: GoType) -> super::Value {
     use super::{Datum, Leaf, ScalarType, TypeCoverage, UnknownValue, Value, ValueNode};
-    let ValueNode::Leaf(Leaf { datum: _, origin }) = value.node.as_ref() else {
+    let ValueNode::Leaf(Leaf { datum, origin }) = value.node.as_ref() else {
         return value.clone();
+    };
+    // A refined value references what it did.
+    let aliases = match datum {
+        Datum::Unknown(UnknownValue { types: _, aliases }) => aliases.clone(),
+        Datum::Text(_)
+        | Datum::Scalar {
+            go_type: _,
+            content: _,
+        }
+        | Datum::Map { view: _, target: _ }
+        | Datum::Sequence(_)
+        | Datum::Strings(_)
+        | Datum::Slot {
+            backing: _,
+            index: _,
+        } => super::heap::values_reach(std::slice::from_ref(value)),
     };
     let scalar = match expected {
         GoType::Nil => Some(ScalarType::Nil),
@@ -480,7 +496,7 @@ pub(super) fn refined_parameter(value: &super::Value, expected: GoType) -> super
                 | GoType::Float64
                 | GoType::Unknown => TypeCoverage::Unresolved,
             },
-            aliases: super::Reach::Top,
+            aliases,
         })
     };
     Value {

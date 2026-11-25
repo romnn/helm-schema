@@ -1,3 +1,4 @@
+use super::conditional_overlays::RowGuardQueries;
 use super::{
     BTreeMap, BTreeSet, ContractRequirementImplication, ContractRequirementTarget,
     ContractSchemaSignals, ContractUse, ContractValuePathFacts, FailValueRequirement,
@@ -14,13 +15,17 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
-    for contract_use in uses {
-        record_contract_use(
-            &mut paths,
-            contract_use,
-            &observed_facts.range_modes,
-            predicate_memo,
-        );
+    {
+        let mut row_guards = RowGuardQueries::default();
+        for contract_use in uses {
+            record_contract_use(
+                &mut paths,
+                contract_use,
+                &observed_facts.range_modes,
+                predicate_memo,
+                &mut row_guards,
+            );
+        }
     }
     for capture in &observed_facts.captures {
         record_fail_conjunction(

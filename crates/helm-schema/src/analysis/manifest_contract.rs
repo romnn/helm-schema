@@ -1,36 +1,67 @@
 use helm_schema_ast::contains_template_action;
-use helm_schema_ir::{ContractIr, Guard, SymbolicIrContext, SymbolicTemplate};
+use helm_schema_ir::{
+    ContractIr, GraphContracts, Guard, SymbolicChart, SymbolicIrContext, SymbolicTemplate,
+};
 use helm_schema_k8s::LocalResourceSchema;
 
 use super::local_crd_projection::local_resource_schemas_from_template_source;
 use crate::chart;
 use crate::error::EngineResult;
 
-#[tracing::instrument(skip_all, fields(prefix_len = chart.values_prefix.len()))]
-pub(crate) fn collect_manifest_contract_for_chart(
-    chart: &chart::ChartContext,
+/// Executes every chart instance's templates as one Helm render (ADR 0072 §8).
+///
+/// Values reads carry their root-relative input identity, so no contract path is rescoped by
+/// the file that consumed it. Dependency globals are still projected through Helm's
+/// parent-first coalesce per owning chart until the heap carries the coalesced global maps.
+#[tracing::instrument(skip_all, fields(charts = charts.len()))]
+pub(crate) fn collect_manifest_contract_for_charts(
+    charts: &[chart::ChartContext],
     symbolic_context: &SymbolicIrContext,
-    optional_helpers: &[OptionalDependencyHelpers],
-    corpus: &DefineCorpus<'_>,
 ) -> EngineResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
-    let activation_guard_sets = chart_activation_guard_sets(&chart.dependency_activation_chain);
-
-    let manifests = chart
-        .files
-        .files_with_role(chart::FileRole::ManifestTemplate);
-    let notes = chart.files.files_with_role(chart::FileRole::NotesTemplate);
-    let files = manifests
-        .map(|file| (file, false))
-        .chain(notes.map(|file| (file, true)))
-        .filter_map(|(file, textual)| Some((file, file.text_name()?, textual)))
-        .map(|(file, name, textual)| {
+    let mut graph = Vec::new();
+    let mut loaded = Vec::new();
+    for chart in charts {
+        let mut static_root_strings = chart.static_root_strings.clone();
+        // An aliased dependency renders under its alias (`chart/v2/util/dependencies.go:122`).
+        if let Some(name) = chart.values_prefix.last() {
+            static_root_strings.insert(vec!["Chart".to_owned(), "Name".to_owned()], name.clone());
+        }
+        graph.push(SymbolicChart {
+            namespace: chart.template_namespace.clone(),
+            values_path: values_root_path(&chart.values_prefix),
+            enabled: activation_predicate(helm_enabled_guard_sets(
+                &chart.dependency_activation_chain,
+            )),
+            static_root_strings,
+        });
+        // Helm parses only a library chart's partials (`engine.go:592`).
+        if chart.is_library {
+            continue;
+        }
+        // Helm executes every template that is not a partial; NOTES.txt is not a manifest.
+        let manifests = chart
+            .files
+            .files_with_role(chart::FileRole::ManifestTemplate)
+            .map(|file| (file, false));
+        let notes = chart
+            .files
+            .files_with_role(chart::FileRole::NotesTemplate)
+            .map(|file| (file, true));
+        for (file, textual) in manifests.chain(notes) {
+            loaded.push((chart, file, file.template_name(), textual));
+        }
+    }
+    let files = loaded
+        .iter()
+        .map(|(chart, file, name, textual)| {
             Ok(ManifestSource {
                 path: &file.path,
                 name: chart::template_execution_name(chart, name),
                 source: file.source()?,
-                textual,
+                textual: *textual,
+                values_prefix: &chart.values_prefix,
             })
         })
         .collect::<EngineResult<Vec<_>>>()?;
@@ -41,57 +72,36 @@ pub(crate) fn collect_manifest_contract_for_chart(
             source_path: &file.name,
         })
         .collect();
-    let contracts = symbolic_context.generate_contract_irs_for_sources(&sources);
-    let mut scoped_paths = std::collections::BTreeMap::new();
+    let GraphContracts {
+        files: contracts,
+        startup,
+    } = symbolic_context.generate_contract_irs_for_render_graph(&sources, &graph);
+    contract.append(startup);
     for (file, mut manifest_contract) in files.iter().zip(contracts) {
-        let source = file.source;
-        // NOTES executes in the same schedule, but its prose is not a YAML manifest.
-        let template_local_resource_schemas = if file.textual {
+        // NOTES and other non-YAML templates execute in the same schedule, but their text is
+        // not a YAML manifest.
+        if file.textual {
             manifest_contract.mark_rendered_output_textual();
-            Vec::new()
         } else {
-            local_resource_schemas_from_template_source(
-                source,
+            local_resource_schemas.extend(local_resource_schemas_from_template_source(
+                file.source,
                 file.path,
-                contains_template_action(source)?,
-            )
-        };
-        manifest_contract.map_value_paths_shared(|path| {
-            scoped_paths
-                .entry(path)
-                .or_insert_with_key(|path| {
-                    helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
-                        &path.encode(),
-                        &chart.values_prefix,
-                    ))
-                })
-                .clone()
-        });
-        manifest_contract.project_dependency_global_contracts(&chart.values_prefix);
-        // Rendering this template unconditionally reaches these helper
-        // names; a name only an inactive optional dependency defines aborts
-        // with "no template". The activation predicates are already
-        // root-relative, so the clause is added AFTER this chart's own path
-        // scoping and BEFORE its activation guards (an optional chart's
-        // clause must itself only fire while the chart is active).
-        if !optional_helpers.is_empty() {
-            let reached = unconditional_include_closure(source, corpus);
-            for entry in optional_helpers {
-                if reached.iter().any(|name| entry.helper_names.contains(name)) {
-                    manifest_contract.add_terminal_fail_condition(entry.inactive.clone());
-                }
-            }
+                contains_template_action(file.source)?,
+            ));
         }
-        manifest_contract =
-            apply_chart_activation_guard_sets(manifest_contract, &activation_guard_sets);
+        manifest_contract.project_dependency_global_contracts(file.values_prefix);
         contract.append(manifest_contract);
-        local_resource_schemas.extend(template_local_resource_schemas);
     }
-
     Ok(ManifestContractAnalysis {
         contract,
         local_resource_schemas,
     })
+}
+
+fn values_root_path(prefix: &[String]) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::from_segments(
+        prefix.iter().cloned().map(helm_schema_core::Segment::from),
+    )
 }
 
 struct ManifestSource<'a> {
@@ -99,6 +109,7 @@ struct ManifestSource<'a> {
     path: &'a str,
     name: String,
     textual: bool,
+    values_prefix: &'a [String],
 }
 
 pub(crate) struct ManifestContractAnalysis {
@@ -106,48 +117,16 @@ pub(crate) struct ManifestContractAnalysis {
     pub(crate) local_resource_schemas: Vec<LocalResourceSchema>,
 }
 
-fn apply_chart_activation_guard_sets(
-    contract: ContractIr,
-    activation_guard_sets: &[Vec<Guard>],
-) -> ContractIr {
-    if activation_guard_sets.is_empty() {
-        return contract;
-    }
-
-    let mut activated_contract = ContractIr::default();
-    for guards in activation_guard_sets {
-        let mut guarded_contract = contract.clone();
-        guarded_contract.append_guards_to_all_uses(guards);
-        activated_contract.append(guarded_contract);
-    }
-    activated_contract
-}
-
-/// The activation alternatives for a whole ancestor chain: a nested chart
-/// renders only while EVERY level activates, so the alternatives are the
-/// cross product of the per-level guard sets. An empty result means the
-/// chart is unconditionally active.
-pub(crate) fn chart_activation_guard_sets(
-    chain: &[chart::ChartDependencyActivation],
-) -> Vec<Vec<Guard>> {
-    chain_guard_sets(chain, level_activation_guard_sets)
-}
-
-/// Like [`chart_activation_guard_sets`], with Helm's own dependency
-/// enablement per level ([`helm_level_enabled_guard_sets`]).
+/// The activation alternatives for a whole ancestor chain, with Helm's own dependency
+/// enablement per level ([`helm_level_enabled_guard_sets`]): a nested chart renders only while
+/// EVERY level activates, so the alternatives are the cross product of the per-level guard
+/// sets. An empty result means the chart is unconditionally active.
 pub(crate) fn helm_enabled_guard_sets(
     chain: &[chart::ChartDependencyActivation],
 ) -> Vec<Vec<Guard>> {
-    chain_guard_sets(chain, helm_level_enabled_guard_sets)
-}
-
-fn chain_guard_sets(
-    chain: &[chart::ChartDependencyActivation],
-    level_guard_sets: fn(&chart::ChartDependencyActivation) -> Vec<Vec<Guard>>,
-) -> Vec<Vec<Guard>> {
     let mut product: Vec<Vec<Guard>> = Vec::new();
     for level in chain {
-        let level_sets = level_guard_sets(level);
+        let level_sets = helm_level_enabled_guard_sets(level);
         if level_sets.is_empty() {
             continue;
         }
@@ -226,41 +205,6 @@ fn helm_level_enabled_guard_sets(activation: &chart::ChartDependencyActivation) 
     guard_sets
 }
 
-fn level_activation_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
-    if !activation.legacy {
-        return helm_level_enabled_guard_sets(activation);
-    }
-    let condition_paths = normalized_ordered_paths(&activation.condition_paths);
-    let tag_paths = normalized_sorted_paths(&activation.tag_paths);
-
-    if condition_paths.is_empty() && tag_paths.is_empty() {
-        return Vec::new();
-    }
-
-    let mut guard_sets = Vec::new();
-    for (index, condition_path) in condition_paths.iter().enumerate() {
-        let mut guards = absent_guards(condition_paths.get(..index).unwrap_or_default());
-        guards.push(Guard::Truthy {
-            path: condition_path.clone(),
-        });
-        guard_sets.push(guards);
-    }
-
-    let mut fallback_guards = absent_guards(&condition_paths);
-    if tag_paths.is_empty() {
-        guard_sets.push(fallback_guards);
-    } else {
-        let mut tag_truthy_guards = fallback_guards.clone();
-        tag_truthy_guards.push(truthy_tag_guard(&tag_paths));
-        guard_sets.push(tag_truthy_guards);
-
-        fallback_guards.extend(absent_guards(&tag_paths));
-        guard_sets.push(fallback_guards);
-    }
-
-    guard_sets
-}
-
 fn trimmed_nonempty(paths: &[String]) -> impl Iterator<Item = helm_schema_core::ValuesPath> + '_ {
     paths.iter().filter_map(|path| {
         let path = path.trim();
@@ -284,170 +228,4 @@ fn normalized_sorted_paths(paths: &[String]) -> Vec<helm_schema_core::ValuesPath
     normalized.sort();
     normalized.dedup();
     normalized
-}
-
-fn absent_guards(paths: &[helm_schema_core::ValuesPath]) -> Vec<Guard> {
-    paths
-        .iter()
-        .cloned()
-        .map(|path| Guard::Absent { path })
-        .collect()
-}
-
-fn truthy_tag_guard(tag_paths: &[helm_schema_core::ValuesPath]) -> Guard {
-    match tag_paths {
-        [path] => Guard::Truthy { path: path.clone() },
-        paths => Guard::Or {
-            paths: paths.to_vec(),
-        },
-    }
-}
-
-/// Helper names owned SOLELY by one optional direct dependency of a chart,
-/// with the predicate under which that dependency is INACTIVE. An
-/// unconditionally reached include of such a helper aborts rendering with
-/// "no template" while the dependency is inactive, so the inactive states
-/// become terminal clauses on the including chart.
-pub(crate) struct OptionalDependencyHelpers {
-    pub(crate) helper_names: std::collections::BTreeSet<String>,
-    pub(crate) inactive: helm_schema_core::Predicate,
-}
-
-/// Everything the analysis knows about one define name.
-pub(crate) struct DefineFacts {
-    /// Every chart directory owning a file that defines the name: the deepest
-    /// chart whose directory contains the defining file. More than one owner
-    /// means the name's resolution is ambiguous and ownership-based reasoning
-    /// abstains.
-    owner_dirs: std::collections::BTreeSet<String>,
-}
-
-/// Per-define facts for the whole chart tree, parsed once per analysis.
-///
-/// Both consumers — include-closure walking (bodies) and sole-ownership
-/// decisions for optional dependencies (owner dirs) — read the same parse of
-/// the same helper files, so the corpus is one pass over the define index
-/// rather than two parallel projections that could drift.
-pub(crate) struct DefineCorpus<'a> {
-    defines: &'a helm_schema_ir::ParsedDefines,
-    facts: std::collections::BTreeMap<String, DefineFacts>,
-}
-
-impl<'a> DefineCorpus<'a> {
-    pub(crate) fn build(
-        charts: &[chart::ChartContext],
-        defines: &'a helm_schema_ir::ParsedDefines,
-    ) -> Self {
-        let mut facts: std::collections::BTreeMap<String, DefineFacts> =
-            std::collections::BTreeMap::new();
-        for name in defines.define_names() {
-            let mut owner_dirs = std::collections::BTreeSet::new();
-            for path in defines.define_source_paths(name) {
-                let owner = charts
-                    .iter()
-                    .map(|chart| chart.template_namespace.as_str())
-                    .filter(|namespace| template_in_namespace(path, namespace))
-                    .max_by_key(|namespace| namespace.len());
-                if let Some(owner) = owner {
-                    owner_dirs.insert(owner.to_string());
-                }
-            }
-            if defines.define_body(name).is_some() {
-                facts.insert(name.to_string(), DefineFacts { owner_dirs });
-            }
-        }
-        Self { defines, facts }
-    }
-
-    fn body(&self, name: &str) -> Option<&str> {
-        self.defines.define_body(name)
-    }
-
-    /// Define names whose every known owner lies inside `dir` (or is `dir`
-    /// itself). A name with no known owner is never "solely owned" — its
-    /// defining file is not a template of any chart in the tree.
-    fn names_owned_solely_under(&self, dir: &str) -> std::collections::BTreeSet<String> {
-        self.facts
-            .iter()
-            .filter(|(_, facts)| {
-                !facts.owner_dirs.is_empty()
-                    && facts
-                        .owner_dirs
-                        .iter()
-                        .all(|owner| owner == dir || owner.starts_with(&format!("{dir}/")))
-            })
-            .map(|(name, _)| name.clone())
-            .collect()
-    }
-}
-
-/// Whether a define-index path is one of the namespace's own templates.
-///
-/// Template names and chart namespaces nest the same way Helm nests them
-/// (`root`, `root/charts/kid`, `root/charts/kid/charts/grandkid`), so the
-/// owning chart is the longest namespace that prefixes the name on a
-/// segment boundary. A `.Files.Get` payload is keyed by its chart-relative
-/// path and belongs to no namespace.
-fn template_in_namespace(path: &str, namespace: &str) -> bool {
-    path.strip_prefix(namespace)
-        .is_some_and(|rest| rest.starts_with('/'))
-}
-
-pub(crate) fn optional_dependency_helpers_for_chart(
-    chart: &chart::ChartContext,
-    charts: &[chart::ChartContext],
-    corpus: &DefineCorpus<'_>,
-) -> Vec<OptionalDependencyHelpers> {
-    let mut out = Vec::new();
-    for dependency in charts {
-        let direct_child = dependency.values_prefix.len() == chart.values_prefix.len() + 1
-            && dependency.values_prefix.starts_with(&chart.values_prefix);
-        if !direct_child {
-            continue;
-        }
-        // The including chart's own activation guards are appended to its
-        // whole contract (terminal clauses included) AFTER these predicates
-        // are added, so the inactive predicate must cover only the edge
-        // RELATIVE to the including chart: the dependency's chain minus the
-        // parent's prefix.
-        let relative_chain = dependency
-            .dependency_activation_chain
-            .get(chart.dependency_activation_chain.len()..)
-            .unwrap_or_default();
-        let activation_sets = chart_activation_guard_sets(relative_chain);
-        if activation_sets.is_empty() {
-            continue;
-        }
-        let helper_names = corpus.names_owned_solely_under(&dependency.template_namespace);
-        if helper_names.is_empty() {
-            continue;
-        }
-        out.push(OptionalDependencyHelpers {
-            helper_names,
-            inactive: activation_predicate(activation_sets).negated(),
-        });
-    }
-    out
-}
-
-/// The transitive closure of helper names a template source reaches through
-/// UNCONDITIONAL includes: the source's own top-level includes, plus each
-/// reached helper body's top-level includes.
-pub(crate) fn unconditional_include_closure(
-    source: &str,
-    corpus: &DefineCorpus<'_>,
-) -> std::collections::BTreeSet<String> {
-    let mut reached = std::collections::BTreeSet::new();
-    let mut queue: Vec<String> = helm_schema_ast::unconditional_include_names(source)
-        .into_iter()
-        .collect();
-    while let Some(name) = queue.pop() {
-        if !reached.insert(name.clone()) {
-            continue;
-        }
-        if let Some(body) = corpus.body(&name) {
-            queue.extend(helm_schema_ast::unconditional_include_names(body));
-        }
-    }
-    reached
 }

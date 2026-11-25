@@ -55,15 +55,15 @@ impl RangeExits {
             .into_iter()
             .chain(backedge.into_iter().map(move |mut exit| {
                 if matches!(exit.flow, Flow::Normal(_)) {
+                    // A finished range statement references no object.
                     exit.flow = Flow::Normal(Normal {
-                        value: Value::unknown(),
+                        value: super::heap::unknown_member(&[], BTreeSet::new()),
                     });
                     if let Some(continuation) = &continuation {
                         exit.state.output.repeat(Rc::clone(continuation));
                     } else {
-                        exit.state
-                            .output
-                            .emit(exit.state.heap.freeze(&Value::influenced(source.inputs())));
+                        let unknown = super::heap::unknown_member(&[], source.inputs());
+                        exit.state.output.emit(exit.state.heap.freeze(&unknown));
                     }
                 }
                 exit
@@ -601,7 +601,8 @@ impl Executor<'_> {
                     bindings.assignment,
                 );
             }
-            let entries = match range_domain(&exit.state, &value.value, bindings.key.is_some()) {
+            let entries = match range_domain(&mut exit.state, &value.value, bindings.key.is_some())
+            {
                 RangeInput::Exact(entries) => entries,
                 RangeInput::Summary(summary) => {
                     results.extend(self.unknown_range(
@@ -722,8 +723,9 @@ impl Executor<'_> {
         let iteration = |mut state: State, entry_value: &Value, entry: Option<&RangeEntry>| {
             state.enter_scope(Some(entry_value.clone()));
             if let Some(name) = &bindings.key {
+                // A key is a string or an index: it references nothing.
                 let key = entry.map_or_else(
-                    || Value::influenced(value.inputs()),
+                    || super::heap::unknown_member(&[], value.inputs()),
                     |entry| entry.key.clone(),
                 );
                 bind_range(&mut state, name, key, bindings.assignment);
@@ -1076,7 +1078,7 @@ fn member_collection(state: &State, value: &Value) -> Option<helm_schema_core::V
     Some(path)
 }
 
-fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput {
+fn range_domain(state: &mut State, value: &Value, two_variables: bool) -> RangeInput {
     use super::kinds::GoType;
 
     let value = state.consumed_contents(value);
@@ -1097,9 +1099,16 @@ fn range_domain(state: &State, value: &Value, two_variables: bool) -> RangeInput
             let member = summarized_member(state, entries.as_slice(), value.inputs());
             RangeInput::Summary(RangeSummary { first, member })
         }
+        // A member references only what the collection reaches when the range begins.
         None => RangeInput::Summary(RangeSummary {
             first: None,
-            member: Value::influenced(value.inputs()),
+            member: Value::with_influences(
+                Value::leaf(Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Unresolved,
+                    aliases: super::operations::member_aliases(&value, state),
+                })),
+                value.inputs(),
+            ),
         }),
     }
 }
@@ -1122,17 +1131,21 @@ fn summarized_member(
             origin: _,
         }) = value.node.as_ref()
         else {
-            return Value::influenced(inputs);
+            return super::heap::unknown_member(&entry_values(entries), inputs);
         };
         if common.is_some_and(|common| common != *go_type) {
-            return Value::influenced(inputs);
+            return super::heap::unknown_member(&entry_values(entries), inputs);
         }
         common = Some(*go_type);
     }
     match common {
         Some(kind) => Value::with_influences(Value::scalar(kind, None), inputs),
-        None => Value::influenced(inputs),
+        None => super::heap::unknown_member(&entry_values(entries), inputs),
     }
+}
+
+fn entry_values(entries: &[RangeEntry]) -> Vec<Value> {
+    entries.iter().map(|entry| entry.value.clone()).collect()
 }
 
 fn integer_entries(value: &Value, two_variables: bool) -> RangeInput {
@@ -1305,6 +1318,51 @@ pub(super) fn bound_exits(exits: Vec<Exit>) -> Vec<Exit> {
     summarize_exits(exits)
 }
 
+/// What a group of exits summarized into one depends on and may reference.
+struct GroupDependencies {
+    inputs: std::collections::BTreeSet<helm_schema_core::ValuesPath>,
+    referenced: Vec<Value>,
+    reads: super::read_set::ReadSet,
+}
+
+fn group_dependencies(group: &[Exit]) -> GroupDependencies {
+    let mut inputs = std::collections::BTreeSet::new();
+    let mut referenced = Vec::new();
+    let mut snapshots = std::collections::BTreeSet::new();
+    let mut reads = super::read_set::ReadSet::default();
+    for exit in group {
+        for read in &exit.state.reads {
+            if read.coverage.is_requirement() {
+                continue;
+            }
+            inputs.insert(read.path.clone());
+            reads.insert(super::RuntimeRead {
+                path: read.path.clone(),
+                coverage: read.coverage,
+                condition: Predicate::True,
+            });
+        }
+        if snapshots.insert(exit.state.heap.version.id.ordinal) {
+            inputs.extend(exit.state.heap.freeze(&Value::unknown()).reachable_inputs());
+        }
+        for frame in &exit.state.frames {
+            for value in frame.bindings.values().chain(frame.dot.iter()) {
+                inputs.extend(value.inputs());
+                referenced.push(value.clone());
+            }
+        }
+        if let Flow::Normal(normal) = &exit.flow {
+            inputs.extend(normal.value.inputs());
+            referenced.push(normal.value.clone());
+        }
+    }
+    GroupDependencies {
+        inputs,
+        referenced,
+        reads,
+    }
+}
+
 pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
     let mut groups: Vec<Vec<Exit>> = Vec::new();
     for exit in exits {
@@ -1321,33 +1379,11 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
     groups
         .into_iter()
         .filter_map(|mut group| {
-            let mut inputs = std::collections::BTreeSet::new();
-            let mut snapshots = std::collections::BTreeSet::new();
-            let mut reads = super::read_set::ReadSet::default();
-            for exit in &group {
-                for read in &exit.state.reads {
-                    if read.coverage.is_requirement() {
-                        continue;
-                    }
-                    inputs.insert(read.path.clone());
-                    reads.insert(super::RuntimeRead {
-                        path: read.path.clone(),
-                        coverage: read.coverage,
-                        condition: Predicate::True,
-                    });
-                }
-                if snapshots.insert(exit.state.heap.version.id.ordinal) {
-                    inputs.extend(exit.state.heap.freeze(&Value::unknown()).reachable_inputs());
-                }
-                for frame in &exit.state.frames {
-                    for value in frame.bindings.values().chain(frame.dot.iter()) {
-                        inputs.extend(value.inputs());
-                    }
-                }
-                if let Flow::Normal(normal) = &exit.flow {
-                    inputs.extend(normal.value.inputs());
-                }
-            }
+            let GroupDependencies {
+                inputs,
+                referenced,
+                reads,
+            } = group_dependencies(&group);
             let mut representative = group.pop()?;
             // The summary widens only the continuation (ADR 0072 §10): every member's recorded
             // consumptions, reads, sites and text sites survive under their own conditions.
@@ -1377,13 +1413,15 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                 })
                 .collect();
             representative.state.reads = widened.union(&history);
+            // Each summary references only what some member's values referenced.
+            let summary = super::heap::unknown_member(&referenced, inputs.clone());
             for frame in &mut representative.state.frames {
                 let frame = Rc::make_mut(frame);
                 for value in frame.bindings.values_mut() {
-                    *value = Value::influenced(inputs.clone());
+                    *value = summary.clone();
                 }
                 if let Some(dot) = &mut frame.dot {
-                    *dot = Value::influenced(inputs.clone());
+                    *dot = summary.clone();
                 }
             }
             let test = representative.state.heap.arena.decision(
@@ -1404,7 +1442,7 @@ pub(super) fn summarize_exits(exits: Vec<Exit>) -> Vec<Exit> {
                     .freeze(&Value::influenced(inputs.clone())),
             );
             if let Flow::Normal(normal) = &mut representative.flow {
-                normal.value = Value::influenced(inputs);
+                normal.value = summary;
             }
             Some(representative)
         })
@@ -1462,10 +1500,11 @@ impl super::ExitBuffer {
 }
 impl super::StateBuffer {
     pub(super) fn push(&mut self, state: State) {
+        // A buffered continuation carries no value of its own: it references no object.
         self.exits.push(Exit {
             state,
             flow: Flow::Normal(Normal {
-                value: Value::unknown(),
+                value: super::heap::unknown_member(&[], std::collections::BTreeSet::new()),
             }),
         });
     }

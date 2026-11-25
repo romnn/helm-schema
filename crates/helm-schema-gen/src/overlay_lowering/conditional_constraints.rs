@@ -1815,6 +1815,25 @@ fn append_terminal_clause(
         }
         return;
     }
+    let alternatives = gate.terminal_omission_alternatives(ancestor_segments, guard_row, encoding);
+    for alternative in &alternatives {
+        let planned = gate.planned_conjunction(
+            alternative,
+            ancestor_segments,
+            values_yaml_doc,
+            absence,
+            encoding.polarity,
+        );
+        if let Some(then_schema) = gate.lint_safe_planned_then(
+            ancestor_segments,
+            alternative,
+            &planned,
+            Value::Bool(false),
+            encoding,
+        ) {
+            emissions.push(gate, ancestor_segments, planned, then_schema);
+        }
+    }
     let planned = gate.planned_conjunction(
         guard_row,
         ancestor_segments,

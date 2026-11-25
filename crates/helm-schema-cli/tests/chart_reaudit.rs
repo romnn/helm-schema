@@ -4043,7 +4043,8 @@ fn nats_extra_resources_items_must_be_objects() -> eyre::Result<()> {
 /// bitnami-postgresql's live parent templates unconditionally include
 /// `common.*` helpers that only the tagged `common` library defines:
 /// disabling the tag makes Helm abort with `no template
-/// "common.names.fullname"`, so the inactive tag states are terminal.
+/// "common.names.fullname"`. The schema reports that render abort at the
+/// root because the proof also uses the guards of the calling templates.
 #[test]
 fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> eyre::Result<()> {
     assert_chart_cases(
@@ -4051,7 +4052,7 @@ fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> eyre::Result<(
         vec![
             SemanticCase::rejected(
                 "explicitly disabled library tag",
-                "/tags",
+                "",
                 json!({ "tags": { "bitnami-common": false } }),
             ),
             SemanticCase::accepted(

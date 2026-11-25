@@ -169,7 +169,8 @@ impl Executor<'_> {
     ) -> Vec<Exit> {
         if *remaining == 0 {
             let inputs = state.heap.freeze(&value).inputs();
-            return normal(state, Value::influenced(inputs));
+            let member = super::heap::unknown_member(std::slice::from_ref(&value), inputs);
+            return normal(state, member);
         }
         *remaining -= 1;
         let consumed = state.consumed(&value);
@@ -185,7 +186,8 @@ impl Executor<'_> {
         }
         let Some(live) = state.selector_entry_domain(&value) else {
             let inputs = state.heap.freeze(&value).inputs();
-            return normal(state, Value::influenced(inputs));
+            let member = super::heap::unknown_member(std::slice::from_ref(&value), inputs);
+            return normal(state, member);
         };
         if state.heap.freeze(&state.consumed(&value)).go_type() == super::kinds::GoType::Nil {
             return normal(state, Value::invalid());
@@ -234,7 +236,8 @@ impl Executor<'_> {
     ) -> Vec<Exit> {
         if *remaining == 0 {
             let inputs = state.heap.freeze(value).inputs();
-            return normal(state, Value::influenced(inputs));
+            let member = super::heap::unknown_member(std::slice::from_ref(value), inputs);
+            return normal(state, member);
         }
         *remaining -= 1;
         let value = state.consumed(value);

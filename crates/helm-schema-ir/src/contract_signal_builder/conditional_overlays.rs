@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ContractUse, Guard, Predicate, ProviderSchemaUse,
     ValueKind, ValuesPath,
@@ -625,25 +627,68 @@ pub(super) fn guard_to_conditional_guard(
     ConditionalGuard::try_from(guard).ok()
 }
 
-/// Whether a conjunct tests the TYPE of `source_expr`, positively or under
-/// negation.
-pub(super) fn predicate_tests_source_type(predicate: &Predicate, source_expr: &str) -> bool {
-    let source_path = helm_schema_core::ValuesPath::parse(source_expr);
+/// Pure predicate queries shared by the rows of one signal derivation.
+#[derive(Default)]
+pub(super) struct RowGuardQueries {
+    evidence: ahash::AHashMap<Predicate, Option<Rc<RowGuardEvidence>>>,
+    type_tests: ahash::AHashMap<Predicate, BTreeSet<ValuesPath>>,
+}
+
+pub(super) struct RowGuardEvidence {
+    pub(super) guard: ConditionalGuard,
+    pub(super) paths: BTreeSet<ValuesPath>,
+}
+
+impl RowGuardQueries {
+    pub(super) fn evidence(&mut self, predicate: &Predicate) -> Option<Rc<RowGuardEvidence>> {
+        self.evidence
+            .entry(predicate.clone())
+            .or_insert_with(|| {
+                let mut guards = vec![predicate_to_guard(predicate, None)?];
+                ConditionalGuard::canonicalize_conjunction(&mut guards);
+                let guard = guards.pop()?;
+                Some(Rc::new(RowGuardEvidence {
+                    paths: guard.value_paths(),
+                    guard,
+                }))
+            })
+            .clone()
+    }
+
+    pub(super) fn tests_source_type(&mut self, predicate: &Predicate, source: &ValuesPath) -> bool {
+        self.type_tests
+            .entry(predicate.clone())
+            .or_insert_with(|| {
+                let mut paths = BTreeSet::new();
+                collect_type_test_paths(predicate, &mut paths, &mut ahash::AHashSet::new());
+                paths
+            })
+            .contains(source)
+    }
+}
+
+fn collect_type_test_paths<'a>(
+    predicate: &'a Predicate,
+    paths: &mut BTreeSet<ValuesPath>,
+    visited: &mut ahash::AHashSet<&'a Predicate>,
+) {
+    use helm_schema_core::PredicateKind;
     match predicate.kind() {
-        helm_schema_core::PredicateKind::Guard(
-            Guard::TypeIs { path, .. } | Guard::NotTypeIs { path, .. },
-        ) => path == &source_path,
-        helm_schema_core::PredicateKind::Not(inner) => {
-            predicate_tests_source_type(inner, source_expr)
+        PredicateKind::Guard(Guard::TypeIs { path, .. } | Guard::NotTypeIs { path, .. }) => {
+            paths.insert(path.clone());
         }
-        helm_schema_core::PredicateKind::And(items)
-        | helm_schema_core::PredicateKind::Or(items) => items
-            .iter()
-            .any(|item| predicate_tests_source_type(item, source_expr)),
-        helm_schema_core::PredicateKind::True
-        | helm_schema_core::PredicateKind::False
-        | helm_schema_core::PredicateKind::Approximate { .. }
-        | helm_schema_core::PredicateKind::Guard(_) => false,
+        PredicateKind::Not(inner) => collect_type_test_paths(inner, paths, visited),
+        PredicateKind::And(items) | PredicateKind::Or(items) => {
+            if visited.insert(predicate) {
+                for item in items {
+                    collect_type_test_paths(item, paths, visited);
+                }
+            }
+        }
+        PredicateKind::True
+        | PredicateKind::False
+        | PredicateKind::Approximate { .. }
+        | PredicateKind::Guard(_) => {}
     }
 }
 

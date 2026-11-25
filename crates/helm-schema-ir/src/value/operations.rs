@@ -48,7 +48,73 @@ pub(super) fn transfer(
         first,
         last,
     };
-    transfer_known(input, state)
+    let result = transfer_known(input, state)?;
+    Ok(bounded_result(result, arguments, state))
+}
+
+/// A Go template function returns only values it creates or references its arguments reach, so
+/// an unknown result of unrecorded reach may reference only those objects.
+fn bounded_result(result: Value, arguments: &[Value], state: &mut State) -> Value {
+    fn unbounded(value: &Value) -> bool {
+        match value.node.as_ref() {
+            ValueNode::Select {
+                decision: _,
+                yes,
+                no,
+            } => unbounded(yes) || unbounded(no),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Unknown(super::UnknownValue {
+                        types: _,
+                        aliases: super::Reach::Top,
+                    }),
+                origin,
+            }) => origin.identity.is_none(),
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }) => false,
+        }
+    }
+    fn bounded(value: &Value, reach: &super::Reach) -> Value {
+        match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => {
+                Value::select(Rc::clone(decision), bounded(yes, reach), bounded(no, reach))
+            }
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Unknown(super::UnknownValue {
+                        types,
+                        aliases: super::Reach::Top,
+                    }),
+                origin,
+            }) if origin.identity.is_none() => Value {
+                node: Rc::new(ValueNode::Leaf(Leaf {
+                    datum: Datum::Unknown(super::UnknownValue {
+                        types: types.clone(),
+                        aliases: reach.clone(),
+                    }),
+                    origin: origin.clone(),
+                })),
+            },
+            ValueNode::Leaf(Leaf {
+                datum: _,
+                origin: _,
+            }) => value.clone(),
+        }
+    }
+    if !unbounded(&result) {
+        return result;
+    }
+    let Reached {
+        objects,
+        bounded: known,
+        undecided: _,
+    } = reached_objects(arguments, state);
+    if !known {
+        return result;
+    }
+    bounded(&result, &super::Reach::Bounded(Rc::new(objects)))
 }
 
 /// Records what a call demands of its operands before it executes: catalog parsers abort outside
@@ -150,6 +216,7 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         "print" | "println" => Ok(transfer_print(input, state)),
         "printf" => Ok(transfer_printf(input, state)),
         "trunc" | "trimSuffix" | "trimPrefix" | "replace" => Ok(transfer_text_edit(input, state)),
+        "sub" => Ok(transfer_subtraction(input, state)),
         "regexReplaceAll"
         | "regexReplaceAllLiteral"
         | "mustRegexReplaceAll"
@@ -170,9 +237,28 @@ fn transfer_fallback(input: TransferInput<'_>, state: &mut State) -> Value {
         crate::function_semantics::HeapEffect::Operands => {
             widen_operands(input.arguments, state);
         }
-        crate::function_semantics::HeapEffect::Unknown => invalidate(state),
+        crate::function_semantics::HeapEffect::Unknown => {
+            invalidate(state);
+            return Value::influenced(input.influences);
+        }
     }
-    Value::influenced(input.influences)
+    // Without heap effects the result is fresh or one of what the operands reference.
+    super::heap::unknown_member(input.arguments, input.influences)
+}
+
+fn transfer_subtraction(input: TransferInput<'_>, state: &mut State) -> Value {
+    let (Some(GuardValue::Int(left)), Some(GuardValue::Int(right))) =
+        (input.first.constant(), input.last.constant())
+    else {
+        return transfer_fallback(input, state);
+    };
+    Value::scalar(
+        super::ScalarType::Int64,
+        Some(super::scalar_value::ScalarContent::Literal(
+            GuardValue::Int(left.wrapping_sub(*right)),
+        )),
+    )
+    .with_influences(input.influences)
 }
 struct TransferInput<'a> {
     function: &'a str,
@@ -398,6 +484,7 @@ fn transfer_dictionary(input: TransferInput<'_>, state: &mut State) -> Value {
                         multiplicity: super::Multiplicity::Singleton,
                         data: ObjectData::Widened {
                             inputs: Rc::new(influences.clone()),
+                            reachable: super::heap::values_reach(arguments),
                         },
                     },
                 );
@@ -430,7 +517,7 @@ fn transfer_write_map(input: TransferInput<'_>, state: &mut State) -> Result<Val
         })
     else {
         if let Some(target) = state.map_target(&first) {
-            widen_map(&target, &influences, state);
+            widen_map(&target, &influences, arguments.get(2), state);
             return Ok(Value::with_influences(first, influences));
         }
         invalidate(state);
@@ -777,14 +864,16 @@ fn transfer_join(input: TransferInput<'_>, state: &mut State) -> Result<Value, T
         last,
     } = input;
 
+    // The joined text references no object.
+    let text = || super::heap::unknown_member(&[], influences.clone());
     let Some(GuardValue::String(separator)) = first.constant() else {
-        return Ok(Value::influenced(influences.clone()));
+        return Ok(text());
     };
     let Some(items) = sequence_items(&last, state) else {
-        return Ok(Value::influenced(influences.clone()));
+        return Ok(text());
     };
     let Some(strings) = string_members(&items, state)? else {
-        return Ok(Value::influenced(influences.clone()));
+        return Ok(text());
     };
     Ok(Value::string(&strings.join(separator)))
 }
@@ -1755,8 +1844,9 @@ fn printf_string_with_budget(value: &Value, state: &State, remaining: &mut usize
     if state.heap.freeze(value).go_type() == super::kinds::GoType::String {
         return value.clone();
     }
+    // Formatted text references no object.
     let Some(path) = value.identity() else {
-        return Value::influenced(value.inputs());
+        return super::heap::unknown_member(&[], value.inputs());
     };
     let string = Predicate::from(Guard::TypeIs {
         path: path.clone(),
@@ -2200,7 +2290,11 @@ fn transfer_semver(input: &TransferInput<'_>, state: &mut State) -> Result<Value
             state.heap.write(&target, name, Field::Present(field));
         }
     }
-    Ok(super::hosts::typed_map(value, MapType::Semver))
+    Ok(super::hosts::typed_map(
+        value,
+        MapType::Semver,
+        &state.heap.arena,
+    ))
 }
 
 /// `strings.Repeat` over literal operands; a negative count panics and aborts the call.
@@ -2284,6 +2378,7 @@ pub(super) fn inputs(arguments: &[Value], state: &State) -> BTreeSet<helm_schema
 pub(super) fn widen_map(
     target: &super::ObjectId,
     influences: &BTreeSet<helm_schema_core::ValuesPath>,
+    stored: Option<&Value>,
     state: &mut State,
 ) {
     let input_path = state.heap.arena.input_paths.borrow().get(target).cloned();
@@ -2316,21 +2411,220 @@ pub(super) fn widen_map(
             multiplicity,
             data: ObjectData::Widened {
                 inputs: Rc::new(inputs),
+                reachable: super::heap::data_reach(&object.data)
+                    .union(&super::heap::values_reach(stored)),
             },
         },
     );
 }
+/// The unknown write of the code running on the current frames (ADR 0072 §5).
+///
+/// Helm executes every file and helper against its own context, so an unknown writer reaches
+/// only what the frames reach; another chart instance's values and allocations keep their
+/// contents.
 pub(super) fn invalidate(state: &mut State) {
-    let input_regions = Rc::new(state.heap.freeze(&Value::unknown()).reachable_inputs());
-    for path in input_regions.iter() {
-        state.reads.insert(super::RuntimeRead {
-            path: path.clone(),
-            condition: state.path_predicate(),
-            coverage: super::ReadCoverage::UnknownRegion,
-        });
+    let roots: Vec<Value> = state
+        .frames
+        .iter()
+        .flat_map(|frame| frame.bindings.values().chain(frame.dot.iter()).cloned())
+        .collect();
+    let input_regions = unknown_write(&roots, &roots, state);
+    forget_frame_scalars(state, &input_regions);
+}
+
+/// Widens what `targets` reach, every object depending on the inputs `sources` reach.
+///
+/// Helm runs an unknown program against its data argument alone, so it can write only what
+/// that argument reaches when the call begins (`engine.go` `tpl`); whatever it stores may then
+/// reference any of those objects. Where an unknown part may reference objects nothing records,
+/// the writer may reach any object.
+fn unknown_write(
+    targets: &[Value],
+    sources: &[Value],
+    state: &mut State,
+) -> Rc<BTreeSet<helm_schema_core::ValuesPath>> {
+    let reached = reached_objects(targets, state);
+    let owners = Vec::from_iter(executing_values_path(state));
+    write_reached(reached, sources, &owners, state)
+}
+
+/// Ends the analysis assumptions of the chart instances whose roots are `contexts`, which made
+/// every assumption the path holds. Each unknown program they assumed action-free runs against its
+/// data argument alone (`engine.go` `tpl`), which reaches only what its instance's root reaches.
+/// The documents on which the assumptions hold continue as they are; on the others those roots'
+/// reach takes an unknown write. The two continuations join, so later instances claim their facts
+/// on every document.
+pub(super) fn discharge_assumptions(contexts: &[Value], state: State) -> Vec<State> {
+    let Some(test) = state.heap.arena.assumption_test(&state.active) else {
+        return vec![state];
+    };
+    let base = state
+        .active
+        .without(super::path::LinkKind::Assume)
+        .unwrap_or_else(|| state.active.clone());
+    let mut held = state.clone();
+    held.active = base.pushed(
+        super::DecisionEdge {
+            test: Rc::clone(&test),
+            taken: true,
+        },
+        super::path::LinkKind::Branch,
+    );
+    let mut broken = state;
+    broken.active = base.pushed(
+        super::DecisionEdge { test, taken: false },
+        super::path::LinkKind::Branch,
+    );
+    let reached = reached_objects(contexts, &mut broken);
+    let owners = contexts
+        .iter()
+        .map(|context| instance_values_path(context, &broken))
+        .collect::<Option<Vec<_>>>()
+        .unwrap_or_default();
+    write_reached(reached, contexts, &owners, &mut broken);
+    let normal = |state| super::Exit {
+        state,
+        flow: super::Flow::Normal(super::Normal {
+            value: Value::nil(),
+        }),
+    };
+    super::control::reconverge(vec![normal(held), normal(broken)])
+        .into_iter()
+        .map(|exit| exit.state)
+        .collect()
+}
+
+/// [`unknown_write`] over what its targets were already found to reach.
+fn write_reached(
+    reached: Reached,
+    sources: &[Value],
+    owners: &[helm_schema_core::ValuesPath],
+    state: &mut State,
+) -> Rc<BTreeSet<helm_schema_core::ValuesPath>> {
+    let Reached {
+        mut objects,
+        bounded,
+        undecided: _,
+    } = reached;
+    let mut influences = inputs(sources, state);
+    let reachable = if bounded {
+        super::Reach::Bounded(Rc::new(objects.clone()))
+    } else {
+        // An unknown part may reference objects nothing records. Until every summary keeps its
+        // references, such a writer is scoped to the instances that run it: it may reach any
+        // object except another instance's values maps and render-context maps.
+        if owners.is_empty() {
+            return invalidate_all(state);
+        }
+        let owned = |path: &helm_schema_core::ValuesPath| {
+            owners
+                .iter()
+                .any(|own| path == own || path.is_descendant_of(own))
+        };
+        let outside = |path: &helm_schema_core::ValuesPath| !owned(path);
+        let input_paths = state.heap.arena.input_paths.borrow();
+        let instance_objects = state.heap.arena.instance_objects.borrow();
+        for id in state.heap.version.store.objects() {
+            let foreign = input_paths.get(&id).is_some_and(outside)
+                || instance_objects.get(&id).is_some_and(outside);
+            if !foreign {
+                objects.insert(id);
+            }
+        }
+        drop(input_paths);
+        drop(instance_objects);
+        influences.extend(
+            state
+                .heap
+                .freeze(&Value::unknown())
+                .reachable_inputs()
+                .into_iter()
+                .filter(|path| owned(path)),
+        );
+        super::Reach::Top
+    };
+    // Objects one earlier writer widened share its input set; each set is merged once.
+    let mut merged = ahash::AHashSet::new();
+    for id in &objects {
+        if let Some(object) = state.heap.version.object(id)
+            && let ObjectData::Widened {
+                inputs,
+                reachable: _,
+            } = &object.data
+            && merged.insert(Rc::as_ptr(inputs))
+        {
+            influences.extend(inputs.iter().cloned());
+        }
     }
-    // An unknown writer can insert or delete keys as well as replace their contents.
-    state.heap.unknown_write(Rc::clone(&input_regions));
+    // A template writes only `map[string]interface{}` maps; the host structs keep their fields.
+    let read_only = state.heap.arena.read_only_objects.borrow();
+    let written = objects
+        .into_iter()
+        .filter(|id| !read_only.contains(id))
+        .collect();
+    drop(read_only);
+    let influences = Rc::new(influences);
+    widen_objects(written, &influences, &reachable, state);
+    influences
+}
+
+/// The effect of an unknown program run against `argument`, reading `sources`: one
+/// continuation per outcome of the open decisions that select what the argument reaches, each
+/// writing only what its own path reaches (Helm runs `tpl` and `include` against their data
+/// argument alone, `engine.go`).
+pub(super) fn opaque_call(argument: &Value, sources: &[Value], state: State) -> Vec<State> {
+    const MAX_REACH_FORKS: usize = 3;
+    let mut pending = vec![(state, 0)];
+    let mut done = Vec::new();
+    while let Some((mut state, depth)) = pending.pop() {
+        let reached = reached_objects(std::slice::from_ref(argument), &mut state);
+        match reached.undecided.first() {
+            Some(decision) if reached.bounded && depth < MAX_REACH_FORKS => {
+                for taken in [true, false] {
+                    let fork = state.fork(Rc::clone(decision), taken);
+                    if !fork.path_is_infeasible() {
+                        pending.push((fork, depth + 1));
+                    }
+                }
+            }
+            Some(_) | None => {
+                let owners = Vec::from_iter(executing_values_path(&state));
+                write_reached(reached, sources, &owners, &mut state);
+                done.push(state);
+            }
+        }
+    }
+    done
+}
+
+/// The values path of the chart instance whose file is executing.
+fn executing_values_path(state: &State) -> Option<helm_schema_core::ValuesPath> {
+    instance_values_path(state.frames.first()?.bindings.get("$")?, state)
+}
+
+/// The values path of the chart instance whose root map is `root`.
+fn instance_values_path(root: &Value, state: &State) -> Option<helm_schema_core::ValuesPath> {
+    let ValueNode::Leaf(Leaf {
+        datum: Datum::Map {
+            view: _,
+            target: Some(target),
+        },
+        origin: _,
+    }) = root.node.as_ref()
+    else {
+        return None;
+    };
+    state
+        .heap
+        .arena
+        .instance_objects
+        .borrow()
+        .get(target)
+        .cloned()
+}
+
+/// Frame values that are not map references now depend on everything the writer read.
+fn forget_frame_scalars(state: &mut State, input_regions: &BTreeSet<helm_schema_core::ValuesPath>) {
     for frame in &mut state.frames {
         let frame = Rc::make_mut(frame);
         for value in frame.bindings.values_mut() {
@@ -2341,10 +2635,41 @@ pub(super) fn invalidate(state: &mut State) {
                     origin: _,
                 })
             ) {
-                *value = Value::influenced(input_regions.union(&value.inputs()).cloned().collect());
+                // The value still references only what it did.
+                *value = super::heap::unknown_member(
+                    std::slice::from_ref(value),
+                    input_regions.union(&value.inputs()).cloned().collect(),
+                );
             }
         }
     }
+}
+
+/// An unknown write to every object, reading every input the heap reaches.
+pub(super) fn invalidate_all(state: &mut State) -> Rc<BTreeSet<helm_schema_core::ValuesPath>> {
+    let input_regions = Rc::new(state.heap.freeze(&Value::unknown()).reachable_inputs());
+    for path in input_regions.iter() {
+        state.reads.insert(super::RuntimeRead {
+            path: path.clone(),
+            condition: state.path_predicate(),
+            coverage: super::ReadCoverage::UnknownRegion,
+        });
+    }
+    // A template writes only `map[string]interface{}` maps; the host structs keep their fields.
+    let kept = state
+        .heap
+        .arena
+        .read_only_objects
+        .borrow()
+        .iter()
+        .filter_map(|id| Some((id.clone(), state.heap.version.object(id)?)))
+        .collect::<Vec<_>>();
+    // An unknown writer can insert or delete keys as well as replace their contents.
+    state.heap.unknown_write(Rc::clone(&input_regions));
+    for (id, object) in kept {
+        state.heap.install(id, object.as_ref().clone());
+    }
+    input_regions
 }
 
 fn decode(value: &serde_json::Value, state: &mut State) -> Value {
@@ -2577,6 +2902,7 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Result<Valu
             let backing = state.heap.allocate(
                 ObjectData::Widened {
                     inputs: Rc::new(influences.clone()),
+                    reachable: super::heap::values_reach([first]),
                 },
                 super::Multiplicity::Singleton,
             );
@@ -2585,8 +2911,9 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Result<Valu
                 influences,
             ));
         } else {
+            // `sortAlpha` sorts a `[]string` operand in place (`sprig` `strslice`).
             if function == "sortAlpha" {
-                invalidate(state);
+                widen_operands(std::slice::from_ref(first), state);
             }
             return Ok(Value::influenced(influences));
         };
@@ -2610,52 +2937,66 @@ fn string_slice(function: &str, first: &Value, state: &mut State) -> Result<Valu
             influences.clone(),
         )
     };
-    if function == "sortAlpha"
-        && let ValueNode::Leaf(Leaf {
-            datum: Datum::Strings(slice),
-            origin: _,
-        }) = value.node.as_ref()
-    {
-        let storage = state.heap.version.object(&slice.backing);
-        let Some(ObjectVersion {
-            data: ObjectData::Strings(slots),
-            revision: _,
-            multiplicity: _,
-        }) = storage.as_deref()
-        else {
-            return Ok(value);
-        };
-        let sorted = slots
-            .get(slice.start..slice.start.saturating_add(slice.length))
-            .map(|slots| string_members(slots, state))
-            .transpose()?
-            .flatten();
-        let Some(mut sorted) = sorted else {
-            let multiplicity = state
-                .heap
-                .version
-                .object(&slice.backing)
-                .map_or(super::Multiplicity::Summary, |object| object.multiplicity);
-            state.heap.install(
-                slice.backing.clone(),
-                ObjectVersion {
-                    revision: state.heap.arena.snapshot(),
-                    multiplicity,
-                    data: ObjectData::Widened {
-                        inputs: Rc::new(influences),
-                    },
-                },
-            );
-            return Ok(value);
-        };
-        sorted.sort();
-        for (index, text) in sorted.iter().enumerate() {
-            state
-                .heap
-                .write_slot(&slice.backing, slice.start + index, Value::string(text));
-        }
+    if function == "sortAlpha" {
+        sort_strings_in_place(&value, influences, state)?;
     }
     Ok(value)
+}
+
+/// Sorts a `[]string` in place, as `sortAlpha` does (`sprig` `strslice`).
+fn sort_strings_in_place(
+    value: &Value,
+    influences: BTreeSet<helm_schema_core::ValuesPath>,
+    state: &mut State,
+) -> Result<(), TransferDemand> {
+    let ValueNode::Leaf(Leaf {
+        datum: Datum::Strings(slice),
+        origin: _,
+    }) = value.node.as_ref()
+    else {
+        return Ok(());
+    };
+    let storage = state.heap.version.object(&slice.backing);
+    let Some(ObjectVersion {
+        data: ObjectData::Strings(slots),
+        revision: _,
+        multiplicity: _,
+    }) = storage.as_deref()
+    else {
+        return Ok(());
+    };
+    let sorted = slots
+        .get(slice.start..slice.start.saturating_add(slice.length))
+        .map(|slots| string_members(slots, state))
+        .transpose()?
+        .flatten();
+    let Some(mut sorted) = sorted else {
+        let multiplicity = state
+            .heap
+            .version
+            .object(&slice.backing)
+            .map_or(super::Multiplicity::Summary, |object| object.multiplicity);
+        state.heap.install(
+            slice.backing.clone(),
+            ObjectVersion {
+                revision: state.heap.arena.snapshot(),
+                multiplicity,
+                data: ObjectData::Widened {
+                    inputs: Rc::new(influences),
+                    // String slots reference no object.
+                    reachable: super::Reach::Bounded(Rc::default()),
+                },
+            },
+        );
+        return Ok(());
+    };
+    sorted.sort();
+    for (index, text) in sorted.iter().enumerate() {
+        state
+            .heap
+            .write_slot(&slice.backing, slice.start + index, Value::string(text));
+    }
+    Ok(())
 }
 
 fn selected_member(value: &Value, state: &State) -> Value {
@@ -2743,7 +3084,10 @@ fn map_fields(value: &Value, state: &State) -> Option<MapFields> {
             }),
             ObjectData::Strings(_)
             | ObjectData::Opaque { reachable: _ }
-            | ObjectData::Widened { inputs: _ } => None,
+            | ObjectData::Widened {
+                inputs: _,
+                reachable: _,
+            } => None,
         },
         ValueNode::Leaf(Leaf {
             datum: _,
@@ -3086,81 +3430,16 @@ pub(super) fn widen_operands(arguments: &[Value], state: &mut State) {
 /// Widens the objects reachable from `targets`; their unknown contents depend on every input
 /// of `sources`.
 fn widen_targets(targets: &[Value], sources: &[Value], state: &mut State) {
-    let influences = Rc::new(inputs(sources, state));
-    let mut pending = targets.to_vec();
-    let mut objects = BTreeSet::new();
-    while let Some(value) = pending.pop() {
-        let mut targets = BTreeSet::new();
-        if mutation_targets(&value, &mut pending, &mut targets) {
-            invalidate(state);
-            return;
-        }
-        for target in targets {
-            if !objects.insert(target.clone()) {
-                continue;
-            }
-            let Some(object) = state.heap.version.object(&target) else {
-                continue;
-            };
-            match &object.data {
-                ObjectData::Map { fields, remainder } => {
-                    if matches!(remainder, Remainder::Unknown { inputs: _ }) {
-                        invalidate(state);
-                        return;
-                    }
-                    // Unwritten keys of a layered map may alias what its layers reach.
-                    if let Remainder::Layered(layers) = remainder {
-                        let Some(aliases) = state.layer_aliases(layers) else {
-                            invalidate(state);
-                            return;
-                        };
-                        let children = state.allocated_children(&target);
-                        pending.extend(
-                            aliases
-                                .into_iter()
-                                .chain(children.into_iter().map(|(_, child)| child))
-                                .map(|id| {
-                                    Value::leaf(Datum::Map {
-                                        view: MapType::Interface,
-                                        target: Some(id),
-                                    })
-                                }),
-                        );
-                    }
-                    let mut fields: Vec<_> = fields.values().collect();
-                    while let Some(field) = fields.pop() {
-                        match field {
-                            Field::Absent | Field::Unknown => {}
-                            Field::Present(value) => pending.push(value.clone()),
-                            Field::Select {
-                                decision: _,
-                                yes,
-                                no,
-                            } => fields.extend([yes.as_ref(), no.as_ref()]),
-                        }
-                    }
-                }
-                ObjectData::Strings(slots) => pending.extend(slots.iter().cloned()),
-                ObjectData::Opaque { reachable } => match reachable {
-                    super::Reach::Bounded(ids) => pending.extend(ids.iter().map(|id| {
-                        Value::leaf(Datum::Map {
-                            view: MapType::Interface,
-                            target: Some(id.clone()),
-                        })
-                    })),
-                    super::Reach::Top => {
-                        invalidate(state);
-                        return;
-                    }
-                },
-                ObjectData::Widened { inputs: _ } => {
-                    // Lost fields may still alias objects elsewhere in the render graph.
-                    invalidate(state);
-                    return;
-                }
-            }
-        }
-    }
+    unknown_write(targets, sources, state);
+}
+
+/// Replaces each object by an unknown one depending on `influences`, recording the read.
+fn widen_objects(
+    objects: BTreeSet<super::ObjectId>,
+    influences: &Rc<BTreeSet<helm_schema_core::ValuesPath>>,
+    reachable: &super::Reach,
+    state: &mut State,
+) {
     for id in objects {
         let Some(object) = state.heap.version.object(&id) else {
             continue;
@@ -3172,7 +3451,8 @@ fn widen_targets(targets: &[Value], sources: &[Value], state: &mut State) {
                 revision: state.heap.arena.snapshot(),
                 multiplicity,
                 data: ObjectData::Widened {
-                    inputs: Rc::clone(&influences),
+                    inputs: Rc::clone(influences),
+                    reachable: reachable.clone(),
                 },
             },
         );
@@ -3183,6 +3463,260 @@ fn widen_targets(targets: &[Value], sources: &[Value], state: &mut State) {
             condition: state.path_predicate(),
             coverage: super::ReadCoverage::UnknownRegion,
         });
+    }
+}
+
+/// The objects a member of `collection` may reference: everything the collection reaches on the
+/// current path. An input collection whose map was never allocated stays unbounded: allocating
+/// it here would change what later reads of it see.
+pub(super) fn member_aliases(collection: &Value, state: &mut State) -> super::Reach {
+    let target = match collection.node.as_ref() {
+        ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Unknown(super::UnknownValue {
+                    types: _,
+                    aliases: super::Reach::Top,
+                }),
+            origin:
+                super::Origin {
+                    derivation: _,
+                    identity: Some(path),
+                    influences: _,
+                },
+        }) => {
+            let Some(object) = state
+                .heap
+                .arena
+                .input_objects
+                .borrow()
+                .get(path)
+                .map(|backing| backing.object.clone())
+            else {
+                return super::Reach::Top;
+            };
+            Value::leaf(Datum::Map {
+                view: MapType::Interface,
+                target: Some(object),
+            })
+        }
+        ValueNode::Leaf(_)
+        | ValueNode::Select {
+            decision: _,
+            yes: _,
+            no: _,
+        } => collection.clone(),
+    };
+    let Reached {
+        objects,
+        bounded,
+        undecided: _,
+    } = reached_objects(std::slice::from_ref(&target), state);
+    if bounded {
+        super::Reach::Bounded(Rc::new(objects))
+    } else {
+        super::Reach::Top
+    }
+}
+
+/// What a writer's argument reaches on the current path.
+struct Reached {
+    objects: BTreeSet<super::ObjectId>,
+    /// False when an unknown part may reference objects nothing records.
+    bounded: bool,
+    /// The decisions the path leaves open that select a reached reference.
+    undecided: Vec<Rc<super::FrozenTest>>,
+}
+
+/// The objects `targets` may reach on the current path through known fields, slots, merge
+/// layers, the references unknown contents keep and the input maps allocated beneath an input
+/// map.
+fn reached_objects(targets: &[Value], state: &mut State) -> Reached {
+    let guard = state.heap.arena.path_guard(&state.active);
+    let mut reach = Reached {
+        objects: BTreeSet::new(),
+        bounded: true,
+        undecided: Vec::new(),
+    };
+    let mut pending: Vec<Value> = targets.to_vec();
+    while let Some(value) = pending.pop() {
+        // A choice the path decides holds only its own arm; a choice between different
+        // references leaves what is reached open.
+        if let ValueNode::Select { decision, yes, no } = value.node.as_ref() {
+            match guard.implies_test(decision) {
+                Some(true) => pending.push(yes.clone()),
+                Some(false) => pending.push(no.clone()),
+                None => {
+                    if super::heap::values_reach([yes]) != super::heap::values_reach([no]) {
+                        reach.undecide(decision);
+                    }
+                    pending.extend([yes.clone(), no.clone()]);
+                }
+            }
+            continue;
+        }
+        let mut targets = BTreeSet::new();
+        // An input value references the input map at its own path, if it is one.
+        if let ValueNode::Leaf(Leaf {
+            datum:
+                Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Unresolved | super::TypeCoverage::Map(_),
+                    aliases: super::Reach::Top,
+                }),
+            origin:
+                super::Origin {
+                    derivation: None,
+                    identity: Some(path),
+                    influences: _,
+                },
+        }) = value.node.as_ref()
+        {
+            let path = path.clone();
+            targets.insert(state.input_object(&path));
+        } else {
+            let bounded = super::heap::value_references(&value, &mut pending, &mut targets);
+            if reach.bounded && !bounded {
+                // The first unbounded producer of each reach, for attributing genuine Top.
+                tracing::debug!(target: "helm_schema_ir::top_reach", node = ?value.node, "unbounded value");
+            }
+            reach.bounded &= bounded;
+        }
+        for target in targets {
+            if !reach.objects.insert(target.clone()) {
+                continue;
+            }
+            let Some(object) = state.heap.version.object(&target) else {
+                continue;
+            };
+            let bounded = reach_object(
+                &target,
+                &object.data,
+                state,
+                &guard,
+                &mut reach,
+                &mut pending,
+            );
+            if reach.bounded && !bounded {
+                tracing::debug!(target: "helm_schema_ir::top_reach", ?target, data = ?object.data, "unbounded object");
+            }
+            reach.bounded &= bounded;
+        }
+    }
+    reach
+}
+
+/// The objects a field's values may reference.
+fn field_reach(field: &Field) -> super::Reach {
+    let mut values = Vec::new();
+    let mut pending = vec![field];
+    while let Some(field) = pending.pop() {
+        match field {
+            Field::Absent | Field::Unknown => {}
+            Field::Present(value) => values.push(value),
+            Field::Select {
+                decision: _,
+                yes,
+                no,
+            } => pending.extend([yes.as_ref(), no.as_ref()]),
+        }
+    }
+    super::heap::values_reach(values)
+}
+
+impl Reached {
+    fn undecide(&mut self, decision: &Rc<super::FrozenTest>) {
+        if !self.undecided.iter().any(|known| known.id == decision.id) {
+            self.undecided.push(Rc::clone(decision));
+        }
+    }
+}
+
+/// Queues what one object reaches; false when an unknown part may reference unnamed objects.
+fn reach_object(
+    target: &super::ObjectId,
+    data: &ObjectData,
+    state: &State,
+    guard: &super::guard::RuntimeGuard,
+    reach: &mut Reached,
+    pending: &mut Vec<Value>,
+) -> bool {
+    let map = |id| {
+        Value::leaf(Datum::Map {
+            view: MapType::Interface,
+            target: Some(id),
+        })
+    };
+    let children = || {
+        state
+            .allocated_children(target)
+            .into_iter()
+            .map(|(_, child)| map(child))
+    };
+    match data {
+        ObjectData::Map { fields, remainder } => {
+            let mut bounded = true;
+            match remainder {
+                // The input maps already allocated beneath an input map are its members.
+                Remainder::Input => pending.extend(children()),
+                // Unwritten keys of a layered map may alias what its layers reach.
+                Remainder::Layered(layers) => {
+                    if let Some(aliases) = state.layer_aliases(layers) {
+                        pending.extend(aliases.into_iter().map(map));
+                    } else {
+                        bounded = false;
+                    }
+                    pending.extend(children());
+                }
+                Remainder::Unknown { inputs: _ } => {
+                    bounded = false;
+                    pending.extend(children());
+                }
+                Remainder::Closed | Remainder::Open => {}
+            }
+            let mut fields: Vec<_> = fields.values().collect();
+            while let Some(field) = fields.pop() {
+                match field {
+                    Field::Absent | Field::Unknown => {}
+                    Field::Present(value) => pending.push(value.clone()),
+                    // A member the path selects holds only its own arm.
+                    Field::Select { decision, yes, no } => match guard.implies_test(decision) {
+                        Some(true) => fields.push(yes.as_ref()),
+                        Some(false) => fields.push(no.as_ref()),
+                        None => {
+                            if field_reach(yes) != field_reach(no) {
+                                reach.undecide(decision);
+                            }
+                            fields.extend([yes.as_ref(), no.as_ref()]);
+                        }
+                    },
+                }
+            }
+            bounded
+        }
+        ObjectData::Strings(slots) => {
+            pending.extend(slots.iter().cloned());
+            true
+        }
+        ObjectData::Opaque { reachable } => match reachable {
+            super::Reach::Bounded(ids) => {
+                pending.extend(ids.iter().cloned().map(map));
+                true
+            }
+            super::Reach::Top => false,
+        },
+        // Unknown contents keep the references they may hold.
+        ObjectData::Widened {
+            inputs: _,
+            reachable,
+        } => {
+            pending.extend(children());
+            match reachable {
+                super::Reach::Bounded(ids) => {
+                    pending.extend(ids.iter().cloned().map(map));
+                    true
+                }
+                super::Reach::Top => false,
+            }
+        }
     }
 }
 
@@ -3316,11 +3850,13 @@ fn split_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
                     separator.to_owned(),
                 )),
             );
+        // The other pieces are strings: they reference no object.
         return string_map(
             BTreeMap::from([("_0".to_owned(), Field::Present(first))]),
-            Remainder::Unknown {
-                inputs: Rc::new(influences.clone()),
-            },
+            super::layers::unknown_members(
+                &Rc::new(influences.clone()),
+                &super::Reach::Bounded(Rc::default()),
+            ),
             influences,
             state,
         );
@@ -3433,6 +3969,8 @@ fn copy_string_slice(
         let backing = state.heap.allocate(
             ObjectData::Widened {
                 inputs: Rc::new(influences.clone()),
+                // String slots reference no object.
+                reachable: super::Reach::Bounded(Rc::default()),
             },
             super::Multiplicity::Singleton,
         );
@@ -3500,7 +4038,10 @@ fn sequence_bounds(value: &Value, state: &State) -> Option<SequenceBounds> {
                         remainder: _,
                     }
                     | ObjectData::Opaque { reachable: _ }
-                    | ObjectData::Widened { inputs: _ } => None,
+                    | ObjectData::Widened {
+                        inputs: _,
+                        reachable: _,
+                    } => None,
                 })
                 .unwrap_or(0),
         }),
@@ -3544,57 +4085,4 @@ fn interface_map_view(first: &Value, state: &mut State) -> Value {
         ),
     };
     Value::with_influences(view, state.heap.freeze(first).inputs())
-}
-
-fn mutation_targets(
-    value: &Value,
-    pending: &mut Vec<Value>,
-    targets: &mut BTreeSet<super::ObjectId>,
-) -> bool {
-    match value.node.as_ref() {
-        ValueNode::Select {
-            decision: _,
-            yes,
-            no,
-        } => {
-            pending.extend([yes.clone(), no.clone()]);
-        }
-        ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
-            Datum::Text(_)
-            | Datum::Scalar {
-                go_type: _,
-                content: _,
-            }
-            | Datum::Map {
-                view: _,
-                target: None,
-            } => {}
-            Datum::Map {
-                view: _,
-                target: Some(id),
-            }
-            | Datum::Slot {
-                backing: id,
-                index: _,
-            } => {
-                targets.insert(id.clone());
-            }
-            Datum::Strings(slice) => {
-                targets.insert(slice.backing.clone());
-            }
-            Datum::Sequence(sequence) => pending.extend(
-                sequence
-                    .storage
-                    .iter()
-                    .flat_map(|items| items.iter().cloned()),
-            ),
-            Datum::Unknown(unknown) => match &unknown.aliases {
-                super::Reach::Bounded(ids) => targets.extend(ids.iter().cloned()),
-                super::Reach::Top => {
-                    return true;
-                }
-            },
-        },
-    }
-    false
 }

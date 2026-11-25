@@ -146,7 +146,8 @@ fn widened_field_reads_keep_the_recorded_dependency_set() -> eyre::Result<()> {
         "input",
         Field::Present(Value::input(ValuesPath::parse("alpha"))),
     );
-    crate::value::operations::invalidate(&mut state);
+    // An unknown write that reaches every object.
+    crate::value::operations::invalidate_all(&mut state);
     let result = state.field(&value, "other");
     sim_assert_eq!(have: state.heap.freeze(&result).inputs(), want: BTreeSet::from([ValuesPath::parse("alpha")]));
     assert!(result.identity().is_none());

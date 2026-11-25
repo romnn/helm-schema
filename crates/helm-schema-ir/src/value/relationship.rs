@@ -628,7 +628,10 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 if !self.charge(1)
                     || matches!(
                         heap.borrowed_object(object).map(|object| &object.data),
-                        Some(ObjectData::Widened { inputs: _ })
+                        Some(ObjectData::Widened {
+                            inputs: _,
+                            reachable: _,
+                        })
                     )
                 {
                     return Relationships::unknown();

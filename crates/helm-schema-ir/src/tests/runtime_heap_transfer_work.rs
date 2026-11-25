@@ -35,6 +35,7 @@ fn exhausted_join_of_widened_operands_keeps_unknown_provenance_local() -> eyre::
             multiplicity: Multiplicity::Singleton,
             data: ObjectData::Widened {
                 inputs: Rc::new(BTreeSet::from([ValuesPath::parse(path)])),
+                reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
             },
         }))
     };
@@ -55,7 +56,7 @@ fn exhausted_join_of_widened_operands_keeps_unknown_provenance_local() -> eyre::
     )
     .ok_or_eyre("bounded join dropped the object")?;
     // Both operands are already widened, so exhaustion must not erase their dependencies.
-    sim_assert_eq!(have: &joined.data, want: &ObjectData::Widened { inputs: Rc::new(BTreeSet::from([ValuesPath::default()])) });
+    sim_assert_eq!(have: &joined.data, want: &ObjectData::Widened { inputs: Rc::new(BTreeSet::from([ValuesPath::default()])), reachable: crate::value::Reach::Bounded(std::rc::Rc::default()) });
     sim_assert_eq!(have: state.heap.version.field(&other_id, "saved"), want: Field::Present(Value::string("exact")));
     Ok(())
 }
@@ -81,7 +82,10 @@ fn widened_join_reuses_union_when_original_path_is_already_present() -> eyre::Re
         Some(Rc::new(ObjectVersion {
             revision: SnapshotId { ordinal },
             multiplicity: Multiplicity::Singleton,
-            data: ObjectData::Widened { inputs },
+            data: ObjectData::Widened {
+                inputs,
+                reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
+            },
         }))
     };
     let paths = state.heap.arena.input_paths.borrow();
@@ -100,7 +104,11 @@ fn widened_join_reuses_union_when_original_path_is_already_present() -> eyre::Re
         &mut WorkBudget::new(crate::value::work::OBJECT_WORK),
     )
     .ok_or_eyre("joined object missing")?;
-    let ObjectData::Widened { inputs } = &joined.data else {
+    let ObjectData::Widened {
+        inputs,
+        reachable: _,
+    } = &joined.data
+    else {
         eyre::bail!("join changed its storage shape");
     };
     sim_assert_eq!(have: inputs.as_ref(), want: &BTreeSet::from([source, ValuesPath::parse("left"), ValuesPath::parse("right")]));

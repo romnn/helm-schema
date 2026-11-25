@@ -753,3 +753,47 @@ fn a_decision_has_key_keeps_the_dependency_only_member_deciding() -> eyre::Resul
     assert!(!validator.is_valid(&defaults));
     Ok(())
 }
+
+/// An unrelated caller flag still gates the abort after the dependency's
+/// architecture is filled or deleted. Helm 4.2.3 renders the disabled
+/// caller and the replication override.
+#[test]
+fn dependency_default_preserves_the_rest_of_a_terminal_decision() -> eyre::Result<()> {
+    use helm_schema_core::{Guard, Predicate, RequirementAtom, RequirementBdd};
+
+    let architecture = ValuesPath::parse("kid.architecture");
+    let caller = Guard::Truthy {
+        path: ValuesPath::parse("kid.probe"),
+    };
+    let standalone = Guard::NotEq {
+        path: architecture.clone(),
+        value: GuardValue::String("replication".to_owned()),
+    };
+    let reaches_abort = Predicate::all(vec![
+        Predicate::from(caller.clone()),
+        Predicate::from(standalone.clone()),
+    ]);
+    let atoms = [
+        RequirementAtom::Value(caller),
+        RequirementAtom::Value(standalone),
+    ];
+    let mut work = RequirementBdd::WORK_BUDGET;
+    let mut bdd = RequirementBdd::new(&atoms, &mut work).ok_or_eyre("decision inventory")?;
+    let root = bdd
+        .predicate(&reaches_abort)
+        .ok_or_eyre("decision conjunction")?;
+    let decision = bdd.finish(root).ok_or_eyre("terminal decision")?;
+    let defaults =
+        serde_yaml::to_value(json!({"kid": {"probe": true, "architecture": "standalone"}}))?;
+    let different_default =
+        serde_yaml::to_value(json!({"kid": {"probe": true, "architecture": "replication"}}))?;
+    sim_assert_eq!(
+        have: crate::condition_encoding::guard_ignores_default_presence(&decision, &architecture, &defaults, &defaults),
+        want: true
+    );
+    sim_assert_eq!(
+        have: crate::condition_encoding::guard_ignores_default_presence(&decision, &architecture, &defaults, &different_default),
+        want: false
+    );
+    Ok(())
+}

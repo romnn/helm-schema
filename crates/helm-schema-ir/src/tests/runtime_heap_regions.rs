@@ -142,7 +142,10 @@ fn full_scan(
                 .object(&object)
                 .ok_or_eyre("allocated object missing")?;
             let original = match &storage.data {
-                ObjectData::Widened { inputs }
+                ObjectData::Widened {
+                    inputs,
+                    reachable: _,
+                }
                 | ObjectData::Map {
                     fields: _,
                     remainder: Remainder::Unknown { inputs },

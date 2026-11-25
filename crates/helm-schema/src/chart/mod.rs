@@ -14,7 +14,6 @@ pub(crate) use define_index::template_execution_name;
 pub(crate) use directory::Directory;
 pub(crate) use discovery::discover_chart_contexts;
 pub(crate) use files::{FileRole, LoadedChart, LoadedEntries, SourcePath};
-pub(crate) use paths::scope_values_path;
 pub use types::{ChartContext, ChartDependencyActivation};
 pub(crate) use values::build_dependency_global_ownership;
 pub use values::{

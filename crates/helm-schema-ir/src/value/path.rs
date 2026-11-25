@@ -325,6 +325,20 @@ impl Path {
         }
         path
     }
+
+    /// The same conditions without the links of `kind`, or `None` when the path has none.
+    pub(super) fn without(&self, kind: LinkKind) -> Option<Self> {
+        let links = self.links();
+        let first = links.iter().position(|link| link.kind == kind)?;
+        let mut path = self.clone();
+        path.truncate(first);
+        for link in links.get(first..).unwrap_or_default() {
+            if link.kind != kind {
+                path.push(link.edge.clone(), link.kind);
+            }
+        }
+        Some(path)
+    }
 }
 
 impl super::Arena {

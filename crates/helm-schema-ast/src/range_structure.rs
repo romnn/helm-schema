@@ -35,20 +35,19 @@ pub fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -
 /// Reports whether a range header assigns existing variables with `=`.
 #[must_use]
 pub fn range_uses_assignment(node: tree_sitter::Node<'_>) -> bool {
-    let mut walker = node.walk();
-    let mut children = node.named_children(&mut walker);
-    let Some(definition) =
-        children.find(|child| matches!(child.kind(), "assignment" | "range_variable_definition"))
-    else {
-        return false;
-    };
-    if definition.kind() == "assignment" {
-        return true;
+    // Only the header decides: an assignment in the body is not the range's own.
+    if let Some(range) = node.child_by_field_name("range") {
+        return range.kind() == "assignment";
     }
-    let mut definition_walker = definition.walk();
-    definition
-        .children(&mut definition_walker)
-        .any(|child| child.kind() == "=")
+    let mut walker = node.walk();
+    node.named_children(&mut walker)
+        .filter(|child| child.kind() == "range_variable_definition")
+        .any(|definition| {
+            let mut definition_walker = definition.walk();
+            definition
+                .children(&mut definition_walker)
+                .any(|child| child.kind() == "=")
+        })
 }
 
 /// The KEY variable of a destructured range header (`$k` in

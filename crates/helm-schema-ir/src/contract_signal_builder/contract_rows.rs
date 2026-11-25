@@ -5,9 +5,11 @@ use super::{
     RangeDomain, SourceUseFactSplit, ValueKind, ValuesPath, collapse_layered_truthy_gates,
     extend_lowerable_predicate, hard_negation_paths, lowerable_conditional_guard_set,
     lowerable_conditional_guard_subset, path_accumulator, path_contains_wildcard,
-    predicate_is_structural_ancestor_guard, predicate_tests_source_type, predicate_to_guard,
-    provider_schema_use, range_guard_is_iteration_ancestor, ranged_member_parent,
+    predicate_is_structural_ancestor_guard, predicate_to_guard, provider_schema_use,
+    range_guard_is_iteration_ancestor, ranged_member_parent,
 };
+
+use super::conditional_overlays::{RowGuardEvidence, RowGuardQueries};
 
 #[derive(Default)]
 pub(super) struct ContractPathAccumulator {
@@ -243,6 +245,7 @@ pub(super) fn record_contract_use(
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
     predicate_memo: &helm_schema_core::PredicateMemo,
+    row_guards: &mut RowGuardQueries,
 ) {
     let source_path = contract_use.source_expr.clone();
     if contract_use.range_key {
@@ -331,6 +334,7 @@ pub(super) fn record_contract_use(
             &predicates,
             range_modes,
             predicate_memo,
+            row_guards,
         );
     }
 }
@@ -444,6 +448,7 @@ fn record_default_dependency_metadata(
     paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
     contract_use: &ContractUse,
     predicates: &[Predicate],
+    row_guards: &mut RowGuardQueries,
 ) -> bool {
     if contract_use.kind != ValueKind::Scalar
         || !contract_use.path.0.is_empty()
@@ -480,13 +485,12 @@ fn record_default_dependency_metadata(
     }
     let acc = path_accumulator(paths, &contract_use.source_expr);
     acc.referenced = true;
-    let source_expr = contract_use.source_expr.encode();
     acc.facts.record_facts(ContractValuePathFacts {
         is_nullable: true,
         used_as_serialized: contract_use.stringified
-            || predicates
-                .iter()
-                .any(|predicate| predicate_tests_source_type(predicate, &source_expr)),
+            || predicates.iter().any(|predicate| {
+                row_guards.tests_source_type(predicate, &contract_use.source_expr)
+            }),
         ..ContractValuePathFacts::default()
     });
     acc.facts.record_nullable_observation(true);
@@ -503,8 +507,9 @@ pub(super) fn record_contract_use_conjunction(
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
     predicate_memo: &helm_schema_core::PredicateMemo,
+    row_guards: &mut RowGuardQueries,
 ) {
-    if record_default_dependency_metadata(paths, contract_use, predicates) {
+    if record_default_dependency_metadata(paths, contract_use, predicates, row_guards) {
         return;
     }
     let source_path = contract_use.source_expr.clone();
@@ -714,7 +719,7 @@ pub(super) fn record_contract_use_conjunction(
     let type_dispatched = has_source
         && predicates
             .iter()
-            .any(|predicate| predicate_tests_source_type(predicate, &source_expr));
+            .any(|predicate| row_guards.tests_source_type(predicate, &source_path));
     // The catch-all COMPLEMENT arm of a type dispatch (every self-type
     // test negated: a plain `else`) executes for every unmatched type, so
     // its structural placement types that whole domain — scoped to the
@@ -727,12 +732,12 @@ pub(super) fn record_contract_use_conjunction(
             .iter()
             .flat_map(flattened_conjuncts)
             .all(|predicate| {
-                !predicate_tests_source_type(predicate, &source_expr)
+                !row_guards.tests_source_type(predicate, &source_path)
                     || matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::NotTypeIs { path, .. }) if path == &source_path)
                     || matches!(
                         predicate.kind(),
                         helm_schema_core::PredicateKind::Not(inner)
-                            if predicate_tests_source_type(inner, &source_expr)
+                            if row_guards.tests_source_type(inner, &source_path)
                     )
             });
     let total_stringified = contract_use.stringified
@@ -1013,14 +1018,19 @@ pub(super) fn record_contract_use_conjunction(
     if has_source {
         let mut conditional_guards = predicates
             .iter()
-            .filter_map(|predicate| predicate_to_guard(predicate, None))
+            .filter_map(|predicate| row_guards.evidence(predicate))
             .collect::<Vec<_>>();
-        ConditionalGuard::canonicalize_conjunction(&mut conditional_guards);
-        for predicate in conditional_guards {
-            for path in predicate.value_paths() {
-                let acc = path_accumulator(paths, &path);
-                if !acc.guard_predicates.contains(&predicate) {
-                    acc.guard_predicates.push(predicate.clone());
+        conditional_guards.sort_by(|left, right| left.guard.cmp(&right.guard));
+        conditional_guards.dedup_by(|left, right| left.guard == right.guard);
+        for evidence in conditional_guards {
+            let RowGuardEvidence {
+                guard,
+                paths: guard_paths,
+            } = evidence.as_ref();
+            for path in guard_paths {
+                let acc = path_accumulator(paths, path);
+                if !acc.guard_predicates.contains(guard) {
+                    acc.guard_predicates.push(guard.clone());
                 }
             }
         }

@@ -67,6 +67,26 @@ impl LoadedFile {
         std::str::from_utf8(&self.name).ok()
     }
 
+    /// The name Helm registers a template under. Go keeps a name's bytes as they are, so each byte
+    /// that is not UTF-8 maps to its own supplementary private-use character: names stay distinct
+    /// and such bytes still sort after every ASCII byte, as they do in Go.
+    pub(crate) fn template_name(&self) -> std::borrow::Cow<'_, str> {
+        if let Ok(name) = std::str::from_utf8(&self.name) {
+            return std::borrow::Cow::Borrowed(name);
+        }
+        let mut name = String::with_capacity(self.name.len());
+        for chunk in self.name.utf8_chunks() {
+            name.push_str(chunk.valid());
+            name.extend(
+                chunk
+                    .invalid()
+                    .iter()
+                    .filter_map(|byte| char::from_u32(0x0010_FF00 + u32::from(*byte))),
+            );
+        }
+        std::borrow::Cow::Owned(name)
+    }
+
     pub(crate) fn source(&self) -> EngineResult<&str> {
         std::str::from_utf8(&self.bytes).map_err(|_| CliError::NonUtf8ChartSource {
             path: self.path.clone(),

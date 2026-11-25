@@ -30,6 +30,28 @@ pub struct SymbolicTemplate<'a> {
     pub source_path: &'a str,
 }
 
+/// One chart instance in Helm's render graph (`pkg/engine/engine.go:544-590`).
+#[derive(Clone, Debug)]
+pub struct SymbolicChart {
+    /// Helm's template namespace of the instance, including dependency aliases.
+    pub namespace: String,
+    /// The root-relative values path the instance's `.Values` is bound to.
+    pub values_path: helm_schema_core::ValuesPath,
+    /// The predicate under which this instance and all its ancestors are enabled.
+    pub enabled: helm_schema_core::Predicate,
+    /// Exact scalar strings beneath the instance's own root, such as `.Chart.Name`.
+    pub static_root_strings: BTreeMap<Vec<String>, String>,
+}
+
+/// Contracts from one render graph.
+#[derive(Debug, Default)]
+pub struct GraphContracts {
+    /// File contracts in the caller's source order.
+    pub files: Vec<ContractIr>,
+    /// Template-namespace failures and surviving setup of a graph with no executable files.
+    pub startup: ContractIr,
+}
+
 /// Reusable state for generating symbolic IR across many templates that
 /// share one [`DefineIndex`].
 ///
@@ -111,7 +133,25 @@ impl SymbolicIrContext {
         &self,
         sources: &[SymbolicTemplate<'_>],
     ) -> Vec<ContractIr> {
-        let mut contracts: Vec<_> = sources.iter().map(|_| ContractIr::default()).collect();
+        self.generate_contract_irs_for_render_graph(sources, &[])
+            .files
+    }
+
+    /// Executes every chart instance's templates in one heap and one Helm schedule, each file
+    /// against its own instance's root (ADR 0072 §8).
+    ///
+    /// File results retain the source order.
+    #[must_use]
+    #[tracing::instrument(skip_all)]
+    pub fn generate_contract_irs_for_render_graph(
+        &self,
+        sources: &[SymbolicTemplate<'_>],
+        charts: &[SymbolicChart],
+    ) -> GraphContracts {
+        let mut contracts = GraphContracts {
+            files: sources.iter().map(|_| ContractIr::default()).collect(),
+            startup: ContractIr::default(),
+        };
         let prepared = sources
             .iter()
             .map(|source| {
@@ -122,10 +162,23 @@ impl SymbolicIrContext {
                 )
             })
             .collect();
-        crate::value::project_documents(
+        crate::value::project_chart_documents(
             prepared,
             &self.analysis_db,
+            charts,
             |index, program, execution| {
+                let Some(index) = index else {
+                    contracts
+                        .startup
+                        .append(crate::fragment_eval::project_execution_at_offset(
+                            "",
+                            None,
+                            0,
+                            &self.analysis_db,
+                            execution,
+                        ));
+                    return;
+                };
                 let Some(source) = sources.get(index) else {
                     return;
                 };
@@ -144,7 +197,7 @@ impl SymbolicIrContext {
                     &self.analysis_db,
                     execution,
                 );
-                if let Some(contract) = contracts.get_mut(index) {
+                if let Some(contract) = contracts.files.get_mut(index) {
                     contract.append(document);
                 }
             },

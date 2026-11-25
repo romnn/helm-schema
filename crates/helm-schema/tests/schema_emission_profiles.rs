@@ -4574,9 +4574,9 @@ fn mixed_dialect_candidate_preserves_tuple_bounds_and_local_references() -> eyre
 /// under both policies and requires the candidate to be the assert
 /// regeneration. A value `import-values` supplies (`settings.unread: 7`, the
 /// parent declares `settings: {enabled: false}`) is no declaration, so a
-/// candidate typing it `integer` is not the chart's generation; a
-/// declaration below a pruned dependency (`kid.unread: ""`, absent from the
-/// coalesced defaults) is the policy's.
+/// candidate typing it `integer` is not the chart's generation. Helm 4.2.3
+/// renders just the parent when `kidEnabled` is false, so the pruned child's
+/// unread declaration supplies no consumption on which to assert its type.
 #[test]
 #[expect(
     clippy::too_many_lines,
@@ -4727,7 +4727,7 @@ fn declared_types_attribution_reads_declarations_from_the_generation() -> eyre::
         ],
         want: vec![
             Err("the candidate is not the assert regeneration".to_string()),
-            Ok(()),
+            Err("the candidate accepts it".to_string()),
         ]
     );
     Ok(())

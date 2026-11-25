@@ -115,7 +115,10 @@ impl HeapVersion {
                         }
                         | ObjectData::Strings(_)
                         | ObjectData::Opaque { reachable: _ }
-                        | ObjectData::Widened { inputs: _ } => true,
+                        | ObjectData::Widened {
+                            inputs: _,
+                            reachable: _,
+                        } => true,
                     }
                 });
         });
@@ -155,8 +158,15 @@ fn data_inputs_with_budget(
             remainder,
         } => {
             fields.extend(known.values());
-            if let Remainder::Unknown { inputs: known } = remainder {
-                inputs.extend(known.iter().cloned());
+            match remainder {
+                Remainder::Unknown { inputs: known } => inputs.extend(known.iter().cloned()),
+                // Unknown members of a layered map depend on their own inputs.
+                Remainder::Layered(layers) => {
+                    if let Some(known) = layers.unknown_inputs() {
+                        inputs.extend(known.iter().cloned());
+                    }
+                }
+                Remainder::Closed | Remainder::Open | Remainder::Input => {}
             }
         }
         ObjectData::Strings(slots) => values.extend(slots.iter().cloned()),
@@ -166,7 +176,10 @@ fn data_inputs_with_budget(
                 aliases: reachable.clone(),
             },
         ))),
-        ObjectData::Widened { inputs: known } => inputs.extend(known.iter().cloned()),
+        ObjectData::Widened {
+            inputs: known,
+            reachable: _,
+        } => inputs.extend(known.iter().cloned()),
     }
     while let Some(field) = fields.pop() {
         if !budget.charge(1) {
@@ -264,7 +277,11 @@ impl HeapVersion {
                 Some(ObjectVersion {
                     revision: _,
                     multiplicity: _,
-                    data: ObjectData::Widened { inputs },
+                    data:
+                        ObjectData::Widened {
+                            inputs,
+                            reachable: _,
+                        },
                 }) => super::Value {
                     node: Rc::new(super::ValueNode::Leaf(super::Leaf {
                         datum: super::Datum::Scalar {

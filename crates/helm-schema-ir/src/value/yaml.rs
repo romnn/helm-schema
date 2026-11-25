@@ -19,6 +19,7 @@ use helm_schema_syntax::{
     ScalarStyle, Skeleton, SkeletonSegment, Span, YamlNodeKind, YamlOwnership,
 };
 
+use super::guard::RuntimeGuard;
 use super::quoted::{self, LexicalState, States};
 use super::relationship::TextFormat;
 use super::{
@@ -1129,7 +1130,12 @@ impl FilePlacement {
             Predicate::Or(survivors).negated(),
         ]);
         let abort = match exits.first() {
-            Some(exit) => exit.state.heap.arena.predicate_memo.normalize(abort),
+            Some(exit) => {
+                let arena = &exit.state.heap.arena;
+                arena
+                    .predicate_memo
+                    .normalize(Predicate::Or(vec![abort, certain_flow_abort(arena, exits)]))
+            }
             None => abort.normalize_boolean(),
         };
         Self { outputs, abort }
@@ -1197,6 +1203,31 @@ impl FilePlacement {
             }
         }
     }
+}
+
+/// Aborts can cover both arms of a decision that has no input predicate. Join
+/// the runtime regions before projecting a sufficient predicate over input.
+fn certain_flow_abort(arena: &super::Arena, exits: &[Exit]) -> Predicate {
+    if !exits
+        .iter()
+        .any(|exit| matches!(exit.flow, Flow::Abort(_)) && !exit.state.active.coverage_exact())
+    {
+        return Predicate::False;
+    }
+    let mut aborted = RuntimeGuard::False;
+    let mut continued = RuntimeGuard::False;
+    for exit in exits {
+        let active = &exit.state.active;
+        if matches!(exit.flow, Flow::Abort(_)) {
+            aborted = arena.union_runtime_guards(&aborted, &arena.exported_path_guard(active));
+        } else {
+            continued =
+                arena.union_runtime_guards(&continued, &arena.runtime_path(&active.edges()));
+        }
+    }
+    let ended =
+        arena.intersect_runtime_guards(&aborted, &arena.complement_runtime_guard(&continued));
+    arena.budget_test(ended).when_true.clone()
 }
 
 struct LayoutBuilder<'a> {
@@ -3020,12 +3051,20 @@ impl<'a> LexicalTransfers<'a> {
         memo: &PredicateMemo,
     ) -> States {
         match &derivation.operation {
-            super::relationship::ValueOperation::Text(transform) => self.transformed(
-                &derivation.source,
-                state,
-                std::slice::from_ref(transform),
-                memo,
-            ),
+            super::relationship::ValueOperation::Text(transform) => {
+                let source = &derivation.source;
+                let mut states =
+                    self.transformed(source, state, std::slice::from_ref(transform), memo);
+                if let Some(end) = state.edited_word_end(transform)
+                    && states.get(&end) != Some(&Predicate::True)
+                    && let Some(preserved) = self
+                        .value(source, LexicalState::TruncatableStart, memo)
+                        .remove(&LexicalState::TruncatableWord)
+                {
+                    quoted::merge(&mut states, end, preserved, memo);
+                }
+                states
+            }
             super::relationship::ValueOperation::Format(TextFormat::Value | TextFormat::String) => {
                 self.stringified(&derivation.source, state, memo)
             }
@@ -3188,7 +3227,10 @@ impl<'a> LexicalTransfers<'a> {
             super::ObjectData::Map { fields, remainder } => (fields, remainder),
             super::ObjectData::Strings(_)
             | super::ObjectData::Opaque { reachable: _ }
-            | super::ObjectData::Widened { inputs: _ } => return States::new(),
+            | super::ObjectData::Widened {
+                inputs: _,
+                reachable: _,
+            } => return States::new(),
         };
         let Some(guard) = self.map_guard(target, fields, remainder) else {
             return States::new();

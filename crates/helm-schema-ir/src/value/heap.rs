@@ -90,18 +90,25 @@ impl Heap {
             }
             | ObjectData::Strings(_)
             | ObjectData::Opaque { reachable: _ }
-            | ObjectData::Widened { inputs: _ } => None,
+            | ObjectData::Widened {
+                inputs: _,
+                reachable: _,
+            } => None,
         };
         let data = if let Some(reason) = reason {
             tracing::debug!(?reason, "widen object");
             tracing::debug_span!(target: "helm_schema_ir::counters::heap_store", "object_widened", reason = ?reason).in_scope(|| {});
             ObjectData::Widened {
                 inputs: Rc::new(self.data_inputs(&data)),
+                reachable: data_reach(&data),
             }
         } else {
             data
         };
-        let classes = self.version.object_count();
+        let classes = self
+            .version
+            .object_count()
+            .saturating_sub(self.arena.instance_object_base.get());
         let existing = occurrence.is_some_and(|id| self.version.has_allocated_object(id));
         if !existing && classes >= 4096 {
             tracing::debug!(reason = ?super::BoundReason::ObjectClasses, "widen allocation");
@@ -115,12 +122,18 @@ impl Heap {
             };
             let id = ObjectId { ordinal };
             let mut inputs = self.data_inputs(&data);
+            let mut reachable = data_reach(&data);
             if let Some(ObjectVersion {
-                data: ObjectData::Widened { inputs: old },
+                data:
+                    ObjectData::Widened {
+                        inputs: old,
+                        reachable: old_reachable,
+                    },
                 ..
             }) = self.version.object(&id).as_deref()
             {
                 inputs.extend(old.iter().cloned());
+                reachable = reachable.union(old_reachable);
             }
             self.install(
                 id.clone(),
@@ -129,6 +142,7 @@ impl Heap {
                     multiplicity: Multiplicity::Summary,
                     data: ObjectData::Widened {
                         inputs: Rc::new(inputs),
+                        reachable,
                     },
                 },
             );
@@ -216,7 +230,10 @@ impl Heap {
             ObjectData::Map {
                 fields: _,
                 remainder: _
-            } | ObjectData::Widened { inputs: _ }
+            } | ObjectData::Widened {
+                inputs: _,
+                reachable: _,
+            }
         ) {
             return false;
         }
@@ -304,6 +321,7 @@ impl Heap {
     ) {
         let mut inputs = self.data_inputs(&previous.data);
         inputs.extend(self.data_inputs(added));
+        let reachable = data_reach(&previous.data).union(&data_reach(added));
         tracing::debug_span!(target: "helm_schema_ir::counters::heap_store", "object_widened", reason = "summary_write_bound", object = id.ordinal).in_scope(|| {});
         self.install(
             id.clone(),
@@ -312,6 +330,7 @@ impl Heap {
                 multiplicity: previous.multiplicity,
                 data: ObjectData::Widened {
                     inputs: Rc::new(inputs),
+                    reachable,
                 },
             },
         );
@@ -421,7 +440,10 @@ impl HeapVersion {
                 data:
                     ObjectData::Strings(_)
                     | ObjectData::Opaque { reachable: _ }
-                    | ObjectData::Widened { inputs: _ },
+                    | ObjectData::Widened {
+                        inputs: _,
+                        reachable: _,
+                    },
             })
             | None => Field::Unknown,
         }
@@ -580,30 +602,40 @@ pub(super) fn join_data(
         (ObjectData::Strings(yes), ObjectData::Strings(no)) if yes.len() == no.len() => {
             Ok(join_slots(decision, yes, no, budget))
         }
-        (ObjectData::Widened { inputs: yes }, ObjectData::Widened { inputs: no }) => {
+        (
+            ObjectData::Widened {
+                inputs: yes,
+                reachable: yes_reachable,
+            },
+            ObjectData::Widened {
+                inputs: no,
+                reachable: no_reachable,
+            },
+        ) => Ok(ObjectData::Widened {
+            inputs: join_input_sets(yes, no, input_unions, budget),
+            reachable: yes_reachable.union(no_reachable),
+        }),
+        // A map widened on one arm keeps the other arm's fields under the decision: the widened
+        // arm's members are unknown and reference what its contents may reference.
+        (ObjectData::Widened { inputs, reachable }, ObjectData::Map { fields, remainder })
+        | (ObjectData::Map { fields, remainder }, ObjectData::Widened { inputs, reachable }) => {
             Ok(ObjectData::Widened {
-                inputs: join_input_sets(yes, no, input_unions, budget),
+                inputs: Rc::clone(inputs),
+                reachable: reachable.union(&map_reach(fields, remainder)),
             })
         }
+        // Other storage widened on one arm stays widened: its unknown contents may still
+        // reference what either arm references.
         (
-            ObjectData::Widened { inputs },
-            ObjectData::Map {
-                fields: _,
-                remainder: _,
-            }
-            | ObjectData::Strings(_)
-            | ObjectData::Opaque { reachable: _ },
+            ObjectData::Widened { inputs, reachable },
+            other @ (ObjectData::Strings(_) | ObjectData::Opaque { reachable: _ }),
         )
         | (
-            ObjectData::Map {
-                fields: _,
-                remainder: _,
-            }
-            | ObjectData::Strings(_)
-            | ObjectData::Opaque { reachable: _ },
-            ObjectData::Widened { inputs },
+            other @ (ObjectData::Strings(_) | ObjectData::Opaque { reachable: _ }),
+            ObjectData::Widened { inputs, reachable },
         ) => Ok(ObjectData::Widened {
             inputs: Rc::clone(inputs),
+            reachable: reachable.union(&data_reach(other)),
         }),
         (ObjectData::Opaque { reachable: yes }, ObjectData::Opaque { reachable: no }) => {
             if !budget.charge(
@@ -611,6 +643,7 @@ pub(super) fn join_data(
             ) {
                 return Ok(ObjectData::Widened {
                     inputs: Rc::default(),
+                    reachable: yes.union(no),
                 });
             }
             Ok(ObjectData::Opaque {
@@ -662,6 +695,7 @@ fn join_slots(
     {
         return ObjectData::Widened {
             inputs: Rc::default(),
+            reachable: slots_reach(yes).union(&slots_reach(no)),
         };
     }
     let Some(slots) = yes
@@ -672,6 +706,7 @@ fn join_slots(
     else {
         return ObjectData::Widened {
             inputs: Rc::default(),
+            reachable: slots_reach(yes).union(&slots_reach(no)),
         };
     };
     ObjectData::Strings(slots)
@@ -721,10 +756,13 @@ fn join_map_data(
         .keys()
         .chain(no.keys())
         .collect::<std::collections::BTreeSet<_>>();
+    // A join that cannot keep the fields keeps what they may reference.
+    let widened = || ObjectData::Widened {
+        inputs: Rc::default(),
+        reachable: map_reach(yes, &yes_remainder).union(&map_reach(no, &no_remainder)),
+    };
     if keys.len() > 128 {
-        return ObjectData::Widened {
-            inputs: Rc::default(),
-        };
+        return widened();
     }
     let mut fields = BTreeMap::new();
     for key in keys {
@@ -737,14 +775,10 @@ fn join_map_data(
             .cloned()
             .unwrap_or_else(|| no_remainder.missing());
         if !field_join_fits(&yes_field, &no_field, budget) {
-            return ObjectData::Widened {
-                inputs: Rc::default(),
-            };
+            return widened();
         }
         let Some(field) = super::heap_select::field(decision, yes_field, no_field, budget) else {
-            return ObjectData::Widened {
-                inputs: Rc::default(),
-            };
+            return widened();
         };
         fields.insert(key.clone(), field);
     }
@@ -759,7 +793,8 @@ fn join_map_data(
             Remainder::Unknown { inputs }
         }
         (yes @ Remainder::Layered(_), no) | (yes, no @ Remainder::Layered(_)) => {
-            super::layers::join_remainders(decision, &yes, &no, budget).unwrap_or(Remainder::Open)
+            super::layers::join_remainders(decision, &yes, &no, budget)
+                .unwrap_or_else(|| super::layers::covering_remainder(&yes, &no))
         }
         (Remainder::Closed, Remainder::Closed) => Remainder::Closed,
         (Remainder::Input, Remainder::Input) => Remainder::Input,
@@ -846,4 +881,143 @@ impl std::fmt::Debug for HeapVersion {
             .field("id", &self.id)
             .finish_non_exhaustive()
     }
+}
+
+impl super::Reach {
+    /// What either reach may reference.
+    pub(super) fn union(&self, other: &Self) -> Self {
+        match (self, other) {
+            (Self::Bounded(left), Self::Bounded(right)) => {
+                if right.is_subset(left) {
+                    self.clone()
+                } else if left.is_subset(right) {
+                    other.clone()
+                } else {
+                    Self::Bounded(Rc::new(left.union(right).cloned().collect()))
+                }
+            }
+            (Self::Top, Self::Bounded(_) | Self::Top) | (Self::Bounded(_), Self::Top) => Self::Top,
+        }
+    }
+}
+
+/// Records the objects `value` references directly and queues the values it holds; false when
+/// an unknown part may reference objects nothing records.
+pub(super) fn value_references(
+    value: &Value,
+    pending: &mut Vec<Value>,
+    targets: &mut BTreeSet<ObjectId>,
+) -> bool {
+    match value.node.as_ref() {
+        super::ValueNode::Select {
+            decision: _,
+            yes,
+            no,
+        } => {
+            pending.extend([yes.clone(), no.clone()]);
+        }
+        super::ValueNode::Leaf(super::Leaf { datum, origin: _ }) => match datum {
+            super::Datum::Text(_)
+            | super::Datum::Scalar {
+                go_type: _,
+                content: _,
+            }
+            | super::Datum::Map {
+                view: _,
+                target: None,
+            } => {}
+            super::Datum::Map {
+                view: _,
+                target: Some(id),
+            }
+            | super::Datum::Slot {
+                backing: id,
+                index: _,
+            } => {
+                targets.insert(id.clone());
+            }
+            super::Datum::Strings(slice) => {
+                targets.insert(slice.backing.clone());
+            }
+            super::Datum::Sequence(sequence) => pending.extend(
+                sequence
+                    .storage
+                    .iter()
+                    .flat_map(|items| items.iter().cloned()),
+            ),
+            super::Datum::Unknown(unknown) => match &unknown.aliases {
+                super::Reach::Bounded(ids) => targets.extend(ids.iter().cloned()),
+                super::Reach::Top => return false,
+            },
+        },
+    }
+    true
+}
+
+/// The objects the values in `values` may reference.
+pub(super) fn values_reach<'a>(values: impl IntoIterator<Item = &'a Value>) -> super::Reach {
+    let mut pending: Vec<Value> = values.into_iter().cloned().collect();
+    let mut targets = BTreeSet::new();
+    while let Some(value) = pending.pop() {
+        if !value_references(&value, &mut pending, &mut targets) {
+            return super::Reach::Top;
+        }
+    }
+    super::Reach::Bounded(Rc::new(targets))
+}
+
+fn slots_reach(slots: &[Value]) -> super::Reach {
+    values_reach(slots)
+}
+
+fn map_reach(fields: &super::ObjectFields, remainder: &Remainder) -> super::Reach {
+    let unwritten = match remainder {
+        // Unwritten keys hold the input map's own members, reached through it.
+        Remainder::Closed | Remainder::Open | Remainder::Input => {
+            super::Reach::Bounded(Rc::default())
+        }
+        Remainder::Layered(layers) => layers.references(),
+        Remainder::Unknown { inputs: _ } => return super::Reach::Top,
+    };
+    if unwritten == super::Reach::Top {
+        return super::Reach::Top;
+    }
+    let mut values = Vec::new();
+    let mut pending: Vec<&Field> = fields.values().collect();
+    while let Some(field) = pending.pop() {
+        match field {
+            Field::Absent | Field::Unknown => {}
+            Field::Present(value) => values.push(value),
+            Field::Select {
+                decision: _,
+                yes,
+                no,
+            } => pending.extend([yes.as_ref(), no.as_ref()]),
+        }
+    }
+    values_reach(values).union(&unwritten)
+}
+
+/// The objects the contents of `data` may reference: what a summary of them keeps.
+pub(super) fn data_reach(data: &ObjectData) -> super::Reach {
+    match data {
+        ObjectData::Map { fields, remainder } => map_reach(fields, remainder),
+        ObjectData::Strings(slots) => slots_reach(slots),
+        ObjectData::Opaque { reachable }
+        | ObjectData::Widened {
+            inputs: _,
+            reachable,
+        } => reachable.clone(),
+    }
+}
+
+/// A member of these values: reached through them, it references only what they may.
+pub(super) fn unknown_member(values: &[Value], inputs: BTreeSet<ValuesPath>) -> Value {
+    Value::with_influences(
+        Value::leaf(super::Datum::Unknown(super::UnknownValue {
+            types: super::TypeCoverage::Unresolved,
+            aliases: values_reach(values),
+        })),
+        inputs,
+    )
 }

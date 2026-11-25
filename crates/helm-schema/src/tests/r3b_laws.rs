@@ -40,7 +40,7 @@ const CONFIG_MAP: &str = indoc! {"
 ///
 /// Declared defaults only annotate, so every verdict comes from template and
 /// Helm semantics rather than authoring policy (ADR 0043).
-fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
+pub(super) fn law_schema(files: &[(&str, &str)]) -> eyre::Result<Value> {
     law_schema_with_archives(files, &[])
 }
 
@@ -70,6 +70,22 @@ type ArchiveEntries<'a> = Vec<(&'a [u8], &'a str)>;
 fn law_schema_with_byte_archives(
     files: &[(&str, &str)],
     archives: &[(&str, ArchiveEntries<'_>)],
+) -> eyre::Result<Value> {
+    chart_law_schema(files, archives, false)
+}
+
+/// [`law_schema`] with the chart's test templates kept, as Helm renders without `--skip-tests`.
+fn law_schema_with_tests(files: &[(&str, &str)]) -> eyre::Result<Value> {
+    chart_law_schema(files, &[], true)
+}
+
+/// The final schema for a chart, its packaged dependencies, and whether `templates/tests/**`
+/// is part of the render (ADR 0052: `--exclude-tests` removes it from the render and from the
+/// definitions, as Helm's adjudication does by removing the directory).
+fn chart_law_schema(
+    files: &[(&str, &str)],
+    archives: &[(&str, ArchiveEntries<'_>)],
+    include_tests: bool,
 ) -> eyre::Result<Value> {
     use std::io::Write as _;
 
@@ -103,7 +119,7 @@ fn law_schema_with_byte_archives(
     }
     let session = crate::AnalysisSession::new(crate::GenerateOptions {
         chart_source: chart_dir.into(),
-        include_tests: false,
+        include_tests,
         include_subchart_values: true,
         values_files: Vec::new(),
         infer_required: false,
@@ -4141,12 +4157,13 @@ fn an_unscheduled_template_write_reaches_a_later_read() -> eyre::Result<()> {
     assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
 }
 
-/// A test template runs first (deeper path) and its output is filtered only after rendering, so
-/// its write reaches the read even when tests are excluded (receipt
-/// `transfer/receipts-lanec3/unscheduled-test`, exit 0 with and without `--skip-tests`).
+/// A test template runs first (deeper path), so its write reaches the read: the intact chart
+/// renders. With `templates/tests` removed, as `--exclude-tests` does (ADR 0052), the initial
+/// Release service fails the render (receipt `transfer/receipts-lanec3/unscheduled-test`, exit
+/// 0; Helm 4.2.3 without the test directory: `initial service`).
 #[test]
-fn an_excluded_test_template_write_reaches_a_later_read() -> eyre::Result<()> {
-    let schema = law_schema(&[
+fn a_test_template_write_reaches_a_later_read_only_with_tests() -> eyre::Result<()> {
+    let files: &[(&str, &str)] = &[
         ("Chart.yaml", CHART),
         ("values.yaml", "x: 1\n"),
         (
@@ -4169,8 +4186,20 @@ fn an_excluded_test_template_write_reaches_a_later_read() -> eyre::Result<()> {
             "templates/a.yaml",
             &[INITIAL_SERVICE_FAILS, CONFIG_MAP].concat(),
         ),
-    ])?;
-    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+    ];
+    assert_test_scope_verdicts(files)
+}
+
+/// Helm's verdicts on a chart whose test templates make it render: it renders with them and
+/// fails without them.
+fn assert_test_scope_verdicts(files: &[(&str, &str)]) -> eyre::Result<()> {
+    for (schema, renders) in [
+        (law_schema_with_tests(files)?, true),
+        (law_schema(files)?, false),
+    ] {
+        assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], renders)?;
+    }
+    Ok(())
 }
 
 /// Helm parses only a library chart's partials: the packaged library's `_helpers.tpl` defines the
@@ -4373,13 +4402,15 @@ fn truncation_follows_byte_widths() -> eyre::Result<()> {
     assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
 }
 
-/// Helm parses every template, test hooks included, and the shallower `templates/tests/_touch.tpl`
-/// redefines the helper after `templates/deep/nested/_touch.tpl`; its write reaches the read even
-/// when tests are excluded (receipt `transfer/receipts-lanec3/test-partial-shadow`, exit 0 with and
-/// without `--skip-tests`).
+/// Helm parses every template of the render, test hooks included, and the shallower
+/// `templates/tests/_touch.tpl` redefines the helper after `templates/deep/nested/_touch.tpl`:
+/// the intact chart renders. With `templates/tests` removed, as `--exclude-tests` does (ADR
+/// 0052), the no-op helper runs and the initial Release service fails the render (receipt
+/// `transfer/receipts-lanec3/test-partial-shadow`, exit 0; Helm 4.2.3 without the test
+/// directory: `initial service`).
 #[test]
-fn an_excluded_test_partial_defines_the_helper_helm_runs() -> eyre::Result<()> {
-    let schema = law_schema(&[
+fn a_test_partial_defines_the_helper_only_with_tests() -> eyre::Result<()> {
+    let files: &[(&str, &str)] = &[
         ("Chart.yaml", CHART),
         ("values.yaml", "x: 1\n"),
         (
@@ -4399,8 +4430,8 @@ fn an_excluded_test_partial_defines_the_helper_helm_runs() -> eyre::Result<()> {
             ]
             .concat(),
         ),
-    ])?;
-    assert_helm_verdicts(&schema, &[("defaults", json!({"x": 1}))], true)
+    ];
+    assert_test_scope_verdicts(files)
 }
 
 /// A library partial whose name is not UTF-8 still defines the helper Helm runs: Helm parses
@@ -4521,4 +4552,27 @@ fn a_split_rune_opener_through_to_yaml_fails_the_render() -> eyre::Result<()> {
         ),
     ])?;
     assert_helm_verdicts(&schema, &[("plain-split", json!({"code": "{{é"}))], false)
+}
+
+/// A body assignment `$item = $i` is not the range header's own: `$i` stays bound to each member,
+/// so Helm 4.2.3 renders string members and fails `upper` on an integer member (receipts
+/// `range-body-assignment/`).
+#[test]
+fn a_body_assignment_leaves_the_range_variable_bound() -> eyre::Result<()> {
+    let schema = template_law_schema(
+        "items: []\n",
+        &[
+            indoc! {r#"
+                {{- range $i := .Values.items }}{{ $item := "" }}{{ $item = $i }}{{ $_ := upper $item }}{{ end }}
+            "#},
+            CONFIG_MAP,
+        ],
+        "",
+    )?;
+    assert_helm_verdicts(&schema, &[("strings", json!({"items": ["a", "b"]}))], true)?;
+    assert_helm_verdicts(
+        &schema,
+        &[("integer member", json!({"items": ["a", 7]}))],
+        false,
+    )
 }

@@ -416,7 +416,10 @@ fn raw_range_variable_definition_exposes_children() {
 #[test]
 fn range_assignment_operator_remains_structurally_visible() {
     for (operator, want) in [("=", true), (":=", false)] {
-        let src = format!("{{{{ range $value {operator} .Values.items }}}}{{{{ end }}}}");
+        // An assignment in the body never makes the header one.
+        let src = format!(
+            "{{{{ range $value {operator} .Values.items }}}}{{{{ $n = $value }}}}{{{{ end }}}}"
+        );
         let tree = crate::parse_go_template(&src).expect("parse source");
         let mut stack = vec![tree.root_node()];
         let mut range = None;
@@ -444,8 +447,9 @@ fn range_assignment_operator_remains_structurally_visible() {
             range.to_sexp(),
         );
 
-        let destructured_src =
-            format!("{{{{ range $key, $value {operator} .Values.items }}}}{{{{ end }}}}");
+        let destructured_src = format!(
+            "{{{{ range $key, $value {operator} .Values.items }}}}{{{{ $n = $key }}}}{{{{ end }}}}"
+        );
         let destructured_tree =
             crate::parse_go_template(&destructured_src).expect("parse destructured source");
         let mut stack = vec![destructured_tree.root_node()];

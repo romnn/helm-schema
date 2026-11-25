@@ -11,12 +11,14 @@ pub fn build_define_index(charts: &[ChartContext]) -> EngineResult<DefineIndex> 
 
     for chart in charts {
         for file in chart.files.files_with_role(FileRole::DefineIndexTemplate) {
-            let Some(name) = file.text_name() else {
+            let name = file.template_name();
+            // Helm parses only a library chart's partials (`engine.go:592`).
+            if chart.is_library && !is_partial(&name) {
                 continue;
-            };
+            }
             index.add_chart_template_source(
                 &chart.template_namespace,
-                &template_execution_name(chart, name),
+                &template_execution_name(chart, &name),
                 file.source()?,
             );
         }
@@ -41,4 +43,11 @@ pub fn build_define_index(charts: &[ChartContext]) -> EngineResult<DefineIndex> 
 /// executing chart's own file.
 pub(crate) fn template_execution_name(chart: &ChartContext, name: &str) -> String {
     format!("{}/{name}", chart.template_namespace)
+}
+
+/// Whether a template is a partial: its file name starts with `_`.
+fn is_partial(name: &str) -> bool {
+    name.rsplit('/')
+        .next()
+        .is_some_and(|file| file.starts_with('_'))
 }

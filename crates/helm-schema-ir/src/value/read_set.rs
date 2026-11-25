@@ -187,6 +187,14 @@ impl ReadSet {
         })
     }
 
+    /// The recorded reads of `coverage`, in order. A heap observation projects only
+    /// [`super::ReadCoverage::UnknownRegion`] reads, so other coverages need no projection.
+    pub(super) fn recorded(&self, coverage: super::ReadCoverage) -> Vec<&RuntimeRead> {
+        let mut reads = Vec::new();
+        collect_coverage(self.root.as_deref(), coverage, &mut reads);
+        reads
+    }
+
     pub(super) fn iter(&self) -> ReadIter<'_> {
         let root = self.projection();
         let mut result = ReadIter {
@@ -265,6 +273,26 @@ fn length(link: &Link) -> usize {
 }
 
 // Coverage is the leading sort key, so filtering cuts two search boundaries.
+fn collect_coverage<'a>(
+    node: Option<&'a Node>,
+    coverage: super::ReadCoverage,
+    reads: &mut Vec<&'a RuntimeRead>,
+) {
+    let Some(node) = node else {
+        return;
+    };
+    let order = node.entry.coverage.cmp(&coverage);
+    if order != Ordering::Less {
+        collect_coverage(node.left.as_deref(), coverage, reads);
+    }
+    if order == Ordering::Equal {
+        reads.push(&node.entry);
+    }
+    if order != Ordering::Greater {
+        collect_coverage(node.right.as_deref(), coverage, reads);
+    }
+}
+
 fn contains_coverage(root: &Link, coverage: super::ReadCoverage) -> bool {
     let mut current = root.as_ref();
     while let Some(node) = current {

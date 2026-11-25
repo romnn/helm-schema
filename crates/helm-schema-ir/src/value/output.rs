@@ -1355,7 +1355,7 @@ impl RuntimeCondition {
     }
 
     pub(super) fn requirement_identity(&self) -> super::consumption::RequirementScope {
-        self.arena.requirement_identity.clone()
+        self.arena.requirement_identity.borrow().clone()
     }
 
     pub(super) fn requirement_scope(&self) -> String {
@@ -1828,44 +1828,54 @@ fn capture_member_host(
     level = "debug",
     target = "helm_schema_ir::value::document_sealing"
 )]
+/// The conditions under which `exit` installed each root merge fallback.
+fn installed_root_fallbacks(
+    exit: &Exit,
+) -> BTreeMap<&helm_schema_core::ValuesPath, Vec<Predicate>> {
+    let mut conditions = BTreeMap::<_, Vec<_>>::new();
+    for read in exit
+        .state
+        .reads
+        .recorded(super::ReadCoverage::RootMergeFallback)
+    {
+        conditions
+            .entry(&read.path)
+            .or_default()
+            .push(read.condition.clone());
+    }
+    conditions
+}
+
 fn always_installed_root_fallbacks(exits: &[Exit]) -> BTreeSet<helm_schema_core::ValuesPath> {
-    let root_fallback_sources = exits
+    let sources = exits
         .iter()
-        .flat_map(|exit| exit.state.reads.iter())
-        .filter(|read| read.coverage == super::ReadCoverage::RootMergeFallback)
-        .map(|read| read.path.clone())
+        .flat_map(|exit| installed_root_fallbacks(exit).into_keys().cloned())
         .collect::<BTreeSet<_>>();
-    root_fallback_sources
+    let normal = exits
+        .iter()
+        .filter(|exit| matches!(exit.flow, Flow::Normal(_)))
+        .map(|exit| {
+            (
+                exit,
+                installed_root_fallbacks(exit),
+                exit.state.path_predicate(),
+            )
+        })
+        .collect::<Vec<_>>();
+    if normal.is_empty() {
+        return BTreeSet::new();
+    }
+    sources
         .into_iter()
         .filter(|path| {
-            let mut saw_normal = false;
-            for exit in exits {
-                if !matches!(exit.flow, Flow::Normal(_)) {
-                    continue;
-                }
-                saw_normal = true;
-                let installed = Predicate::Or(
-                    exit.state
-                        .reads
-                        .iter()
-                        .filter(|read| {
-                            read.coverage == super::ReadCoverage::RootMergeFallback
-                                && &read.path == path
-                        })
-                        .map(|read| read.condition.clone())
-                        .collect(),
-                );
-                if !exit
-                    .state
+            normal.iter().all(|(exit, installed, reached)| {
+                let installed = Predicate::Or(installed.get(path).cloned().unwrap_or_default());
+                exit.state
                     .heap
                     .arena
                     .predicate_memo
-                    .exactly_implies(&exit.state.path_predicate(), &installed)
-                {
-                    return false;
-                }
-            }
-            saw_normal
+                    .exactly_implies(reached, &installed)
+            })
         })
         .collect()
 }

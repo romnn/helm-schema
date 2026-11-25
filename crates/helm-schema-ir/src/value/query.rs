@@ -443,11 +443,13 @@ impl State {
             .is_some_and(|object| {
                 matches!(
                     &object.data,
-                    ObjectData::Widened { inputs: _ }
-                        | ObjectData::Map {
-                            fields: _,
-                            remainder: super::Remainder::Open
-                        }
+                    ObjectData::Widened {
+                        inputs: _,
+                        reachable: _,
+                    } | ObjectData::Map {
+                        fields: _,
+                        remainder: super::Remainder::Open
+                    }
                 )
             });
         if opaque_unknown || opaque_map {
@@ -1150,10 +1152,27 @@ impl State {
                 };
                 self.consumed(&field_value(field, &unknown, &Value::nil()))
             }
+            // A member of an unknown value is reached through it: it references only what the
+            // value may reference.
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Unknown(super::UnknownValue {
+                        types: _,
+                        aliases: aliases @ super::Reach::Bounded(_),
+                    }),
+                origin: _,
+            }) => Value::with_influences(
+                Value::leaf(Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Unresolved,
+                    aliases: aliases.clone(),
+                })),
+                value.inputs(),
+            ),
+            // A member of any other leaf references only what the leaf may reference.
             ValueNode::Leaf(Leaf {
                 datum: _,
                 origin: _,
-            }) => Value::influenced(value.inputs()),
+            }) => super::heap::unknown_member(std::slice::from_ref(&value), value.inputs()),
         })
     }
     /// A key of a `map[string]string`: a string, empty when missing.
@@ -1235,14 +1254,18 @@ impl State {
             Some(
                 ObjectData::Strings(_)
                 | ObjectData::Opaque { reachable: _ }
-                | ObjectData::Widened { inputs: _ },
+                | ObjectData::Widened {
+                    inputs: _,
+                    reachable: _,
+                },
             )
             | None => Field::Unknown,
         };
+        // A known field needs no stand-in for unknown contents.
         let unknown = if field_needs_unknown(&field) {
             Self::unknown_child_in_storage(data, path, key)
         } else {
-            Value::unknown()
+            super::heap::unknown_member(&[], BTreeSet::new())
         };
         (field, unknown)
     }
@@ -1252,18 +1275,49 @@ impl State {
         path: Option<&ValuesPath>,
         key: &str,
     ) -> Value {
-        if let Some(
-            ObjectData::Widened { inputs }
-            | ObjectData::Map {
-                fields: _,
-                remainder: super::Remainder::Unknown { inputs },
-            },
-        ) = data
+        if let Some(ObjectData::Widened { inputs, reachable }) = data {
+            // A member of unknown contents may be any reference those contents hold.
+            return Value::with_influences(
+                Value::leaf(super::Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Unresolved,
+                    aliases: reachable.clone(),
+                })),
+                inputs.as_ref().clone(),
+            );
+        }
+        if let Some(ObjectData::Map {
+            fields: _,
+            remainder: super::Remainder::Unknown { inputs },
+        }) = data
         {
             return Value::influenced(inputs.as_ref().clone());
         }
         let Some(mut path) = path.cloned() else {
-            return Value::unknown();
+            // A member a map's unwritten keys supply references only what those keys may.
+            let (inputs, aliases) = match data {
+                Some(ObjectData::Map {
+                    fields: _,
+                    remainder: super::Remainder::Layered(layers),
+                }) => (
+                    layers
+                        .unknown_inputs()
+                        .map(|inputs| inputs.as_ref().clone()),
+                    layers.references(),
+                ),
+                Some(ObjectData::Map {
+                    fields: _,
+                    remainder:
+                        super::Remainder::Open | super::Remainder::Closed | super::Remainder::Input,
+                }) => (None, super::Reach::Bounded(Rc::default())),
+                _ => return Value::unknown(),
+            };
+            return Value::with_influences(
+                Value::leaf(super::Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Unresolved,
+                    aliases,
+                })),
+                inputs.unwrap_or_default(),
+            );
         };
         if key.is_empty() {
             return Value::influenced(BTreeSet::from([path]));
@@ -1640,6 +1694,40 @@ fn field_needs_unknown(field: &Field) -> bool {
     }
 }
 
+/// Collects one stored object's dependencies; false when the budget ran out. An opaque object's
+/// dependencies are the objects it may reference, which the caller walks.
+fn collect_object_inputs(
+    data: &ObjectData,
+    seen_input_sets: &mut AHashSet<*const BTreeSet<ValuesPath>>,
+    inputs: &mut BTreeSet<ValuesPath>,
+    values: &mut Vec<Value>,
+    budget: &mut super::work::WorkBudget,
+) -> bool {
+    match data {
+        ObjectData::Map { fields, remainder } => {
+            remainder_inputs(remainder, seen_input_sets, inputs, values, budget)
+                && fields
+                    .values()
+                    .all(|field| field_inputs_with_budget(field, values, budget))
+        }
+        ObjectData::Strings(slots) => {
+            values.extend(slots.iter().cloned());
+            true
+        }
+        ObjectData::Widened {
+            inputs: known,
+            reachable: _,
+        } => {
+            let charged = budget.charge(known.len());
+            if charged && seen_input_sets.insert(Rc::as_ptr(known)) {
+                inputs.extend(known.iter().cloned());
+            }
+            charged
+        }
+        ObjectData::Opaque { reachable: _ } => true,
+    }
+}
+
 /// Collects a map remainder's dependencies, charging inputs independently of pointer sharing.
 fn remainder_inputs(
     remainder: &super::Remainder,
@@ -1820,7 +1908,10 @@ impl FrozenValue {
             ObjectData::Opaque {
                 reachable: super::Reach::Bounded(objects),
             } if objects.is_empty() => Some((None, 2)),
-            ObjectData::Widened { inputs } => Some((Some(inputs), inputs.len().saturating_add(2))),
+            ObjectData::Widened {
+                inputs,
+                reachable: _,
+            } => Some((Some(inputs), inputs.len().saturating_add(2))),
             ObjectData::Map {
                 fields: _,
                 remainder: _,
@@ -1914,35 +2005,19 @@ impl FrozenValue {
                 let Some(object) = storage else {
                     continue;
                 };
-                match &object.data {
-                    ObjectData::Map { fields, remainder } => {
-                        if !remainder_inputs(
-                            remainder,
-                            &mut seen_input_sets,
-                            &mut inputs,
-                            &mut values,
-                            budget,
-                        ) {
-                            return BTreeSet::from([ValuesPath::default()]);
-                        }
-                        for field in fields.values() {
-                            if !field_inputs_with_budget(field, &mut values, budget) {
-                                return BTreeSet::from([ValuesPath::default()]);
-                            }
-                        }
-                    }
-                    ObjectData::Strings(slots) => values.extend(slots.iter().cloned()),
-                    ObjectData::Widened { inputs: known } => {
-                        if !budget.charge(known.len()) {
-                            return BTreeSet::from([ValuesPath::default()]);
-                        }
-                        if seen_input_sets.insert(Rc::as_ptr(known)) {
-                            inputs.extend(known.iter().cloned());
-                        }
-                    }
-                    ObjectData::Opaque { reachable } => {
-                        extend_aliases(reachable, heap, &mut objects, &mut expanded_render_graph);
-                    }
+                if let ObjectData::Opaque { reachable } = &object.data {
+                    extend_aliases(reachable, heap, &mut objects, &mut expanded_render_graph);
+                    continue;
+                }
+                let complete = collect_object_inputs(
+                    &object.data,
+                    &mut seen_input_sets,
+                    &mut inputs,
+                    &mut values,
+                    budget,
+                );
+                if !complete {
+                    return BTreeSet::from([ValuesPath::default()]);
                 }
             }
         }

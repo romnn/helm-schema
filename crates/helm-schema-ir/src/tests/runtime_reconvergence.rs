@@ -347,7 +347,10 @@ fn storage_growth(version: &crate::value::HeapVersion) -> StorageGrowth {
             } => fields.len(),
             ObjectData::Strings(slots) => slots.len(),
             ObjectData::Opaque { reachable: _ } => 1,
-            ObjectData::Widened { inputs } => inputs.len(),
+            ObjectData::Widened {
+                inputs,
+                reachable: _,
+            } => inputs.len(),
         };
     });
     StorageGrowth {
@@ -559,6 +562,7 @@ fn heap_observations_freeze_input_identity_when_a_summary_object_is_reused() {
     let object = state.heap.allocate(
         ObjectData::Widened {
             inputs: Rc::default(),
+            reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
         },
         Multiplicity::Summary,
     );
@@ -593,6 +597,7 @@ fn coverage_cache_keys_keep_independent_sessions_separate() {
         state.heap.allocate(
             ObjectData::Widened {
                 inputs: Rc::new(BTreeSet::from([ValuesPath::parse(path)])),
+                reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
             },
             Multiplicity::Singleton,
         );
@@ -745,7 +750,7 @@ fn unknown_write_queries_do_not_reconstruct_discarded_storage() -> eyre::Result<
     sim_assert_eq!(have: object.as_ref(), want: &ObjectVersion {
         revision: state.heap.version.id,
         multiplicity: Multiplicity::Singleton,
-        data: ObjectData::Widened { inputs },
+        data: ObjectData::Widened { inputs, reachable: crate::value::Reach::Top },
     });
     Ok(())
 }
@@ -1035,6 +1040,7 @@ fn terminal_object_provenance_keeps_exact_work_and_does_not_invent_input_identit
         Case {
             data: ObjectData::Widened {
                 inputs: Rc::new(inputs.clone()),
+                reachable: crate::value::Reach::Bounded(std::rc::Rc::default()),
             },
             inputs,
             work: 4,

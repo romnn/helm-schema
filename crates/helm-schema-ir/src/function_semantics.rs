@@ -347,7 +347,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "adler32sum" => encoded(OutputAlphabet::Decimal),
         "sha1sum" | "sha256sum" | "sha512sum" => encoded(OutputAlphabet::Hexadecimal),
         "and" | "coalesce" | "or" => UNKNOWN.selected(&[], Some(Unknown)),
-        "b64dec" | "lower" | "trim" | "upper" => TRANSFORM.fixed(&[Text], Text),
+        "b64dec" | "clean" | "lower" | "trim" | "upper" => TRANSFORM.fixed(&[Text], Text),
         "b64enc" => encoded(OutputAlphabet::Base64),
         "chunk" | "mustChunk" => UNKNOWN.selected(&[Int, Unknown], None),
         "concat" => STRICT.selected(&[], Some(Unknown)),

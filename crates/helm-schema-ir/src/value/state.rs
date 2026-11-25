@@ -260,6 +260,8 @@ impl State {
             .arena
             .decision(action_free, negated, super::Coverage::Exact);
         if test.constant_outcome() != Some(true) {
+            let made = &self.heap.arena.assumptions_made;
+            made.set(made.get() + 1);
             self.active.push(
                 DecisionEdge { test, taken: true },
                 super::path::LinkKind::Assume,

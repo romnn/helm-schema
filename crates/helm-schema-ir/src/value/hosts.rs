@@ -172,7 +172,10 @@ fn values_as_map(
             Some(
                 ObjectData::Strings(_)
                 | ObjectData::Opaque { reachable: _ }
-                | ObjectData::Widened { inputs: _ },
+                | ObjectData::Widened {
+                    inputs: _,
+                    reachable: _,
+                },
             )
             | None => false,
         }
@@ -228,16 +231,23 @@ fn readonly_unknown(types: TypeCoverage) -> Value {
     }))
 }
 
-pub(super) fn typed_map(mut value: Value, view: MapType) -> Value {
+pub(super) fn typed_map(mut value: Value, view: MapType, arena: &super::Arena) -> Value {
     match Rc::make_mut(&mut value.node) {
         ValueNode::Leaf(Leaf {
             datum:
                 Datum::Map {
                     view: existing,
-                    target: _,
+                    target,
                 },
             origin: _,
-        }) => *existing = view,
+        }) => {
+            *existing = view;
+            if let Some(target) = target
+                && !writable(view)
+            {
+                arena.read_only_objects.borrow_mut().insert(target.clone());
+            }
+        }
         ValueNode::Leaf(Leaf {
             datum: _,
             origin: _,
@@ -268,11 +278,15 @@ pub(super) fn file_catalogs(
                 );
             }
         }
-        catalogs.insert(chart.clone(), typed_map(value, MapType::Files));
+        catalogs.insert(
+            chart.clone(),
+            typed_map(value, MapType::Files, &state.heap.arena),
+        );
     }
-    catalogs
-        .entry(String::new())
-        .or_insert_with(|| typed_map(state.heap.map(Remainder::Closed), MapType::Files));
+    catalogs.entry(String::new()).or_insert_with(|| {
+        let files = state.heap.map(Remainder::Closed);
+        typed_map(files, MapType::Files, &state.heap.arena)
+    });
     catalogs
 }
 
@@ -283,9 +297,12 @@ pub(super) fn file_catalogs(
 pub(super) fn release(state: &mut State, initial_fields: bool) -> Value {
     if !initial_fields {
         // Dependencies share this map in Helm; their writes are not yet imported across units.
-        return state.heap.map(Remainder::Unknown {
-            inputs: Rc::new(BTreeSet::new()),
-        });
+        // Helm's initial Release holds only strings, Booleans and an integer: its unknown
+        // members reference no object.
+        return state.heap.map(super::layers::unknown_members(
+            &Rc::new(BTreeSet::new()),
+            &super::Reach::Bounded(Rc::default()),
+        ));
     }
     let release = state.heap.map(Remainder::Closed);
     if let Some(target) = state.map_target(&release) {
@@ -351,7 +368,7 @@ pub(super) fn capabilities(state: &mut State) -> Value {
         state.heap.write(
             &target,
             "KubeVersion",
-            Field::Present(typed_map(version, MapType::KubeVersion)),
+            Field::Present(typed_map(version, MapType::KubeVersion, &state.heap.arena)),
         );
         state.heap.write(
             &target,
@@ -359,7 +376,7 @@ pub(super) fn capabilities(state: &mut State) -> Value {
             Field::Present(readonly_unknown(TypeCoverage::Unresolved)),
         );
     }
-    typed_map(capabilities, MapType::Capabilities)
+    typed_map(capabilities, MapType::Capabilities, &state.heap.arena)
 }
 
 fn catalog(receiver: &Value, state: &mut State) -> Option<BTreeMap<String, Value>> {
@@ -538,7 +555,7 @@ fn glob_files(files: BTreeMap<String, Value>, pattern: &str, state: &mut State) 
             }
         }
     }
-    typed_map(value, MapType::Files)
+    typed_map(value, MapType::Files, &state.heap.arena)
 }
 
 fn flatten_files(files: BTreeMap<String, Value>, secrets: bool, state: &mut State) -> Value {
@@ -582,8 +599,25 @@ fn flatten_files(files: BTreeMap<String, Value>, secrets: bool, state: &mut Stat
     )
 }
 
-pub(super) fn as_files(value: Value) -> Value {
-    typed_map(value, MapType::Files)
+pub(super) fn as_files(value: Value, arena: &super::Arena) -> Value {
+    typed_map(value, MapType::Files, arena)
+}
+
+/// Whether a template can write the map in place. Sprig's mutating functions (`set`, `unset`,
+/// `merge` and its variants) take `map[string]interface{}`, which `chartutil.Values` is assignable
+/// to; the host structs (`*chartutil.Capabilities`, `*chartutil.KubeVersion`, a parsed
+/// `*semver.Version`), the `VersionSet` slice, `Files` (`map[string][]byte`) and
+/// `map[string]string` hold nothing such a function accepts.
+pub(super) fn writable(view: MapType) -> bool {
+    match view {
+        MapType::Interface | MapType::Values => true,
+        MapType::Files
+        | MapType::ApiVersions
+        | MapType::Capabilities
+        | MapType::KubeVersion
+        | MapType::Semver
+        | MapType::String => false,
+    }
 }
 
 pub(super) fn go_type(view: MapType) -> super::kinds::GoType {

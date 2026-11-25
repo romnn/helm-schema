@@ -56,6 +56,52 @@ pub(super) struct Layers {
     merges: Vec<MergeLayer>,
 }
 
+/// The remainder of a map whose other keys and members are unknown: they depend on `inputs`
+/// and may reference `aliases`.
+pub(super) fn unknown_members(
+    inputs: &Rc<BTreeSet<ValuesPath>>,
+    aliases: &super::Reach,
+) -> Remainder {
+    match aliases {
+        super::Reach::Top => Remainder::Unknown {
+            inputs: Rc::clone(inputs),
+        },
+        super::Reach::Bounded(_) => Remainder::Layered(Rc::new(Layers {
+            base: Base::Unknown(Rc::clone(inputs), aliases.clone()),
+            merges: Vec::new(),
+        })),
+    }
+}
+
+/// A remainder covering both remainders when their layers cannot be joined exactly: unknown
+/// members depending on both sides' inputs and referencing what either side may reference.
+pub(super) fn covering_remainder(yes: &Remainder, no: &Remainder) -> Remainder {
+    let mut inputs = BTreeSet::new();
+    let mut aliases = super::Reach::Bounded(Rc::default());
+    for remainder in [yes, no] {
+        match remainder {
+            // Unknown keys of an open map reference no object.
+            Remainder::Closed | Remainder::Input | Remainder::Open => {}
+            Remainder::Unknown { inputs: known } => {
+                inputs.extend(known.iter().cloned());
+                aliases = super::Reach::Top;
+            }
+            Remainder::Layered(layers) => {
+                if let Base::Unknown(known, reach) = &layers.base {
+                    inputs.extend(known.iter().cloned());
+                    aliases = aliases.union(reach);
+                }
+                let sources = layers.source_values().cloned().collect::<Vec<_>>();
+                aliases = aliases.union(&super::heap::values_reach(&sources));
+            }
+        }
+    }
+    if inputs.is_empty() && aliases == super::Reach::Bounded(Rc::default()) {
+        return Remainder::Open;
+    }
+    unknown_members(&Rc::new(inputs), &aliases)
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Base {
     /// The key is absent.
@@ -904,10 +950,25 @@ impl State {
 
     /// Nested maps allocated beneath `target` for unwritten keys: input children and copies.
     pub(super) fn allocated_children(&self, target: &ObjectId) -> Vec<(String, ObjectId)> {
+        use std::ops::Bound;
         let mut children = Vec::new();
         if let Some(path) = self.heap.version.input_paths.get(target) {
-            for (child, backing) in self.heap.arena.input_objects.borrow().iter() {
-                if child.parent().as_ref() == Some(path)
+            let depth = path.segments().len() + 1;
+            let encoded = path.encode();
+            // Paths order by their encoding, so a non-root path's descendants follow it within
+            // the encodings that continue it with a separator.
+            let end = (!encoded.is_empty()).then(|| format!("{encoded}/"));
+            let input_objects = self.heap.arena.input_objects.borrow();
+            for (child, backing) in
+                input_objects.range((Bound::Excluded(path.clone()), Bound::Unbounded))
+            {
+                if let Some(end) = &end
+                    && child.encode() >= *end
+                {
+                    break;
+                }
+                if child.segments().len() == depth
+                    && child.is_descendant_of(path)
                     && let Some(key) = child
                         .segments()
                         .last()
@@ -1460,6 +1521,24 @@ impl Layers {
             Base::Unknown(inputs, _) => Some(inputs),
             Base::Closed | Base::Input | Base::Copy(_) | Base::DecodedInput(_) => None,
         }
+    }
+
+    /// What the unwritten keys may reference: the base's references and every merged source's.
+    /// The input maps beneath an input base are the object's own children, reached through it.
+    pub(super) fn references(&self) -> super::Reach {
+        let base = match &self.base {
+            Base::Closed | Base::Input | Base::DecodedInput(_) => {
+                super::Reach::Bounded(Rc::default())
+            }
+            Base::Copy(source) => super::heap::values_reach([&source.value]),
+            Base::Unknown(_, aliases) => aliases.clone(),
+        };
+        let sources = self
+            .merges
+            .iter()
+            .map(|layer| &layer.source.value)
+            .collect::<Vec<_>>();
+        base.union(&super::heap::values_reach(sources))
     }
 
     /// The values this object reads its unwritten keys from.

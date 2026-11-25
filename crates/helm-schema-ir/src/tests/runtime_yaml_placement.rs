@@ -755,7 +755,7 @@ fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() 
         apiVersion: autoscaling/v2beta1
         kind: HorizontalPodAutoscaler
         metadata:
-          name: {{ .Values.name | trunc 63 }}
+          name: {{ .Values.name | trunc -63 }}
         spec:
           replicas: {{ .Values.replicas }}
     "};
@@ -771,8 +771,8 @@ fn an_unknown_body_keeps_resource_diagnostics_without_inventing_placed_fields() 
             activation: Some(Vec::new()),
         }
     ]));
-    // The truncated name is placed as opaque text (no slot demand reaches `name`); the unknown
-    // body after it invents no placed field.
+    // A suffix of arbitrary text has no certified initial token state, so it
+    // cannot establish placement of the later field.
     let placed = contract
         .uses()
         .iter()
@@ -1402,5 +1402,37 @@ fn flow_plain_tokens_do_not_absorb_brackets() -> eyre::Result<()> {
             "x={x:?}"
         );
     }
+    Ok(())
+}
+
+/// A byte prefix of a plain composed word keeps the replicas slot. A name
+/// that emits another document may move the slot, as in the Helm 4.2.3
+/// receipts under `transfer/r4/trunc-word`.
+#[test]
+fn truncating_a_composed_word_keeps_the_following_plain_document_slot() -> eyre::Result<()> {
+    let source = indoc::indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: {{ printf "%s-frontend" (.Values.name | trimSuffix "-") | trunc (sub 104 (len "frontend") | int) }}
+        spec:
+          replicas: {{ .Values.replicas }}
+    "#};
+    sim_assert_eq!(
+        have: placed(source, &["spec", "replicas"], &json!({"name": "ordinary-probe", "replicas": "three"}))?,
+        want: true
+    );
+    let moved = indoc::indoc! {"
+        split
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: moved
+    "};
+    sim_assert_eq!(
+        have: placed(source, &["spec", "replicas"], &json!({"name": moved.trim_end(), "replicas": "three"}))?,
+        want: false
+    );
     Ok(())
 }

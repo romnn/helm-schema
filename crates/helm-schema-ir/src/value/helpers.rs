@@ -185,14 +185,23 @@ impl Executor<'_> {
                     .filter(|_| function == "tpl");
                 // An unknown program is analyzed under the assumption that it writes nothing:
                 // facts below are claimed only where it holds no template action (ADR 0072 §2,
-                // §5). Where that cannot be stated, its effect is still an unknown write.
+                // §5). Where that cannot be stated, its effect is still an unknown write, to
+                // what its data argument reaches: Helm executes it against that context alone,
+                // in a cloned template namespace (`engine.go` `tpl`, `include`).
                 let assumed = program.is_some_and(|program| state.assume_action_free(program));
-                if !assumed && !read_only_inputs {
-                    super::operations::invalidate(&mut state);
-                }
-                let value = unknown_helper_text(influences);
-                state.output.emit(state.heap.freeze(&value));
-                normal(state, value)
+                let states = if !assumed && !read_only_inputs {
+                    super::operations::opaque_call(argument, arguments, state)
+                } else {
+                    vec![state]
+                };
+                states
+                    .into_iter()
+                    .flat_map(|mut state| {
+                        let value = unknown_helper_text(influences.clone());
+                        state.output.emit(state.heap.freeze(&value));
+                        normal(state, value)
+                    })
+                    .collect()
             }
         }
     }

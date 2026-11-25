@@ -116,11 +116,22 @@ pub(super) fn objects(
             }
             return Some(yes == no);
         }
-        (ObjectData::Widened { inputs: yes }, ObjectData::Widened { inputs: no }) => {
-            if !budget.charge(yes.len() + no.len()) {
+        (
+            ObjectData::Widened {
+                inputs: yes,
+                reachable: yes_reachable,
+            },
+            ObjectData::Widened {
+                inputs: no,
+                reachable: no_reachable,
+            },
+        ) => {
+            if !budget
+                .charge(yes.len() + no.len() + reach_work(yes_reachable) + reach_work(no_reachable))
+            {
                 return None;
             }
-            return Some(yes == no);
+            return Some(yes == no && yes_reachable == no_reachable);
         }
         (
             ObjectData::Map { .. }

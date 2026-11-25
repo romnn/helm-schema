@@ -1,13 +1,41 @@
 use std::collections::BTreeSet;
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use color_eyre::eyre::{self, OptionExt as _};
-use helm_schema_core::{ConditionalGuard, Predicate, ValuesPath};
+use helm_schema_core::{ConditionalGuard, Guard, Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 use tracing_subscriber::prelude::*;
 
+use super::conditional_overlays::RowGuardQueries;
 use super::predicate_to_guard;
+
+#[test]
+fn equal_row_predicates_share_guard_evidence_across_source_paths() -> eyre::Result<()> {
+    let typed = ValuesPath::parse("workload.kind");
+    let other = ValuesPath::parse("workload.enabled");
+    let predicate = || {
+        Predicate::Or(vec![
+            Predicate::from(Guard::Truthy {
+                path: other.clone(),
+            }),
+            Predicate::from(Guard::TypeIs {
+                path: typed.clone(),
+                schema_type: "string".to_owned(),
+            })
+            .negated(),
+        ])
+    };
+    let mut queries = RowGuardQueries::default();
+    let first = queries.evidence(&predicate()).ok_or_eyre("first guard")?;
+    let second = queries.evidence(&predicate()).ok_or_eyre("second guard")?;
+    assert!(Rc::ptr_eq(&first, &second));
+    sim_assert_eq!(have: &first.paths, want: &BTreeSet::from([other.clone(), typed.clone()]));
+    assert!(queries.tests_source_type(&predicate(), &typed));
+    assert!(!queries.tests_source_type(&predicate(), &other));
+    Ok(())
+}
 
 #[derive(Default)]
 struct RequirementBounds {
