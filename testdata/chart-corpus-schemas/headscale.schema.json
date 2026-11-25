@@ -152,64 +152,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configMaps.acl:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global?@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1configMaps.dns:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global?@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "postgresql": {
-          "description": "Enable and configure postgresql database subchart under this key.\nFor more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/postgresql)",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "$ref": "#/definitions/constrains~1configMaps=null"
           },
           {
@@ -242,406 +184,6 @@
               ],
               "type": "object"
             }
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.dns:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+global+global.fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.dns:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null@4"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1global+global.nameOverride:t+nameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+global+global.fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1global+global.nameOverride:t+nameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1configMaps.dns.data+configMaps.dns.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1configMaps.acl.data+configMaps.acl.enabled:t"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1configMaps.dns.data+configMaps.dns.enabled:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1configMaps.acl.data+configMaps.acl.enabled:t"
-                    }
-                  ]
-                }
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1configMaps.dns.data"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1configMaps.acl.data"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+6more"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "not": {
-                                "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null"
-                              }
-                            },
-                            {
-                              "anyOf": [
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+6more"
-                                    },
-                                    {
-                                      "not": {
-                                        "$ref": "#/definitions/constrains~1configMaps.dns:t@2"
-                                      }
-                                    }
-                                  ]
-                                },
-                                {
-                                  "allOf": [
-                                    {
-                                      "anyOf": [
-                                        {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                                            },
-                                            {
-                                              "anyOf": [
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+4more"
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+5more"
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1fullnameOverride"
-                                            },
-                                            {
-                                              "anyOf": [
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
-                                                    },
-                                                    {
-                                                      "anyOf": [
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+5more"
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
-                                                    },
-                                                    {
-                                                      "anyOf": [
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                                                            },
-                                                            {
-                                                              "anyOf": [
-                                                                {
-                                                                  "allOf": [
-                                                                    {
-                                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
-                                                                    },
-                                                                    {
-                                                                      "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
-                                                                    },
-                                                                    {
-                                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
-                                                                    }
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "allOf": [
-                                                                    {
-                                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride:t@2"
-                                                                    },
-                                                                    {
-                                                                      "anyOf": [
-                                                                        {
-                                                                          "allOf": [
-                                                                            {
-                                                                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                                                                            },
-                                                                            {
-                                                                              "anyOf": [
-                                                                                {
-                                                                                  "allOf": [
-                                                                                    {
-                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride"
-                                                                                    },
-                                                                                    {
-                                                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@5"
-                                                                                    }
-                                                                                  ]
-                                                                                },
-                                                                                {
-                                                                                  "allOf": [
-                                                                                    {
-                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
-                                                                                    },
-                                                                                    {
-                                                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
-                                                                                    }
-                                                                                  ]
-                                                                                }
-                                                                              ]
-                                                                            }
-                                                                          ]
-                                                                        },
-                                                                        {
-                                                                          "allOf": [
-                                                                            {
-                                                                              "$ref": "#/definitions/constrains~1nameOverride"
-                                                                            },
-                                                                            {
-                                                                              "anyOf": [
-                                                                                {
-                                                                                  "allOf": [
-                                                                                    {
-                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride"
-                                                                                    },
-                                                                                    {
-                                                                                      "anyOf": [
-                                                                                        {
-                                                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more"
-                                                                                        },
-                                                                                        {
-                                                                                          "allOf": [
-                                                                                            {
-                                                                                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                                                                                            },
-                                                                                            {
-                                                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@5"
-                                                                                            }
-                                                                                          ]
-                                                                                        }
-                                                                                      ]
-                                                                                    }
-                                                                                  ]
-                                                                                },
-                                                                                {
-                                                                                  "allOf": [
-                                                                                    {
-                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
-                                                                                    },
-                                                                                    {
-                                                                                      "anyOf": [
-                                                                                        {
-                                                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+3more"
-                                                                                        },
-                                                                                        {
-                                                                                          "allOf": [
-                                                                                            {
-                                                                                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                                                                                            },
-                                                                                            {
-                                                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
-                                                                                            }
-                                                                                          ]
-                                                                                        }
-                                                                                      ]
-                                                                                    }
-                                                                                  ]
-                                                                                }
-                                                                              ]
-                                                                            }
-                                                                          ]
-                                                                        }
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              ]
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+4more"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1configMaps.dns:t"
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
           },
           {
             "$ref": "#/definitions/constrains~1persistence"
@@ -790,6 +332,406 @@
             ]
           },
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+global+global.fullnameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1global.nameOverride+global.nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.dns:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1global.nameOverride+global.nameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.dns:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null@4"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t+configMaps.dns"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+global+global.fullnameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1configMaps.dns.data+configMaps.dns.enabled:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1configMaps.acl.data+configMaps.acl.enabled:t"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1configMaps.dns.data+configMaps.dns.enabled:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1configMaps.acl.data+configMaps.acl.enabled:t"
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps.acl.data"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps.dns.data"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+6more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null"
+                              }
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+6more"
+                                    },
+                                    {
+                                      "not": {
+                                        "$ref": "#/definitions/constrains~1configMaps.dns:t@2"
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                                            },
+                                            {
+                                              "anyOf": [
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+4more"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+5more"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1fullnameOverride"
+                                            },
+                                            {
+                                              "anyOf": [
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
+                                                    },
+                                                    {
+                                                      "anyOf": [
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                                                            },
+                                                            {
+                                                              "anyOf": [
+                                                                {
+                                                                  "allOf": [
+                                                                    {
+                                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride:t@2"
+                                                                    },
+                                                                    {
+                                                                      "anyOf": [
+                                                                        {
+                                                                          "allOf": [
+                                                                            {
+                                                                              "$ref": "#/definitions/constrains~1nameOverride"
+                                                                            },
+                                                                            {
+                                                                              "anyOf": [
+                                                                                {
+                                                                                  "allOf": [
+                                                                                    {
+                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride"
+                                                                                    },
+                                                                                    {
+                                                                                      "anyOf": [
+                                                                                        {
+                                                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more"
+                                                                                        },
+                                                                                        {
+                                                                                          "allOf": [
+                                                                                            {
+                                                                                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                                                                                            },
+                                                                                            {
+                                                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@5"
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                },
+                                                                                {
+                                                                                  "allOf": [
+                                                                                    {
+                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
+                                                                                    },
+                                                                                    {
+                                                                                      "anyOf": [
+                                                                                        {
+                                                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+3more"
+                                                                                        },
+                                                                                        {
+                                                                                          "allOf": [
+                                                                                            {
+                                                                                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                                                                                            },
+                                                                                            {
+                                                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
+                                                                                            }
+                                                                                          ]
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        },
+                                                                        {
+                                                                          "allOf": [
+                                                                            {
+                                                                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                                                                            },
+                                                                            {
+                                                                              "anyOf": [
+                                                                                {
+                                                                                  "allOf": [
+                                                                                    {
+                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
+                                                                                    },
+                                                                                    {
+                                                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
+                                                                                    }
+                                                                                  ]
+                                                                                },
+                                                                                {
+                                                                                  "allOf": [
+                                                                                    {
+                                                                                      "$ref": "#/definitions/constrains~1global.nameOverride"
+                                                                                    },
+                                                                                    {
+                                                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@5"
+                                                                                    }
+                                                                                  ]
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                },
+                                                                {
+                                                                  "allOf": [
+                                                                    {
+                                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
+                                                                    },
+                                                                    {
+                                                                      "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
+                                                                    },
+                                                                    {
+                                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+4more"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
+                                                    },
+                                                    {
+                                                      "anyOf": [
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+5more"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1configMaps.dns:t"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
             "not": {
               "properties": {
                 "ingress": {}
@@ -885,6 +827,64 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1configMaps.acl:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global?@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1configMaps.dns+configMaps.dns=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1configMaps.dns:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global?@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "description": "Enable and configure postgresql database subchart under this key.\nFor more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/postgresql)",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
     },
     {
       "if": {
@@ -1660,7 +1660,7 @@
       "type": "object"
     },
     "constrains/architecture+architecture=null": {
-      "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+      "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
     },
     "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+3more": {
       "anyOf": [
@@ -1673,7 +1673,7 @@
               "$ref": "#/definitions/constrains~1architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride"
@@ -1682,7 +1682,7 @@
               "$ref": "#/definitions/constrains~1architecture+architecture=null"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
@@ -1692,7 +1692,7 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "type": "object"
@@ -1704,7 +1704,7 @@
               "$ref": "#/definitions/constrains~1fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
@@ -1717,7 +1717,7 @@
               "$ref": "#/definitions/constrains~1architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1732,7 +1732,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
@@ -1742,7 +1742,7 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -1760,7 +1760,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
@@ -1770,7 +1770,7 @@
               "$ref": "#/definitions/constrains~1architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t@2"
@@ -1785,14 +1785,14 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "type": "object"
@@ -1810,7 +1810,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
@@ -1820,7 +1820,7 @@
               "$ref": "#/definitions/constrains~1architecture+architecture=null"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1architecture"
@@ -1864,6 +1864,11 @@
     },
     "constrains/architecture+architecture=null@4": {
       "not": {
+        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+      }
+    },
+    "constrains/architecture+architecture=null@5": {
+      "not": {
         "allOf": [
           {
             "type": "object"
@@ -1874,7 +1879,35 @@
         ]
       }
     },
+    "constrains/architecture+architecture=null@6": {
+      "not": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+          }
+        ]
+      }
+    },
+    "constrains/architecture+enabled+enabled=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1architecture"
+        }
+      ]
+    },
     "constrains/architecture=replication": {
+      "$ref": "#/definitions/constrains~1architecture=replication@2"
+    },
+    "constrains/architecture=replication@2": {
       "properties": {
         "architecture": {
           "enum": [
@@ -1898,6 +1931,41 @@
       ],
       "type": "object"
     },
+    "constrains/commonLabels+commonLabels=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "commonLabels": {}
+                },
+                "required": [
+                  "commonLabels"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "commonLabels": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "commonLabels"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
     "constrains/configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more": {
       "anyOf": [
         {
@@ -1909,17 +1977,7 @@
         {
           "allOf": [
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@2"
-              }
-            },
-            {
               "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/definitions/constrains~1configMaps.acl:t@2"
-                  }
-                },
                 {
                   "allOf": [
                     {
@@ -1929,8 +1987,18 @@
                       "$ref": "#/definitions/constrains~1configMaps.acl.enabled:t"
                     }
                   ]
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1configMaps.acl:t@2"
+                  }
                 }
               ]
+            },
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1configMaps.acl+configMaps.acl=null@2"
+              }
             }
           ]
         }
@@ -1985,10 +2053,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1global?@2"
+              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+              "$ref": "#/definitions/constrains~1global?@2"
             }
           ]
         },
@@ -2031,10 +2099,10 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1global.nameOverride:t"
+                  "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+                  "$ref": "#/definitions/constrains~1global.nameOverride:t"
                 }
               ]
             },
@@ -2057,6 +2125,30 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1nameOverride@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1global.nameOverride@2"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global.nameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@3"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
@@ -2069,9 +2161,6 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more"
-                        },
-                        {
                           "allOf": [
                             {
                               "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -2080,6 +2169,9 @@
                               "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@3"
                             }
                           ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more"
                         }
                       ]
                     }
@@ -2105,35 +2197,21 @@
               ]
             }
           ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1global.nameOverride@2"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1global.nameOverride"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@3"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
         }
       ]
     },
     "constrains/configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+5more": {
       "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+4more"
+            }
+          ]
+        },
         {
           "allOf": [
             {
@@ -2144,13 +2222,20 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/definitions/constrains~1nameOverride@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/definitions/constrains~1nameOverride"
                     },
                     {
                       "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more"
-                        },
                         {
                           "allOf": [
                             {
@@ -2160,32 +2245,15 @@
                               "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@2"
                             }
                           ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more"
                         }
                       ]
                     }
                   ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@2"
-                    }
-                  ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+4more"
             }
           ]
         }
@@ -2203,10 +2271,51 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+5more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
                     },
                     {
                       "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+4more"
+                            }
+                          ]
+                        },
                         {
                           "allOf": [
                             {
@@ -2241,34 +2350,13 @@
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
-                                                    },
-                                                    {
-                                                      "anyOf": [
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@4"
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+3more"
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
                                                       "$ref": "#/definitions/constrains~1global.nameOverride"
                                                     },
                                                     {
                                                       "anyOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more"
+                                                        },
                                                         {
                                                           "allOf": [
                                                             {
@@ -2278,9 +2366,30 @@
                                                               "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@5"
                                                             }
                                                           ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
+                                                    },
+                                                    {
+                                                      "anyOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+3more"
                                                         },
                                                         {
-                                                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more"
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@4"
+                                                            }
+                                                          ]
                                                         }
                                                       ]
                                                     }
@@ -2300,20 +2409,20 @@
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
+                                                      "$ref": "#/definitions/constrains~1global.nameOverride"
                                                     },
                                                     {
-                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@4"
+                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@5"
                                                     }
                                                   ]
                                                 },
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1global.nameOverride"
+                                                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
                                                     },
                                                     {
-                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@5"
+                                                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+2more@4"
                                                     }
                                                   ]
                                                 }
@@ -2326,47 +2435,6 @@
                                   ]
                                 }
                               ]
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+4more"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+5more"
                             }
                           ]
                         }
@@ -2388,20 +2456,20 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
+                      "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+5more"
+                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+4more"
                     }
                   ]
                 },
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
+                      "$ref": "#/definitions/constrains~1global.fullnameOverride"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+4more"
+                      "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+5more"
                     }
                   ]
                 }
@@ -2466,13 +2534,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1global?@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
             },
             {
               "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1global?@2"
             }
           ]
         },
@@ -2486,6 +2554,16 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1global.nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1global.nameOverride:t@2"
             },
             {
@@ -2493,16 +2571,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1global.nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
             }
           ]
         }
@@ -2518,23 +2586,23 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1global.nameOverride:t"
+                  "$ref": "#/definitions/constrains~1global.nameOverride:t@2"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+                  "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
                 }
               ]
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1global.nameOverride:t@2"
+                  "$ref": "#/definitions/constrains~1configMaps.dns.enabled:t"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@4"
+                  "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl.enabled:t+configMaps.acl:t+1more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1global.nameOverride:t"
                 }
               ]
             }
@@ -2551,22 +2619,8 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
+                      "$ref": "#/definitions/constrains~1global.nameOverride"
                     },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+3more"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
                     {
                       "anyOf": [
                         {
@@ -2583,9 +2637,23 @@
                           ]
                         }
                       ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1global.nameOverride@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1global.nameOverride"
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+3more"
+                        }
+                      ]
                     }
                   ]
                 }
@@ -2627,6 +2695,16 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+4more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1global.fullnameOverride:t@2"
             },
             {
@@ -2646,17 +2724,17 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more"
-                        },
-                        {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@2"
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more@2"
                             }
                           ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+2more"
                         }
                       ]
                     },
@@ -2666,16 +2744,6 @@
                   ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1configMaps+configMaps.acl+configMaps.acl:t+configMaps.acl=null+4more"
             }
           ]
         }
@@ -2890,7 +2958,7 @@
         "configMaps": {
           "properties": {
             "acl": {
-              "$ref": "#/definitions/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t@2"
             }
           },
           "required": [
@@ -3238,7 +3306,7 @@
         "configMaps": {
           "properties": {
             "dns": {
-              "$ref": "#/definitions/constrains~1enabled:t"
+              "$ref": "#/definitions/constrains~1enabled:t@2"
             }
           },
           "required": [
@@ -3332,6 +3400,9 @@
       ]
     },
     "constrains/enabled:t": {
+      "$ref": "#/definitions/constrains~1enabled:t@2"
+    },
+    "constrains/enabled:t@2": {
       "properties": {
         "enabled": {
           "$ref": "#/definitions/t"
@@ -3356,10 +3427,16 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
-                "$ref": "#/definitions/constrains~1global.fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1global.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global?@3"
               }
             ]
           },
@@ -3376,25 +3453,6 @@
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global?@3"
               }
             ]
           },
@@ -3414,6 +3472,19 @@
               },
               {
                 "$ref": "#/definitions/constrains~1global?@2"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               }
             ]
           },
@@ -3463,95 +3534,6 @@
       ],
       "type": "object"
     },
-    "constrains/global+global.nameOverride:t+nameOverride": {
-      "not": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global?@3"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global?@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1global.nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          }
-        ]
-      }
-    },
     "constrains/global.fullnameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1global.fullnameOverride@2"
@@ -3587,6 +3569,95 @@
     "constrains/global.nameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1global.nameOverride@2"
+      }
+    },
+    "constrains/global.nameOverride+global.nameOverride:t": {
+      "not": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global?@3"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global?@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride:t"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1global.nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          }
+        ]
       }
     },
     "constrains/global.nameOverride:t": {
@@ -3815,7 +3886,7 @@
     "constrains/postgresql.architecture=replication@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture=replication"
+          "$ref": "#/definitions/constrains~1architecture=replication@2"
         }
       },
       "required": [
@@ -3863,7 +3934,7 @@
     "constrains/postgresql.enabled:t": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t@2"
         }
       },
       "required": [
@@ -4105,7 +4176,7 @@
             ]
           },
           {
-            "$ref": "#/definitions/constrains~1enabled:t"
+            "$ref": "#/definitions/constrains~1enabled:t@2"
           }
         ]
       },
@@ -4324,24 +4395,150 @@
       "allOf": [
         {
           "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1architecture!=null"
+                },
+                {
+                  "properties": {
+                    "commonLabels": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "commonLabels"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
             "else": {
               "allOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  }
+                },
                 {
                   "not": {
                     "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
                   }
                 },
                 {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+                  "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1architecture"
+                  "$ref": "#/definitions/constrains~1architecture+enabled+enabled=null"
                 }
               ]
             },
@@ -4352,11 +4549,16 @@
               "allOf": [
                 {
                   "not": {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  }
+                },
+                {
+                  "not": {
                     "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
                   }
                 },
                 {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+                  "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
                 },
                 {
                   "$ref": "#/definitions/constrains~1architecture"
@@ -4380,7 +4582,7 @@
                     "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1enabled:t"
+                    "$ref": "#/definitions/constrains~1enabled:t@2"
                   }
                 ]
               },

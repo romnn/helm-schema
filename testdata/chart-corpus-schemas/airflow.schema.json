@@ -527,7 +527,7 @@
       "type": "object"
     },
     "constrains/architecture+architecture=null": {
-      "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+      "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
     },
     "constrains/architecture+architecture=null+architecture=replication+fullnameOverride+3more": {
       "anyOf": [
@@ -540,7 +540,7 @@
               "$ref": "#/definitions/constrains~1architecture+architecture=null"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
@@ -553,7 +553,7 @@
               "$ref": "#/definitions/constrains~1architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -565,7 +565,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -578,13 +578,13 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             },
             {
               "type": "object"
@@ -603,7 +603,7 @@
               "$ref": "#/definitions/constrains~1architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1architecture+architecture=null"
@@ -612,14 +612,14 @@
               "$ref": "#/definitions/constrains~1fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -628,7 +628,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             },
             {
               "type": "object"
@@ -647,7 +647,7 @@
               "$ref": "#/definitions/constrains~1architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1architecture+architecture=null"
@@ -659,7 +659,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -672,7 +672,7 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture=replication"
+              "$ref": "#/definitions/constrains~1architecture=replication@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -681,7 +681,7 @@
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+              "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
             },
             {
               "type": "object"
@@ -731,6 +731,11 @@
     },
     "constrains/architecture+architecture=null@4": {
       "not": {
+        "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+      }
+    },
+    "constrains/architecture+architecture=null@5": {
+      "not": {
         "allOf": [
           {
             "type": "object"
@@ -741,7 +746,35 @@
         ]
       }
     },
+    "constrains/architecture+architecture=null@6": {
+      "not": {
+        "allOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+          }
+        ]
+      }
+    },
+    "constrains/architecture+enabled+enabled=null": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1architecture"
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled+enabled=null"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
     "constrains/architecture=replication": {
+      "$ref": "#/definitions/constrains~1architecture=replication@2"
+    },
+    "constrains/architecture=replication@2": {
       "properties": {
         "architecture": {
           "enum": [
@@ -764,6 +797,41 @@
         "architecture"
       ],
       "type": "object"
+    },
+    "constrains/commonLabels+commonLabels=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "commonLabels": {}
+                },
+                "required": [
+                  "commonLabels"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "commonLabels": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "commonLabels"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
     },
     "constrains/enabled+enabled=null": {
       "anyOf": [
@@ -794,6 +862,9 @@
       ]
     },
     "constrains/enabled:t": {
+      "$ref": "#/definitions/constrains~1enabled:t@2"
+    },
+    "constrains/enabled:t@2": {
       "properties": {
         "enabled": {
           "$ref": "#/definitions/t"
@@ -896,7 +967,7 @@
     "constrains/postgresql.architecture=replication@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture=replication"
+          "$ref": "#/definitions/constrains~1architecture=replication@2"
         }
       },
       "required": [
@@ -944,7 +1015,7 @@
     "constrains/postgresql.enabled:t": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled:t"
+          "$ref": "#/definitions/constrains~1enabled:t@2"
         }
       },
       "required": [
@@ -1247,23 +1318,149 @@
       "allOf": [
         {
           "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+enabled+enabled=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+enabled+enabled=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1enabled:t"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1architecture"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@6"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture+architecture=null@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled:t"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1architecture!=null"
+                },
+                {
+                  "properties": {
+                    "commonLabels": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "commonLabels"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
             "else": {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1architecture"
+                  "$ref": "#/definitions/constrains~1architecture+enabled+enabled=null"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1enabled+enabled=null"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+                  "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
                 },
                 {
                   "not": {
                     "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                  }
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
                   }
                 }
               ]
@@ -1277,11 +1474,16 @@
                   "$ref": "#/definitions/constrains~1architecture"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null@4"
+                  "$ref": "#/definitions/constrains~1architecture+architecture=null@5"
                 },
                 {
                   "not": {
                     "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+                  }
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1architecture=replication"
                   }
                 }
               ]
@@ -1316,7 +1518,7 @@
                     "$ref": "#/definitions/constrains~1architecture+architecture=null+architecture=replication+fullnameOverride+3more"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1enabled:t"
+                    "$ref": "#/definitions/constrains~1enabled:t@2"
                   }
                 ]
               }

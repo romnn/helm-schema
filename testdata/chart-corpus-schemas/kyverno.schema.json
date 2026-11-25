@@ -76,6 +76,139 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+                }
+              },
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reports-server.postgresql.enabled+2more"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reports-server.postgresql.enabled+1more"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+              },
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reportsServer.enabled+1more"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "else": {
           "anyOf": [
             {
@@ -389,121 +522,6 @@
             "type": "object"
           }
         }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
-                }
-              },
-              {
-                "else": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reportsServer.enabled+1more"
-                    }
-                  ]
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
-                },
-                "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "else": {
-                  "else": {
-                    "$ref": "#/definitions/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more@2"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more@2"
-                  }
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
-                },
-                "then": {
-                  "else": {
-                    "$ref": "#/definitions/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
-                  },
-                  "then": {
-                    "$ref": "#/definitions/constrains~1reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more"
-                  }
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture!=null"
-            }
-          ]
-        },
-        "then": false
       }
     },
     {
@@ -1229,6 +1247,280 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reportsServer.enabled+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reports-server.postgresql.enabled+2more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reports-server.postgresql.enabled+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reports-server.postgresql.enabled+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reports-server.postgresql.enabled+2more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reportsServer.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1reports-server.postgresql.commonLabels+1more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reportsServer.enabled+1more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture!=null"
+            },
+            {
+              "properties": {
+                "reports-server": {
+                  "properties": {
+                    "postgresql": {
+                      "properties": {
+                        "commonLabels": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "commonLabels"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "postgresql"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "reports-server"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "properties": {
               "reportsController": {
                 "enum": [
@@ -1480,7 +1772,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
+                "$ref": "#/definitions/constrains~1global.templating.version"
               },
               {
                 "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
@@ -1499,7 +1791,7 @@
                 "$ref": "#/definitions/constrains~1group-13"
               },
               {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
+                "$ref": "#/definitions/constrains~1global.templating.version"
               },
               {
                 "$ref": "#/definitions/constrains~1reportsController.metricsService.create:t"
@@ -1639,7 +1931,7 @@
                 "$ref": "#/definitions/constrains~1group-13"
               },
               {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
+                "$ref": "#/definitions/constrains~1global.templating.version"
               },
               {
                 "$ref": "#/definitions/constrains~1reportsController.rbac.create:t"
@@ -1661,7 +1953,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
+                "$ref": "#/definitions/constrains~1global.templating.version"
               },
               {
                 "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
@@ -1740,7 +2032,7 @@
                 "$ref": "#/definitions/constrains~1group-13"
               },
               {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
+                "$ref": "#/definitions/constrains~1global.templating.version"
               },
               {
                 "$ref": "#/definitions/constrains~1reportsController.serviceMonitor.enabled:t"
@@ -1939,7 +2231,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1global.templating.version@2"
+                "$ref": "#/definitions/constrains~1global.templating.version"
               },
               {
                 "$ref": "#/definitions/constrains~1global.templating.version+global.templating.version=null@2"
@@ -7400,7 +7692,7 @@
     },
     "constrains/global.templating.version": {
       "not": {
-        "$ref": "#/definitions/constrains~1global.templating.version@3"
+        "$ref": "#/definitions/constrains~1global.templating.version@4"
       }
     },
     "constrains/global.templating.version!=null": {
@@ -7551,7 +7843,7 @@
     },
     "constrains/global.templating.version@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1global.templating.version@4"
+        "$ref": "#/definitions/constrains~1global.templating.version@3"
       }
     },
     "constrains/global.templating.version@3": {
@@ -8138,7 +8430,7 @@
           "$ref": "#/definitions/constrains~1global.templating.enabled"
         },
         {
-          "$ref": "#/definitions/constrains~1global.templating.version"
+          "$ref": "#/definitions/constrains~1global.templating.version@2"
         }
       ]
     },
@@ -9285,66 +9577,18 @@
       ],
       "type": "object"
     },
-    "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+1more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
-        }
-      ]
-    },
-    "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
-        }
-      ]
-    },
-    "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+3more@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reportsServer.enabled+1more"
-        }
-      ]
-    },
     "constrains/reports-server+reports-server.postgresql+reports-server.postgresql.architecture+6more": {
       "anyOf": [
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@5"
             }
           ]
         },
@@ -9354,13 +9598,13 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride"
@@ -9379,13 +9623,13 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@5"
             }
           ]
         },
@@ -9398,7 +9642,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride@2"
@@ -9407,7 +9651,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride"
@@ -9432,13 +9676,13 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@5"
             }
           ]
         },
@@ -9454,7 +9698,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride:t"
@@ -9463,7 +9707,7 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@2"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@5"
             }
           ]
         },
@@ -9473,13 +9717,13 @@
               "$ref": "#/definitions/constrains~1reports-server.postgresql.nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture=replication@2"
             },
             {
-              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+              "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
             },
             {
               "$ref": "#/definitions/constrains~1reports-server.postgresql.fullnameOverride:t"
@@ -9658,49 +9902,20 @@
       "type": "object"
     },
     "constrains/reports-server.postgresql.architecture+1more": {
-      "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@3"
-    },
-    "constrains/reports-server.postgresql.architecture+1more@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@4"
-      }
-    },
-    "constrains/reports-server.postgresql.architecture+1more@3": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "reports-server": {
-                  "properties": {
-                    "postgresql": {
-                      "properties": {
-                        "architecture": {}
-                      },
-                      "required": [
-                        "architecture"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "postgresql"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "reports-server"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
               "reports-server": {
                 "properties": {
                   "postgresql": {
-                    "$ref": "#/definitions/constrains~1architecture=null"
+                    "properties": {
+                      "architecture": {}
+                    },
+                    "required": [
+                      "architecture"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
@@ -9714,10 +9929,49 @@
             ],
             "type": "object"
           }
-        ]
+        },
+        {
+          "properties": {
+            "reports-server": {
+              "properties": {
+                "postgresql": {
+                  "$ref": "#/definitions/constrains~1architecture=null"
+                }
+              },
+              "required": [
+                "postgresql"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "reports-server"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/reports-server.postgresql.architecture+1more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
+      }
+    },
+    "constrains/reports-server.postgresql.architecture+1more@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
       }
     },
     "constrains/reports-server.postgresql.architecture+1more@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more"
+      }
+    },
+    "constrains/reports-server.postgresql.architecture+1more@5": {
+      "not": {
+        "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+1more@6"
+      }
+    },
+    "constrains/reports-server.postgresql.architecture+1more@6": {
       "properties": {
         "reports-server": {
           "properties": {
@@ -9757,6 +10011,26 @@
         "reports-server"
       ],
       "type": "object"
+    },
+    "constrains/reports-server.postgresql.architecture+reports-server.postgresql.enabled+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture"
+        }
+      ]
+    },
+    "constrains/reports-server.postgresql.architecture+reports-server.postgresql.enabled+2more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1reports-server.postgresql.enabled+reports-server.postgresql.enabled=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1reports-server.postgresql.architecture+reportsServer.enabled+1more"
+        }
+      ]
     },
     "constrains/reports-server.postgresql.architecture+reportsServer.enabled+1more": {
       "allOf": [
@@ -9814,6 +10088,57 @@
                 "architecture"
               ],
               "type": "object"
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "reports-server"
+      ],
+      "type": "object"
+    },
+    "constrains/reports-server.postgresql.commonLabels+1more": {
+      "properties": {
+        "reports-server": {
+          "properties": {
+            "postgresql": {
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "commonLabels": {}
+                        },
+                        "required": [
+                          "commonLabels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "commonLabels": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "commonLabels"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                },
+                {
+                  "type": "object"
+                }
+              ]
             }
           },
           "required": [
