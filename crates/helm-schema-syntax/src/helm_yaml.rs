@@ -58,13 +58,21 @@ pub enum HelmYamlKey {
 pub fn helm_yaml_documents(source: &str) -> Vec<HelmYamlDocument> {
     transport_documents(source)
         .into_iter()
-        .map(
-            |document| match document.and_then(|document| load(&document)) {
-                Ok(doc) => decode_document(doc.value),
-                Err(err) => HelmYamlDocument::Failed(err),
-            },
-        )
+        .map(|document| {
+            document.map_or_else(HelmYamlDocument::Failed, |document| {
+                helm_yaml_document(&document)
+            })
+        })
         .collect()
+}
+
+/// Decodes the first document directly, as Helm's template YAML decoders do.
+#[must_use]
+pub fn helm_yaml_document(source: &str) -> HelmYamlDocument {
+    match load(source) {
+        Ok(document) => decode_document(document.value),
+        Err(error) => HelmYamlDocument::Failed(error),
+    }
 }
 
 /// How Helm reads `source`, a single scalar, as a mapping key.

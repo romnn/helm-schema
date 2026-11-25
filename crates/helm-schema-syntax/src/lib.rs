@@ -59,8 +59,8 @@ pub use cst::{
     TemplatedDocument,
 };
 pub use helm_yaml::{
-    HelmYamlDocument, HelmYamlError, HelmYamlKey, helm_yaml_documents, helm_yaml_key,
-    transport_documents,
+    HelmYamlDocument, HelmYamlError, HelmYamlKey, helm_yaml_document, helm_yaml_documents,
+    helm_yaml_key, transport_documents,
 };
 pub use rendered::{
     BodyLayout, BranchChoice, HoleShape, HoleShapes, LayoutUncertainty, MAX_LAYOUT_STATES,

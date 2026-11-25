@@ -605,15 +605,19 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             target: Some(id),
             view: _,
         } = datum
-            && !matches!(
-                heap.borrowed_object(id).map(|object| &object.data),
+        {
+            match heap.borrowed_object(id).map(|object| &object.data) {
                 Some(ObjectData::Map {
                     fields: _,
-                    remainder: Remainder::Closed | Remainder::Open | Remainder::Input
-                })
-            )
-        {
-            return Relationships::unknown();
+                    remainder: Remainder::Closed | Remainder::Open | Remainder::Input,
+                }) => {}
+                Some(ObjectData::Map {
+                    fields: _,
+                    remainder: Remainder::Layered(layers),
+                }) if layers.decoded_input().is_some()
+                    && heap.decoded_copy_unchanged(id, || self.charge(1)) => {}
+                _ => return Relationships::unknown(),
+            }
         }
         if let Datum::Unknown(super::UnknownValue {
             types: _,

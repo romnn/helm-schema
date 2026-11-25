@@ -1646,25 +1646,260 @@ fn helper_argument_merge_preserves_ordered_overwrite_and_root_context_expansion(
 
 #[test]
 fn json_roundtrip_preserves_input_identity_with_decoded_representation() {
-    let result = observe("", ".Values.extraResources | toJson | fromJson");
-    sim_assert_eq!(have: result.paths(), want: paths(&["extraResources"]));
-    assert_selected(&result, "extraResources", Predicate::True);
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    crate::tests::support::with_execution(
+        "{{ .Values.extraResources | toJson | fromJson }}",
+        None,
+        &db,
+        |execution| {
+            let relationships: Vec<_> = execution
+                .sites()
+                .filter(|site| site.rendered())
+                .flat_map(|site| execution.relationships(site.value(), &[], 1024).known)
+                .map(|relationship| (relationship.source.into_owned(), relationship.condition))
+                .collect();
+            sim_assert_eq!(
+                have: relationships,
+                want: vec![(ValuesPath::parse("extraResources"), typed("extraResources", "object"))]
+            );
+        },
+    );
 }
 
 #[test]
-fn json_roundtrip_preserves_values_root_inside_constructed_container() {
+fn literal_json_decoder_uses_the_last_duplicate_key() {
+    let string_last = r#"{{ $m := fromJson "{\"a\":1,\"a\":\"x\"}" }}"#;
+    sim_assert_eq!(
+        have: observe(string_last, "$m.a").literals(),
+        want: BTreeSet::from([GuardValue::string("x")])
+    );
+    let accepted = observe(string_last, "b64enc $m.a");
+    sim_assert_eq!(have: accepted.abort, want: Predicate::False);
+    assert!(
+        accepted
+            .sites
+            .iter()
+            .any(|site| site.rendered() && site.span() == accepted.value_span)
+    );
+
+    let number_last = r#"{{ $m := fromJson "{\"a\":\"x\",\"a\":1}" }}"#;
+    sim_assert_eq!(
+        have: observe(number_last, "b64enc $m.a").abort,
+        want: Predicate::True
+    );
+}
+
+#[test]
+fn yaml_roundtrip_keeps_float_type_and_leaves_numeric_spelling_open() {
+    let prefix = r#"{{ $decoded := dict "number" -0.0 | toYaml | fromYaml }}"#;
+    sim_assert_eq!(have: observe(prefix, r#"get $decoded "number""#).literals(), want: BTreeSet::new());
+    sim_assert_eq!(
+        have: observe(prefix, r#"typeOf (get $decoded "number")"#).literals(),
+        want: BTreeSet::from([GuardValue::String("float64".to_owned())])
+    );
+}
+
+#[test]
+fn literal_yaml_decoder_preserves_float_type() {
+    sim_assert_eq!(
+        have: observe("", r#"typeOf (get (fromYaml "number: -0.0") "number")"#).literals(),
+        want: BTreeSet::from([GuardValue::String("float64".to_owned())])
+    );
+}
+
+#[test]
+fn literal_yaml_decoder_preserves_go_numeric_types_without_inventing_values() {
+    let prefix =
+        r#"{{ $decoded := fromYaml "octal: 012\nseparated: 1_000\nrounded: 9007199254740993" }}"#;
+    for key in ["octal", "separated", "rounded"] {
+        let member = format!(r#"get $decoded "{key}""#);
+        sim_assert_eq!(have: observe(prefix, &member).literals(), want: BTreeSet::new());
+        sim_assert_eq!(
+            have: observe(prefix, &format!("typeOf ({member})")).literals(),
+            want: BTreeSet::from([GuardValue::String("float64".to_owned())])
+        );
+    }
+}
+
+#[test]
+fn literal_yaml_decoder_preserves_the_error_arm_for_non_finite_input() {
+    let prefix = r#"{{ $decoded := fromYaml "number: 1\ninvalid: .nan" }}"#;
+    sim_assert_eq!(
+        have: observe(prefix, r#"hasKey $decoded "Error""#).literals(),
+        want: BTreeSet::from([GuardValue::Bool(true)])
+    );
+    sim_assert_eq!(
+        have: observe(prefix, r#"get $decoded "number""#).literals(),
+        want: BTreeSet::from([GuardValue::String(String::new())])
+    );
+}
+
+fn decoded_consumer_rejects(
+    result: &Observation,
+    paths: &[&str],
+    document: &serde_json::Value,
+) -> eyre::Result<bool> {
+    Ok(result.string_consumptions_reject(paths, document)?
+        || crate::tests::guard_oracle::predicate_holds(&result.abort, document)?)
+}
+
+#[test]
+fn decoded_member_preserves_the_strict_string_consumer() -> eyre::Result<()> {
+    for prefix in [
+        r#"{{ $doc := dict "member" .Values.member | toJson | fromJson }}"#,
+        r#"{{ $doc := dict "member" .Values.member | toYaml | fromYaml }}"#,
+    ] {
+        let result = observe(prefix, r#"get $doc "member" | b64enc"#);
+        assert!(
+            !result
+                .string_consumptions_reject(&["member"], &serde_json::json!({"member": "ok"}))?
+        );
+        assert!(decoded_consumer_rejects(
+            &result,
+            &["member"],
+            &serde_json::json!({"member": 7})
+        )?);
+    }
+    Ok(())
+}
+
+#[test]
+fn decoded_member_reads_the_snapshot_before_the_source_write() -> eyre::Result<()> {
+    for prefix in [
+        indoc! {r#"
+            {{ $doc := dict "member" .Values.member }}
+            {{ $text := toJson $doc }}
+            {{ $_ := set $doc "member" "later" }}
+            {{ $decoded := fromJson $text }}
+        "#},
+        indoc! {r#"
+            {{ $doc := dict "member" .Values.member }}
+            {{ $text := toYaml $doc }}
+            {{ $_ := set $doc "member" "later" }}
+            {{ $decoded := fromYaml $text }}
+        "#},
+    ] {
+        let result = observe(prefix, r#"get $decoded "member" | b64enc"#);
+        assert!(
+            !result
+                .string_consumptions_reject(&["member"], &serde_json::json!({"member": "ok"}))?
+        );
+        assert!(decoded_consumer_rejects(
+            &result,
+            &["member"],
+            &serde_json::json!({"member": 7})
+        )?);
+    }
+    Ok(())
+}
+
+#[test]
+fn json_roundtrip_preserves_values_root_inside_constructed_container() -> eyre::Result<()> {
     let result = observe("", r#"get (dict "doc" .Values | toJson | fromJson) "doc""#);
     sim_assert_eq!(have: result.paths(), want: paths(&[""]));
-    assert_selected(&result, "", Predicate::True);
+    let result = observe(
+        "",
+        r#"get (get (dict "doc" .Values | toJson | fromJson) "doc") "member" | b64enc"#,
+    );
+    assert!(!decoded_consumer_rejects(
+        &result,
+        &["member"],
+        &serde_json::json!({})
+    )?);
+    assert!(decoded_consumer_rejects(
+        &result,
+        &["member"],
+        &serde_json::json!({"member": 7})
+    )?);
+    Ok(())
 }
 
 #[test]
-fn yaml_roundtrip_preserves_values_root_inside_constructed_container() {
-    assert_selected(
-        &observe("", r#"get (dict "doc" .Values | toYaml | fromYaml) "doc""#),
+fn yaml_roundtrip_preserves_values_root_inside_constructed_container() -> eyre::Result<()> {
+    let result = observe("", r#"get (dict "doc" .Values | toYaml | fromYaml) "doc""#);
+    sim_assert_eq!(have: result.paths(), want: paths(&[""]));
+    let result = observe(
         "",
-        Predicate::True,
+        r#"get (get (dict "doc" .Values | toYaml | fromYaml) "doc") "member" | b64enc"#,
     );
+    assert!(!decoded_consumer_rejects(
+        &result,
+        &["member"],
+        &serde_json::json!({})
+    )?);
+    assert!(decoded_consumer_rejects(
+        &result,
+        &["member"],
+        &serde_json::json!({"member": 7})
+    )?);
+    Ok(())
+}
+
+#[test]
+fn decoded_member_demand_is_guarded_by_the_input_object_and_key() -> eyre::Result<()> {
+    for prefix in [
+        "{{ $doc := .Values.doc | toJson | fromJson }}",
+        "{{ $doc := .Values.doc | toYaml | fromYaml }}",
+    ] {
+        let result = observe(prefix, r#"get $doc "member" | b64enc"#);
+        for doc in [
+            serde_json::json!({}),
+            serde_json::json!({"doc": null}),
+            serde_json::json!({"doc": false}),
+            serde_json::json!({"doc": 7}),
+            serde_json::json!({"doc": [7]}),
+            serde_json::json!({"doc": {"member": "ok"}}),
+        ] {
+            assert!(
+                !decoded_consumer_rejects(&result, &["doc", "doc.member"], &doc)?,
+                "{doc}"
+            );
+        }
+        assert!(decoded_consumer_rejects(
+            &result,
+            &["doc.member"],
+            &serde_json::json!({"doc": {"member": 7}}),
+        )?);
+    }
+    Ok(())
+}
+
+#[test]
+fn decoded_member_keeps_the_yaml_merge_error_arm_open() -> eyre::Result<()> {
+    let result = observe(
+        "{{ $doc := .Values.doc | toYaml | fromYaml }}",
+        r#"get $doc "member" | b64enc"#,
+    );
+    assert!(!decoded_consumer_rejects(
+        &result,
+        &["doc.member"],
+        &serde_json::json!({"doc": {"member": 7, "<<": "not a mapping"}}),
+    )?);
+    Ok(())
+}
+
+#[test]
+fn matching_map_decoders_distinguish_null_and_non_map_values() {
+    for (expression, expected) in [
+        (
+            r#"hasKey (list 7 | toJson | fromJson) "Error""#,
+            GuardValue::Bool(true),
+        ),
+        (
+            r#"hasKey (list 7 | toYaml | fromYaml) "Error""#,
+            GuardValue::Bool(true),
+        ),
+        (
+            r#"eq (toJson (toJson nil | fromJson)) "null""#,
+            GuardValue::Bool(true),
+        ),
+        (
+            r#"eq (toJson (toYaml nil | fromYaml)) "{}""#,
+            GuardValue::Bool(true),
+        ),
+    ] {
+        sim_assert_eq!(have: observe("", expression).literals(), want: BTreeSet::from([expected]), "{expression}");
+    }
 }
 
 /// Standalone `fromJson` consumes `payload` as text: any string renders, even one that does not

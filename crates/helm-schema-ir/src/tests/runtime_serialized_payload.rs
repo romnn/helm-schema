@@ -122,6 +122,23 @@ fn decoded_serialization_preserves_frozen_source() {
     );
 }
 
+/// A materialized descendant can change the parent without writing the parent's fields.
+#[test]
+fn decoded_parent_relationship_checks_descendant_writes_at_the_serializer_read() {
+    let prefix = indoc! {r#"
+        {{- $saved := fromJson (toJson .Values.payload) -}}
+        {{- $child := get (get $saved "nested") "inner" -}}
+    "#};
+    let write = r#"{{- $_ := set $child "member" "copy" -}}"#;
+    let clean = format!("{prefix}{{{{ toYaml $saved }}}}");
+    let dirty = format!("{prefix}{write}{{{{ toYaml $saved }}}}");
+    let frozen = format!("{prefix}{{{{ $before := toYaml $saved }}}}{write}{{{{ $before }}}}");
+    let original = BTreeSet::from([ValuesPath::parse("payload")]);
+    sim_assert_eq!(have: payload_origins(&clean, ""), want: original);
+    sim_assert_eq!(have: payload_origins(&dirty, ""), want: BTreeSet::new());
+    sim_assert_eq!(have: payload_origins(&frozen, ""), want: original);
+}
+
 /// Unknown decoded kinds share one operation preimage even without a values-level kind test.
 #[test]
 fn json_decoder_keeps_its_common_source_preimage() -> eyre::Result<()> {

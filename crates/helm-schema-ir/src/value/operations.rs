@@ -1,8 +1,11 @@
+use super::relationship::{Decoder, ValueOperation};
+use super::text::TextTerm;
 use super::{
     AbortReason, Datum, Field, Leaf, MapType, ObjectData, ObjectVersion, Remainder, State,
     TextPart, Value, ValueNode,
 };
-use helm_schema_core::{GuardValue, ValuesPath};
+use helm_schema_core::{Guard, GuardValue, Predicate, ValuePattern, ValuesPath};
+use helm_schema_syntax::{HelmYamlDocument, HelmYamlError, helm_yaml_document};
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
 
@@ -975,54 +978,427 @@ fn transfer_deserialize(input: TransferInput<'_>, state: &mut State) -> Value {
         last: _,
     } = input;
 
+    let decoder = match function {
+        "fromYaml" => Decoder::YamlMap,
+        "fromYamlArray" => Decoder::YamlSequence,
+        "fromJson" => Decoder::JsonMap,
+        "fromJsonArray" => Decoder::JsonSequence,
+        _ => Decoder::JsonValue,
+    };
     if first.constant().is_none() {
         let frozen = state.heap.freeze(&first);
-        let decoded = unknown_decoded(function, influences, state);
-        return decoded.derived(
-            frozen,
-            super::relationship::ValueOperation::Decode(match function {
-                "fromYaml" => super::relationship::Decoder::YamlMap,
-                "fromYamlArray" => super::relationship::Decoder::YamlSequence,
-                "fromJson" => super::relationship::Decoder::JsonMap,
-                "fromJsonArray" => super::relationship::Decoder::JsonSequence,
-                _ => super::relationship::Decoder::JsonValue,
-            }),
-        );
+        if let ValueNode::Leaf(Leaf {
+            datum: Datum::Text(text),
+            origin: _,
+        }) = first.node.as_ref()
+        {
+            let operand = match (decoder, text.term()) {
+                (
+                    Decoder::YamlMap,
+                    TextTerm::Yaml {
+                        value,
+                        pretty: false,
+                    },
+                )
+                | (
+                    Decoder::JsonMap,
+                    TextTerm::Json {
+                        value,
+                        pretty: _,
+                        escape_html: _,
+                        literal: None,
+                    },
+                ) => Some(value),
+                _ => None,
+            };
+            if let Some(operand) = operand {
+                let mut projection = DecodeSnapshot {
+                    heap: &operand.heap,
+                    decoder,
+                    yaml_inputs: BTreeSet::new(),
+                    budget: super::work::WorkBudget::new(4096),
+                };
+                if let Some(decoded) = projection.result(&operand.value, &frozen, state) {
+                    let stable = projection.yaml_stability();
+                    if stable == Predicate::True {
+                        return decoded;
+                    }
+                    let decision = state.heap.arena.decision(
+                        stable.clone(),
+                        stable.negated(),
+                        super::Coverage::Exact,
+                    );
+                    let unknown = unknown_decoded(function, influences, state)
+                        .derived(frozen, ValueOperation::Decode(decoder));
+                    return Value::select(decision, decoded, unknown);
+                }
+            }
+        }
+        return unknown_decoded(function, influences, state)
+            .derived(frozen, ValueOperation::Decode(decoder));
     }
     let Some(GuardValue::String(text)) = first.constant() else {
-        return unknown_decoded(function, influences.clone(), state);
+        return unknown_decoded(function, influences, state);
     };
-    let parsed = if matches!(function, "fromYaml" | "fromYamlArray") {
-        parse_yaml(text)
-    } else {
-        serde_json::from_str::<serde_yaml::Value>(text).ok()
-    };
-    let Some(parsed) = parsed else {
-        return unknown_decoded(function, influences.clone(), state);
-    };
+    decode_literal(decoder, text, state)
+        .unwrap_or_else(|| unknown_decoded(function, influences, state))
+}
+
+fn decode_literal(decoder: Decoder, text: &str, state: &mut State) -> Option<Value> {
+    let parsed = match decoder {
+        Decoder::YamlMap | Decoder::YamlSequence => match helm_yaml_document(text) {
+            HelmYamlDocument::Decoded { value, unknown } if unknown.is_empty() => Some(value),
+            HelmYamlDocument::Failed(HelmYamlError::Rejected) if decoder == Decoder::YamlMap => {
+                return Some(decoded_error_map(state));
+            }
+            HelmYamlDocument::Decoded {
+                value: _,
+                unknown: _,
+            }
+            | HelmYamlDocument::Failed(_) => None,
+        },
+        Decoder::JsonMap | Decoder::JsonSequence | Decoder::JsonValue => {
+            serde_json::from_str::<serde_json::Value>(text).ok()
+        }
+    }?;
     if parsed.is_null() {
-        return match function {
-            "fromYaml" => state.heap.map(Remainder::Closed),
-            "fromYamlArray" => Value::sequence(Vec::new()),
-            "fromJson" => Value::leaf(Datum::Map {
-                view: MapType::Interface,
-                target: None,
-            }),
-            "fromJsonArray" => Value::nil_sequence(),
-            _ => Value::nil(),
-        };
+        return Some(match decoder {
+            Decoder::YamlMap | Decoder::JsonMap => decoded_null_map(decoder, state),
+            Decoder::YamlSequence => Value::sequence(Vec::new()),
+            Decoder::JsonSequence => Value::nil_sequence(),
+            Decoder::JsonValue => Value::nil(),
+        });
     }
-    if matches!(function, "fromJson" | "fromYaml") && !parsed.is_mapping() {
-        return Value::with_influences(state.heap.map(Remainder::Open), influences.clone());
+    match decoder {
+        Decoder::YamlMap | Decoder::JsonMap if !parsed.is_object() => {
+            Some(decoded_error_map(state))
+        }
+        Decoder::YamlSequence | Decoder::JsonSequence if !parsed.is_array() => None,
+        Decoder::YamlMap
+        | Decoder::JsonMap
+        | Decoder::YamlSequence
+        | Decoder::JsonSequence
+        | Decoder::JsonValue => Some(decode(&parsed, state)),
     }
-    if matches!(function, "fromJsonArray" | "fromYamlArray") && !parsed.is_sequence() {
-        return unknown_decoded(function, influences.clone(), state);
+}
+
+fn decoded_null_map(decoder: Decoder, state: &mut State) -> Value {
+    if decoder == Decoder::YamlMap {
+        state.heap.map(Remainder::Closed)
+    } else {
+        Value::leaf(Datum::Map {
+            view: MapType::Interface,
+            target: None,
+        })
     }
-    decode(
-        &parsed,
+}
+
+fn decoded_error_map(state: &mut State) -> Value {
+    fresh_map(
+        MapFields {
+            fields: BTreeMap::from([(
+                "Error".to_owned(),
+                Field::Present(Value::scalar(super::ScalarType::String, None)),
+            )]),
+            remainder: Remainder::Closed,
+        },
+        BTreeSet::new(),
         state,
-        !matches!(function, "fromYaml" | "fromYamlArray"),
     )
+}
+
+struct DecodeSnapshot<'a> {
+    heap: &'a super::HeapVersion,
+    decoder: Decoder,
+    yaml_inputs: BTreeSet<ValuesPath>,
+    budget: super::work::WorkBudget,
+}
+
+impl DecodeSnapshot<'_> {
+    fn result(
+        &mut self,
+        operand: &Value,
+        text: &super::FrozenValue,
+        state: &mut State,
+    ) -> Option<Value> {
+        if let Some(path) = self.pristine_input(operand, state) {
+            let decoded = state
+                .decoded_input_map(&path)
+                .derived(text.clone(), ValueOperation::Decode(self.decoder));
+            if known_input_map(operand, &path) {
+                return Some(decoded);
+            }
+            let object = state.input_decision(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: "object".to_owned(),
+            });
+            let nil = super::kinds::input_nil_predicate(&path);
+            let nil = state
+                .heap
+                .arena
+                .decision(nil.clone(), nil.negated(), super::Coverage::Exact);
+            let missing = decoded_null_map(self.decoder, state)
+                .with_influences(BTreeSet::from([path.clone()]));
+            let error = decoded_error_map(state).with_influences(BTreeSet::from([path]));
+            return Some(Value::select(
+                object,
+                decoded,
+                Value::select(nil, missing, error),
+            ));
+        }
+        // An unsupported sibling can cause encoding to fail before any key reaches the decoder.
+        let value = self.value(operand, state, 0)?;
+        match value.node.as_ref() {
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        view: _,
+                        target: Some(_),
+                    },
+                origin: _,
+            }) => Some(value.derived(text.clone(), ValueOperation::Decode(self.decoder))),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Scalar {
+                        go_type: super::ScalarType::Nil,
+                        content: _,
+                    },
+                origin: _,
+            }) => Some(decoded_null_map(self.decoder, state)),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Scalar {
+                        go_type: _,
+                        content: _,
+                    }
+                    | Datum::Sequence(_),
+                origin: _,
+            }) => Some(decoded_error_map(state)),
+            _ => None,
+        }
+    }
+
+    fn yaml_stability(&self) -> Predicate {
+        // YAML can interpret an input key as a merge. The existing flow-stability proof excludes
+        // merge keys at every depth. Outside its domain the result stays unknown.
+        Predicate::all(
+            self.yaml_inputs
+                .iter()
+                .map(|path| {
+                    let stable = Predicate::from(Guard::MatchesValue {
+                        path: path.clone(),
+                        pattern: ValuePattern::YamlFlowStable,
+                    });
+                    if path.segments().next().is_none() {
+                        stable
+                    } else {
+                        Predicate::Or(vec![
+                            Predicate::from(Guard::Absent { path: path.clone() }),
+                            stable,
+                        ])
+                    }
+                })
+                .collect(),
+        )
+        .normalize_boolean()
+    }
+
+    fn pristine_input(&mut self, value: &Value, state: &State) -> Option<ValuesPath> {
+        let path = match value.node.as_ref() {
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Map {
+                        view: MapType::Interface | MapType::Values,
+                        target: Some(id),
+                    },
+                origin: _,
+            }) => self.heap.input_paths.get(id).cloned(),
+            ValueNode::Leaf(Leaf {
+                datum:
+                    Datum::Unknown(super::UnknownValue {
+                        types:
+                            super::TypeCoverage::Unresolved
+                            | super::TypeCoverage::Map(MapType::Interface | MapType::Values),
+                        aliases: _,
+                    }),
+                origin: _,
+            }) => value.identity().cloned(),
+            _ => None,
+        }?;
+        let inputs = state.heap.arena.input_objects.borrow();
+        if !super::relationship::RelationshipQuery::new(&inputs, 1024)
+            .original_unchanged(&path, self.heap)
+        {
+            return None;
+        }
+        if self.decoder == Decoder::YamlMap {
+            self.yaml_inputs.insert(path.clone());
+        }
+        Some(path)
+    }
+
+    fn value(&mut self, value: &Value, state: &mut State, depth: usize) -> Option<Value> {
+        use super::ScalarType;
+        if depth >= 32 {
+            self.budget.exhaust();
+            return None;
+        }
+        if !self.budget.charge(1) {
+            return None;
+        }
+        if let Some(path) = self.pristine_input(value, state) {
+            let map = state.decoded_input_map(&path);
+            return Some(if known_input_map(value, &path) {
+                map
+            } else {
+                state.decoded_input_member(&path, map)
+            });
+        }
+        match value.node.as_ref() {
+            ValueNode::Select { decision, yes, no } => Some(Value::select(
+                Rc::clone(decision),
+                self.value(yes, state, depth + 1)?,
+                self.value(no, state, depth + 1)?,
+            )),
+            ValueNode::Leaf(Leaf { datum, origin: _ }) => match datum {
+                Datum::Map { view, target } => match view {
+                    MapType::Interface | MapType::Values => match target {
+                        Some(id) => self.map(id, state, depth + 1),
+                        None => Some(Value::nil()),
+                    },
+                    MapType::Files
+                    | MapType::ApiVersions
+                    | MapType::Capabilities
+                    | MapType::KubeVersion
+                    | MapType::Semver
+                    | MapType::String => None,
+                },
+                Datum::Sequence(sequence) => match &sequence.storage {
+                    None => Some(Value::nil()),
+                    Some(storage) if storage.is_nil() => Some(Value::nil()),
+                    Some(storage) if storage.is_bytes() => None,
+                    Some(_) => self.sequence(sequence, state, depth + 1),
+                },
+                Datum::Scalar {
+                    go_type,
+                    content: _,
+                } => {
+                    // Both codecs return float64, and YAML can drop the sign of zero.
+                    let number =
+                        || Value::scalar(ScalarType::Float64, None).with_influences(value.inputs());
+                    match go_type {
+                        ScalarType::Invalid | ScalarType::Nil => Some(Value::nil()),
+                        ScalarType::Bool | ScalarType::String => Some(value.clone()),
+                        ScalarType::Int
+                        | ScalarType::Int64
+                        | ScalarType::Uint8
+                        | ScalarType::Uint64 => Some(number()),
+                        ScalarType::Float64 => value.constant().and_then(|literal| {
+                            let GuardValue::Float(text) = literal else {
+                                return None;
+                            };
+                            text.parse::<f64>().is_ok_and(f64::is_finite).then(number)
+                        }),
+                        ScalarType::Complex128 => None,
+                    }
+                }
+                Datum::Text(_) => {
+                    Some(Value::scalar(ScalarType::String, None).with_influences(value.inputs()))
+                }
+                Datum::Unknown(_)
+                | Datum::Strings(_)
+                | Datum::Slot {
+                    backing: _,
+                    index: _,
+                } => None,
+            },
+        }
+    }
+
+    fn map(&mut self, id: &super::ObjectId, state: &mut State, depth: usize) -> Option<Value> {
+        let object = self.heap.borrowed_object(id)?;
+        let ObjectData::Map {
+            fields,
+            remainder: Remainder::Closed,
+        } = &object.data
+        else {
+            return None;
+        };
+        let mut decoded = BTreeMap::new();
+        for (key, field) in fields.iter() {
+            if self.decoder == Decoder::YamlMap && key == "<<" {
+                return None;
+            }
+            decoded.insert(key.clone(), self.field(field, state, depth)?);
+        }
+        Some(fresh_map(
+            MapFields {
+                fields: decoded,
+                remainder: Remainder::Closed,
+            },
+            BTreeSet::new(),
+            state,
+        ))
+    }
+
+    fn sequence(
+        &mut self,
+        sequence: &super::InterfaceSequence,
+        state: &mut State,
+        depth: usize,
+    ) -> Option<Value> {
+        let items = sequence
+            .items()?
+            .iter()
+            .map(|item| self.value(item, state, depth))
+            .collect::<Option<Vec<_>>>()?;
+        let mut decoded = Value::sequence(items);
+        if let ValueNode::Leaf(Leaf {
+            datum: Datum::Sequence(sequence),
+            origin: _,
+        }) = Rc::make_mut(&mut decoded.node)
+        {
+            sequence.capacity = None;
+        }
+        Some(decoded)
+    }
+
+    fn field(&mut self, field: &Field, state: &mut State, depth: usize) -> Option<Field> {
+        if depth >= 32 {
+            self.budget.exhaust();
+            return None;
+        }
+        if !self.budget.charge(1) {
+            return None;
+        }
+        match field {
+            Field::Present(value) => Some(Field::Present(self.value(value, state, depth + 1)?)),
+            Field::Absent => Some(Field::Absent),
+            Field::Unknown => None,
+            Field::Select { decision, yes, no } => Some(Field::select(
+                Rc::clone(decision),
+                self.field(yes, state, depth + 1)?,
+                self.field(no, state, depth + 1)?,
+            )),
+        }
+    }
+}
+
+fn known_input_map(value: &Value, path: &ValuesPath) -> bool {
+    path.segments().next().is_none()
+        || matches!(
+            value.node.as_ref(),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Map {
+                    view: _,
+                    target: Some(_)
+                } | Datum::Unknown(super::UnknownValue {
+                    types: super::TypeCoverage::Map(_),
+                    aliases: _
+                }),
+                origin: _,
+            })
+        )
 }
 
 fn transfer_quote(input: TransferInput<'_>, state: &State) -> Value {
@@ -1970,123 +2346,22 @@ pub(super) fn invalidate(state: &mut State) {
         }
     }
 }
-struct YamlScalarReplacement {
-    range: std::ops::Range<usize>,
-    spelling: &'static str,
-}
 
-fn parse_yaml(text: &str) -> Option<serde_yaml::Value> {
-    use helm_schema_syntax::{DialectDivergence, plain_scalar_divergence};
-
-    let tree = helm_schema_syntax::parse_yaml(text)?;
-    if tree.root_node().has_error() {
-        return None;
-    }
-    let mut pending = vec![tree.root_node()];
-    let mut replacements = Vec::new();
-    while let Some(node) = pending.pop() {
-        match node.kind() {
-            // Tags can override implicit resolution; retain no exact result without that policy.
-            "tag" => return None,
-            "single_quote_scalar" | "double_quote_scalar" => {
-                let spelling = text.get(node.byte_range())?;
-                // serde_yaml's merge expansion no longer retains a key's quoted style.
-                if serde_yaml::from_str::<String>(spelling).ok().as_deref() == Some("<<") {
-                    return None;
-                }
-                continue;
-            }
-            "plain_scalar" => {
-                let spelling = text.get(node.start_byte()..node.end_byte())?;
-                let replacement = match plain_scalar_divergence(spelling, false) {
-                    Some(DialectDivergence::Boolean) => {
-                        if matches!(
-                            spelling,
-                            "y" | "Y" | "yes" | "Yes" | "YES" | "on" | "On" | "ON"
-                        ) {
-                            "true"
-                        } else {
-                            "false"
-                        }
-                    }
-                    // The decoder deliberately withholds exact numeric content. A numeric node
-                    // keeps divergent YAML 1.1 spellings from becoming exact YAML 1.2 strings.
-                    Some(DialectDivergence::Number | DialectDivergence::ImpreciseInteger) => ".nan",
-                    Some(DialectDivergence::SpecialFloat) => return None,
-                    Some(DialectDivergence::MergeKey | DialectDivergence::NonStringKey) | None => {
-                        continue;
-                    }
-                };
-                replacements.push(YamlScalarReplacement {
-                    range: node.byte_range(),
-                    spelling: replacement,
-                });
-                continue;
-            }
-            _ => {}
-        }
-        let mut cursor = node.walk();
-        pending.extend(node.named_children(&mut cursor));
-    }
-    replacements.sort_by_key(|replacement| replacement.range.start);
-    let mut normalized = String::new();
-    let mut cursor = 0;
-    for YamlScalarReplacement { range, spelling } in replacements {
-        normalized.push_str(text.get(cursor..range.start)?);
-        normalized.push_str(spelling);
-        cursor = range.end;
-    }
-    normalized.push_str(text.get(cursor..)?);
-    let mut parsed = serde_yaml::from_str::<serde_yaml::Value>(&normalized).ok()?;
-    parsed.apply_merge().ok()?;
-    yaml_json_compatible(&parsed).then_some(parsed)
-}
-
-fn yaml_json_compatible(value: &serde_yaml::Value) -> bool {
+fn decode(value: &serde_json::Value, state: &mut State) -> Value {
     match value {
-        serde_yaml::Value::Mapping(fields) => {
-            let mut keys = BTreeSet::new();
-            fields.iter().all(|(key, value)| {
-                yaml_key(key).is_some_and(|key| keys.insert(key)) && yaml_json_compatible(value)
-            })
-        }
-        serde_yaml::Value::Sequence(items) => items.iter().all(yaml_json_compatible),
-        serde_yaml::Value::Tagged(_) => false,
-        serde_yaml::Value::Null
-        | serde_yaml::Value::Bool(_)
-        | serde_yaml::Value::Number(_)
-        | serde_yaml::Value::String(_) => true,
-    }
-}
-
-fn decode(value: &serde_yaml::Value, state: &mut State, json_numbers: bool) -> Value {
-    match value {
-        serde_yaml::Value::Mapping(fields) => {
-            let mut keyed = BTreeMap::new();
-            for (key, value) in fields {
-                let Some(key) = yaml_key(key) else {
-                    return state.heap.map(Remainder::Open);
-                };
-                if keyed.insert(key, value).is_some() {
-                    return state.heap.map(Remainder::Open);
-                }
-            }
+        serde_json::Value::Object(fields) => {
             let value = state.heap.map(Remainder::Closed);
             if let Some(id) = state.map_target(&value) {
-                for (key, value) in keyed {
-                    let value = decode(value, state, json_numbers);
-                    state.heap.write(&id, &key, Field::Present(value));
+                for (key, value) in fields {
+                    let value = decode(value, state);
+                    state.heap.write(&id, key, Field::Present(value));
                 }
             }
             value
         }
-        serde_yaml::Value::Sequence(items) => {
-            let mut value = Value::sequence(
-                items
-                    .iter()
-                    .map(|value| decode(value, state, json_numbers))
-                    .collect(),
-            );
+        serde_json::Value::Array(items) => {
+            let mut value =
+                Value::sequence(items.iter().map(|value| decode(value, state)).collect());
             if let ValueNode::Leaf(Leaf {
                 datum: Datum::Sequence(sequence),
                 origin: _,
@@ -2096,29 +2371,11 @@ fn decode(value: &serde_yaml::Value, state: &mut State, json_numbers: bool) -> V
             }
             value
         }
-        serde_yaml::Value::Null => Value::nil(),
-        serde_yaml::Value::Bool(value) => Value::literal(GuardValue::Bool(*value)),
-        serde_yaml::Value::String(value) => Value::string(value),
+        serde_json::Value::Null => Value::nil(),
+        serde_json::Value::Bool(value) => Value::literal(GuardValue::Bool(*value)),
+        serde_json::Value::String(value) => Value::string(value),
         // The Go type is exact; numeric content still lacks Go-compatible serialization.
-        serde_yaml::Value::Number(_) if json_numbers => {
-            Value::scalar(super::ScalarType::Float64, None)
-        }
-        serde_yaml::Value::Number(_) | serde_yaml::Value::Tagged(_) => Value::unknown(),
-    }
-}
-
-fn yaml_key(value: &serde_yaml::Value) -> Option<String> {
-    match value {
-        serde_yaml::Value::String(value) => Some(value.clone()),
-        serde_yaml::Value::Bool(value) => Some(value.to_string()),
-        serde_yaml::Value::Number(value) => value
-            .as_i64()
-            .map(|value| value.to_string())
-            .or_else(|| value.as_u64().map(|value| value.to_string())),
-        serde_yaml::Value::Null
-        | serde_yaml::Value::Sequence(_)
-        | serde_yaml::Value::Mapping(_)
-        | serde_yaml::Value::Tagged(_) => None,
+        serde_json::Value::Number(_) => Value::scalar(super::ScalarType::Float64, None),
     }
 }
 

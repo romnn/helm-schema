@@ -920,6 +920,20 @@ impl State {
         if let Some(path) = &origin.identity {
             return Some(path.clone());
         }
+        // A numeric conversion may round its input, but an incompatible strict parameter still
+        // rejects the converted value wherever this argument is selected.
+        if matches!(
+            operation,
+            RequirementKind::StrictArgument { kind, allows_nil: _ }
+                if kind != super::kinds::GoType::Float64
+        ) && let Some(derivation) = origin.derivation.as_deref()
+            && matches!(
+                derivation.operation,
+                super::relationship::ValueOperation::Numeric(ScalarType::Float64)
+            )
+        {
+            return derivation.source.identity().cloned();
+        }
         let Datum::Map {
             target: Some(id),
             view: _,
@@ -1638,6 +1652,12 @@ fn remainder_inputs(
         super::Remainder::Unknown { inputs } => Some(inputs),
         super::Remainder::Layered(layers) => {
             values.extend(layers.source_values().cloned());
+            if let Some(path) = layers.decoded_input() {
+                if !budget.charge(1) {
+                    return false;
+                }
+                inputs.insert(path.clone());
+            }
             layers.unknown_inputs()
         }
         super::Remainder::Closed | super::Remainder::Open | super::Remainder::Input => None,
