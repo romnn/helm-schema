@@ -155,6 +155,297 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1tests.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "clusterHealthCheckParams": {
+                "description": "https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-health.html#request-params wait_for_status",
+                "type": "string"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpPort": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "persistence": {
+            "$ref": "#/definitions/constrains~1enabled:t"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "persistence": {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1tests.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nodeGroup": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1extraInitContainers:t+extraVolumes:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secret": {
+                "description": "Disable it to use your own elastic-credential Secret.",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "roles": {
+                "description": "Elasticsearch roles that will be applied to this nodeGroup\nThese will be set as environment variables. E.g. node.roles=master\nhttps://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#node-roles",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1tests.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "clusterName": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1extraVolumes:t@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1keystore:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1keystore:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "keystore": {
+            "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1extraContainers:t"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1extraInitContainers:t"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1extraVolumeMounts:t"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1extraVolumes:t@2"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Enabling this will publicly expose your Elasticsearch instance.\nOnly enable this if you have security enabled on your cluster",
+            "properties": {
+              "hosts": {
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1extraVolumes:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "sysctlInitContainer": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tests.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1esConfig:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1extraContainers:t+extraInitContainers:t+extraVolumeMounts:t+extraVolumes:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1esConfig:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esConfig": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "Allows you to add any config files in /usr/share/elasticsearch/config/\nsuch as elasticsearch.yml and log4j2.properties\nelasticsearch.yml: |\nkey:\nnestedkey: value\nlog4j2.properties: |\nkey = value"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -259,6 +550,480 @@
                 "$ref": "#/definitions/constrains~1additionalRules@items.ipBlock.cidr+additionalRules@items.ipBlock.except+6more"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1extraInitContainers:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1extraVolumes:t@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tests.enabled:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1httpPort+httpPort=false+httpPort=null+httpPort=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1networkPolicy.http.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1httpPort+httpPort=false+httpPort=null+httpPort=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1networkPolicy.http.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
+            "additionalProperties": {},
+            "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
+            "properties": {
+              "http": {
+                "$ref": "#/definitions/constrains~1explicitNamespacesSelector.matchExpressions@items.key+5more"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podSecurityContext": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1explicitNamespacesSelector.matchExpressions@items.key+5more~1not~1:helm-marker-free"
+              },
+              {
+                "additionalProperties": false,
+                "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
+                "properties": {
+                  "fsGroup": {
+                    "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
+                    "format": "int64",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "fsGroupChangePolicy": {
+                    "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used. Note that this field cannot be set when spec.os.name is windows.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "runAsGroup": {
+                    "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                    "format": "int64",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "runAsNonRoot": {
+                    "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "runAsUser": {
+                    "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+                    "format": "int64",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "seLinuxOptions": {
+                    "additionalProperties": false,
+                    "description": "SELinuxOptions are the labels to be applied to the container",
+                    "properties": {
+                      "level": {
+                        "description": "Level is SELinux level label that applies to the container.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "role": {
+                        "description": "Role is a SELinux role label that applies to the container.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "type": {
+                        "description": "Type is a SELinux type label that applies to the container.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "user": {
+                        "description": "User is a SELinux user label that applies to the container.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "seccompProfile": {
+                    "additionalProperties": false,
+                    "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+                    "properties": {
+                      "localhostProfile": {
+                        "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "type": {
+                        "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-unions": [
+                      {
+                        "discriminator": "type",
+                        "fields-to-discriminateBy": {
+                          "localhostProfile": "LocalhostProfile"
+                        }
+                      }
+                    ]
+                  },
+                  "supplementalGroups": {
+                    "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
+                    "items": {
+                      "format": "int64",
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "sysctls": {
+                    "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch. Note that this field cannot be set when spec.os.name is windows.",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Sysctl defines a kernel parameter to be set",
+                      "properties": {
+                        "name": {
+                          "description": "Name of a property to set",
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value of a property to set",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "value"
+                      ],
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "windowsOptions": {
+                    "additionalProperties": false,
+                    "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+                    "properties": {
+                      "gmsaCredentialSpec": {
+                        "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "gmsaCredentialSpecName": {
+                        "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "hostProcess": {
+                        "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "runAsUserName": {
+                        "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1extraContainers:t+extraInitContainers:t+extraVolumeMounts:t+extraVolumes:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "podSecurityPolicy": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "description": "Enabling this will publicly expose your Elasticsearch instance.\nOnly enable this if you have security enabled on your cluster",
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
+                "properties": {
+                  "transport": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "networkPolicy": {
+                "additionalProperties": {},
+                "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
+                "properties": {
+                  "http": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-22"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-22"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
+            "additionalProperties": {},
+            "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
+            "properties": {
+              "http": {
+                "$ref": "#/definitions/constrains~1additionalRules@items.ipBlock.cidr+additionalRules@items.ipBlock.except+6more"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/constrains~1extraInitContainers:t+extraVolumes:t"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1esJvmOptions:t"
+        },
+        "then": true
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esJvmOptions": {
+            "description": "processors.options: |\n-XX:ActiveProcessorCount=3",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
           }
         }
       }
@@ -666,6 +1431,119 @@
             "type": "object"
           },
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                      }
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1healthNameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more"
+                          }
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1healthNameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more"
+                          }
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
             "properties": {
               "persistence": {
                 "enum": [
@@ -965,81 +1843,6 @@
             ]
           },
           {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+11more"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
             "not": {
               "properties": {
                 "tests": {}
@@ -1053,297 +1856,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1tests.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "clusterHealthCheckParams": {
-                "description": "https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-health.html#request-params wait_for_status",
-                "type": "string"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpPort": {
-                "type": "integer"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "persistence": {
-            "$ref": "#/definitions/constrains~1enabled:t"
-          }
-        },
-        "required": [
-          "persistence"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1tests.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nodeGroup": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1extraInitContainers:t+extraVolumes:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "secret": {
-                "description": "Disable it to use your own elastic-credential Secret.",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "roles": {
-                "description": "Elasticsearch roles that will be applied to this nodeGroup\nThese will be set as environment variables. E.g. node.roles=master\nhttps://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#node-roles",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1tests.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "clusterName": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1extraVolumes:t@2"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1keystore:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1keystore:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "keystore": {
-            "$ref": "#/definitions/values~1anyOf~1array+integer+null+object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1extraContainers:t"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1extraInitContainers:t"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1extraVolumeMounts:t"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1extraVolumes:t@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Enabling this will publicly expose your Elasticsearch instance.\nOnly enable this if you have security enabled on your cluster",
-            "properties": {
-              "hosts": {
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1extraVolumes:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "sysctlInitContainer": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tests.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1esConfig:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1extraContainers:t+extraInitContainers:t+extraVolumeMounts:t+extraVolumes:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1esConfig:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esConfig": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "maximum": 0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              }
-            ],
-            "description": "Allows you to add any config files in /usr/share/elasticsearch/config/\nsuch as elasticsearch.yml and log4j2.properties\nelasticsearch.yml: |\nkey:\nnestedkey: value\nlog4j2.properties: |\nkey = value"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -1405,7 +1917,7 @@
                 "$ref": "#/definitions/constrains~1group-15"
               },
               {
-                "$ref": "#/definitions/constrains~1group-10"
+                "$ref": "#/definitions/constrains~1group-9"
               },
               {
                 "$ref": "#/definitions/constrains~1networkPolicy.http.additionalRules+2more"
@@ -1443,7 +1955,7 @@
                 "$ref": "#/definitions/constrains~1group-18"
               },
               {
-                "$ref": "#/definitions/constrains~1group-9"
+                "$ref": "#/definitions/constrains~1group-10"
               },
               {
                 "$ref": "#/definitions/constrains~1networkPolicy.http.additionalRules+2more"
@@ -1463,434 +1975,6 @@
                 "$ref": "#/definitions/constrains~1explicitNamespacesSelector.matchExpressions@items.key+5more"
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1extraInitContainers:t"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1extraVolumes:t@2"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tests.enabled:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1httpPort+httpPort=false+httpPort=null+httpPort=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1networkPolicy.http.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1httpPort+httpPort=false+httpPort=null+httpPort=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1networkPolicy.http.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkPolicy": {
-            "additionalProperties": {},
-            "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
-            "properties": {
-              "http": {
-                "$ref": "#/definitions/constrains~1explicitNamespacesSelector.matchExpressions@items.key+5more"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1tests.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1healthNameOverride:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podSecurityContext": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1explicitNamespacesSelector.matchExpressions@items.key+5more~1not~1:helm-marker-free"
-              },
-              {
-                "additionalProperties": false,
-                "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
-                "properties": {
-                  "fsGroup": {
-                    "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "fsGroupChangePolicy": {
-                    "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used. Note that this field cannot be set when spec.os.name is windows.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "runAsGroup": {
-                    "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "runAsNonRoot": {
-                    "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-                    "type": [
-                      "boolean",
-                      "null"
-                    ]
-                  },
-                  "runAsUser": {
-                    "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
-                    "format": "int64",
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "seLinuxOptions": {
-                    "additionalProperties": false,
-                    "description": "SELinuxOptions are the labels to be applied to the container",
-                    "properties": {
-                      "level": {
-                        "description": "Level is SELinux level label that applies to the container.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "Role is a SELinux role label that applies to the container.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "type": {
-                        "description": "Type is a SELinux type label that applies to the container.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "user": {
-                        "description": "User is a SELinux user label that applies to the container.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "seccompProfile": {
-                    "additionalProperties": false,
-                    "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-                    "properties": {
-                      "localhostProfile": {
-                        "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "type": {
-                        "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": [
-                      "object",
-                      "null"
-                    ],
-                    "x-kubernetes-unions": [
-                      {
-                        "discriminator": "type",
-                        "fields-to-discriminateBy": {
-                          "localhostProfile": "LocalhostProfile"
-                        }
-                      }
-                    ]
-                  },
-                  "supplementalGroups": {
-                    "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
-                    "items": {
-                      "format": "int64",
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "sysctls": {
-                    "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch. Note that this field cannot be set when spec.os.name is windows.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "Sysctl defines a kernel parameter to be set",
-                      "properties": {
-                        "name": {
-                          "description": "Name of a property to set",
-                          "type": "string"
-                        },
-                        "value": {
-                          "description": "Value of a property to set",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "name",
-                        "value"
-                      ],
-                      "type": [
-                        "object",
-                        "null"
-                      ]
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "windowsOptions": {
-                    "additionalProperties": false,
-                    "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
-                    "properties": {
-                      "gmsaCredentialSpec": {
-                        "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "gmsaCredentialSpecName": {
-                        "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "hostProcess": {
-                        "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
-                        "type": [
-                          "boolean",
-                          "null"
-                        ]
-                      },
-                      "runAsUserName": {
-                        "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      }
-                    },
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  }
-                },
-                "type": [
-                  "object",
-                  "null"
-                ]
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1extraContainers:t+extraInitContainers:t+extraVolumeMounts:t+extraVolumes:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podSecurityPolicy": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "ingress": {
-                "description": "Enabling this will publicly expose your Elasticsearch instance.\nOnly enable this if you have security enabled on your cluster",
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "additionalProperties": {},
-                "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
-                "properties": {
-                  "transport": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "networkPolicy": {
-                "additionalProperties": {},
-                "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
-                "properties": {
-                  "http": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "$ref": "#/definitions/constrains~1extraInitContainers:t+extraVolumes:t"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1esJvmOptions:t"
-        },
-        "then": true
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esJvmOptions": {
-            "description": "processors.options: |\n-XX:ActiveProcessorCount=3",
-            "type": [
-              "array",
-              "null",
-              "object"
-            ]
           }
         }
       }
@@ -2432,52 +2516,6 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-22"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-19"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-9"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-22"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride=false+fullnameOverride=null+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-10"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "networkPolicy": {
-            "additionalProperties": {},
-            "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.\nIn order for a Pod to access Elasticsearch, it needs to have the following label:\n{{ template \"uname\" . }}-client: \"true\"\nExample for default configuration to access HTTP port:\nelasticsearch-master-http-client: \"true\"\nExample for default configuration to access transport port:\nelasticsearch-master-transport-client: \"true\"",
-            "properties": {
-              "http": {
-                "$ref": "#/definitions/constrains~1additionalRules@items.ipBlock.cidr+additionalRules@items.ipBlock.except+6more"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "podAnnotations": {
@@ -2698,102 +2736,6 @@
                       "anyOf": [
                         {
                           "properties": {
-                            "nodeGroup": {
-                              "additionalProperties": true,
-                              "propertyNames": true,
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "nodeGroup"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "nodeGroup": {
-                              "pattern": "^(?:(?:(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "nodeGroup"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "nodeGroup": {
-                              "items": true,
-                              "type": "array"
-                            }
-                          },
-                          "required": [
-                            "nodeGroup"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@16"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@12"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@21"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@7"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@16"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@22"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@21"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@7"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
                             "clusterName": {
                               "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1array@2"
                             }
@@ -2855,19 +2797,157 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@19"
+                          "properties": {
+                            "nodeGroup": {
+                              "additionalProperties": true,
+                              "propertyNames": true,
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "nodeGroup"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "nodeGroup": {
+                              "pattern": "^(?:(?:(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5b\\x7b\\x7d](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*))$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "nodeGroup"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "nodeGroup": {
+                              "items": true,
+                              "type": "array"
+                            }
+                          },
+                          "required": [
+                            "nodeGroup"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@26"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@22"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@7"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@26"
                         },
                         {
                           "$ref": "#/definitions/constrains~1nodeGroup@4"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@8"
+                          "$ref": "#/definitions/constrains~1nodeGroup@12"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@13"
+                          "$ref": "#/definitions/constrains~1nodeGroup@7"
                         }
                       ]
                     },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nodeGroup@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@16"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@12"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@21"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@7"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@16"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@22"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@21"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@7"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
                     {
                       "anyOf": [
                         {
@@ -2881,6 +2961,22 @@
                         },
                         {
                           "$ref": "#/definitions/constrains~1nodeGroup@8"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@19"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@8"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nodeGroup@13"
                         }
                       ]
                     },
@@ -2899,7 +2995,7 @@
                         {
                           "properties": {
                             "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b@3"
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b"
                             }
                           },
                           "required": [
@@ -2911,15 +3007,87 @@
                           "$ref": "#/definitions/constrains~1clusterName@4"
                         },
                         {
+                          "$ref": "#/definitions/constrains~1clusterName"
+                        },
+                        {
                           "properties": {
                             "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1array@3"
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1array"
                             }
                           },
                           "required": [
                             "clusterName"
                           ],
                           "type": "object"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "nodeGroup": {
+                          "pattern": "^(?:(?:(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)))$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "nodeGroup"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "nodeGroup": {
+                          "pattern": "^(?:(?:(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*|(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*)))$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "nodeGroup"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x25"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clusterName@4"
                         },
                         {
                           "$ref": "#/definitions/constrains~1clusterName"
@@ -2982,89 +3150,6 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName"
-                        },
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1array"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "clusterName": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x25"
-                            }
-                          },
-                          "required": [
-                            "clusterName"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName@4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clusterName"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nodeGroup@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nodeGroup"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/constrains~1nodeGroup@24"
@@ -3107,58 +3192,106 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nodeGroup@2"
-                    },
-                    {
                       "$ref": "#/definitions/constrains~1nodeGroup"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      "$ref": "#/definitions/constrains~1nodeGroup@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
                     }
                   ]
                 },
                 {
                   "allOf": [
                     {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@26"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@22"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nodeGroup@7"
-                        }
-                      ]
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
                     },
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@26"
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20-x5b@3"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@4"
+                          "$ref": "#/definitions/constrains~1clusterName@4"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@12"
+                          "properties": {
+                            "clusterName": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1anyOf~1array@3"
+                            }
+                          },
+                          "required": [
+                            "clusterName"
+                          ],
+                          "type": "object"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1nodeGroup@7"
+                          "$ref": "#/definitions/constrains~1clusterName"
                         }
                       ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "properties": {
+                            "nameOverride": {
+                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@3"
+                            }
+                          },
+                          "required": [
+                            "nameOverride"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "properties": {
+                                "nameOverride": {
+                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@2"
+                                }
+                              },
+                              "required": [
+                                "nameOverride"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 },
@@ -3267,106 +3400,11 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "properties": {
-                        "nodeGroup": {
-                          "pattern": "^(?:(?:(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*[\\x21-\\x22\\x24-\\x2b\\x2d-\\x39\\x3b\\x3d-\\x5c\\x5e-\\x7c\\x7e](?:[\\x09-\\x0a\\x20-\\x7e\\x85 - ])*)))$",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "nodeGroup"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "properties": {
-                        "nodeGroup": {
-                          "pattern": "^(?:(?:(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*|(?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20](?:(?:[\\x20]|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x20]))*(?:[\\x5d](?:[\\x09\\x20])*|[\\x2b\\x2e-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a](?:[\\x2b\\x2d-\\x39\\x41-\\x5a\\x5f\\x61-\\x7a])*[\\x5d](?:[\\x09\\x20])*)))$",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "nodeGroup"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clusterName+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1string;pattern-x20"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "nameOverride": {
-                              "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@3"
-                            }
-                          },
-                          "required": [
-                            "nameOverride"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "properties": {
-                                "nameOverride": {
-                                  "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=null+clusterName=true+19more~1allOf~1not~1object+object@2"
-                                }
-                              },
-                              "required": [
-                                "nameOverride"
-                              ],
-                              "type": "object"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
                 }
               ]
             },
             {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+              "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
             }
           ]
         },
@@ -3382,7 +3420,7 @@
               "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag+imageTag=false+imageTag=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+              "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
             }
           ]
         },
@@ -3395,7 +3433,7 @@
               "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag"
             },
             {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+              "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
             }
           ]
         }
@@ -4081,10 +4119,10 @@
     "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more"
+          "$ref": "#/definitions/constrains~1clusterName+nameOverride+nameOverride:t+nodeGroup+nodeGroup=false+nodeGroup=true"
         },
         {
-          "$ref": "#/definitions/constrains~1clusterName+nameOverride+nameOverride:t+nodeGroup+nodeGroup=false+nodeGroup=true"
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more"
         },
         {
           "$ref": "#/definitions/constrains~1clusterName+nameOverride+nameOverride:t+nodeGroup"
@@ -4103,13 +4141,10 @@
     "constrains/clusterName+clusterName=false+clusterName=null+clusterName=true+nameOverride+8more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more"
-        },
-        {
           "$ref": "#/definitions/constrains~1clusterName+nameOverride+nameOverride:t+nodeGroup+nodeGroup=false+nodeGroup=true"
         },
         {
-          "$ref": "#/definitions/constrains~1clusterName+nameOverride+nameOverride:t+nodeGroup"
+          "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+6more"
         },
         {
           "allOf": [
@@ -4145,6 +4180,9 @@
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=null"
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1clusterName+nameOverride+nameOverride:t+nodeGroup"
         },
         {
           "$ref": "#/definitions/constrains~1clusterName+clusterName=null+nameOverride+nameOverride:t+nameOverride=null+3more"
@@ -4610,6 +4648,46 @@
         {
           "allOf": [
             {
+              "anyOf": [
+                {
+                  "properties": {
+                    "nameOverride": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
+                    }
+                  },
+                  "required": [
+                    "nameOverride"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride:t"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "clusterName": {
+                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
+                    }
+                  },
+                  "required": [
+                    "clusterName"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1nameOverride:t"
             },
             {
@@ -4662,46 +4740,6 @@
                     "clusterName"
                   ],
                   "type": "object"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "nameOverride": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
-                    }
-                  },
-                  "required": [
-                    "nameOverride"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride:t"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "properties": {
-                    "clusterName": {
-                      "$ref": "#/definitions/constrains~1clusterName+clusterName=false+clusterName=true+nameOverride+nameOverride:t+2more~1string;pattern-x20@2"
-                    }
-                  },
-                  "required": [
-                    "clusterName"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride:t@2"
                 }
               ]
             }
@@ -4912,10 +4950,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
         }
       ]
     },
@@ -4966,10 +5004,10 @@
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1clusterName+nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
         }
       ]
     },
@@ -5857,7 +5895,7 @@
               "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag"
             },
             {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+              "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
             }
           ]
         },
@@ -6014,7 +6052,7 @@
               ]
             },
             {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+              "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
             }
           ]
         },
@@ -6030,7 +6068,7 @@
               "$ref": "#/definitions/constrains~1image+image=false+image=null+image=true+imageTag+imageTag=false+imageTag=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1healthNameOverride:t"
+              "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
             }
           ]
         }
@@ -6324,7 +6362,7 @@
     "constrains/group-10": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-14"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
         },
         {
           "$ref": "#/definitions/constrains~1group-12"
@@ -6599,7 +6637,7 @@
     "constrains/group-9": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+          "$ref": "#/definitions/constrains~1group-14"
         },
         {
           "$ref": "#/definitions/constrains~1group-12"
@@ -6607,6 +6645,11 @@
       ]
     },
     "constrains/healthNameOverride:t": {
+      "not": {
+        "$ref": "#/definitions/constrains~1healthNameOverride:t@2"
+      }
+    },
+    "constrains/healthNameOverride:t@2": {
       "properties": {
         "healthNameOverride": {
           "$ref": "#/definitions/t"
