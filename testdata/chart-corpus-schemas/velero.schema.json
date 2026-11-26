@@ -8,6 +8,77 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDsJob.automountServiceAccountToken@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDsJob.automountServiceAccountToken@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "upgradeCRDsJob": {
+            "additionalProperties": {},
+            "description": "requests:\ncpu: 50m\nmemory: 128Mi\nlimits:\ncpu: 100m\nmemory: 256Mi",
+            "properties": {
+              "automountServiceAccountToken": {
+                "description": "Configure if API credential for Service Account is automounted.\nConfigure the shell cmd in case you are using custom image\nshellCmd: /tmp/sh\nupdateCmd: /velero install --crds-only --dry-run -o yaml | /tmp/kubectl apply -f -",
+                "not": {
+                  "items": {
+                    "$ref": "#/definitions/values~1anyOf~1array+null,boolean,number+object+string"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDsJob.automountServiceAccountToken@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
               },
               {
@@ -27,16 +98,6 @@
               },
               {
                 "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-11"
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDsJob.automountServiceAccountToken@3"
               }
             ]
           }
@@ -71,273 +132,6 @@
                 "description": "Configure if API credential for Service Account is automounted.\nConfigure the shell cmd in case you are using custom image\nshellCmd: /tmp/sh\nupdateCmd: /velero install --crds-only --dry-run -o yaml | /tmp/kubectl apply -f -"
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.server.labels:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                    }
-                  ]
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.server.labels:helm-marker-free"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "server": {
-                              "properties": {
-                                "labels": {
-                                  "required": [
-                                    "app.kubernetes.io/name"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "labels"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "server"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/definitions/values~1not~1:t"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1group-9"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
-            "properties": {
-              "pullPolicy": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1string;pattern-r-n"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^(null|Null|NULL)[ \\t]+#"
-                        }
-                      },
-                      {
-                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-                        }
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "maxItems": 0,
-                          "type": "array"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "$ref": "#/definitions/values~1string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "maxProperties": 0,
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    "propertyNames": {
-                      "$ref": "#/definitions/values~1string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1string;pattern-null-null-null"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-                        }
-                      }
-                    ],
-                    "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-                    "type": "string"
-                  }
-                ],
-                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podSecurityContext": {
-            "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337",
-            "type": [
-              "null",
-              "object"
-            ]
           }
         }
       }
@@ -923,6 +717,148 @@
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "description": "Information about the Kubernetes service account Velero uses.",
+            "properties": {
+              "server": {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/values~1not~1:helm-marker-free"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1object,null;map-of-string-keys"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1not~1:t"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "image": {
+                "properties": {
+                  "pullPolicy": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "pullPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1group-9"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
+            "properties": {
+              "pullPolicy": {
+                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
+                "not": {
+                  "items": {
+                    "$ref": "#/definitions/values~1anyOf~1array+null,boolean,number+object+string"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podSecurityContext": {
+            "description": "SecurityContext to use for the Velero deployment. Optional.\nSet fsGroup for `AWS IAM Roles for Service Accounts`\nsee more informations at: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html\nfsGroup: 1337",
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
           },
           {
             "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
@@ -972,7 +908,7 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1namespace:t@2"
+        "$ref": "#/definitions/constrains~1namespace:t@3"
       },
       "then": {
         "additionalProperties": {},
@@ -980,6 +916,36 @@
           "namespace": {
             "description": "Labels settings in namespace",
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1namespace:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespace": {
+            "additionalProperties": {},
+            "description": "Labels settings in namespace",
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array"
+                  }
+                ],
+                "description": "Enforce Pod Security Standards with Namespace Labels\nhttps://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/\npod-security.kubernetes.io/enforce: privileged\npod-security.kubernetes.io/enforce-version: latest\npod-security.kubernetes.io/audit: privileged\npod-security.kubernetes.io/audit-version: latest\npod-security.kubernetes.io/warn: privileged\npod-security.kubernetes.io/warn-version: latest"
+              }
+            }
           }
         }
       }
@@ -1046,56 +1012,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "description": "Information about the Kubernetes service account Velero uses.",
-            "properties": {
-              "server": {
-                "additionalProperties": {},
-                "properties": {
-                  "labels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/values~1not~1:helm-marker-free"
-                      },
-                      {
-                        "$ref": "#/definitions/values~1object,null;map-of-string-keys"
-                      },
-                      {
-                        "$ref": "#/definitions/values~1not~1:t"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1group-11"
           }
         ]
@@ -1135,831 +1051,6 @@
                   }
                 ],
                 "description": "Configure if API credential for Service Account is automounted.\nConfigure the shell cmd in case you are using custom image\nshellCmd: /tmp/sh\nupdateCmd: /velero install --crds-only --dry-run -o yaml | /tmp/kubectl apply -f -"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1image.imagePullSecrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+2more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "kubectl": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1not~1:helm-marker-free"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1object,null;annotations-is-an-unstructured"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Annotations to set for the upgrade/cleanup job. Optional."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1image.imagePullSecrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+2more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "kubectl": {
-            "additionalProperties": {},
-            "properties": {
-              "labels": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1not~1:helm-marker-free"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1object,null;map-of-string-keys"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Labels to set for the upgrade/cleanup job. Optional."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1securityContext:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "securityContext": {
-            "type": [
-              "null",
-              "object"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "pullPolicy": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "pullPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1group-9"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
-            "properties": {
-              "pullPolicy": {
-                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
-                "not": {
-                  "items": {
-                    "$ref": "#/definitions/values~1anyOf~1array+null,boolean,number+object+string"
-                  },
-                  "type": "array"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                    }
-                  ]
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                        },
-                        {
-                          "not": {
-                            "allOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+29more"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+28more"
-                              }
-                            ]
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1namespace:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1namespace:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@6"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1namespace:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+29more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+28more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "kubectl": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kubectl"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "kubectl": {}
-                      },
-                      "required": [
-                        "kubectl"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                      },
-                      {
-                        "not": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1securityContext"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1securityContext=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1securityContext@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1securityContext:t"
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                      },
-                      {
-                        "not": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1podSecurityContext:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1podSecurityContext@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1podSecurityContext"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1podSecurityContext=null"
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+37more"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+37more"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1securityContext:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                        },
-                        {
-                          "not": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1securityContext"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1securityContext=null"
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1securityContext@2"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1podSecurityContext@2"
-                          }
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "server": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "server"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "server": {}
-                          },
-                          "required": [
-                            "server"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
-            "properties": {
-              "imagePullSecrets": {
-                "description": "One or more secrets to be used when pulling images\n- registrySecretName",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "pullPolicy": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "pullPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1group-9"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
-            "properties": {
-              "pullPolicy": {
-                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
-                "not": {
-                  "$ref": "#/definitions/values~1object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "description": "Information about the Kubernetes service account Velero uses.",
-            "properties": {
-              "server": {
-                "additionalProperties": {},
-                "properties": {
-                  "imagePullSecrets": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
               }
             }
           }
@@ -3842,6 +2933,944 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.server.labels:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                    }
+                  ]
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.server.labels:helm-marker-free"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "server": {
+                              "properties": {
+                                "labels": {
+                                  "required": [
+                                    "app.kubernetes.io/name"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "labels"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "server"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/values~1not~1:t"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1group-9"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
+            "properties": {
+              "pullPolicy": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1string;pattern-r-n"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^(null|Null|NULL)[ \\t]+#"
+                        }
+                      },
+                      {
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+                        }
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1string;pattern-a-za-z0-9-t"
+                  },
+                  {
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "maxItems": 0,
+                          "type": "array"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "$ref": "#/definitions/values~1string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "maxProperties": 0,
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "propertyNames": {
+                      "$ref": "#/definitions/values~1string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1string;pattern-null-null-null"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                        }
+                      }
+                    ],
+                    "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+                    "type": "string"
+                  }
+                ],
+                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1image.imagePullSecrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+2more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kubectl": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1not~1:helm-marker-free"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1object,null;annotations-is-an-unstructured"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "Annotations to set for the upgrade/cleanup job. Optional."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "description": "Information about the Kubernetes service account Velero uses.",
+            "properties": {
+              "server": {
+                "additionalProperties": {},
+                "properties": {
+                  "imagePullSecrets": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1image.imagePullSecrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+2more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kubectl": {
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1not~1:helm-marker-free"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1object,null;map-of-string-keys"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "Labels to set for the upgrade/cleanup job. Optional."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1securityContext:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "securityContext": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                    },
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more@2"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+23more@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+28more"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                        },
+                        {
+                          "not": {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+28more"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+29more"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1namespace:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@6"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1namespace:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1namespace:t@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+29more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more"
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+8more"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1securityContext"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1securityContext=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1securityContext@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1securityContext:t"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1podSecurityContext:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1podSecurityContext"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1podSecurityContext=null"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+37more"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+7more"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+37more"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1securityContext:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                        },
+                        {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1securityContext"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1securityContext=null"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1securityContext@2"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1podSecurityContext:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1podSecurityContext@2"
+                          }
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext=null"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1namespace:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/definitions/constrains~1labels=null"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "namespace": {
+                          "$ref": "#/definitions/constrains~1labels@3"
+                        }
+                      },
+                      "required": [
+                        "namespace"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kubectl": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kubectl"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "kubectl": {}
+                      },
+                      "required": [
+                        "kubectl"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "server": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "server"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "server": {}
+                          },
+                          "required": [
+                            "server"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
           },
           {
@@ -3884,59 +3913,95 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDsJob.automountServiceAccountToken@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
+            "properties": {
+              "image": {
+                "properties": {
+                  "pullPolicy": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "pullPolicy"
+                ],
+                "type": "object"
               }
-            ]
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-11"
-              },
-              {
-                "$ref": "#/definitions/constrains~1upgradeCRDsJob.automountServiceAccountToken@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1group-9"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "upgradeCRDsJob": {
+          "image": {
             "additionalProperties": {},
-            "description": "requests:\ncpu: 50m\nmemory: 128Mi\nlimits:\ncpu: 100m\nmemory: 256Mi",
+            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
             "properties": {
-              "automountServiceAccountToken": {
-                "description": "Configure if API credential for Service Account is automounted.\nConfigure the shell cmd in case you are using custom image\nshellCmd: /tmp/sh\nupdateCmd: /velero install --crds-only --dry-run -o yaml | /tmp/kubectl apply -f -",
+              "pullPolicy": {
+                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
                 "not": {
-                  "items": {
-                    "$ref": "#/definitions/values~1anyOf~1array+null,boolean,number+object+string"
-                  },
-                  "type": "array"
+                  "$ref": "#/definitions/values~1object"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1upgradeCRDs:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
+            "properties": {
+              "imagePullSecrets": {
+                "description": "One or more secrets to be used when pulling images\n- registrySecretName",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -5367,22 +5432,6 @@
               "$ref": "#/definitions/constrains~1group-7"
             },
             {
-              "$ref": "#/definitions/constrains~1image+image.digest:t+image.repository+image.repository=false+6more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image+image.pullPolicy"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-7"
-            },
-            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
@@ -5390,41 +5439,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1image.digest:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@5"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken@2"
             }
           ]
         },
@@ -5450,6 +5464,57 @@
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-7"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image+image.digest:t+image.repository+image.repository=false+6more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image+image.pullPolicy"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@5"
             }
           ]
         }
@@ -5553,6 +5618,28 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1image.digest:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image+image.digest+image.repository+image.repository=false+image.repository=null+1more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
@@ -5572,6 +5659,19 @@
             },
             {
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+2more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@5"
             }
           ]
         },
@@ -5603,28 +5703,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image.digest:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image+image.digest+image.repository+image.repository=false+image.repository=null+1more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
@@ -5635,19 +5713,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@5"
             }
           ]
         },
@@ -5687,6 +5752,22 @@
                   "$ref": "#/definitions/constrains~1fullnameOverride:t"
                 },
                 {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                },
+                {
                   "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@3"
                 }
               ]
@@ -5726,22 +5807,6 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
                   "$ref": "#/definitions/constrains~1kubectl.labels:t"
                 },
                 {
@@ -5758,31 +5823,6 @@
                 },
                 {
                   "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1kubectl.labels:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels=null"
                 }
               ]
             },
@@ -5842,6 +5882,31 @@
                   "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@2"
                 }
               ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1kubectl.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels=null"
+                }
+              ]
             }
           ]
         },
@@ -5888,6 +5953,22 @@
               {
                 "allOf": [
                   {
+                    "$ref": "#/definitions/constrains~1image.imagePullSecrets:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@5"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                   },
                   {
@@ -5914,6 +5995,38 @@
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@4"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@6"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@5"
                   }
                 ]
               },
@@ -5947,54 +6060,6 @@
                     "$ref": "#/definitions/constrains~1fullnameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@6"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1image.imagePullSecrets:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@5"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+image+image.digest+image.digest:t+35more@5"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1image.imagePullSecrets:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
                     "not": {
                       "$ref": "#/definitions/constrains~1kubectl+kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels:t+3more"
                     }
@@ -6011,13 +6076,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1kubectl.image.digest:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.digest+kubectl.image.repository+3more"
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository@5"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
@@ -6026,7 +6088,10 @@
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl.image.digest:t+kubectl.image.tag:t"
+              "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
             }
           ]
         },
@@ -6046,10 +6111,22 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1kubectl.image.digest:t@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@6"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.digest+kubectl.image.repository+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl.image.digest:t+kubectl.image.tag:t"
             }
           ]
         },
@@ -6072,19 +6149,7 @@
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@6"
             }
           ]
         }
@@ -6164,10 +6229,10 @@
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
+              "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
+              "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
             }
           ]
         },
@@ -6183,10 +6248,10 @@
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.digest+kubectl.image.repository+3more"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.digest+kubectl.image.repository+3more"
             },
             {
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
@@ -6247,10 +6312,10 @@
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
+              "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
+              "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
             }
           ]
         },
@@ -6282,10 +6347,10 @@
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.digest+kubectl.image.repository+3more"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.digest+kubectl.image.repository+3more"
             },
             {
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+4more"
@@ -6302,7 +6367,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -6315,7 +6380,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -6331,7 +6396,7 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+kubectl+kubectl.image+kubectl.image.digest+27more@2"
@@ -6344,7 +6409,7 @@
       "not": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1namespace:t@2"
+            "$ref": "#/definitions/constrains~1namespace:t@3"
           },
           {
             "allOf": [
@@ -6352,7 +6417,7 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1namespace:t@2"
+                "$ref": "#/definitions/constrains~1namespace:t@3"
               },
               {
                 "not": {
@@ -6364,7 +6429,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1namespace:t@2"
+                "$ref": "#/definitions/constrains~1namespace:t@3"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -6379,7 +6444,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1namespace:t@2"
+                "$ref": "#/definitions/constrains~1namespace:t@3"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -6393,7 +6458,7 @@
           },
           {
             "not": {
-              "$ref": "#/definitions/constrains~1namespace:t"
+              "$ref": "#/definitions/constrains~1namespace:t@2"
             }
           }
         ]
@@ -6454,6 +6519,9 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.create:t"
+                },
+                {
                   "anyOf": [
                     {
                       "$ref": "#/definitions/constrains~1serviceAccount.server.name:t"
@@ -6462,9 +6530,6 @@
                       "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+3more"
                     }
                   ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.create:t"
                 }
               ]
             }
@@ -6556,25 +6621,6 @@
                 },
                 {
                   "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.server.annotations@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.server.annotations@3"
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.annotations+2more"
-                },
-                {
-                  "not": {
                     "anyOf": [
                       {
                         "properties": {
@@ -6649,6 +6695,25 @@
                   }
                 }
               ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.annotations+2more"
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.server.annotations@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.server.annotations@3"
+                      }
+                    ]
+                  }
+                }
+              ]
             }
           ]
         }
@@ -6691,6 +6756,9 @@
             },
             {
               "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.labels+serviceAccount.server.labels:helm-marker-free+1more"
+                },
                 {
                   "not": {
                     "anyOf": [
@@ -6748,9 +6816,6 @@
                       }
                     ]
                   }
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.labels+serviceAccount.server.labels:helm-marker-free+1more"
                 }
               ]
             }
@@ -6782,6 +6847,43 @@
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more": {
       "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken@2"
+            }
+          ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+19more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+15more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@4"
+        },
         {
           "allOf": [
             {
@@ -6841,43 +6943,6 @@
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
             }
           ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken@2"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+19more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+15more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.server+serviceAccount.server.name+1more@4"
         }
       ]
     },
@@ -6897,19 +6962,6 @@
               "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
-            },
-            {
               "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+19more@2"
             }
           ]
@@ -6918,6 +6970,19 @@
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.server.imagePullSecrets:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1upgradeCRDs:t@3"
@@ -7185,20 +7250,20 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1upgradeCRDs:t@2"
+                      "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+3more"
                     }
                   ]
                 },
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+securityContext+3more"
+                      "$ref": "#/definitions/constrains~1upgradeCRDs:t@2"
                     }
                   ]
                 }
@@ -7708,27 +7773,7 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.digest@15"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
               "$ref": "#/definitions/constrains~1image.digest@16"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.digest@17"
             }
           ]
         },
@@ -7748,17 +7793,7 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.digest@23"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.digest@24"
+              "$ref": "#/definitions/constrains~1image.digest@15"
             }
           ]
         },
@@ -7778,7 +7813,7 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.digest@26"
+              "$ref": "#/definitions/constrains~1image.digest@23"
             }
           ]
         },
@@ -7798,7 +7833,7 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.digest@21"
+              "$ref": "#/definitions/constrains~1image.digest@24"
             }
           ]
         },
@@ -7818,7 +7853,7 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.digest@13"
+              "$ref": "#/definitions/constrains~1image.digest@26"
             }
           ]
         },
@@ -7829,6 +7864,36 @@
             },
             {
               "$ref": "#/definitions/constrains~1image.digest@27"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.digest@21"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.digest@17"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.digest@13"
             }
           ]
         },
@@ -7900,6 +7965,36 @@
             {
               "anyOf": [
                 {
+                  "$ref": "#/definitions/constrains~1image.digest@9"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1image.digest@5"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1image.digest@35"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1image.digest@6"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1image+image.digest"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
+              "anyOf": [
+                {
                   "$ref": "#/definitions/constrains~1image.digest@30"
                 },
                 {
@@ -7931,36 +8026,6 @@
                 },
                 {
                   "$ref": "#/definitions/constrains~1image.digest@14"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1image.digest@9"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1image.digest@5"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1image.digest@35"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1image.digest@6"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1image+image.digest"
-                    }
-                  ]
                 }
               ]
             }
@@ -8671,32 +8736,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image+image.pullPolicy@2"
-            },
-            {
-              "properties": {
-                "image": {
-                  "properties": {
-                    "pullPolicy": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken~1allOf~1not~1object+object@5"
-                    }
-                  },
-                  "required": [
-                    "pullPolicy"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "image"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "image": {
                   "properties": {
@@ -8717,6 +8756,32 @@
             },
             {
               "$ref": "#/definitions/constrains~1image+image.pullPolicy@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.pullPolicy@2"
+            },
+            {
+              "properties": {
+                "image": {
+                  "properties": {
+                    "pullPolicy": {
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken~1allOf~1not~1object+object@5"
+                    }
+                  },
+                  "required": [
+                    "pullPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -9059,16 +9124,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@23"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1image.tag@17"
             },
             {
@@ -9079,10 +9134,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image.tag@13"
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+              "$ref": "#/definitions/constrains~1image.tag@22"
             }
           ]
         },
@@ -9093,16 +9148,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1image.tag@16"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@22"
             }
           ]
         },
@@ -9133,6 +9178,16 @@
             },
             {
               "$ref": "#/definitions/constrains~1image.tag@11"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image.tag@13"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             }
           ]
         },
@@ -9246,16 +9301,6 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag@18"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
               "$ref": "#/definitions/constrains~1image.tag@20"
             }
           ]
@@ -9286,6 +9331,36 @@
               "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
             },
             {
+              "$ref": "#/definitions/constrains~1image.tag@23"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag@19"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag@18"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
+            },
+            {
               "anyOf": [
                 {
                   "$ref": "#/definitions/constrains~1image.tag@27"
@@ -9307,16 +9382,6 @@
                   "$ref": "#/definitions/constrains~1image.tag@15"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1image+image.repository+image.repository=false+image.repository=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag@19"
             }
           ]
         },
@@ -13841,18 +13906,6 @@
     "constrains/kubectl+kubectl.image+kubectl.image.digest+kubectl.image.digest:t+8more": {
       "anyOf": [
         {
-          "not": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1kubectl.image.digest:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kubectl.image.digest:t+kubectl.image.tag:t"
-              }
-            ]
-          }
-        },
-        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
@@ -13869,6 +13922,18 @@
               "type": "object"
             }
           ]
+        },
+        {
+          "not": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kubectl.image.digest:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubectl.image.digest:t+kubectl.image.tag:t"
+              }
+            ]
+          }
         },
         {
           "allOf": [
@@ -14136,6 +14201,39 @@
                 {
                   "properties": {
                     "kubectl": {
+                      "$ref": "#/definitions/constrains~1image.digest@14"
+                    }
+                  },
+                  "required": [
+                    "kubectl"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "kubectl": {
+                      "$ref": "#/definitions/constrains~1image.digest@3"
+                    }
+                  },
+                  "required": [
+                    "kubectl"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "kubectl": {
                       "$ref": "#/definitions/constrains~1image.digest@32"
                     }
                   },
@@ -14256,33 +14354,18 @@
         {
           "allOf": [
             {
-              "anyOf": [
-                {
-                  "properties": {
-                    "kubectl": {
-                      "$ref": "#/definitions/constrains~1image.digest@14"
-                    }
-                  },
-                  "required": [
-                    "kubectl"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "kubectl": {
-                      "$ref": "#/definitions/constrains~1image.digest@3"
-                    }
-                  },
-                  "required": [
-                    "kubectl"
-                  ],
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
             },
             {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
+              "properties": {
+                "kubectl": {
+                  "$ref": "#/definitions/constrains~1image.digest@24"
+                }
+              },
+              "required": [
+                "kubectl"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -14310,6 +14393,24 @@
               "properties": {
                 "kubectl": {
                   "$ref": "#/definitions/constrains~1image.digest@23"
+                }
+              },
+              "required": [
+                "kubectl"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "kubectl": {
+                  "$ref": "#/definitions/constrains~1image.digest@21"
                 }
               },
               "required": [
@@ -14364,42 +14465,6 @@
               "properties": {
                 "kubectl": {
                   "$ref": "#/definitions/constrains~1image.digest@25"
-                }
-              },
-              "required": [
-                "kubectl"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
-            },
-            {
-              "properties": {
-                "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.digest@24"
-                }
-              },
-              "required": [
-                "kubectl"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.digest@21"
                 }
               },
               "required": [
@@ -14820,6 +14885,24 @@
             {
               "properties": {
                 "kubectl": {
+                  "$ref": "#/definitions/constrains~1image.tag@18"
+                }
+              },
+              "required": [
+                "kubectl"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "kubectl": {
                   "$ref": "#/definitions/constrains~1image.tag@19"
                 }
               },
@@ -14962,24 +15045,6 @@
             {
               "properties": {
                 "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.tag@22"
-                }
-              },
-              "required": [
-                "kubectl"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "kubectl": {
                   "$ref": "#/definitions/constrains~1image.tag@10"
                 }
               },
@@ -15032,18 +15097,18 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
-            },
-            {
               "properties": {
                 "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.tag@21"
+                  "$ref": "#/definitions/constrains~1image.tag@13"
                 }
               },
               "required": [
                 "kubectl"
               ],
               "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
             }
           ]
         },
@@ -15106,7 +15171,7 @@
             {
               "properties": {
                 "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.tag@18"
+                  "$ref": "#/definitions/constrains~1image.tag@22"
                 }
               },
               "required": [
@@ -15145,7 +15210,7 @@
             {
               "properties": {
                 "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.tag@16"
+                  "$ref": "#/definitions/constrains~1image.tag@21"
                 }
               },
               "required": [
@@ -15158,18 +15223,18 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
+            },
+            {
               "properties": {
                 "kubectl": {
-                  "$ref": "#/definitions/constrains~1image.tag@13"
+                  "$ref": "#/definitions/constrains~1image.tag@16"
                 }
               },
               "required": [
                 "kubectl"
               ],
               "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kubectl+kubectl.image+kubectl.image.repository+kubectl.image.repository=false+2more"
             }
           ]
         },
@@ -15299,25 +15364,6 @@
             },
             {
               "not": {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1kubectl.labels@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1kubectl.labels@2"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels=null"
-            },
-            {
-              "not": {
                 "anyOf": [
                   {
                     "$ref": "#/definitions/constrains~1kubectl.labels=null"
@@ -15354,6 +15400,25 @@
                   },
                   {
                     "$ref": "#/definitions/constrains~1kubectl.labels"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1kubectl.labels+kubectl.labels:helm-marker-free+kubectl.labels=null"
+            },
+            {
+              "not": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kubectl.labels@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kubectl.labels@2"
                   }
                 ]
               }
@@ -15448,10 +15513,10 @@
       "not": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
+            "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
           },
           {
-            "$ref": "#/definitions/constrains~1kubectl.image.digest:t"
+            "$ref": "#/definitions/constrains~1kubectl.image.tag:t"
           }
         ]
       }
@@ -15791,13 +15856,7 @@
       "not": {
         "properties": {
           "kubectl": {
-            "properties": {
-              "labels": {}
-            },
-            "required": [
-              "labels"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1labels@3"
           }
         },
         "required": [
@@ -15841,17 +15900,7 @@
     "constrains/kubectl.labels=null": {
       "properties": {
         "kubectl": {
-          "properties": {
-            "labels": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "labels"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1labels=null"
         }
       },
       "required": [
@@ -16007,12 +16056,34 @@
       ],
       "type": "object"
     },
+    "constrains/labels=null": {
+      "properties": {
+        "labels": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "labels"
+      ],
+      "type": "object"
+    },
     "constrains/labels@2": {
       "properties": {
         "labels": {
           "minProperties": 1,
           "type": "object"
         }
+      },
+      "required": [
+        "labels"
+      ],
+      "type": "object"
+    },
+    "constrains/labels@3": {
+      "properties": {
+        "labels": {}
       },
       "required": [
         "labels"
@@ -16202,6 +16273,11 @@
                           "allOf": [
                             {
                               "not": {
+                                "$ref": "#/definitions/constrains~1nameOverride@3"
+                              }
+                            },
+                            {
+                              "not": {
                                 "anyOf": [
                                   {
                                     "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -16210,11 +16286,6 @@
                                     "$ref": "#/definitions/constrains~1nameOverride=null"
                                   }
                                 ]
-                              }
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/definitions/constrains~1nameOverride@3"
                               }
                             },
                             {
@@ -16373,6 +16444,9 @@
       "type": "object"
     },
     "constrains/namespace:t": {
+      "$ref": "#/definitions/constrains~1namespace:t@2"
+    },
+    "constrains/namespace:t@2": {
       "properties": {
         "namespace": {
           "$ref": "#/definitions/t"
@@ -16383,7 +16457,7 @@
       ],
       "type": "object"
     },
-    "constrains/namespace:t@2": {
+    "constrains/namespace:t@3": {
       "properties": {
         "namespace": {
           "anyOf": [
@@ -16522,10 +16596,10 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+upgradeCRDs:t"
+                      "$ref": "#/definitions/constrains~1securityContext:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1securityContext:t"
+                      "$ref": "#/definitions/constrains~1podSecurityContext+podSecurityContext:t+podSecurityContext=null+upgradeCRDs:t"
                     }
                   ]
                 },
@@ -16863,7 +16937,7 @@
                 "serviceAccount": {
                   "properties": {
                     "server": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@6"
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@7"
                     }
                   },
                   "required": [
@@ -16889,7 +16963,7 @@
                 "serviceAccount": {
                   "properties": {
                     "server": {
-                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@7"
+                      "$ref": "#/definitions/constrains~1automountServiceAccountToken@6"
                     }
                   },
                   "required": [
@@ -17155,6 +17229,11 @@
     "constrains/serviceAccount+serviceAccount.server+serviceAccount.server.annotations+3more": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.server.annotations:t"
+          }
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1serviceAccount.server.annotations@2"
@@ -17166,11 +17245,6 @@
               "$ref": "#/definitions/constrains~1serviceAccount.server.annotations+2more"
             }
           ]
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.server.annotations:t"
-          }
         }
       ]
     },
@@ -17240,6 +17314,11 @@
     "constrains/serviceAccount+serviceAccount.server+serviceAccount.server.labels+3more": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/definitions/constrains~1serviceAccount.server.labels:t"
+          }
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1serviceAccount.server.labels@2"
@@ -17251,11 +17330,6 @@
               "$ref": "#/definitions/constrains~1serviceAccount.server.labels+serviceAccount.server.labels:helm-marker-free+1more"
             }
           ]
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1serviceAccount.server.labels:t"
-          }
         }
       ]
     },
@@ -17429,6 +17503,25 @@
               "$ref": "#/definitions/constrains~1serviceAccount.server.name@2"
             },
             {
+              "$ref": "#/definitions/constrains~1serviceAccount.server.name"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.server.name@12"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.server.name@15"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.server.name:t"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.server.name@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1serviceAccount.server.name@12"
             },
             {
@@ -17463,25 +17556,6 @@
                 "serviceAccount"
               ],
               "type": "object"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.server.name@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.server.name"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.server.name@12"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.server.name@15"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.server.name:t"
             }
           ]
         }
@@ -17522,28 +17596,6 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.name"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@11"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@15"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.server.name:t"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
                   "$ref": "#/definitions/constrains~1serviceAccount.server.name@11"
                 },
                 {
@@ -17557,6 +17609,28 @@
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.server+serviceAccount.server.name"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.name:t"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.name"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@11"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.server.name@15"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.server.name:t"
@@ -18007,13 +18081,7 @@
           "serviceAccount": {
             "properties": {
               "server": {
-                "properties": {
-                  "labels": {}
-                },
-                "required": [
-                  "labels"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1labels@3"
               }
             },
             "required": [
@@ -18084,17 +18152,7 @@
         "serviceAccount": {
           "properties": {
             "server": {
-              "properties": {
-                "labels": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "labels"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1labels=null"
             }
           },
           "required": [
@@ -19059,24 +19117,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken"
-            },
-            {
-              "properties": {
-                "upgradeCRDsJob": {
-                  "$ref": "#/definitions/constrains~1automountServiceAccountToken@6"
-                }
-              },
-              "required": [
-                "upgradeCRDsJob"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "upgradeCRDsJob": {
                   "$ref": "#/definitions/constrains~1automountServiceAccountToken@7"
@@ -19089,6 +19129,24 @@
             },
             {
               "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1upgradeCRDsJob+upgradeCRDsJob.automountServiceAccountToken"
+            },
+            {
+              "properties": {
+                "upgradeCRDsJob": {
+                  "$ref": "#/definitions/constrains~1automountServiceAccountToken@6"
+                }
+              },
+              "required": [
+                "upgradeCRDsJob"
+              ],
+              "type": "object"
             }
           ]
         }

@@ -368,6 +368,119 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1cluster.auth.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.auth.users:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.create:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "$ref": "#/definitions/constrains~1password+permissions+username"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "items": {
+                              "$ref": "#/definitions/constrains~1password+permissions+username"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "maximum": 0,
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "cluster": {
+                "additionalProperties": {},
+                "properties": {
+                  "auth": {
+                    "additionalProperties": {},
+                    "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                    "properties": {
+                      "users": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "array"
+                          }
+                        ],
+                        "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "properties": {
               "image": {
                 "$ref": "#/definitions/constrains~1pullPolicy@20"
@@ -1515,6 +1628,57 @@
             "properties": {
               "periodSeconds": {
                 "$ref": "#/definitions/values~1allOf~1not~1object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1cluster.auth.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1cluster.auth.users:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "cluster": {
+            "additionalProperties": {},
+            "properties": {
+              "auth": {
+                "additionalProperties": {},
+                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
+                "properties": {
+                  "users": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "$ref": "#/definitions/constrains~1password+permissions+username"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/definitions/constrains~1password+permissions+username"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
+                  }
+                }
               }
             }
           }
@@ -2891,69 +3055,6 @@
             "properties": {
               "initialDelaySeconds": {
                 "$ref": "#/definitions/values~1allOf~1not~1object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1cluster.auth.enabled:t@2"
-          },
-          {
-            "properties": {
-              "cluster": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "users": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "users"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "cluster"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1cluster.create:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "properties": {
-              "auth": {
-                "additionalProperties": {},
-                "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
-                "properties": {
-                  "users": {
-                    "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
               }
             }
           }
@@ -21678,6 +21779,33 @@
       ],
       "type": "object"
     },
+    "constrains/cluster.auth.users:t": {
+      "properties": {
+        "cluster": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "users": {
+                  "$ref": "#/definitions/t"
+                }
+              },
+              "required": [
+                "users"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "auth"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "cluster"
+      ],
+      "type": "object"
+    },
     "constrains/cluster.configReload+cluster.configReload.enabled": {
       "anyOf": [
         {
@@ -25811,7 +25939,7 @@
         {
           "properties": {
             "livenessProbe": {
-              "$ref": "#/definitions/constrains~1periodSeconds@13"
+              "$ref": "#/definitions/constrains~1periodSeconds@14"
             }
           },
           "required": [
@@ -25988,7 +26116,7 @@
         {
           "properties": {
             "livenessProbe": {
-              "$ref": "#/definitions/constrains~1timeoutSeconds@13"
+              "$ref": "#/definitions/constrains~1timeoutSeconds@14"
             }
           },
           "required": [
@@ -26151,7 +26279,7 @@
         {
           "properties": {
             "livenessProbe": {
-              "$ref": "#/definitions/constrains~1periodSeconds@14"
+              "$ref": "#/definitions/constrains~1periodSeconds@13"
             }
           },
           "required": [
@@ -26187,7 +26315,7 @@
         {
           "properties": {
             "livenessProbe": {
-              "$ref": "#/definitions/constrains~1timeoutSeconds@14"
+              "$ref": "#/definitions/constrains~1timeoutSeconds@13"
             }
           },
           "required": [
@@ -26566,6 +26694,38 @@
       ],
       "type": "object"
     },
+    "constrains/password+permissions+username": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "password": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "username": {}
+              }
+            },
+            {
+              "additionalProperties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "permissions": {}
+              }
+            }
+          ]
+        }
+      ]
+    },
     "constrains/periodSeconds": {
       "properties": {
         "periodSeconds": {
@@ -26652,7 +26812,7 @@
     "constrains/periodSeconds@13": {
       "properties": {
         "periodSeconds": {
-          "$ref": "#/definitions/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more~1string;pattern-x20@3"
+          "$ref": "#/definitions/constrains~1antiAffinity=hard+antiAffinity=soft+cluster+cluster.namespace+89more~1keywords~1maxItems+maxProperties"
         }
       },
       "required": [
@@ -26663,7 +26823,7 @@
     "constrains/periodSeconds@14": {
       "properties": {
         "periodSeconds": {
-          "$ref": "#/definitions/constrains~1antiAffinity=hard+antiAffinity=soft+cluster+cluster.namespace+89more~1keywords~1maxItems+maxProperties"
+          "$ref": "#/definitions/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more~1string;pattern-x20@3"
         }
       },
       "required": [
@@ -27559,7 +27719,7 @@
         {
           "properties": {
             "readinessProbe": {
-              "$ref": "#/definitions/constrains~1periodSeconds@13"
+              "$ref": "#/definitions/constrains~1periodSeconds@14"
             }
           },
           "required": [
@@ -27745,7 +27905,7 @@
         {
           "properties": {
             "readinessProbe": {
-              "$ref": "#/definitions/constrains~1timeoutSeconds@13"
+              "$ref": "#/definitions/constrains~1timeoutSeconds@14"
             }
           },
           "required": [
@@ -27878,7 +28038,7 @@
         {
           "properties": {
             "readinessProbe": {
-              "$ref": "#/definitions/constrains~1periodSeconds@14"
+              "$ref": "#/definitions/constrains~1periodSeconds@13"
             }
           },
           "required": [
@@ -27911,7 +28071,7 @@
         {
           "properties": {
             "readinessProbe": {
-              "$ref": "#/definitions/constrains~1timeoutSeconds@14"
+              "$ref": "#/definitions/constrains~1timeoutSeconds@13"
             }
           },
           "required": [
@@ -30163,7 +30323,7 @@
     "constrains/timeoutSeconds@13": {
       "properties": {
         "timeoutSeconds": {
-          "$ref": "#/definitions/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more~1string;pattern-x20@3"
+          "$ref": "#/definitions/constrains~1antiAffinity=hard+antiAffinity=soft+cluster+cluster.namespace+89more~1keywords~1maxItems+maxProperties"
         }
       },
       "required": [
@@ -30174,7 +30334,7 @@
     "constrains/timeoutSeconds@14": {
       "properties": {
         "timeoutSeconds": {
-          "$ref": "#/definitions/constrains~1antiAffinity=hard+antiAffinity=soft+cluster+cluster.namespace+89more~1keywords~1maxItems+maxProperties"
+          "$ref": "#/definitions/constrains~1cluster+cluster.auth+cluster.auth.enableServiceAccounts+4more~1string;pattern-x20@3"
         }
       },
       "required": [
@@ -31451,6 +31611,7 @@
               "description": "This is where you enter a username/password for 1 user"
             },
             "users": {
+              "additionalProperties": {},
               "description": "This is a where you can specify 2 or more users\n- username: \"another-user-1\"\npassword: \"another-password-1\"\n- username: \"another-user-2\"\npassword: \"another-password-2\"\npermissions:\npublish: [\"hello.*\"]\nsubscribe: [\"hello.world\"]"
             }
           }
