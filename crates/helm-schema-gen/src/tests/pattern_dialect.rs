@@ -2,16 +2,16 @@ use color_eyre::eyre::{self, OptionExt as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
-use crate::path_resolver::ecma_compatible_pattern;
+use helm_schema_core::re2_to_ecma_pattern;
 
 #[test]
 fn leading_multiline_start_anchor_has_an_exact_ecma_form() -> eyre::Result<()> {
     let go_pattern = r"(?m)^name\s*=\s*value";
-    let ecma_pattern = ecma_compatible_pattern(go_pattern).ok_or_eyre("pattern must lower")?;
+    let ecma_pattern = re2_to_ecma_pattern(go_pattern).ok_or_eyre("pattern must lower")?;
 
     sim_assert_eq!(
         have: &ecma_pattern,
-        want: r"(?:^|\n)name\s*=\s*value"
+        want: r"(?:^|\n)name[\t\n\f\r ]*=[\t\n\f\r ]*value"
     );
 
     let go = regex::Regex::new(go_pattern)?;
@@ -42,7 +42,7 @@ fn leading_multiline_start_anchor_has_an_exact_ecma_form() -> eyre::Result<()> {
 #[test]
 fn multiline_without_anchors_drops_the_semantically_idle_flag() {
     sim_assert_eq!(
-        have: ecma_compatible_pattern("(?m)literal"),
+        have: re2_to_ecma_pattern("(?m)literal"),
         want: Some("literal".to_string())
     );
 }
@@ -50,21 +50,21 @@ fn multiline_without_anchors_drops_the_semantically_idle_flag() {
 #[test]
 fn later_multiline_anchors_abstain() {
     sim_assert_eq!(
-        have: ecma_compatible_pattern("(?m)prefix$"),
+        have: re2_to_ecma_pattern("(?m)prefix$"),
         want: None
     );
     sim_assert_eq!(
-        have: ecma_compatible_pattern("(?m)^first$"),
+        have: re2_to_ecma_pattern("(?m)^first$"),
         want: None
     );
 }
 
 /// A chart's `regexMatch` pattern gets the same `u`-flag escape rewrite as a
-/// provider pattern, after the RE2 literal braces gain their ECMA escapes.
+/// provider pattern.
 #[test]
 fn chart_patterns_drop_unicode_mode_rejected_escapes() {
     sim_assert_eq!(
-        have: ecma_compatible_pattern(r"^\ {x}\-\d+$"),
-        want: Some(r"^ \{x\}-\d+$".to_string()),
+        have: re2_to_ecma_pattern(r"^\ \{x\}\-\d+$"),
+        want: Some(r"^ \{x\}-[0-9]+$".to_string()),
     );
 }

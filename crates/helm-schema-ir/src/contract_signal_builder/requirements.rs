@@ -1,3 +1,5 @@
+use helm_schema_core::{PredicateKind, RequirementPattern};
+
 use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ContractPathAccumulator, ContractRequirementImplication,
     ContractRequirementTarget, FailValueRequirement, Guard, GuardDnf, GuardValue,
@@ -162,6 +164,7 @@ pub(super) fn record_fail_conjunction(
             .map(terminal_clause_guard)
             .collect::<Option<Vec<_>>>()
     {
+        record_required_patterns(paths, &Predicate::all(conjunction.clone()));
         ConditionalGuard::canonicalize_conjunction(&mut clause);
         if !terminal_clauses.contains(&clause) {
             terminal_clauses.push(clause);
@@ -430,6 +433,81 @@ pub(super) fn record_fail_conjunction(
     }
 }
 
+fn record_required_patterns(
+    paths: &mut BTreeMap<ValuesPath, ContractPathAccumulator>,
+    failure: &Predicate,
+) {
+    for predicate in entailed_patterns(failure, false) {
+        let PredicateKind::Guard(Guard::MatchesPattern {
+            path,
+            pattern: _,
+            templated: _,
+        }) = predicate.kind()
+        else {
+            continue;
+        };
+        let Some(requirements) = requirements_from_holding(predicate, &path.encode()) else {
+            continue;
+        };
+        let implication = ContractRequirementImplication::new(
+            Vec::new(),
+            ContractRequirementTarget::Value,
+            requirements,
+        );
+        let acc = path_accumulator(paths, path);
+        acc.referenced = true;
+        if !acc.requirement_implications.contains(&implication) {
+            acc.requirement_implications.push(implication);
+        }
+    }
+}
+
+fn entailed_patterns(predicate: &Predicate, holds: bool) -> BTreeSet<&Predicate> {
+    match (predicate.kind(), holds) {
+        (PredicateKind::Not(inner), _) => entailed_patterns(inner, !holds),
+        // Every operand must have this outcome.
+        (PredicateKind::And(items), true) | (PredicateKind::Or(items), false) => items
+            .iter()
+            .flat_map(|item| entailed_patterns(item, holds))
+            .collect(),
+        // Any operand with this outcome suffices, so every alternative must prove the pattern.
+        (PredicateKind::And(items), false) | (PredicateKind::Or(items), true) => {
+            let mut alternatives = items.iter();
+            let mut common = alternatives
+                .next()
+                .map_or_else(BTreeSet::new, |first| entailed_patterns(first, holds));
+            for alternative in alternatives {
+                if common.is_empty() {
+                    break;
+                }
+                let patterns = entailed_patterns(alternative, holds);
+                common.retain(|pattern| patterns.contains(pattern));
+            }
+            common
+        }
+        (
+            PredicateKind::Guard(Guard::MatchesPattern {
+                path,
+                pattern: _,
+                templated: _,
+            }),
+            true,
+        ) if path.segments().next().is_some() => BTreeSet::from([predicate]),
+        (
+            PredicateKind::True
+            | PredicateKind::False
+            | PredicateKind::Approximate {
+                marker: _,
+                paths: _,
+                role: _,
+                sound_subset: _,
+            }
+            | PredicateKind::Guard(_),
+            _,
+        ) => BTreeSet::new(),
+    }
+}
+
 fn is_document_terminal_predicate(predicate: &Predicate) -> bool {
     match predicate.kind() {
         helm_schema_core::PredicateKind::True | helm_schema_core::PredicateKind::False => true,
@@ -612,12 +690,12 @@ pub(super) fn record_range_key_matches_requirement(
     }
     let requirement = if *negated {
         FailValueRequirement::MatchesPattern {
-            pattern: (*pattern).to_string(),
+            pattern: RequirementPattern::Go((*pattern).to_string()),
             templated: false,
         }
     } else {
         FailValueRequirement::NotMatchesPattern {
-            pattern: (*pattern).to_string(),
+            pattern: RequirementPattern::Go((*pattern).to_string()),
         }
     };
     let implication = ContractRequirementImplication::new(
@@ -1423,7 +1501,7 @@ pub(super) fn requirements_from_holding(
             pattern,
             templated,
         }) if path == &scope_path => Some(vec![FailValueRequirement::MatchesPattern {
-            pattern: pattern.clone(),
+            pattern: RequirementPattern::Go(pattern.clone()),
             templated: *templated,
         }]),
         // The tested value's own PRESENCE holding (the `hasKey` conjunct of

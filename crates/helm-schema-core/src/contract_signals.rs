@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Serialize;
@@ -1107,6 +1108,26 @@ pub enum ContractRequirementTarget {
     Keys,
 }
 
+/// A regular expression carried by a contract requirement.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum RequirementPattern {
+    /// A pattern with the semantics of Go's regexp engine.
+    Go(String),
+    /// A pattern already expressed in the schema's ECMA-262 dialect.
+    Ecma(String),
+}
+
+impl RequirementPattern {
+    /// Returns the schema spelling. Unknown Go syntax has no proved spelling.
+    #[must_use]
+    pub fn ecma_pattern(&self) -> Option<Cow<'_, str>> {
+        match self {
+            Self::Go(pattern) => crate::re2_to_ecma_pattern(pattern).map(Cow::Owned),
+            Self::Ecma(pattern) => Some(Cow::Borrowed(pattern)),
+        }
+    }
+}
+
 /// One requirement a `fail` branch imposes on an affected value.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FailValueRequirement {
@@ -1210,7 +1231,7 @@ pub enum FailValueRequirement {
     /// along).
     MatchesPattern {
         /// Regular expression the string must match.
-        pattern: String,
+        pattern: RequirementPattern,
         /// Whether the pattern originated from a templated expression.
         templated: bool,
     },
@@ -1219,7 +1240,7 @@ pub enum FailValueRequirement {
     /// type-asserts a string subject (traefik's uppercase key gate).
     NotMatchesPattern {
         /// Regular expression the string must not match.
-        pattern: String,
+        pattern: RequirementPattern,
     },
     /// The value must be a string whose length lies inside the window — a
     /// provider key slot's `minLength`/`maxLength` projected onto a ranged

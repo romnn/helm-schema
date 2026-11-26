@@ -33,7 +33,7 @@ pub use contract_signals::{
     ConditionalPathOverlay, ContractPathSchemaEvidence, ContractRequirednessEvidence,
     ContractRequirementImplication, ContractRequirementTarget, ContractSchemaSignals,
     ContractValuePathFacts, FailValueRequirement, GuardedValuesDefaultSource, MetadataFieldKind,
-    RangeDomain, ResourceObservation, ValuesDefaultSource,
+    RangeDomain, RequirementPattern, ResourceObservation, ValuesDefaultSource,
 };
 pub use contract_use::{
     ContractUse, MergeLayer, MergeLayerTransform, MergeLayersUse, SplitSegmentUse,
@@ -46,7 +46,8 @@ pub use output_path::{
     sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };
 pub use pattern_dialect::{
-    escape_regex_literal, normalize_schema_pattern_dialects, unicode_mode_escaped_pattern,
+    escape_regex_literal, normalize_schema_pattern_dialects, re2_to_ecma_pattern,
+    unicode_mode_escaped_pattern,
 };
 pub use predicate::{ApproximationRole, Conjunction, Predicate, PredicateKind};
 pub use predicate_bdd::{

@@ -829,7 +829,10 @@ fn transfer_regex_split(input: TransferInput<'_>, state: &State) -> Value {
     let Some(GuardValue::String(pattern)) = pattern.constant().filter(|_| *limit < 0) else {
         return Value::influenced(influences);
     };
-    let Ok(parsed) = regex_syntax::Parser::new().parse(pattern) else {
+    let Some(pattern) = helm_schema_core::re2_to_ecma_pattern(pattern) else {
+        return Value::influenced(influences);
+    };
+    let Ok(parsed) = regex_syntax::Parser::new().parse(&pattern) else {
         return Value::influenced(influences);
     };
     let regex_syntax::hir::HirKind::Literal(literal) = parsed.kind() else {
@@ -838,8 +841,7 @@ fn transfer_regex_split(input: TransferInput<'_>, state: &State) -> Value {
     let Ok(separator) = std::str::from_utf8(&literal.0) else {
         return Value::influenced(influences);
     };
-    // Only literal spellings shared by Go's regexp parser and regex-syntax are proved here.
-    if helm_schema_core::escape_regex_literal(separator) != *pattern {
+    if helm_schema_core::escape_regex_literal(separator) != pattern {
         return Value::influenced(influences);
     }
     Value::leaf(Datum::Unknown(super::UnknownValue {
@@ -1025,7 +1027,12 @@ fn transfer_string_match(input: TransferInput<'_>, state: &mut State) -> Value {
     let pattern = match input.function {
         "hasPrefix" => format!("^{}", helm_schema_core::escape_regex_literal(operand)),
         "hasSuffix" => format!("{}$", helm_schema_core::escape_regex_literal(operand)),
-        _ => operand.clone(),
+        _ => {
+            let Some(pattern) = helm_schema_core::re2_to_ecma_pattern(operand) else {
+                return transfer_fallback(input, state);
+            };
+            pattern
+        }
     };
     string_language_truth(state, subject, pattern, input.influences.clone())
         .unwrap_or_else(|| transfer_fallback(input, state))
@@ -1039,7 +1046,6 @@ pub(super) fn string_language_truth(
     pattern: String,
     influences: BTreeSet<helm_schema_core::ValuesPath>,
 ) -> Option<Value> {
-    // A pattern this dialect cannot parse could disagree with Go's RE2 verdict.
     regex::Regex::new(&pattern).ok()?;
     let super::relationship::LexicalPreimage {
         matched,

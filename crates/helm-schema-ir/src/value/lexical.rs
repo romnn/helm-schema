@@ -98,8 +98,9 @@ pub(super) fn text_preimage(transform: &TextTransform, output: &ValuePattern) ->
             pattern,
             replacement,
         } => {
+            let pattern = helm_schema_core::re2_to_ecma_pattern(pattern)?;
             if replacement.is_empty()
-                && let Some(token) = erased_line_tail(pattern)
+                && let Some(token) = erased_line_tail(&pattern)
             {
                 // Go erases from the first token after the LAST newline (`"a#b\nc#d"` keeps
                 // `"a#b\nc"`), while the cut shape takes the first token overall. The two agree on
@@ -110,9 +111,7 @@ pub(super) fn text_preimage(transform: &TextTransform, output: &ValuePattern) ->
                     ..cut_preimage(&token, r"[^\n]*$", Some(single_line), &output)
                 });
             }
-            // An unparsable pattern keeps no preimage: Go and the schema dialect could disagree.
-            regex_syntax::Parser::new().parse(pattern).ok()?;
-            Some(Lexical::subset(unchanged(searched(pattern.clone()))))
+            Some(Lexical::subset(unchanged(searched(pattern))))
         }
         TextTransform::Replace { from: _, to: _ }
         | TextTransform::Truncate(_)

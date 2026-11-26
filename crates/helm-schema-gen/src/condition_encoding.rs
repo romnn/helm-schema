@@ -1118,12 +1118,11 @@ fn build_single_condition_fragment(
             )
         }
         ConditionalGuard::MatchesPattern { path, pattern } => {
-            let ecma_pattern = crate::path_resolver::ecma_compatible_pattern(pattern)?;
+            let ecma_pattern = helm_schema_core::re2_to_ecma_pattern(pattern)?;
+            let regex = regex::Regex::new(&ecma_pattern).ok()?;
             let absent_matches = yaml_value_at_path(runtime_defaults_doc, path)
                 .and_then(YamlValue::as_str)
-                .is_some_and(|value| {
-                    regex::Regex::new(pattern).is_ok_and(|regex| regex.is_match(value))
-                });
+                .is_some_and(|value| regex.is_match(value));
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
@@ -1160,8 +1159,8 @@ fn build_single_condition_fragment(
             {
                 return None;
             }
-            let regular = regex::Regex::new(pattern).ok()?;
-            let pattern = crate::path_resolver::ecma_compatible_pattern(pattern)?;
+            let pattern = helm_schema_core::re2_to_ecma_pattern(pattern)?;
+            let regular = regex::Regex::new(&pattern).ok()?;
             let member = serde_json::json!({ "type": "string", "pattern": pattern });
             let leaf = match (domain, quantifier) {
                 (CollectionDomain::ObjectValues, CollectionQuantifier::All) => {
@@ -1942,7 +1941,7 @@ fn value_pattern_schema(pattern: &ValuePattern) -> Option<Value> {
         }
         ValuePattern::StringMap => crate::path_resolver::serialized_string_map_schema(),
         ValuePattern::String { pattern } => {
-            serde_json::json!({"type": "string", "pattern": crate::path_resolver::ecma_compatible_pattern(pattern)?})
+            serde_json::json!({"type": "string", "pattern": helm_schema_core::re2_to_ecma_pattern(pattern)?})
         }
         ValuePattern::Array { prefix, items } => {
             let prefix = prefix
@@ -2236,7 +2235,7 @@ fn evaluate_known_guard_on_values(
         }
         ConditionalGuard::MatchesPattern { path, pattern } => {
             let value = yaml_value_at_path(values_yaml_doc, path)?.as_str()?;
-            regex::Regex::new(pattern)
+            regex::Regex::new(&helm_schema_core::re2_to_ecma_pattern(pattern)?)
                 .ok()
                 .map(|regex| regex.is_match(value))
         }
@@ -2252,7 +2251,7 @@ fn evaluate_known_guard_on_values(
             yaml_value_at_path(values_yaml_doc, path),
             *domain,
             *quantifier,
-            &regex::Regex::new(pattern).ok()?,
+            &regex::Regex::new(&helm_schema_core::re2_to_ecma_pattern(pattern)?).ok()?,
         ),
         ConditionalGuard::ContainsMemberEquals {
             path,

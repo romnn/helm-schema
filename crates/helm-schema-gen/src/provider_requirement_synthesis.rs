@@ -385,7 +385,9 @@ pub(crate) fn synthesized_split_segment_implications(
                         path: value_path.clone(),
                     }],
                     ContractRequirementTarget::Value,
-                    vec![FailValueRequirement::NotMatchesPattern { pattern }],
+                    vec![FailValueRequirement::NotMatchesPattern {
+                        pattern: helm_schema_core::RequirementPattern::Ecma(pattern),
+                    }],
                 ),
             );
         }
@@ -439,7 +441,7 @@ pub(crate) fn synthesized_range_key_implications(
             // union-shaped fragments keep the plain string typing.
             if let Some(pattern) = fragment.schema().get("pattern").and_then(Value::as_str) {
                 requirements.push(FailValueRequirement::MatchesPattern {
-                    pattern: pattern.to_string(),
+                    pattern: helm_schema_core::RequirementPattern::Ecma(pattern.to_owned()),
                     templated: false,
                 });
             }

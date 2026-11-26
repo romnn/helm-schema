@@ -1,6 +1,6 @@
 use super::{
-    SchemaNode, Value, ecma_compatible_pattern, empty_schema, guard_value_to_json, is_empty_schema,
-    merge_schema_list, optional_leaf_object_path_schema, required_object_path_schema, type_schema,
+    SchemaNode, Value, empty_schema, guard_value_to_json, is_empty_schema, merge_schema_list,
+    optional_leaf_object_path_schema, required_object_path_schema, type_schema,
 };
 use crate::condition_encoding::{AbsenceDefaults, ConditionFragmentCache, ConditionPolarity};
 
@@ -201,12 +201,12 @@ pub(crate) fn fail_requirement_schema<'a>(
                             pattern,
                             templated: false,
                         } => {
-                            if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                            if let Some(pattern) = pattern.ecma_pattern() {
                                 key_schemas.push(serde_json::json!({ "pattern": pattern }));
                             }
                         }
                         helm_schema_core::FailValueRequirement::NotMatchesPattern { pattern } => {
-                            if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                            if let Some(pattern) = pattern.ecma_pattern() {
                                 key_schemas
                                     .push(serde_json::json!({ "not": { "pattern": pattern } }));
                             }
@@ -368,7 +368,7 @@ fn fail_value_requirement_schema(
                 // JSON Schema patterns are ECMA 262; abstaining on an
                 // untranslatable Go/RE2 pattern only widens the arm back
                 // to its other requirements.
-                if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                if let Some(pattern) = pattern.ecma_pattern() {
                     let matches = serde_json::json!({ "type": "string", "pattern": pattern });
                     if *templated {
                         // The pattern constrains `tpl`'s OUTPUT: a raw value
@@ -389,7 +389,7 @@ fn fail_value_requirement_schema(
             FailValueRequirement::NotMatchesPattern { pattern } => {
                 // Abstaining on an untranslatable pattern only widens the
                 // arm back to its other requirements, as for MatchesPattern.
-                if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                if let Some(pattern) = pattern.ecma_pattern() {
                     parts.push(serde_json::json!({
                         "type": "string",
                         "not": { "pattern": pattern },

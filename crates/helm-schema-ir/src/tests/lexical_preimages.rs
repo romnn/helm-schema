@@ -89,6 +89,10 @@ fn transforms() -> Vec<TextTransform> {
             pattern: "@.*$".to_owned(),
             replacement: String::new(),
         },
+        TextTransform::RegexReplace {
+            pattern: r"@[^\n]*$".to_owned(),
+            replacement: String::new(),
+        },
     ]
 }
 

@@ -6,6 +6,84 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+#[test]
+fn provider_key_projection_preserves_ecma_whitespace() -> eyre::Result<()> {
+    #[derive(Debug)]
+    struct WhitespaceProvider;
+
+    impl ResourceSchemaOracle for WhitespaceProvider {
+        fn schema_fragment_for_use(
+            &self,
+            _use: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            Some(ProviderSchemaFragment::new(serde_json::json!({
+                "type": "string",
+                "pattern": r"^\s+$",
+            })))
+        }
+    }
+
+    let source = helm_schema_core::ValuesPath::parse("labels");
+    let use_ = ProviderSchemaUse {
+        value_path: source.clone(),
+        path: YamlPath(vec!["spec".to_owned(), "name".to_owned()]),
+        kind: ValueKind::Scalar,
+        resource: ResourceRef::concrete("example.io/v1".to_owned(), "Example".to_owned()),
+        stringified: true,
+        plain_scalar_placement: helm_schema_core::PlainScalarPlacement::Unknown,
+        text_preimage: None,
+        strip_marker: false,
+        is_self_range_collection: false,
+        source_null_tolerant: false,
+        template_supplied_member_keys: BTreeSet::new(),
+        split_segment: None,
+        merge_layers: None,
+        range_key: true,
+        nil_omitting: false,
+        omitted_members: BTreeMap::new(),
+        outer_guards: Vec::new(),
+    };
+    let signals = ContractSchemaSignals::new(
+        BTreeMap::from([(
+            source.clone(),
+            helm_schema_core::ContractPathSchemaEvidence {
+                is_referenced_value_path: true,
+                provider_schema_uses: vec![use_],
+                ..helm_schema_core::ContractPathSchemaEvidence::default()
+            },
+        )]),
+        Vec::new(),
+    );
+    let resolutions = crate::provider_resolution::ProviderSchemaResolutions::resolve(
+        &signals,
+        &WhitespaceProvider,
+    );
+    let implications = crate::provider_requirement_synthesis::synthesized_range_key_implications(
+        &signals,
+        &resolutions,
+    );
+    let (schema, _) = crate::path_resolver::fail_requirement_schema(
+        implications
+            .get(&source)
+            .ok_or_eyre("projected key requirement")?,
+    );
+    for (key, accepts) in [("\u{00a0}", true), (" ", true), ("x", false)] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &serde_json::json!({ (key): "value" })),
+            want: accepts,
+            "provider pattern on key {key:?}"
+        );
+    }
+    sim_assert_eq!(have: schema, want: serde_json::json!({
+        "anyOf": [
+            { "type": "object", "propertyNames": { "pattern": r"^\s+$" } },
+            { "type": "array", "maxItems": 0 },
+            { "type": "null" }
+        ]
+    }));
+    Ok(())
+}
+
 /// Proves use order cannot choose which provider preimage survives memoization.
 #[test]
 fn provider_resolution_distinguishes_stringified_scalar_uses() {

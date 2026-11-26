@@ -26,6 +26,8 @@ pub enum ValuePattern {
     /// A string matching the regular expression.
     String {
         /// Regular expression tested against the string.
+        ///
+        /// The interpreter lowers chart-authored Go regexes before building this pattern.
         pattern: String,
     },
     /// An array containing every required prefix item in order.

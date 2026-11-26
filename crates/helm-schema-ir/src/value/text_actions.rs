@@ -486,7 +486,7 @@ impl Query<'_> {
                     let pattern = if *length > 0 {
                         format!(r"^[\x00-\x7f]{{0,{width}}}\{{\{{")
                     } else {
-                        format!(r"\{{\{{[\x00-\x7f]{{0,{width}}}(?![\s\S])")
+                        format!(r"\{{\{{[\x00-\x7f]{{0,{width}}}$")
                     };
                     let when_true = Predicate::from(Guard::MatchesPattern {
                         path: path.clone(),
@@ -1077,8 +1077,8 @@ fn input_shape(path: &helm_schema_core::ValuesPath) -> TextShape {
         opener: matches(ACTION_OPENER_PATTERN),
         brace: matches(r"\{"),
         starts: matches(r"^\{"),
-        ends: matches(r"\{(?![\s\S])"),
-        empty: matches(r"^(?![\s\S])"),
+        ends: matches(r"\{$"),
+        empty: matches(r"^$"),
         prefix: None,
     }
 }

@@ -1431,7 +1431,7 @@ fn provider_controls() -> Vec<SemanticControl> {
 
 fn conditional_controls() -> Vec<SemanticControl> {
     use ContractVerdict::{Accept, Reject};
-    use ControlCategory::{PositiveControl, RemovedTooth, RetainedTooth};
+    use ControlCategory::{PositiveControl, RetainedTooth};
     use Transport::ValuesFileJson;
 
     vec![
@@ -1446,12 +1446,21 @@ fn conditional_controls() -> Vec<SemanticControl> {
         ),
         control(
             "version pattern near miss",
-            RemovedTooth,
+            RetainedTooth,
             sparse_override(&["version"], json!("v1")),
             ValuesFileJson,
             Reject("the chart rejects a non-matching version"),
             false,
             "the unguarded pattern is mandatory and survives every profile",
+        ),
+        control(
+            "matching version",
+            PositiveControl,
+            sparse_override(&["version"], json!("v1.0")),
+            ValuesFileJson,
+            Accept,
+            true,
+            "both profiles accept a matching version",
         ),
         control(
             "nil-safe object host deletion",

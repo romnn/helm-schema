@@ -1,4 +1,4 @@
-use color_eyre::eyre::{self, WrapErr as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use test_util::prelude::sim_assert_eq;
 
 use super::{
@@ -387,4 +387,162 @@ fn provider_patterns_fold_then_drop_escapes() {
             "patternProperties": { "^x%$": {} },
         }),
     );
+}
+
+#[test]
+fn go_patterns_keep_their_language_in_unicode_ecma() -> eyre::Result<()> {
+    for (source, samples) in [
+        (
+            r"^a{01}[bc]$",
+            [
+                ("a{01}b", true),
+                ("a{01}c", true),
+                ("ab", false),
+                ("aab", false),
+            ],
+        ),
+        (
+            r"^a{ 2 }[bc]$",
+            [
+                ("a{ 2 }b", true),
+                ("a{ 2 }c", true),
+                ("ab", false),
+                ("aab", false),
+            ],
+        ),
+        (
+            r"^a{2,3}[bc]$",
+            [
+                ("aab", true),
+                ("aaac", true),
+                ("ab", false),
+                ("a{2,3}b", false),
+            ],
+        ),
+        (
+            r"^a{2,03}[bc]$",
+            [
+                ("a{2,03}b", true),
+                ("a{2,03}c", true),
+                ("aab", false),
+                ("aaab", false),
+            ],
+        ),
+        (
+            r"^a{2,}[bc]$",
+            [
+                ("aab", true),
+                ("aaaac", true),
+                ("ab", false),
+                ("a{2,}b", false),
+            ],
+        ),
+        (
+            r"^[{}]\x{61}\{01\}$",
+            [
+                ("{a{01}", true),
+                ("}a{01}", true),
+                ("ab", false),
+                ("a{01}", false),
+            ],
+        ),
+        (
+            r"^v\x{61}+$",
+            [("vaa", true), ("vb", false), ("va\n", false), ("v", false)],
+        ),
+        (
+            r"^[\s\S]+$",
+            [("\n", true), ("\r", true), ("😀", true), ("", false)],
+        ),
+        (
+            r"^[\D]+$",
+            [("1", false), ("A", true), ("😀", true), ("١", true)],
+        ),
+        (
+            r"^[\W]+$",
+            [("a", false), (" ", true), ("😀", true), ("_", false)],
+        ),
+        (
+            r"^[\S]+$",
+            [
+                (" ", false),
+                ("\t", false),
+                ("😀", true),
+                ("\u{00A0}", true),
+            ],
+        ),
+        (
+            r"^\s\d\w$",
+            [
+                (" 1a", true),
+                ("\u{00A0}1a", false),
+                ("\u{000B}1a", false),
+                ("\r1_", true),
+            ],
+        ),
+    ] {
+        assert_go_pattern_samples(source, &samples)?;
+    }
+    Ok(())
+}
+
+#[test]
+fn go_patterns_preserve_safe_classes_at_the_surrogate_boundary() -> eyre::Result<()> {
+    assert_go_pattern_samples(
+        r"^[-.+]+$",
+        &[("-", true), (".+", true), ("5", false), ("😀", false)],
+    )?;
+    assert_go_pattern_samples(
+        r"^[a-z-]+$",
+        &[("a-z", true), ("-", true), ("0", false), ("😀", false)],
+    )?;
+    assert_go_pattern_samples(
+        r"^\D*\W+$",
+        &[("😀", true), ("a😀", true), ("ab", false), ("", false)],
+    )?;
+    assert_go_pattern_samples(
+        r"^[\x{D7FE}-\x{D7FF}]+$",
+        &[
+            ("\u{D7FE}", true),
+            ("\u{D7FF}", true),
+            ("\u{E000}", false),
+            ("😀", false),
+        ],
+    )
+}
+
+fn assert_go_pattern_samples(source: &str, samples: &[(&str, bool)]) -> eyre::Result<()> {
+    let lowered = super::re2_to_ecma_pattern(source).ok_or_eyre("pattern must lower")?;
+    let ecma = regress::Regex::with_flags(&lowered, "u")
+        .map_err(|err| eyre::eyre!("compile {lowered:?}: {err}"))?;
+    for &(sample, matches) in samples {
+        sim_assert_eq!(have: ecma.find(sample).is_some(), want: matches, "{source:?} against {sample:?}");
+    }
+    Ok(())
+}
+
+#[test]
+fn go_patterns_abstain_on_unproven_syntax() {
+    for source in [
+        r"^[--a]+$",
+        r"^v.$",
+        r"^[^a]$",
+        r"^[\D]{1,2}$",
+        r"^\W$",
+        r"^[\S_]$",
+        r"^[\s\S]$",
+        r"^[😀]$",
+        r"^[^\x{D7FF}-\x{E000}]+$",
+        r"^[\x{D7FF}-\x{E000}]+$",
+        r"^[^a]+[^b]+$",
+        r"^(?:[^a]+){2}$",
+        r"^(?:a{501}){2}$",
+        r"(?i)abc",
+        r"(?s).",
+        r"\p{Greek}",
+        r"[[:alnum:]]",
+        r"(?m)^name$",
+    ] {
+        sim_assert_eq!(have: super::re2_to_ecma_pattern(source), want: None, "{source:?}");
+    }
 }

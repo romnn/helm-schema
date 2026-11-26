@@ -2,6 +2,10 @@ use helm_schema_json_schema_walk::visit_subschemas_mut;
 use regex_syntax::ast::{self, Ast, ClassSetItem, LiteralKind};
 use serde_json::Value;
 
+mod re2;
+
+pub use re2::re2_to_ecma_pattern;
+
 /// Quotes literal text for every regular-expression dialect emitted by helm-schema.
 #[must_use]
 pub fn escape_regex_literal(value: &str) -> String {
@@ -103,6 +107,10 @@ pub fn unicode_mode_escaped_pattern(pattern: &str) -> Option<String> {
     if respellings.is_empty() {
         return None;
     }
+    apply_respellings(pattern, &mut respellings)
+}
+
+fn apply_respellings(pattern: &str, respellings: &mut [Respelling]) -> Option<String> {
     respellings.sort_unstable_by_key(|respelling| respelling.span.start.offset);
     let mut rewritten = String::with_capacity(pattern.len());
     let mut copied = 0;
@@ -149,23 +157,7 @@ impl PortableEscapes {
         if self.inverse_budget.is_some() && !portable_literal(literal, in_class) {
             return Err(PatternAdmission::Unsupported);
         }
-        let escaped = matches!(literal.kind, LiteralKind::Superfluous | LiteralKind::Meta);
-        // ECMA-262's `u` flag admits only these identity escapes, plus `-` in a class.
-        let unicode_mode_escapable =
-            r"^$\.*+?()[]{}|/".contains(literal.c) || (in_class && literal.c == '-');
-        let text = if matches!(
-            literal.kind,
-            LiteralKind::HexFixed(ast::HexLiteralKind::UnicodeShort)
-        ) && literal.c <= '\u{FF}'
-        {
-            format!("\\x{:02X}", u32::from(literal.c))
-        } else if escaped && !unicode_mode_escapable {
-            if in_class && matches!(literal.c, '&' | '~') {
-                format!("\\x{:02X}", u32::from(literal.c))
-            } else {
-                literal.c.to_string()
-            }
-        } else {
+        let Some(text) = portable_escape(literal, in_class) else {
             return Ok(());
         };
         self.respellings.push(Respelling {
@@ -173,6 +165,28 @@ impl PortableEscapes {
             text,
         });
         Ok(())
+    }
+}
+
+fn portable_escape(literal: &ast::Literal, in_class: bool) -> Option<String> {
+    let escaped = matches!(literal.kind, LiteralKind::Superfluous | LiteralKind::Meta);
+    // ECMA-262's `u` flag admits only these identity escapes, plus `-` in a class.
+    let unicode_mode_escapable =
+        r"^$\.*+?()[]{}|/".contains(literal.c) || (in_class && literal.c == '-');
+    if matches!(
+        literal.kind,
+        LiteralKind::HexFixed(ast::HexLiteralKind::UnicodeShort)
+    ) && literal.c <= '\u{FF}'
+    {
+        Some(format!("\\x{:02X}", u32::from(literal.c)))
+    } else if escaped && !unicode_mode_escapable {
+        if in_class && matches!(literal.c, '&' | '~') {
+            Some(format!("\\x{:02X}", u32::from(literal.c)))
+        } else {
+            Some(literal.c.to_string())
+        }
+    } else {
+        None
     }
 }
 
