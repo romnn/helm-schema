@@ -175,6 +175,7 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         "toStrings" | "sortAlpha" => return string_slice(input.function, &input.first, state),
         "index" => transfer_index(input, state),
         "first" | "last" => transfer_sequence_edge(input, state),
+        "without" | "mustWithout" => transfer_without(input, state),
         "append" | "mustAppend" | "push" | "prepend" | "mustPrepend" | "reverse"
         | "mustReverse" | "rest" | "mustRest" | "initial" | "mustInitial" | "concat" => {
             transfer_sequence_edit(input, state)
@@ -234,15 +235,14 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
 fn transfer_fallback(input: TransferInput<'_>, state: &mut State) -> Value {
     match crate::function_semantics::function_semantics(input.function).heap_effect {
         crate::function_semantics::HeapEffect::ReadOnly => {}
-        crate::function_semantics::HeapEffect::Operands => {
+        crate::function_semantics::HeapEffect::Operands
+        | crate::function_semantics::HeapEffect::Unknown => {
+            // Direct functions receive the evaluated operands. The caller's lexical bindings
+            // are accessible only through values passed to the call.
             widen_operands(input.arguments, state);
         }
-        crate::function_semantics::HeapEffect::Unknown => {
-            invalidate(state);
-            return Value::influenced(input.influences);
-        }
     }
-    // Without heap effects the result is fresh or one of what the operands reference.
+    // The call may return a fresh value or a reference reached through its operands.
     super::heap::unknown_member(input.arguments, input.influences)
 }
 
@@ -626,7 +626,12 @@ fn transfer_index(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
                         .items()
                         .and_then(|items| items.get(index))
                         .cloned()
-                        .unwrap_or_else(|| Value::influenced(influences.clone()))
+                        .unwrap_or_else(|| {
+                            super::heap::unknown_member(
+                                std::slice::from_ref(&value),
+                                influences.clone(),
+                            )
+                        })
                 }
                 ValueNode::Leaf(Leaf {
                     datum: _,
@@ -636,7 +641,7 @@ fn transfer_index(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
                     decision: _,
                     yes: _,
                     no: _,
-                } => Value::influenced(influences.clone()),
+                } => super::heap::unknown_member(std::slice::from_ref(&value), influences.clone()),
             },
             Some(GuardValue::Null | GuardValue::Bool(_) | GuardValue::Float(_)) | None => {
                 Value::influenced(influences.clone())
@@ -783,6 +788,43 @@ fn transfer_sequence_edit(
         sequence.capacity = None;
     }
     Ok(result)
+}
+
+fn transfer_without(input: TransferInput<'_>, state: &State) -> Result<Value, AbortReason> {
+    let TransferInput {
+        function: _,
+        arguments,
+        influences,
+        first,
+        last: _,
+    } = input;
+    let unknown = || super::heap::unknown_member(std::slice::from_ref(&first), influences.clone());
+    let Some(items) = sequence_items(&first, state) else {
+        return if known_non_sequence(&first, state) {
+            Err(AbortReason::Type)
+        } else {
+            Ok(unknown())
+        };
+    };
+    let omitted = arguments.get(1..).unwrap_or_default();
+    if items.len().saturating_mul(omitted.len()) > 128 {
+        return Ok(unknown());
+    }
+    let mut retained = Vec::new();
+    'items: for item in items {
+        for omit in omitted {
+            match super::invoke::deep_equal(state, omit, &item)
+                .as_ref()
+                .and_then(Value::constant)
+            {
+                Some(GuardValue::Bool(true)) => continue 'items,
+                Some(GuardValue::Bool(false)) => {}
+                _ => return Ok(unknown()),
+            }
+        }
+        retained.push(item);
+    }
+    Ok(Value::sequence(retained))
 }
 
 fn transfer_split_list(input: TransferInput<'_>, state: &mut State) -> Value {

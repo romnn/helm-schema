@@ -22,6 +22,7 @@ pub(super) struct ContractPathAccumulator {
         BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
     pub(super) has_unconditional_overlay_peer: bool,
     pub(super) saw_unsupported_overlay: bool,
+    pub(super) has_unlowerable_serialized_use: bool,
     pub(super) requirement_implications: Vec<ContractRequirementImplication>,
     pub(super) opaque_consumption_guards: Option<Vec<helm_schema_core::GuardConjunction>>,
     pub(super) member_access_conditions: MemberAccessConditions,

@@ -980,15 +980,18 @@ fn membership_invocation(state: State, function: &str, arguments: &[Value]) -> V
 /// A string member equals exactly the string needles spelling it, so a needle derived through
 /// executed text transforms (quoting, printing, trimming) lifts that one-word language to its
 /// inputs.
-fn deep_equal(state: &State, needle: &Value, item: &Value) -> Option<Value> {
+pub(super) fn deep_equal(state: &State, needle: &Value, item: &Value) -> Option<Value> {
     let frozen = state.heap.freeze(item);
     let item_type = frozen.go_type();
+    let needle_type = state.heap.freeze(needle).go_type();
+    if item_type != GoType::Unknown && needle_type != GoType::Unknown && needle_type != item_type {
+        return Some(Value::literal(GuardValue::Bool(false)));
+    }
     let literal = &match item.constant() {
         Some(literal) => literal.clone(),
         None => GuardValue::String(frozen.exact_text()?),
     };
     if let Some(constant) = needle.constant() {
-        let needle_type = state.heap.freeze(needle).go_type();
         let equal = needle_type == item_type
             && match (constant, literal) {
                 (GuardValue::Float(left), GuardValue::Float(right)) => {
@@ -1008,7 +1011,7 @@ fn deep_equal(state: &State, needle: &Value, item: &Value) -> Option<Value> {
             _ => None,
         };
     };
-    if state.heap.freeze(needle).go_type() != GoType::Unknown {
+    if needle_type != GoType::Unknown {
         return None;
     }
     let predicate = match (item_type, literal) {

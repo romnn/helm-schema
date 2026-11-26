@@ -355,7 +355,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "default" => UNKNOWN.selected(&[Unknown], Some(Unknown)),
         "empty" | "not" => UNKNOWN.fixed(&[Unknown], Bool),
         "eq" => UNKNOWN.variadic(&[Unknown], Unknown, Bool),
-        "fail" => UNKNOWN.fixed(&[Text], Text),
+        "fail" | "title" => UNKNOWN.fixed(&[Text], Text),
         "has" | "mustHas" => KNOWN
             .fixed(&[Unknown, Unknown], Bool)
             .reading(InputRead::Contents),
@@ -490,6 +490,16 @@ fn collection_semantics(function: &str) -> FunctionSemantics {
         "join" => UNKNOWN
             .fixed(&[Text, Unknown], Text)
             .reading(InputRead::Contents),
+        "all" | "any" => UNKNOWN.variadic(&[], Unknown, Bool),
+        "cat" => UNKNOWN
+            .variadic(&[], Unknown, Text)
+            .reading(InputRead::Contents),
+        "date" => UNKNOWN.fixed(&[Text, Unknown], Text),
+        "mustRegexFind" | "regexFind" => UNKNOWN.fixed(&[Text, Text], Text),
+        "mustWithout" | "without" => UNKNOWN
+            .variadic(&[Unknown], Unknown, Slice)
+            .reading(InputRead::Contents),
+        "shuffle" => UNKNOWN.fixed(&[Text], Text),
         _ => UNKNOWN,
     }
 }

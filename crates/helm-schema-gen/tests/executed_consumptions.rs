@@ -252,6 +252,41 @@ fn a_total_transform_does_not_acquire_the_raw_string_requirement() -> eyre::Resu
 }
 
 #[test]
+fn an_unlowerable_serialized_read_keeps_an_independent_wildcard_sink() -> eyre::Result<()> {
+    use helm_schema_core::{ContractUse, Guard, ResourceRef, ValueKind, YamlPath};
+    use helm_schema_ir::ContractIr;
+
+    let signals = ContractIr::from_contract_uses(vec![
+        ContractUse::new(
+            ValuesPath::parse("config"),
+            YamlPath(Vec::new()),
+            ValueKind::Serialized,
+            vec![Guard::Range {
+                path: ValuesPath::parse("listeners"),
+            }],
+            None,
+        ),
+        ContractUse::new(
+            ValuesPath::parse("config.*"),
+            YamlPath(vec!["spec".to_owned(), "replicas".to_owned()]),
+            ValueKind::Scalar,
+            Vec::new(),
+            Some(ResourceRef::concrete(
+                "apps/v1".to_owned(),
+                "Deployment".to_owned(),
+            )),
+        ),
+    ])
+    .finalize()
+    .into_schema_signals();
+    let observed = generate_values_schema(ValuesSchemaInput::new(&signals, &ReplicaDestination));
+    let validator = jsonschema::validator_for(&observed)?;
+    assert!(validator.is_valid(&json!({"config": {"one": 1}})));
+    assert!(!validator.is_valid(&json!({"config": {"one": "not an integer"}})));
+    Ok(())
+}
+
+#[test]
 fn opaque_policy_uses_only_its_own_executed_guard() -> eyre::Result<()> {
     let context = SymbolicIrContext::new(&DefineIndex::new());
     let signals = context

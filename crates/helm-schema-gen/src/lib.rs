@@ -38,6 +38,7 @@ use serde_yaml::Value as YamlValue;
 
 pub use authoring_policy::{AuthoringPolicy, DeclaredTypes, RootPolicy};
 pub use base_schema::BaseOwner;
+pub use condition_encoding::evaluate_guard_set_on_values;
 use emission_plan::LoweredEmissionPlan;
 pub use emission_policy::{
     ConditionalAnchors, EmissionClassKind, EmissionOrigin, EmissionPolicy, EmissionPolicyDelta,

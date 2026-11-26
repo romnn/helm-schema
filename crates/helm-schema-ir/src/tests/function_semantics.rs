@@ -232,3 +232,19 @@ fn signatures_preserve_declared_parameters_and_success_types() {
     sim_assert_eq!(have: function_semantics("mustFromJson").success, want: SuccessType::Selected);
     sim_assert_eq!(have: function_semantics("mustDateModify").success, want: SuccessType::Selected);
 }
+
+#[test]
+fn regex_find_records_a_read_only_string_signature() {
+    use crate::function_semantics::{HeapEffect, SuccessType};
+    use crate::value::kinds::GoType;
+
+    for function in ["regexFind", "mustRegexFind"] {
+        let semantics = function_semantics(function);
+        sim_assert_eq!(
+            have: (semantics.parameter(0), semantics.parameter(1), semantics.parameter(2)),
+            want: (Some(GoType::String), Some(GoType::String), None)
+        );
+        sim_assert_eq!(have: semantics.success, want: SuccessType::Fixed(GoType::String));
+        sim_assert_eq!(have: semantics.heap_effect, want: HeapEffect::ReadOnly);
+    }
+}

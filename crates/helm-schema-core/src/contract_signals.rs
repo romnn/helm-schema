@@ -896,6 +896,7 @@ impl ConditionalOverlayEvidence {
             conditional_overlays: Vec::new(),
             requirement_implications: Vec::new(),
             opaque_consumption_guards: None,
+            has_unlowerable_serialized_use: false,
         }
     }
 }
@@ -975,6 +976,10 @@ pub struct ContractPathSchemaEvidence {
     /// Positive opaque consumptions at this exact input path. An empty
     /// recorded set means export exhausted its budget and asserts no policy.
     pub opaque_consumption_guards: Option<Vec<GuardConjunction>>,
+    /// A serialized use whose guard could not be encoded.
+    ///
+    /// It withholds declared-default typing without owning descendant contracts.
+    pub has_unlowerable_serialized_use: bool,
 }
 
 /// A chart-wide default subtree merged into an effective `.Values` subtree.

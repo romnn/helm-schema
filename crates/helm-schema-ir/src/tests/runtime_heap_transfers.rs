@@ -73,6 +73,16 @@ fn copying_lists_freeze_string_elements_and_share_nested_maps() {
 }
 
 #[test]
+fn filtered_lists_share_retained_maps() {
+    for function in ["without", "mustWithout"] {
+        let source = format!(
+            r#"{{{{ $m := dict "x" 0 }}}}{{{{ $items := list "drop" $m }}}}{{{{ $kept := {function} $items "drop" }}}}{{{{ $_ := set (index $kept 0) "x" 2 }}}}{{{{ len $items }}}}/{{{{ len $kept }}}}/{{{{ $m.x }}}}"#
+        );
+        sim_assert_eq!(have: texts(&source), want: vec![Some("2/1/2".to_owned())], "{function}");
+    }
+}
+
+#[test]
 fn aliased_merge_order_does_not_choose_one_map_traversal() {
     sim_assert_eq!(
         have: texts(r#"{{ $m := dict "x" 0 }}{{ $d := dict "a" $m "b" $m }}{{ $_ := mergeOverwrite $d (dict "a" (dict "x" 1) "b" (dict "x" 2)) }}{{ $m.x }}"#),

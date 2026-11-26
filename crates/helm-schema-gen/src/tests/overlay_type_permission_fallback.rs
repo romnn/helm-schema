@@ -22,7 +22,7 @@ impl ResourceSchemaOracle for NoProvider {
 #[test]
 fn permission_fallback_uses_declaration_instead_of_a_runtime_type_hint() {
     let target = ValuesPath::parse("subject");
-    let evidence = ContractPathSchemaEvidence {
+    let mut evidence = ContractPathSchemaEvidence {
         type_hints: ["boolean".to_owned()].into(),
         ..ContractPathSchemaEvidence::default()
     };
@@ -56,13 +56,13 @@ fn permission_fallback_uses_declaration_instead_of_a_runtime_type_hint() {
             json!({}),
         ),
     ] {
-        resolved.used_as_serialized = serialized;
+        evidence.facts.used_as_serialized = serialized;
         resolved.values_yaml_schema = declaration;
         let mut conditionals = Vec::new();
         append_type_permission_fallback(
             &mut conditionals,
-            &target,
             &resolved,
+            &evidence,
             permission.clone(),
             policy,
         );
@@ -78,15 +78,19 @@ fn permission_fallback_uses_declaration_instead_of_a_runtime_type_hint() {
 }
 
 #[test]
-fn permission_fallback_preserves_an_independent_strict_consumer() {
+fn permission_fallback_preserves_an_independent_consumer_after_unlowerable_serialization() {
     let target = ValuesPath::parse("subject");
-    let mut evidence = ContractPathSchemaEvidence::default();
+    let mut evidence = ContractPathSchemaEvidence {
+        has_unlowerable_serialized_use: true,
+        ..ContractPathSchemaEvidence::default()
+    };
     evidence.facts.has_string_contract = true;
     evidence.facts.has_non_self_guarded_string_contract = true;
     let provider =
         ProviderSchemaResolutions::resolve(&ContractSchemaSignals::default(), &NoProvider);
-    let (resolved, _) =
+    let (mut resolved, _) =
         PathSchemaResolver::resolve_single_path_evidence(&target, &evidence, &provider);
+    resolved.values_yaml_schema = json!({"type": "integer"});
     assert!(resolved.independent_base_contract.is_some());
     let permission = vec![vec![ConditionalGuard::TypeIs {
         path: target.clone(),
@@ -95,8 +99,8 @@ fn permission_fallback_preserves_an_independent_strict_consumer() {
     let mut conditionals = Vec::new();
     append_type_permission_fallback(
         &mut conditionals,
-        &target,
         &resolved,
+        &evidence,
         permission,
         DeclaredTypes::Assert,
     );

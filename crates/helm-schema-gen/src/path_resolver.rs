@@ -85,8 +85,25 @@ impl<'a> PathSchemaResolver<'a> {
         );
         let evidence_by_path = contract_signals.schema_evidence_by_value_path();
         // An unresolved region cannot retype unobserved children through an ancestor-only host.
-        values_yaml_info
-            .retain(|path, _| !unobserved_parent_in_unknown_region(path, evidence_by_path));
+        values_yaml_info.retain(|path, info| {
+            if unobserved_parent_in_unknown_region(path, evidence_by_path) {
+                return false;
+            }
+            if evidence_by_path.get(path).is_some_and(|evidence| {
+                !evidence.facts.has_non_control_use && evidence.facts.has_referenced_descendants
+            }) && let Some(properties) = info
+                .schema
+                .get_mut("properties")
+                .and_then(Value::as_object_mut)
+            {
+                // A member-access host documents its unread siblings.
+                // The children's own consumptions supply their constraints.
+                for child in properties.values_mut() {
+                    *child = crate::values_yaml::property_slots(child);
+                }
+            }
+            true
+        });
         Self {
             schema_evidence_by_value_path: evidence_by_path,
             values_yaml_info,
@@ -196,6 +213,10 @@ pub(crate) fn opaque_scalar_default_is_replaced(
             .is_some_and(|kind| matches!(kind, "boolean" | "integer" | "number" | "string"))
 }
 
+pub(crate) fn serialization_suppresses_declaration(evidence: &ContractPathSchemaEvidence) -> bool {
+    evidence.facts.used_as_serialized || evidence.has_unlowerable_serialized_use
+}
+
 fn resolve_path_evidence(
     value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
@@ -212,11 +233,12 @@ fn resolve_path_evidence(
     let used_as_pathless_fragment = evidence.facts.used_as_pathless_fragment;
     let accepted_dependency_values_root_fragment =
         evidence.facts.accepted_dependency_values_root_fragment;
-    let declared_types = if opaque_scalar_default_is_replaced(
-        value_path,
-        evidence,
-        values_yaml_info.map(|info| &info.schema),
-    ) {
+    let declared_types = if serialization_suppresses_declaration(evidence)
+        || opaque_scalar_default_is_replaced(
+            value_path,
+            evidence,
+            values_yaml_info.map(|info| &info.schema),
+        ) {
         DeclaredTypes::Annotate
     } else {
         declared_types

@@ -4106,14 +4106,9 @@ fn nacos_cell(
     Ok((verdict, attribution))
 }
 
-/// The nacos `ingress.apiVersion` witness of the declared-types policy: the
-/// key is typed `string` only by its declared `""` default, no template
-/// reads it, and every probe renders. With the unrelated `service.ports`
-/// defect isolated, every schema accepts the chart's defaults, the
-/// candidate rejects each probe, the annotate regeneration accepts it, and
-/// all eight cells are the policy's.
+/// Nacos never consumes its declared ingress API version in template execution.
 #[test]
-fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre::Result<()> {
+fn nacos_ingress_api_version_is_ineligible_for_declared_type_attribution() -> eyre::Result<()> {
     let witness = nacos_witness(true)?;
     let regenerated = witness
         .annotation
@@ -4140,10 +4135,12 @@ fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre
     ] {
         cells.push(nacos_cell(&witness, &value)?);
     }
-    sim_assert_eq!(
-        have: cells,
-        want: vec![(Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy), Ok(())); 8]
-    );
+    assert!(cells.iter().all(|(verdict, attribution)| {
+        !matches!(
+            verdict,
+            Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy)
+        ) && attribution.is_err()
+    }));
     Ok(())
 }
 
@@ -4184,23 +4181,17 @@ type AttributionCell = (
     Result<(), &'static str>,
 );
 
-/// Controls of the declared-types attribution. A rejection is the policy's
-/// only when the candidate is the assert regeneration, the annotate
-/// regeneration accepts the document outright, and every rejected value is
-/// unread; what the baseline rejects does not matter. A document the
-/// annotate regeneration rejects for any reason stays a false rejection: a
-/// changed `propertyNames`, closed object, tuple limit or `minContains`
-/// predicate beside the policy's failure, or an unrelated closed-root
-/// rejection. Renaming a definition changes nothing, since no failure is
-/// compared with another. The document, not the JSON-pointer token, says
-/// whether a rejected value is an object member (`settings."1"`) or an array
-/// element (`settings.list[0]`, never attributed).
+/// Checks exact opaque uses, unrelated constraints, and numeric pointer tokens.
+///
+/// The annotate regeneration must accept the entire document, including the
+/// candidate's additional schema constraint. The baseline's reasons do not
+/// affect attribution. Numeric tokens can name object members or array indices.
 #[test]
 #[expect(
     clippy::too_many_lines,
     reason = "the complete fixture scenario is clearest as one contiguous test"
 )]
-fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::Result<()> {
+fn declared_types_attribution_requires_an_active_opaque_type_rejection() -> eyre::Result<()> {
     let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
@@ -4215,8 +4206,8 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         source.path().join("values.yaml"),
         indoc::indoc! {r#"
             settings:
-              enabled: false
-              unread: ""
+              enabled: true
+              payload: ""
               size: 3
               "1": ""
               list: [""]
@@ -4224,13 +4215,20 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     )?;
     std::fs::write(
         source.path().join("templates/configmap.yaml"),
-        indoc::indoc! {"
+        indoc::indoc! {r#"
+            {{ $_ := .Values }}
             apiVersion: v1
             kind: ConfigMap
             metadata:
               name: declared-types
             data:
               enabled: {{ .Values.settings.enabled | quote }}
+              text: |
+                {{ if .Values.settings.enabled }}
+                payload={{ .Values.settings.payload }}
+                number={{ index .Values.settings "1" }}
+                list={{ .Values.settings.list }}
+                {{ end }}
             ---
             apiVersion: example.com/v1
             kind: Widget
@@ -4238,7 +4236,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
               name: declared-types
             spec:
               size: {{ .Values.settings.size }}
-        "},
+        "#},
     )?;
     let recipe = registry::ChartRecipe::corpus(
         "declared-types",
@@ -4298,12 +4296,12 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     };
     let settings = |member: &str, value: serde_json::Value| {
         let mut document = json!({
-            "settings": {"enabled": false, "size": 3, "unread": 7, "1": "", "list": [""]},
+            "settings": {"enabled": true, "size": 3, "payload": 7, "1": "", "list": [""]},
         });
         document["settings"][member] = value;
         document
     };
-    let unread = |value: serde_json::Value| settings("unread", value);
+    let payload = |value: serde_json::Value| settings("payload", value);
 
     // (baseline, constraint the chart's generation carries under both
     // policies, document, attribution). A `None` constraint uses the generated schema alone.
@@ -4311,33 +4309,22 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     let (renamed_baseline, renamed_baseline_defs) = not_integer("a");
     let (renamed_chart, renamed_chart_defs) = not_integer("b");
     let cells: Vec<AttributionCell> = vec![
-        // The policy alone rejects the unread declared default.
-        (json!({}), None, unread(json!(7)), Ok(())),
-        // The unread declared default `"1"` is an object member although its
+        // The opaque text use supplies the only type assertion.
+        (json!({}), None, payload(json!(7)), Ok(())),
+        // The declared default `"1"` is an object member although its
         // JSON-pointer token is numeric.
         (
             json!({}),
             None,
             {
                 let mut document = settings("1", json!(7));
-                document["settings"]["unread"] = json!("");
+                document["settings"]["payload"] = json!("");
                 document
             },
             Ok(()),
         ),
-        // The unread declared default `list` is rejected at an array element.
-        (
-            json!({}),
-            None,
-            {
-                let mut document = settings("list", json!([7]));
-                document["settings"]["unread"] = json!("");
-                document
-            },
-            Err("/settings/list/0: steps into an array"),
-        ),
         // The Widget renders the string size, which both generated policies accept.
-        // The candidate rejects only the unread member.
+        // The candidate rejects only the opaque payload.
         (json!({}), None, settings("size", json!("x")), Ok(())),
         // The annotate regeneration rejects an unrelated value: the closed
         // root rejects `undeclared`.
@@ -4345,7 +4332,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             json!({}),
             None,
             {
-                let mut document = unread(json!(7));
+                let mut document = payload(json!(7));
                 document["undeclared"] = json!(1);
                 document
             },
@@ -4356,10 +4343,10 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         (
             json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
             None,
-            unread(json!(7)),
+            payload(json!(7)),
             Ok(()),
         ),
-        // The baseline rejects `size` while the candidate rejects only the unread member.
+        // The baseline rejects `size` while the candidate rejects only the payload member.
         (
             json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
             None,
@@ -4372,7 +4359,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             json!({"properties": {"undeclared": {}}, "additionalProperties": false}),
             None,
             {
-                let mut document = unread(json!(7));
+                let mut document = payload(json!(7));
                 document["undeclared"] = json!(1);
                 document
             },
@@ -4493,6 +4480,19 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         ),
     ];
     let annotation = DeclaredTypesAnnotation::new(source.path().to_path_buf(), recipe);
+    let profiles = ProfileSchemas::compile(&json!({}), &assert_schema, defaults.clone())?;
+    let mut dormant = payload(json!(7));
+    dormant["settings"]["enabled"] = json!(false);
+    sim_assert_eq!(
+        have: declared_types_attribution(&annotation, &profiles, &dormant),
+        want: Err("the candidate accepts it".to_owned())
+    );
+    let mut opaque_list = settings("list", json!([7]));
+    opaque_list["settings"]["payload"] = json!("");
+    sim_assert_eq!(
+        have: declared_types_attribution(&annotation, &profiles, &opaque_list),
+        want: Err("the candidate accepts it".to_owned())
+    );
     let mut attributions = Vec::new();
     let mut adjudications = Vec::new();
     for (baseline, constraint, document, _) in &cells {

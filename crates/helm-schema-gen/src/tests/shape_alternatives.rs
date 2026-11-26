@@ -3,6 +3,84 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+#[test]
+fn notes_helper_member_checks_survive_read_only_calls() {
+    let mut index = DefineIndex::new();
+    index.add_file_source(
+        "templates/_helpers.tpl",
+        r#"{{ define "h" }}{{ contains "x" .repository }}{{ end }}"#,
+    );
+    for prefix in [
+        "",
+        r#"{{ $_ := cat "a" "b" }}"#,
+        r"{{ $_ := cat .Values.image }}",
+        r#"{{ $_ := nospace "a b" }}"#,
+    ] {
+        let notes = format!(r#"{prefix}{{{{ include "h" .Values.image }}}}"#);
+        let schema = schema_for_values_yaml(
+            SymbolicIrContext::new(&index)
+                .generate_contract_ir_for_source(&notes, "templates/NOTES.txt"),
+            Some(indoc! {"
+                image:
+                  repository: repo
+            "}),
+        );
+        for (repository, want) in [
+            (serde_json::json!("repo"), true),
+            (serde_json::json!(false), false),
+        ] {
+            let instance = serde_json::json!({"image": {"repository": repository}});
+            sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: want, "{prefix} {instance}");
+        }
+    }
+}
+
+#[test]
+fn notes_title_preserves_the_short_circuited_boolean_operand() {
+    let notes = indoc! {r#"
+        {{ title "x" }}
+        {{ and .Values.a .Values.b | ternary 1 2 }}
+    "#};
+    let index = DefineIndex::new();
+    let schema = schema_for_values_yaml(
+        SymbolicIrContext::new(&index)
+            .generate_contract_ir_for_source(notes, "templates/NOTES.txt"),
+        Some(indoc! {"
+            a: false
+            b: true
+        "}),
+    );
+    for (instance, want) in [
+        (serde_json::json!({"b": true}), false),
+        (serde_json::json!({"a": false, "b": true}), true),
+    ] {
+        sim_assert_eq!(have: schema_accepts_instance(&schema, &instance), want: want, "{instance}");
+    }
+}
+
+#[test]
+fn a_member_access_host_keeps_unread_defaults_untyped() {
+    let schema = schema_for_values_yaml(
+        parse_ir(indoc! {"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: example
+            data:
+              seen: {{ .Values.settings.seen | quote }}
+        "}),
+        Some(indoc! {r#"
+            settings:
+              seen: 1
+              unread: ""
+        "#}),
+    );
+    assert!(schema_accepts_instance(
+        &schema,
+        &serde_json::json!({"settings": {"seen": 1, "unread": false}})
+    ));
+}
+
 /// Simple template produces correct schema structure.
 #[test]
 fn simple_template_schema() {

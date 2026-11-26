@@ -1168,17 +1168,11 @@ pub fn attribute_to_declared_types(
     }
 }
 
-/// Whether the candidate's rejection of the Helm-coalesced `document` is the
-/// `assert` authoring policy's alone. It is when the candidate, which rejects
-/// it, is the chart's assert regeneration, the annotate regeneration accepts
-/// the document outright, and every value the assert regeneration rejects is
-/// an object member explain C1 reports unread (no use of it, its descendants
-/// or an ancestor besides the seeded top-level and dependency-root claims,
-/// and no generation decision). The two regenerations differ only in the
-/// declared-types policy, so when the annotate one accepts, every reason the
-/// candidate rejects for is the policy's, whatever the baseline rejects; no
-/// failure is compared with another. The error names the first condition
-/// that fails.
+/// Attributes scalar and list type failures to active opaque consumptions.
+///
+/// The assert regeneration must match the candidate and the annotate
+/// regeneration must accept the entire document. Each type failure needs
+/// an active opaque consumption at its exact input path.
 ///
 /// A separate candidate constraint applies under both policies.
 ///
@@ -1201,12 +1195,15 @@ pub fn declared_types_attribution(
     if !profiles.accepts_with_candidate_constraint(&regenerated.annotated, document) {
         return Err("the annotate regeneration rejects it".to_string());
     }
+    let signals = regenerated
+        .session
+        .contract_schema_signals()
+        .map_err(|error| format!("read contract signals: {error}"))?;
+    let values = serde_yaml::to_value(document).map_err(|error| error.to_string())?;
     for error in regenerated.asserted.validator.iter_errors(document) {
-        let path = error.instance_path().as_str().to_string();
-        // Whether a JSON-pointer token names an object member or an array
-        // element is the document's to say: `Location::segments` reads every
-        // numeric token as an index, even an object key such as `"1"`.
-        let mut keys = Vec::new();
+        let path = error.instance_path().as_str();
+        // A numeric pointer token can name an object member or an array index.
+        let mut value_path = helm_schema_core::ValuesPath::parse("");
         let mut instance = document;
         for token in path.split('/').skip(1) {
             let key = token.replace("~1", "/").replace("~0", "~");
@@ -1220,48 +1217,34 @@ pub fn declared_types_attribution(
                 }
                 _ => return Err(format!("{path}: steps into a scalar")),
             };
-            keys.push(key);
+            value_path.push(key);
         }
-        let mut reached = helm_schema_core::ValuesPath::parse("");
-        let mut ancestry = vec![reached.clone()];
-        for key in &keys {
-            reached.push(key.clone());
-            ancestry.push(reached.clone());
+        if !matches!(
+            error.kind(),
+            jsonschema::error::ValidationErrorKind::Type {
+                kind: jsonschema::error::TypeKind::Single(
+                    jsonschema::JsonType::Array
+                        | jsonschema::JsonType::Boolean
+                        | jsonschema::JsonType::Integer
+                        | jsonschema::JsonType::Number
+                        | jsonschema::JsonType::String
+                )
+            }
+        ) {
+            return Err(format!(
+                "{path}: the failure is not a declared scalar or list type"
+            ));
         }
-        for (depth, values_path) in ancestry.iter().enumerate() {
-            let values_path = values_path.encode();
-            let explanation = regenerated
-                .session
-                .explain(&values_path)
-                .map_err(|error| format!("explain `{values_path}`: {error}"))?;
-            // Two claims are no template read: values seeding's claim on
-            // every declared top-level key (a pathless scalar) and the
-            // dependency-root claim `ContractIr::finalize` adds for every
-            // dependency values root (a pathless fragment). Neither has a
-            // YAML path or template provenance.
-            let dependency_root = explanation
-                .value_path_facts
-                .as_ref()
-                .is_some_and(|facts| facts.accepted_dependency_values_root_fragment);
-            let template_reads = explanation.exact_uses.iter().any(|use_| {
-                let claim = use_.path.0.is_empty()
-                    && use_.provenance.is_empty()
-                    && (use_.kind == helm_schema_core::ValueKind::Scalar
-                        || (dependency_root && use_.kind == helm_schema_core::ValueKind::Fragment));
-                !claim
+        let active = signals
+            .evidence_for(&value_path)
+            .and_then(|evidence| evidence.opaque_consumption_guards.as_ref())
+            .is_some_and(|guards| {
+                guards.iter().any(|guard| {
+                    helm_schema_gen::evaluate_guard_set_on_values(guard, &values) == Some(true)
+                })
             });
-            if template_reads {
-                return Err(format!("{path}: a template reads `{values_path}`"));
-            }
-            if depth < keys.len() {
-                continue;
-            }
-            if !explanation.descendant_uses.is_empty() {
-                return Err(format!("{path}: a template reads beneath `{values_path}`"));
-            }
-            if explanation.generation.is_some() {
-                return Err(format!("{path}: generation decided `{values_path}`"));
-            }
+        if !active {
+            return Err(format!("{path}: no active opaque consumption at this path"));
         }
     }
     Ok(())

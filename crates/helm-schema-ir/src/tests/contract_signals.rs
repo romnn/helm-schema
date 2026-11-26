@@ -1674,6 +1674,33 @@ fn unsupported_conditional_row_does_not_promote_sink_evidence() {
 }
 
 #[test]
+fn foreign_range_retains_serialized_tolerance() -> eyre::Result<()> {
+    let signals = signals_for(vec![ContractUse::new(
+        conditional_path("port"),
+        YamlPath(Vec::new()),
+        ValueKind::Serialized,
+        vec![Guard::Range {
+            path: conditional_path("listeners"),
+        }],
+        None,
+    )]);
+    let evidence = signals
+        .evidence_for(&conditional_path("port"))
+        .ok_or_eyre("port evidence")?;
+    assert!(evidence.has_unlowerable_serialized_use);
+    assert!(!evidence.facts.used_as_serialized);
+    sim_assert_eq!(
+        have: evidence.provider_schema_uses.as_slice(),
+        want: &[] as &[helm_schema_core::ProviderSchemaUse]
+    );
+    sim_assert_eq!(
+        have: evidence.conditional_overlays.as_slice(),
+        want: &[] as &[helm_schema_core::ConditionalPathOverlay]
+    );
+    Ok(())
+}
+
+#[test]
 fn unlowerable_output_selection_does_not_claim_a_path_wide_string_consumer() -> eyre::Result<()> {
     let signals = signals_for_template(indoc! {r#"
         apiVersion: v1

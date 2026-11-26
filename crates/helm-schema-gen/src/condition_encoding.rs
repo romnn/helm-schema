@@ -1908,8 +1908,9 @@ pub(crate) fn input_path_present_condition(
     )
 }
 
+/// Checks a guard conjunction on a values document, abstaining on unknown conditions.
 #[tracing::instrument(skip_all, level = "debug")]
-pub(crate) fn evaluate_guard_set_on_values<'guard>(
+pub fn evaluate_guard_set_on_values<'guard>(
     guards: impl IntoIterator<Item = &'guard ConditionalGuard>,
     values_yaml_doc: &YamlValue,
 ) -> Option<bool> {

@@ -1868,7 +1868,8 @@ fn templated_crd_template_populates_chart_local_schema_universe() -> eyre::Resul
 /// vanish — with a dependency activation condition appended, a vanished
 /// guard becomes a chart-killing `activation => fail` terminal clause.
 #[test]
-fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Result<()> {
+fn joined_validator_messages_terminate_for_the_active_subchart_without_a_user() -> eyre::Result<()>
+{
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
     test_util::write(
@@ -1946,26 +1947,25 @@ fn joined_validator_messages_do_not_become_activation_terminals() -> eyre::Resul
         None,
     )?;
 
-    // The validator's own operand is `auth.user`; the member-access lane
-    // separately claims that the navigated `auth` host must exist, which is
-    // an abort-grade fact about the receiver, not the validator's `fail`.
-    let validator_clauses = contract_schema_signals!(collection)
-        .terminal_clauses()
-        .iter()
-        .filter(|clause| {
-            clause.iter().any(|guard| {
-                guard
-                    .value_paths()
-                    .iter()
-                    .any(|path| path == &helm_schema_core::ValuesPath::parse("child.auth.user"))
-            })
-        })
-        .cloned()
-        .collect::<Vec<_>>();
-    assert!(
-        validator_clauses.is_empty(),
-        "the conditional validator must not terminate the activated chart: {validator_clauses:#?}"
-    );
+    let signals = contract_schema_signals!(collection);
+    let user_path = conditional_path("child.auth.user");
+    for (active, auth_enabled, user, aborts) in [
+        (true, false, "", false),
+        (true, true, "", true),
+        (true, true, "alice", false),
+        (false, true, "", false),
+    ] {
+        let values = serde_yaml::to_value(json!({
+            "child": {"enabled": active, "auth": {"enabled": auth_enabled, "user": user}},
+        }))?;
+        let validator_aborts = signals.terminal_clauses().iter().any(|clause| {
+            clause
+                .iter()
+                .any(|guard| guard.value_paths().contains(&user_path))
+                && helm_schema_gen::evaluate_guard_set_on_values(clause, &values) == Some(true)
+        });
+        sim_assert_eq!(have: validator_aborts, want: aborts, "{values:?}");
+    }
 
     Ok(())
 }

@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
-    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardConjunction, GuardValue,
-    ProviderSchemaFragment, ValuesPath,
+    ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence, ContractSchemaSignals,
+    GuardConjunction, GuardValue, ProviderSchemaFragment, ValuesPath,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -17,7 +17,9 @@ use crate::generation_decisions::{
     ContainmentCheck, ContainmentDecision, ContainmentShortCircuit, GenerationDecisions,
     ImplicationRef, OverlayResolution,
 };
-use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
+use crate::path_resolver::{
+    PathSchemaResolver, ResolvedPathSchema, serialization_suppresses_declaration,
+};
 use crate::provider_resolution::ProviderSchemaResolutions;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{
@@ -758,8 +760,8 @@ pub(crate) fn collect_conditional_schemas(
         }
         append_type_permission_fallback(
             &mut conditionals,
-            target_value_path,
             resolved_target,
+            evidence,
             type_permissions,
             declared_types,
         );
@@ -928,11 +930,12 @@ fn schema_contains_type(schema: &Value, schema_type: &str) -> bool {
 
 fn append_type_permission_fallback(
     conditionals: &mut Vec<LoweredConjunct>,
-    target: &ValuesPath,
     resolved: &ResolvedPathSchema,
+    evidence: &ContractPathSchemaEvidence,
     permissions: Vec<Vec<ConditionalGuard>>,
     declared_types: crate::DeclaredTypes,
 ) {
+    let target = &resolved.value_path;
     if permissions.is_empty()
         || (crate::schema_model::is_empty_schema(&resolved.schema)
             && resolved.independent_base_contract.is_none())
@@ -949,7 +952,7 @@ fn append_type_permission_fallback(
     // Only declaration supplies the fallback; guarded runtime hints are not unconditional contracts.
     // An empty fallback still owns the base, while independent consumers remain below.
     // Serialization already discarded the declaration's type; the fallback cannot restore it.
-    let declaration = if resolved.used_as_serialized {
+    let declaration = if serialization_suppresses_declaration(evidence) {
         crate::schema_model::empty_schema()
     } else {
         crate::values_yaml::declared_shape_alone(

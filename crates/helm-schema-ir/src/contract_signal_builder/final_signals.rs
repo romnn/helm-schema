@@ -238,11 +238,11 @@ impl ContractPathAccumulator {
         self.referenced = true;
         if lowerable_guards.is_none() {
             self.saw_unsupported_overlay = true;
-            // The sink contract cannot escape an unencodable foreign guard,
-            // but the row is still a render rather than a control-only read.
-            // Retain that distinction so values.yaml remains the bounded
-            // fallback shape instead of widening the path to anything.
+            // An unencodable guard keeps sink constraints branch-local.
+            // A total serialization still withholds the declared type at
+            // this path while leaving independent descendant evidence intact.
             self.facts.facts.has_non_control_use |= facts.path.has_non_control_use;
+            self.has_unlowerable_serialized_use |= facts.path.used_as_serialized;
             return;
         }
         self.facts.record_facts(facts.path);
@@ -308,6 +308,7 @@ impl ContractPathAccumulator {
             conditional_overlay_branches,
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
+            has_unlowerable_serialized_use,
             mut requirement_implications,
             opaque_consumption_guards,
             member_access_conditions: _,
@@ -470,6 +471,7 @@ impl ContractPathAccumulator {
             conditional_overlays,
             requirement_implications,
             opaque_consumption_guards,
+            has_unlowerable_serialized_use,
         }
     }
 }
