@@ -311,7 +311,7 @@ fn deferred_branch_carries_the_owned_control_boundary() {
 
 /// A post-region child follows a conditional parent only on paths that render its header.
 #[test]
-fn deferred_child_bypasses_an_absent_parent_shell() {
+fn deferred_child_bypasses_an_absent_parent_shell() -> eyre::Result<()> {
     let source = indoc! {r"
         data:
         {{- if .Values.enabled }}
@@ -321,35 +321,94 @@ fn deferred_child_bypasses_an_absent_parent_shell() {
         {{- end }}
             after: {{ .Values.after }}
     "};
-    let expected = indoc! {r#"
-        when always:
-          mapping:
-            key "data":
-              when always:
-                mapping:
-                  key "parent":
-                    when truthy(enabled):
-                      mapping:
-                        key "inside":
-                          when always:
-                            scalar [text{"fixed"}]
-                    when truthy(enabled):
-                      mapping:
-                        key "after":
-                          when always:
-                            splice after scalar
-                  key "after":
-                    when !(truthy(enabled)):
-                      splice after scalar
-        reads:
-          enabled [truthy(enabled)]
-    "#};
-    assert_fragment_dump(source, "", expected);
+    assert_after_paths(
+        source,
+        &[
+            (
+                serde_json::json!({"enabled": true, "after": "fixed"}),
+                &["data", "parent", "after"],
+            ),
+            (
+                serde_json::json!({"enabled": false, "after": "fixed"}),
+                &["data", "after"],
+            ),
+        ],
+    )
+}
+
+#[test]
+fn a_yaml_nel_preserves_the_selected_parent_of_a_shared_child() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{- if .Values.first }}
+          # left<NEL>  first:
+        {{- else }}
+          # next<NEL>  second:
+        {{- end }}
+            after: fixed
+    "}
+    .replace("<NEL>", "\u{0085}");
+    assert_after_paths(
+        &source,
+        &[
+            (
+                serde_json::json!({"first": true}),
+                &["data", "first", "after"],
+            ),
+            (
+                serde_json::json!({"first": false}),
+                &["data", "second", "after"],
+            ),
+        ],
+    )
+}
+
+fn assert_after_paths(source: &str, cases: &[(serde_json::Value, &[&str])]) -> eyre::Result<()> {
+    use crate::tests::guard_oracle::predicate_holds;
+    use helm_schema_syntax::YamlNodeKind;
+
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution =
+        crate::value::tests::execute_document(source, Some("templates/probe.yaml"), &db);
+    for (values, expected) in cases {
+        let mut paths = Vec::new();
+        for document in execution.placed_documents() {
+            if !predicate_holds(&document.condition, values)? {
+                continue;
+            }
+            for key in document.nodes().filter(|&node| document.is_key(node)) {
+                if document.literal_key(key) != Some("after")
+                    || !predicate_holds(&document.placement_guard(key), values)?
+                {
+                    continue;
+                }
+                let mut path = Vec::new();
+                let mut ancestor = document.parent(key);
+                while let Some(node) = ancestor {
+                    if document.kind(node) == Some(YamlNodeKind::Pair)
+                        && let Some(key) = document
+                            .children(node)
+                            .iter()
+                            .copied()
+                            .find(|&child| document.is_key(child))
+                        && let Some(name) = document.literal_key(key)
+                    {
+                        path.push(name.to_owned());
+                    }
+                    ancestor = document.parent(node);
+                }
+                path.reverse();
+                paths.push(path);
+            }
+        }
+        sim_assert_eq!(have: paths, want: vec![expected.to_vec()], "values={values}");
+    }
+    Ok(())
 }
 
 /// Deferred content falls back through adjacent conditional mapping shells in source order.
 #[test]
-fn deferred_child_uses_the_latest_rendered_adjacent_mapping_shell() {
+fn deferred_child_uses_the_latest_rendered_adjacent_mapping_shell() -> eyre::Result<()> {
     let source = indoc! {r"
         data:
         {{ if .Values.a }}
@@ -360,32 +419,49 @@ fn deferred_child_uses_the_latest_rendered_adjacent_mapping_shell() {
         {{ end }}
             after: fixed
     "};
-    let expected = indoc! {r#"
-        when always:
-          mapping:
-            key "data":
-              when always:
-                mapping:
-                  key "first":
-                    when (truthy(a) && !(truthy(b))):
-                      mapping:
-                        key "after":
-                          when always:
-                            scalar [text{"fixed"}]
-                  key "second":
-                    when truthy(b):
-                      mapping:
-                        key "after":
-                          when always:
-                            scalar [text{"fixed"}]
-                  key "after":
-                    when !((truthy(a) || truthy(b))):
-                      scalar [text{"fixed"}]
-        reads:
-          a [truthy(a)]
-          b [truthy(b)]
-    "#};
-    assert_fragment_dump(source, "", expected);
+    assert_after_paths(
+        source,
+        &[
+            (
+                serde_json::json!({"a": true, "b": true}),
+                &["data", "second", "after"],
+            ),
+            (
+                serde_json::json!({"a": false, "b": true}),
+                &["data", "second", "after"],
+            ),
+            (
+                serde_json::json!({"a": true, "b": false}),
+                &["data", "first", "after"],
+            ),
+            (
+                serde_json::json!({"a": false, "b": false}),
+                &["data", "after"],
+            ),
+        ],
+    )
+}
+
+#[test]
+fn independent_block_choices_keep_the_common_sibling() -> eyre::Result<()> {
+    let mut source = String::from("data:");
+    let mut values = serde_json::Map::new();
+    for index in 0..8 {
+        writeln!(source, "{{{{- if .Values.enabled{index} }}}}")?;
+        writeln!(source, "  key{index}: fixed")?;
+        source.push_str("{{- end }}");
+        values.insert(
+            format!("enabled{index}"),
+            serde_json::Value::Bool(index % 2 == 0),
+        );
+    }
+    writeln!(source)?;
+    writeln!(source, "  after: {{{{ .Values.after | quote }}}}")?;
+    values.insert("after".to_owned(), serde_json::json!("fixed"));
+    assert_after_paths(
+        &source,
+        &[(serde_json::Value::Object(values), &["data", "after"])],
+    )
 }
 
 /// Deferred content retains the earlier arm's trailing open mapping chain.
@@ -411,9 +487,6 @@ fn deferred_child_uses_each_arm_trailing_open_mapping_chain() {
                     when truthy(x):
                       mapping:
                         key "sub":
-                    when truthy(x):
-                      mapping:
-                        key "sub":
                           when always:
                             mapping:
                               key "after":
@@ -426,14 +499,14 @@ fn deferred_child_uses_each_arm_trailing_open_mapping_chain() {
                           when always:
                             scalar [text{"fixed"}]
         reads:
-          x [truthy(x)]
+          x []
     "#};
     assert_fragment_dump(source, "", expected);
 }
 
 /// Alternative trailing chains retain their own indentation and containment metadata.
 #[test]
-fn deferred_child_preserves_complete_unequal_trailing_chains() {
+fn deferred_child_preserves_complete_unequal_trailing_chains() -> eyre::Result<()> {
     let source = indoc! {r"
         data:
         {{ if .Values.x }}
@@ -445,37 +518,19 @@ fn deferred_child_preserves_complete_unequal_trailing_chains() {
         {{ end }}
               after: fixed
     "};
-    let expected = indoc! {r#"
-        when always:
-          mapping:
-            key "data":
-              when always:
-                mapping:
-                  key "first":
-                    when truthy(x):
-                      mapping:
-                        key "sub":
-                    when truthy(x):
-                      mapping:
-                        key "sub":
-                          when always:
-                            mapping:
-                              key "after":
-                                when always:
-                                  scalar [text{"fixed"}]
-                  key "second":
-                    when !(truthy(x)):
-                      mapping:
-                        key "deep":
-                    when !(truthy(x)):
-                      mapping:
-                        key "after":
-                          when always:
-                            scalar [text{"fixed"}]
-        reads:
-          x [truthy(x)]
-    "#};
-    assert_fragment_dump(source, "", expected);
+    assert_after_paths(
+        source,
+        &[
+            (
+                serde_json::json!({"x": true}),
+                &["data", "first", "sub", "after"],
+            ),
+            (
+                serde_json::json!({"x": false}),
+                &["data", "second", "after"],
+            ),
+        ],
+    )
 }
 
 /// A later arm falls back to the open sibling that rendered before its control.

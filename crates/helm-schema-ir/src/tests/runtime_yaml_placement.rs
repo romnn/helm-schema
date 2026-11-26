@@ -95,6 +95,12 @@ fn matches(predicate: &Predicate, values: &Value) -> eyre::Result<bool> {
         PredicateKind::Guard(Guard::Not { path }) => {
             !matches(&Predicate::truthy_path(path.encode()), values)?
         }
+        PredicateKind::Guard(Guard::Range { path }) => match at(values, path) {
+            Some(Value::Array(items)) => !items.is_empty(),
+            Some(Value::Object(entries)) => !entries.is_empty(),
+            None | Some(Value::Null) => false,
+            Some(other) => eyre::bail!("unsupported range witness input {other}"),
+        },
         PredicateKind::Guard(Guard::TypeIs { path, schema_type }) => {
             let value = at(values, path);
             match schema_type.as_str() {
@@ -650,7 +656,7 @@ fn nested_marker_removal_does_not_invent_a_resource_identity() {
 }
 
 #[test]
-fn range_boundary_witness_keeps_the_real_suffix_in_its_probe() {
+fn range_boundary_witness_keeps_the_real_suffix_in_its_probe() -> eyre::Result<()> {
     let source = indoc::indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
@@ -684,7 +690,7 @@ fn range_boundary_witness_keeps_the_real_suffix_in_its_probe() {
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(source, Some("templates/probe.yaml"), &db);
     let port = ValuesPath::parse("readinessPort");
-    let mut paths = BTreeSet::new();
+    let mut candidates = Vec::new();
     let memo = helm_schema_core::PredicateMemo::default();
     for document in execution.placed_documents() {
         for scalar in document.nodes() {
@@ -714,11 +720,36 @@ fn range_boundary_witness_keeps_the_real_suffix_in_its_probe() {
                 })
                 .collect::<Vec<_>>();
             path.reverse();
-            paths.insert(path.join("."));
+            let selected = Predicate::all(vec![
+                document.condition.clone(),
+                document.selection_guard(scalar),
+            ]);
+            candidates.push((path.join("."), selected));
             sim_assert_eq!(have: memo.normalize(document.placement_guard(scalar)), want: Predicate::False);
         }
     }
-    sim_assert_eq!(have: paths, want: BTreeSet::from(["spec.template.spec.containers.readinessProbe.httpGet.port".to_owned()]));
+    // Test the structural owner on the selected arm. The opaque repetition still
+    // prevents a placement claim after it.
+    let probe = [
+        json!({"path": "/first", "grpcService": "first"}),
+        json!({"path": "/second", "grpcService": "second"}),
+    ];
+    for count in 0..=probe.len() {
+        let values = json!({"probes": &probe[..count], "readinessPort": 8080});
+        let mut paths = BTreeSet::new();
+        for (path, selected) in &candidates {
+            if matches(selected, &values)? {
+                paths.insert(path.as_str());
+            }
+        }
+        let expected = if count == 0 {
+            BTreeSet::new()
+        } else {
+            BTreeSet::from(["spec.template.spec.containers.readinessProbe.httpGet.port"])
+        };
+        sim_assert_eq!(have: paths, want: expected, "probe count {count}");
+    }
+    Ok(())
 }
 
 #[test]
@@ -1402,6 +1433,221 @@ fn flow_plain_tokens_do_not_absorb_brackets() -> eyre::Result<()> {
             "x={x:?}"
         );
     }
+    Ok(())
+}
+
+#[test]
+fn a_selected_separator_detaches_the_shared_metadata_from_the_configmap() -> eyre::Result<()> {
+    let source = indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        {{- if .Values.split }}
+        data: {}
+        ---
+        {{- else }}
+        data: {}
+        {{- end }}
+        metadata:
+          namespace: {{ .Values.namespaceOverride }}
+    "};
+    assert_configmap_namespace_paths(
+        source,
+        &[
+            (json!({"split": true, "namespaceOverride": true}), 0),
+            (json!({"split": false, "namespaceOverride": true}), 1),
+        ],
+    )
+}
+
+#[test]
+fn widening_later_mapping_choices_preserves_established_namespace_placement() -> eyre::Result<()> {
+    let source = indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+          namespace: {{ .Values.namespaceOverride }}
+        data:
+          {{- if .Values.a }}
+          a: fixed
+          {{- end }}
+          {{- if .Values.b }}
+          b: fixed
+          {{- end }}
+          {{- if .Values.c }}
+          c: fixed
+          {{- end }}
+          {{- if .Values.d }}
+          d: fixed
+          {{- end }}
+          {{- if .Values.e }}
+          e: fixed
+          {{- end }}
+          {{- if .Values.f }}
+          f: fixed
+          {{- end }}
+          {{ .Values.key | quote }}: fixed
+    "};
+    let cases = (0..64)
+        .map(|mask| {
+            let mut values = ["a", "b", "c", "d", "e", "f"]
+                .into_iter()
+                .enumerate()
+                .map(|(bit, key)| (key.to_owned(), json!(mask & (1 << bit) != 0)))
+                .collect::<serde_json::Map<_, _>>();
+            values.insert("namespaceOverride".to_owned(), json!(true));
+            values.insert("key".to_owned(), json!("tail"));
+            (Value::Object(values), 1)
+        })
+        .collect::<Vec<_>>();
+    assert_configmap_namespace_paths(source, &cases)?;
+    let immutable = ["immutable: false", ""].join("\n");
+    let later_document = indoc::indoc! {"
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: later
+          namespace: ops
+    "};
+    for tail in [&immutable, later_document] {
+        assert_configmap_namespace_paths(&[source, tail].concat(), &cases)?;
+    }
+    let shadow = indoc::indoc! {r#"
+        {{- if .Values.shadow }}
+        "\u006detadata":
+          name: test
+          namespace: ops
+        {{- else }}
+        immutable: false
+        {{- end }}
+    "#};
+    let mut shadow_cases = Vec::new();
+    for (values, _) in cases {
+        if values.get("a") != Some(&Value::Bool(false)) {
+            continue;
+        }
+        for shadow in [true, false] {
+            let mut configured = values.clone();
+            if let Some(configured) = configured.as_object_mut() {
+                configured.insert("shadow".to_owned(), json!(shadow));
+            }
+            shadow_cases.push((configured, usize::from(!shadow)));
+        }
+    }
+    let shadowed = [source, shadow].concat();
+    let namespace = LiveOutputClaim {
+        input: "namespaceOverride".to_owned(),
+        output: vec!["metadata".to_owned(), "namespace".to_owned()],
+    };
+    for (values, expected) in shadow_cases {
+        let placed = live_output_claims(&shadowed, &values)?.contains(&namespace);
+        sim_assert_eq!(have: usize::from(placed), want: expected, "values={values}");
+    }
+    Ok(())
+}
+
+fn assert_configmap_namespace_paths(source: &str, cases: &[(Value, usize)]) -> eyre::Result<()> {
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, Some("templates/probe.yaml"), &db);
+    for (values, expected) in cases {
+        let mut placed = false;
+        for document in execution.placed_documents() {
+            if !matches(&document.condition, values)?
+                || !crate::resource_identity::placed_resources(&document, &execution)
+                    .into_iter()
+                    .any(|resource| resource.resource.kind == "ConfigMap")
+            {
+                continue;
+            }
+            for node in document.nodes() {
+                if document.is_key(node)
+                    && document.literal_key(node) == Some("namespace")
+                    && matches(&document.placement_guard(node), values)?
+                    && let Some(pair) = document.parent(node)
+                {
+                    for &value in document.children(pair) {
+                        if !document.is_key(value)
+                            && !document.holes(value).is_empty()
+                            && matches(&document.placement_guard(value), values)?
+                        {
+                            placed = true;
+                        }
+                    }
+                }
+            }
+        }
+        sim_assert_eq!(have: usize::from(placed), want: *expected, "values={values}");
+    }
+    Ok(())
+}
+
+fn later_mapping_choices(width: usize) -> eyre::Result<String> {
+    let indent = " ".repeat(width);
+    let mut tail = String::new();
+    for key in ['a', 'b', 'c', 'd', 'e', 'f'] {
+        writeln!(tail, "{indent}{{{{- if .Values.{key} }}}}")?;
+        writeln!(tail, "{indent}{key}: fixed")?;
+        writeln!(tail, "{indent}{{{{- end }}}}")?;
+    }
+    writeln!(tail, "{indent}{{{{ .Values.key | quote }}}}: fixed")?;
+    Ok(tail)
+}
+
+#[test]
+fn widening_a_child_walk_keeps_its_manifest_head_error() -> eyre::Result<()> {
+    let start = indoc::indoc! {"
+        {{- if .Values.create }}
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: probe
+          annotations: {{- toYaml .Values.annotations | nindent 4 }}
+        provisioner: example.com/provisioner
+        parameters:
+    "};
+    let source = [start, &later_mapping_choices(2)?, "{{- end }}\n"].concat();
+    for (create, annotations, aborts) in [
+        (true, json!(1.5), true),
+        (true, json!({"a": "b"}), false),
+        (false, json!(1.5), false),
+    ] {
+        let values = json!({"create": create, "annotations": annotations, "key": "tail"});
+        sim_assert_eq!(have: rejection(&source, &values)?, want: aborts, "values={values}");
+    }
+    Ok(())
+}
+
+#[test]
+fn widening_an_open_mapping_keeps_a_closed_sequence_item_placement() -> eyre::Result<()> {
+    let start = indoc::indoc! {"
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: probe
+        spec:
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: selected
+                image: image:tag
+                imagePullPolicy: {{ .Values.policy }}
+              - name: other
+                image: image:tag
+                imagePullPolicy: Always
+              nodeSelector:
+    "};
+    let source = [start, &later_mapping_choices(8)?].concat();
+    let path = [
+        "spec",
+        "template",
+        "spec",
+        "containers[*]",
+        "imagePullPolicy",
+    ];
+    let values = json!({"policy": [], "key": "tail"});
+    sim_assert_eq!(have: placed(&source, &path, &values)?, want: true);
     Ok(())
 }
 

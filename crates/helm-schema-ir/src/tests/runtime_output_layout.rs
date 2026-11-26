@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 
 use std::rc::Rc;
 
@@ -8,7 +8,7 @@ use helm_schema_core::{PlainScalarPlacement, Predicate, PredicateMemo, ValuesPat
 use helm_schema_syntax::Span;
 use test_util::prelude::sim_assert_eq;
 
-use super::{LexicalTransfers, OutputPlacement};
+use super::{Continuation, LexicalTransfers, OutputPlacement};
 use crate::value::input_paths::InputPaths;
 use crate::value::quoted::LexicalState;
 use crate::value::{Coverage, Value};
@@ -329,6 +329,34 @@ fn marker_provenance_uses_graph_boundaries_for_manifests_and_notes() {
             );
         }
     }
+}
+
+#[test]
+fn folded_nindent_proves_its_leading_lf_until_trimmed() -> eyre::Result<()> {
+    let db = crate::analysis_db::IrAnalysisDb::new(&helm_schema_ast::DefineIndex::new());
+    for (source, proves_lf) in [
+        (r#"{{ nindent 2 "" -}}"#, true),
+        (r#"{{ nindent 2 "data" -}}"#, true),
+        (r#"{{ nindent 2 "" | trim -}}"#, false),
+        (r#"{{ nindent 2 "data" | trim -}}"#, false),
+    ] {
+        let execution =
+            crate::value::tests::execute_document(source, Some("templates/NOTES.txt"), &db);
+        let output = execution.text().next().ok_or_eyre("missing output")?.1;
+        let node = output
+            .parts
+            .single()
+            .ok_or_eyre("missing single emission")?;
+        let TextPart::Frozen(value) = node.content() else {
+            eyre::bail!("expected an action emission for {source}");
+        };
+        sim_assert_eq!(
+            have: Continuation::Opaque.after_frozen(value, 0) == Continuation::LineBreak,
+            want: proves_lf,
+            "{source}"
+        );
+    }
+    Ok(())
 }
 
 #[test]

@@ -557,6 +557,10 @@ impl<'a> PlacedDocument<'a> {
                     .skeleton
                     .text
                     .get(node.span.start..node.span.end)?;
+                if node.kind == YamlNodeKind::Scalar(ScalarStyle::DoubleQuoted) {
+                    return helm_schema_syntax::decoded_yaml_value(&format!("{text}: null"))
+                        .and_then(|mapping| mapping.as_object()?.keys().next().cloned());
+                }
                 helm_schema_syntax::parse_yaml_key(&format!("{text}:"))
             })
             .as_deref()
@@ -836,7 +840,7 @@ impl OutputPlacement {
         };
         build.lexical.remaining = limit;
         let LayoutContexts { known, unknown } =
-            build.walk(graph, 0, &Rc::new(Vec::new()), condition);
+            build.walk(graph, 0, &Rc::new(Vec::new()), condition, Continuation::End);
         // Graph-local unknown coverage gains the file's path condition only at sealing.
         let unknown = memo.normalize(Predicate::all(vec![condition.clone(), unknown]));
         if unknown != Predicate::False {
@@ -1361,6 +1365,7 @@ impl LayoutBuilder<'_> {
         indentation: usize,
         context: &Rc<Vec<ObservationId>>,
         ambient: &Predicate,
+        following: Continuation,
     ) -> LayoutContexts {
         if !self.feasible(ambient, &Predicate::True) {
             return LayoutContexts {
@@ -1372,6 +1377,7 @@ impl LayoutBuilder<'_> {
             known: vec![LayoutContext::empty()],
             unknown: Predicate::False,
         };
+        let mut suffixes = None;
         for (index, output) in graph.parts.iter().enumerate() {
             if contexts.known.is_empty() {
                 break;
@@ -1393,11 +1399,32 @@ impl LayoutBuilder<'_> {
                 context: Rc::clone(context),
                 serializer: None,
             };
+            let mut continuation = |builder: &mut Self| {
+                if matches!(builder.output, FileOutput::Text) {
+                    return Continuation::End;
+                }
+                let trailing = graph.parts.len() - index - 1;
+                suffixes
+                    .get_or_insert_with(|| {
+                        let mut remaining = builder.remaining;
+                        let mut next = following;
+                        let mut continuations = vec![next];
+                        for part in graph.parts.iter().rev().take(trailing) {
+                            next = builder.preceding(part, indentation, next, &mut remaining);
+                            continuations.push(next);
+                        }
+                        continuations
+                    })
+                    .get(trailing)
+                    .copied()
+                    .unwrap_or(Continuation::Opaque)
+            };
             match output.content() {
                 TextPart::Select { decision, yes, no } => {
+                    let following = continuation(self);
                     let active = self.active(&contexts, ambient);
-                    let mut delta = self.choices(decision, [yes, no], &node, &active);
-                    self.local_choices(&contexts, &mut delta);
+                    let mut delta = self.choices(decision, [yes, no], &node, &active, following);
+                    self.local_choices(&contexts, &mut delta, following);
                     contexts = self.then(contexts, delta, ambient);
                 }
                 TextPart::Frozen(value) => {
@@ -1409,20 +1436,16 @@ impl LayoutBuilder<'_> {
                         continue;
                     }
                     let payload = self.payload(value);
-                    if !payload.known.is_empty()
-                        && payload.unknown != Predicate::False
+                    if (payload.known.is_empty() || payload.unknown != Predicate::False)
                         && let Some(capture) = captured_layout(value, &mut 128)
                     {
                         let active = self.active(&contexts, ambient);
-                        let captured = self.capture(&capture, &node, &active);
+                        let following = continuation(self);
+                        let captured = self.capture(&capture, &node, &active, following);
                         contexts = self.then(contexts, captured, ambient);
                     } else if !payload.known.is_empty() {
                         let delta = self.payload_layouts(payload, &node);
                         contexts = self.then(contexts, delta, ambient);
-                    } else if let Some(capture) = captured_layout(value, &mut 128) {
-                        let active = self.active(&contexts, ambient);
-                        let captured = self.capture(&capture, &node, &active);
-                        contexts = self.then(contexts, captured, ambient);
                     } else {
                         let text = spelling.text;
                         self.append(
@@ -1486,6 +1509,7 @@ impl LayoutBuilder<'_> {
         capture: &CapturedLayout,
         node: &NodeRef,
         ambient: &Predicate,
+        following: Continuation,
     ) -> LayoutContexts {
         let mut prefix = LayoutContext::empty();
         if !prefix.append(&capture.prefix, false, node.clone()) {
@@ -1503,6 +1527,7 @@ impl LayoutBuilder<'_> {
             node.indentation.saturating_add(capture.indentation),
             &Rc::new(node.context.iter().chain(occurrences).copied().collect()),
             ambient,
+            following,
         );
         self.then(
             LayoutContexts {
@@ -1568,10 +1593,11 @@ impl LayoutBuilder<'_> {
         branches: [&Rc<TextBuffer>; 2],
         node: &NodeRef,
         ambient: &Predicate,
+        following: Continuation,
     ) -> LayoutContexts {
         let [yes, no] = branches;
         if Rc::ptr_eq(yes, no) {
-            return self.walk(yes, node.indentation, &node.context, ambient);
+            return self.walk(yes, node.indentation, &node.context, ambient, following);
         }
         let FrozenTest {
             id: _,
@@ -1594,7 +1620,7 @@ impl LayoutBuilder<'_> {
                     Predicate::True
                 },
             ]));
-            self.walk(graph, node.indentation, &node.context, &active)
+            self.walk(graph, node.indentation, &node.context, &active, following)
         };
         let LayoutContexts {
             known: yes,
@@ -1649,7 +1675,91 @@ impl LayoutBuilder<'_> {
         result
     }
 
-    fn local_choices(&mut self, prefixes: &LayoutContexts, delta: &mut LayoutContexts) {
+    fn preceding(
+        &mut self,
+        part: &OutputNode,
+        indentation: usize,
+        following: Continuation,
+        remaining: &mut usize,
+    ) -> Continuation {
+        let Some(next) = remaining.checked_sub(1) else {
+            return Continuation::Opaque;
+        };
+        *remaining = next;
+        match part.content() {
+            TextPart::Bytes(bytes)
+                if bytes
+                    .chars()
+                    .all(|ch| ch == ' ' || helm_schema_syntax::is_yaml_line_break(ch)) =>
+            {
+                following
+            }
+            TextPart::Bytes(bytes) => {
+                if indentation == 0
+                    && bytes.starts_with('\n')
+                    && SPLITTER
+                        .as_ref()
+                        .ok()
+                        .and_then(|splitter| splitter.find(bytes))
+                        .is_some_and(|marker| {
+                            bytes
+                                .get(..marker.start())
+                                .is_some_and(|prefix| prefix.trim().is_empty())
+                        })
+                {
+                    return Continuation::End;
+                }
+                let complete = bytes.ends_with(|ch| {
+                    matches!(ch, ' ' | '\t') || helm_schema_syntax::is_yaml_line_break(ch)
+                }) || !matches!(following, Continuation::Opaque);
+                let text = indented_spelling(bytes, indentation);
+                if complete && let Some(block) = self.syntax.block_contribution(&text) {
+                    return Continuation::Block {
+                        indentation: block.indentation,
+                        kind: Some(block.kind),
+                    };
+                }
+                if !text.starts_with(helm_schema_syntax::is_yaml_line_break)
+                    || text.contains(REMOVED_MARKER)
+                {
+                    return Continuation::Opaque;
+                }
+                helm_schema_syntax::yaml_block_start(&text, following != Continuation::Opaque)
+                    .map_or(Continuation::Opaque, |(kind, indentation)| {
+                        Continuation::Block {
+                            indentation,
+                            kind: Some(kind),
+                        }
+                    })
+            }
+            TextPart::Select {
+                decision: _,
+                yes,
+                no,
+            } => {
+                let mut branch = |graph: &TextBuffer| {
+                    graph.parts.iter().rev().fold(following, |tail, part| {
+                        self.preceding(part, indentation, tail, remaining)
+                    })
+                };
+                let yes = branch(yes);
+                if matches!(yes, Continuation::Opaque) {
+                    yes
+                } else {
+                    yes.either(branch(no))
+                }
+            }
+            TextPart::Frozen(value) => following.after_frozen(value, indentation),
+            TextPart::Unknown(_) | TextPart::Repeat(_) => Continuation::Opaque,
+        }
+    }
+
+    fn local_choices(
+        &mut self,
+        prefixes: &LayoutContexts,
+        delta: &mut LayoutContexts,
+        following: Continuation,
+    ) {
         if delta.unknown != Predicate::False
             || delta.known.len() < 2
             || delta.known.iter().any(|branch| {
@@ -1677,11 +1787,14 @@ impl LayoutBuilder<'_> {
         let Some(contribution) = contribution else {
             return;
         };
-        if !prefixes.known.iter().all(|prefix| {
-            self.syntax
-                .contribution_host(&prefix.skeleton, contribution)
-                .is_some()
-        }) {
+        // A witnessed child or change of collection can depend on the preceding arm.
+        if following.changes_owner(contribution)
+            || !prefixes.known.iter().all(|prefix| {
+                self.syntax
+                    .contribution_host(&prefix.skeleton, contribution)
+                    .is_some()
+            })
+        {
             return;
         }
         let exclusive = delta.known.iter().enumerate().all(|(index, branch)| {
@@ -4084,6 +4197,109 @@ fn selection_guard(selections: &[SelectedSpan], span: Span) -> Predicate {
     )
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Continuation {
+    End,
+    // The deepest possible first block determines whether a preceding contribution closes.
+    Block {
+        indentation: usize,
+        kind: Option<YamlNodeKind>,
+    },
+    Column(usize),
+    // The first LF is known even when the YAML that follows it is opaque.
+    LineBreak,
+    Opaque,
+}
+
+impl Continuation {
+    fn after_frozen(self, frozen: &FrozenValue, indentation: usize) -> Self {
+        use super::text::TextTerm;
+        if matches!(frozen.literal(), Some(helm_schema_core::GuardValue::String(text)) if text.starts_with('\n'))
+        {
+            return Self::LineBreak;
+        }
+        let ValueNode::Leaf(Leaf {
+            datum: Datum::Text(text),
+            origin: _,
+        }) = frozen.value.node.as_ref()
+        else {
+            return Self::Opaque;
+        };
+        let TextTerm::Indent {
+            value,
+            width,
+            newline: true,
+        } = text.0.as_ref()
+        else {
+            return Self::Opaque;
+        };
+        if let ValueNode::Leaf(Leaf {
+            datum: Datum::Text(payload),
+            origin: _,
+        }) = value.value.node.as_ref()
+            && matches!(
+                payload.0.as_ref(),
+                TextTerm::Yaml {
+                    value: _,
+                    pretty: false
+                }
+            )
+        {
+            // The serializer opens its root at column zero. An empty serialization leaves the
+            // subsequent continuation in charge.
+            match Self::Column(indentation.saturating_add(*width)).either(self) {
+                Self::Opaque => Self::LineBreak,
+                continuation => continuation,
+            }
+        } else {
+            Self::LineBreak
+        }
+    }
+
+    fn either(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Opaque, _) | (_, Self::Opaque) => Self::Opaque,
+            (Self::End, continuation) | (continuation, Self::End) => continuation,
+            (Self::LineBreak, _) | (_, Self::LineBreak) => Self::LineBreak,
+            (Self::Column(left), Self::Column(right)) => Self::Column(left.max(right)),
+            (Self::Column(column), block @ Self::Block { indentation, .. })
+            | (block @ Self::Block { indentation, .. }, Self::Column(column)) => {
+                if indentation > column {
+                    block
+                } else {
+                    Self::Column(column)
+                }
+            }
+            (
+                Self::Block { indentation, kind },
+                Self::Block {
+                    indentation: other_indentation,
+                    kind: other_kind,
+                },
+            ) => match indentation.cmp(&other_indentation) {
+                std::cmp::Ordering::Less => other,
+                std::cmp::Ordering::Greater => self,
+                std::cmp::Ordering::Equal => Self::Block {
+                    indentation,
+                    kind: kind.filter(|kind| Some(*kind) == other_kind),
+                },
+            },
+        }
+    }
+
+    fn changes_owner(self, block: BlockContribution) -> bool {
+        match self {
+            Self::Block { indentation, kind } => {
+                indentation > block.indentation
+                    || indentation == block.indentation
+                        && block.kind != YamlNodeKind::Sequence
+                        && kind != Some(block.kind)
+            }
+            Self::End | Self::Column(_) | Self::LineBreak | Self::Opaque => false,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct BlockContribution {
     kind: YamlNodeKind,
@@ -4149,7 +4365,7 @@ fn contribution_host(
 
 #[tracing::instrument(skip_all)]
 fn block_contribution(text: &str) -> Option<BlockContribution> {
-    if !text.starts_with('\n') {
+    if !text.starts_with('\n') || SPLITTER.as_ref().ok()?.is_match(text) {
         return None;
     }
     let lines = text

@@ -4897,33 +4897,57 @@ fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
                   {{- toYaml .Values.resources | nindent 10 }}
     "};
 
-    for (label, src) in [("branch-selected", branch_selected), ("plain", plain)] {
+    let digest_inputs = [
+        Some(serde_json::json!("sha256:abc123")),
+        Some(serde_json::json!(false)),
+    ];
+    for (label, src, digests) in [
+        ("branch-selected", branch_selected, digest_inputs.as_slice()),
+        ("plain", plain, &[None][..]),
+    ] {
         let signals = schema_signals_for(parse_ir(src));
         let evidence = signals
             .evidence_for(&helm_schema_core::ValuesPath::parse("resources"))
             .ok_or_eyre("resolved `resources` evidence")?;
-        let slots: Vec<Vec<String>> = evidence
+        let slots: BTreeSet<Vec<String>> = evidence
             .provider_schema_uses
             .iter()
+            .chain(
+                evidence
+                    .conditional_overlays
+                    .iter()
+                    .flat_map(|overlay| &overlay.evidence.provider_schema_uses),
+            )
             .map(|use_| use_.path.0.clone())
             .collect();
         sim_assert_eq!(
             have: slots,
-            want: vec![vec![
+            want: BTreeSet::from([vec![
                 "spec".to_string(),
                 "template".to_string(),
                 "spec".to_string(),
                 "containers[*]".to_string(),
                 "resources".to_string(),
-            ]],
+            ]]),
             "{label} item slot"
         );
-        assert!(
-            schema_for(parse_ir(src))
-                .pointer("/properties/resources/properties/limits")
-                .is_some(),
-            "{label}: the item slot must reach ResourceRequirements typing"
-        );
+        let schema = schema_for(parse_ir(src));
+        for digest in digests {
+            for (cpu, valid) in [
+                (serde_json::json!("1"), true),
+                (serde_json::json!(true), false),
+            ] {
+                let mut values = serde_json::json!({"resources": {"limits": {"cpu": cpu}}});
+                if let Some(digest) = digest {
+                    values["digest"] = digest.clone();
+                }
+                sim_assert_eq!(
+                    have: schema_accepts_instance(&schema, &values),
+                    want: valid,
+                    "{label}: values={values}"
+                );
+            }
+        }
     }
     Ok(())
 }

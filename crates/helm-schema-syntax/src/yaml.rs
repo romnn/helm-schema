@@ -400,6 +400,38 @@ pub fn first_document_ownership(skeleton: Skeleton) -> Result<YamlOwnership, Lay
     ownership(skeleton, true)
 }
 
+/// Returns the first implicit block opener delivered before the input runs out.
+/// The caller may supply a proved line break after the literal prefix.
+#[must_use]
+pub fn yaml_block_start(text: &str, line_break: bool) -> Option<(YamlNodeKind, usize)> {
+    let mut reader = Reader::default();
+    let mut first = None;
+    for character in text.chars().chain(line_break.then_some('\n')) {
+        reader
+            .step_syntax(character, &mut |syntax| {
+                if let Syntax::Token(token) = syntax
+                    && first.is_none()
+                    && token.kind != TokenKind::StreamStart
+                {
+                    first = Some(
+                        match token.kind {
+                            TokenKind::BlockMappingStart => Some(YamlNodeKind::Mapping),
+                            TokenKind::BlockSequenceStart => Some(YamlNodeKind::Sequence),
+                            _ => None,
+                        }
+                        .map(|kind| (kind, token.start.column)),
+                    );
+                }
+                Ok(())
+            })
+            .ok()?;
+        if let Some(first) = first {
+            return first;
+        }
+    }
+    None
+}
+
 /// Reads a skeleton with Helm's pinned go-yaml reader and maps its nodes to pieces.
 ///
 /// `first_only` reads what Helm reads of one `SplitManifests` chunk: the first document.

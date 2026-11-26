@@ -7,8 +7,21 @@ use test_util::prelude::sim_assert_eq;
 use crate::{
     ActionId, ArmLayout, BodyLayout, HoleShape, HoleShapes, LayoutUncertainty, MAX_SKELETON_BYTES,
     RenderedBody, TemplatedDocument, UnknownShapes, YamlNodeKind, YamlOwnership, arm_layout,
-    arm_skeleton, parse_go_template, parse_yaml, render_body,
+    arm_skeleton, parse_go_template, parse_yaml, render_body, yaml_block_start,
 };
+
+#[test]
+fn a_literal_block_opener_precedes_an_unfinished_value() {
+    sim_assert_eq!(
+        have: yaml_block_start("\n  annotations: \"labels", false),
+        want: Some((YamlNodeKind::Mapping, 2)),
+    );
+    sim_assert_eq!(have: yaml_block_start("\n  annotations:", false), want: None);
+    sim_assert_eq!(
+        have: yaml_block_start("\n  annotations: \"", true),
+        want: Some((YamlNodeKind::Mapping, 2)),
+    );
+}
 
 fn sexp(text: &str) -> eyre::Result<String> {
     Ok(parse_yaml(text)
