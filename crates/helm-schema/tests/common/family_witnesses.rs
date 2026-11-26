@@ -497,11 +497,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/nginx-ingress-global-image-registry.yaml"),
                 oracle: RENDERS,
-                // F1's `global` is admitted; the row still rejects through the
-                // pre-existing D1 defaults defect `/properties/controller/allOf/10`
-                // (the lost `hasKey .Values.controller.mgmt "usageReport"` guard,
-                // plan/schema-bug-hunt-reports/report-batch-03.md:527), filed there.
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "89239c69074123a2",
             },
             Witness {
@@ -541,7 +537,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: execution error at (kyverno/templates/validate.yaml:28:6): mode is not supported anymore, please remove it from your release and use admissionController.replicas instead.",
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "3ab28f288921914f",
             },
             Witness {
@@ -593,7 +589,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 "F3/rabbitmq-cluster-operator-fullname-override-null.yaml",
             ),
             oracle: RENDERS,
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "0d2f3169288ebbb9",
         }],
         size_obligations: &[],
@@ -831,7 +827,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F7/prometheus-redis-exporter-service-monitor-targets-string-disabled.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "a59b73f6f30eba4f",
             },
         ],
@@ -971,7 +967,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             kubernetes_version: "1.29.0",
             overrides: Overrides::ValuesFile("F12/kibana-annotations-number-value.yaml"),
             oracle: RENDERS,
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "4106d1751ef83294",
         }],
         size_obligations: &[],
@@ -1076,7 +1072,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Renders {
                 kubernetes: KubernetesExpectation::Valid,
             },
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "ceb0d1a83873e7e0",
         }],
         size_obligations: &[],
@@ -1135,16 +1131,11 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Aborts {
                 diagnostic: "Error: synapse/templates/deployment.yaml:1:27 — wrong type for value; expected string; got interface {}",
             },
-            // Masked: the fixture rejects this document only with the errors it already
-            // gives the chart defaults (F4 `synapse-defaults`), so the verdict says nothing
-            // about F18.
-            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "2181e36a8f27395d",
         }],
         size_obligations: &[],
-        unfrozen: &[
-            "synapse is the only chart calling `required <value> <message>`, and its fixture rejects its own defaults (F4), so `synapse-macaroon-secret-key-null` is rejected only through that unrelated rejection; re-adjudicate the row once the synapse defaults are accepted.",
-        ],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F19,
@@ -1198,7 +1189,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Renders {
                 kubernetes: KubernetesExpectation::Valid,
             },
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "7cc0de498ec09c5b",
         }],
         size_obligations: &[],
@@ -1212,7 +1203,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             kubernetes_version: "1.29.0",
             overrides: Overrides::ValuesFile("F21/minio-ingress-path-number-disabled.yaml"),
             oracle: RENDERS,
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "689d272e9f41eda5",
         }],
         size_obligations: &[],
@@ -1341,7 +1332,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F26/istiod-global-enable-tracing-true.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "65a9f1761621ee4b",
             },
             Witness {
@@ -1352,7 +1343,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F26/istiod-global-outbound-traffic-policy-map.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "438b1c09c0388f15",
             },
         ],
@@ -1492,7 +1483,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                         }],
                     },
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "b79f64da724a1b27",
             },
             Witness {
@@ -1516,7 +1507,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F31/kubeshark-tap-security-context-privileged-false.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "efaa31e5e063478f",
             },
         ],
@@ -1727,7 +1718,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Renders {
                 kubernetes: KubernetesExpectation::Valid,
             },
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "30a3b4e39e5b5cf3",
         }],
         size_obligations: &[],
@@ -1809,7 +1800,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F41/redis-ha-fullname-override-string.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "27512ed6c550baab",
             },
         ],
@@ -1851,7 +1842,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             kubernetes_version: "1.29.0",
             overrides: Overrides::ValuesFile("F43/zabbix-server-host-port-string-true.yaml"),
             oracle: RENDERS,
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "732a8769bb3a51b2",
         }],
         size_obligations: &[],
@@ -1912,7 +1903,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             kubernetes_version: "1.29.0",
             overrides: Overrides::ValuesFile("F46/datadog-operator-migration-preview.yaml"),
             oracle: RENDERS,
-            schema: SchemaExpectation::KnownFalseRejection,
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
             adjudicated: "7af29168d688a7b1",
         }],
         size_obligations: &[],
@@ -2025,9 +2016,6 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: execution error at (eck-stack/charts/eck-kibana/templates/kibana.yaml:27:5): An elasticsearchRef name or secretName is required",
                 },
-                // Masked: the fixture rejects this document only with the errors it already
-                // gives the chart defaults (F51 `eck-stack-defaults`, `/properties/eck-
-                // kibana/allOf/16`), so the verdict says nothing about F50.
                 schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "33e684c276f5bf4b",
             },
@@ -2039,14 +2027,12 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F50/eck-stack-kibana-spec-ref-name-fallback-null.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "f6af6dc42884e662",
             },
         ],
         size_obligations: &[],
-        unfrozen: &[
-            "`eck-stack-kibana-spec-ref-namespace-only` is rejected only by the arm that also rejects the eck-stack defaults (F51); re-adjudicate it once the defaults are accepted.",
-        ],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F51,
@@ -2240,7 +2226,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: alloy/templates/controllers/daemonset.yaml:27:8 — alloy/templates/containers/_agent.yaml:93:18 — nil pointer evaluating interface {}.varlog",
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "1dbbb2392e50fb6c",
             },
             Witness {
@@ -2251,7 +2237,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: alloy/templates/controllers/daemonset.yaml:27:8 — alloy/templates/containers/_agent.yaml:19:18 — nil pointer evaluating interface {}.enabled",
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "bfb3e5574cdd0565",
             },
         ],
@@ -2358,7 +2344,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F59/kube-prometheus-stack-prometheus-network-policy-flavor-list-disabled.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "39eefb18079e995f",
             },
             Witness {
@@ -2540,16 +2526,11 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Aborts {
                 diagnostic: "Error: milvus/templates/ingress.yaml:71:16 — can't evaluate field hosts in type interface {}",
             },
-            // Masked: the fixture rejects this document only with the errors it already
-            // gives the chart defaults (D3 `milvus-defaults`), so the verdict says nothing
-            // about F63.
-            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "24d12d1043dfa03e",
         }],
         size_obligations: &[],
-        unfrozen: &[
-            "milvus `ingress.tls: [\"a\"]` is rejected only by the D3 arms that reject the milvus defaults, and oncall's fixture is refused by Helm under Go regexp; no unmasked witness exists in the corpus.",
-        ],
+        unfrozen: &["The oncall ingress TLS witness still needs adjudication."],
     },
     FamilyWitnesses {
         family: Family::F64,
@@ -2569,16 +2550,11 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Aborts {
                 diagnostic: "Error: execution error at (gitea/templates/gitea/deployment.yaml:30:28): When using multiple replicas, a RWX file system is required and persistence.accessModes[0] must be set to ReadWriteMany.",
             },
-            // Masked: the fixture rejects this document only with the errors it already
-            // gives the chart defaults (`gitea-defaults`), so the verdict says nothing
-            // about F65.
-            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "87086a69c5606a55",
         }],
         size_obligations: &[],
-        unfrozen: &[
-            "`gitea-replica-count-2` is rejected only by the errors the gitea defaults already have; re-adjudicate once `gitea-defaults` is accepted.",
-        ],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F66,
@@ -2590,16 +2566,11 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Aborts {
                 diagnostic: "Error: execution error at (gitea/templates/gitea/clientSettingsPolicy.yaml:3:4): gatewayAPI.nginx.clientSettingsPolicies.body is required",
             },
-            // Masked: the fixture rejects this document only with the errors it already
-            // gives the chart defaults (`gitea-defaults`), so the verdict says nothing
-            // about F66.
-            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "4eb16220b9c24c9d",
         }],
         size_obligations: &[],
-        unfrozen: &[
-            "`gitea-client-settings-policy-empty-body` is rejected only by the errors the gitea defaults already have; re-adjudicate once `gitea-defaults` is accepted.",
-        ],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F67,
@@ -2611,16 +2582,11 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             oracle: OracleExpectation::Aborts {
                 diagnostic: "Error: gitea/templates/gitea/deployment.yaml:47:33 — gitea/templates/_helpers.tpl:109:81 — wrong type for value; expected map[string]interface {}; got string",
             },
-            // Masked: the fixture rejects this document only with the errors it already
-            // gives the chart defaults (`gitea-defaults`), so the verdict says nothing
-            // about F67.
-            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "72434ea88a1f7054",
         }],
         size_obligations: &[],
-        unfrozen: &[
-            "`gitea-pod-security-context-string` is rejected only by the errors the gitea defaults already have; re-adjudicate once `gitea-defaults` is accepted.",
-        ],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F68,
@@ -3084,7 +3050,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F76/surveyor-image-repository-null-registry.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "80884189f380e2e6",
             },
             Witness {
@@ -3783,9 +3749,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "D4/stacks-blockchain-api-postgresql-auth-username.yaml",
                 ),
                 oracle: RENDERS,
-                // Rejected by the ten parent-root arms `stacks-blockchain-api-defaults` also
-                // hits.
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "ac63ffaef3a21bc2",
             },
             Witness {
@@ -3794,9 +3758,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("D4/netbox-postgresql-auth-username.yaml"),
                 oracle: RENDERS,
-                // Rejected by the five root arms `netbox-defaults` also hits (D3 and D4
-                // together).
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "9741e34664f7db1c",
             },
         ],
@@ -3854,7 +3816,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     value: SetValue::Int(0),
                 }]),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "88deed4025ba59b9", // spellcheck:ignore-line
             },
             Witness {
@@ -3866,7 +3828,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     value: SetValue::Null,
                 }]),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "82ffdccf8cae855a",
             },
             Witness {
@@ -3886,7 +3848,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("B6/nginx-hostname-true-disabled.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "5fc12a1f2ca93ece",
             },
         ],
