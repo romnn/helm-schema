@@ -4,42 +4,83 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "persistence": {}
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "persistence": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "persistence"
-                    ],
-                    "type": "object"
-                  }
-                ]
+            "properties": {
+              "fullnameOverride": {
+                "$ref": "#/definitions/t"
               }
-            ]
+            },
+            "required": [
+              "fullnameOverride"
+            ],
+            "type": "object"
           },
+          {
+            "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+          },
+          {
+            "$ref": "#/definitions/constrains~1createConfigmap:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "grafana.ini": {
+            "description": "Grafana's primary configuration\nNOTE: values in map will be converted to ini format\nref: http://docs.grafana.org/installation/configuration/",
+            "type": [
+              "array",
+              "null",
+              "object"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+useStatefulSet:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "allOf": [
               {
@@ -76,6 +117,41 @@
                       ],
                       "type": "object"
                     }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {}
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "persistence": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
                   }
                 ]
               }
@@ -147,54 +223,9 @@
           },
           {
             "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistence": {
-            "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+persistence.type=StatefulSet+3more"
           },
           {
-            "$ref": "#/definitions/constrains~1persistence.enabled:t+useStatefulSet:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t"
-          },
-          {
-            "properties": {
-              "createConfigmap": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "createConfigmap"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1createConfigmap:t"
           },
           {
             "properties": {
@@ -218,6 +249,25 @@
               "null",
               "object"
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "Overrides the Grafana image tag whose default is the chart appVersion",
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -252,53 +302,31 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
+        "$ref": "#/definitions/constrains~1useStatefulSet:t@2"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "description": "Overrides the Grafana image tag whose default is the chart appVersion",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/definitions/t"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
             "type": "object"
-          },
-          {
-            "$ref": "#/definitions/when~1persistence.enabled:t~1then~1persistence.existingClaim:t+persistence.type=StatefulSet+3more~1else~1any"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
           }
         }
       }
     }
   ],
   "definitions": {
+    "constrains/createConfigmap:t": {
+      "properties": {
+        "createConfigmap": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "createConfigmap"
+      ],
+      "type": "object"
+    },
     "constrains/persistence.enabled:t": {
       "not": {
         "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
@@ -329,12 +357,12 @@
     "constrains/persistence.enabled:t+persistence.existingClaim:t+useStatefulSet:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1persistence.enabled:t"
-        },
-        {
           "not": {
             "$ref": "#/definitions/constrains~1persistence.existingClaim:t"
           }
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistence.enabled:t"
         },
         {
           "$ref": "#/definitions/constrains~1useStatefulSet:t@3"
