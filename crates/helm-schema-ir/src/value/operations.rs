@@ -203,7 +203,7 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
             }
             Ok(keys_with_length(&length, state, &mut 255))
         }
-        "len" => Ok(transfer_length(input, state)),
+        "len" => transfer_length(input, state),
         "toJson" | "mustToJson" | "toPrettyJson" | "toRawJson" | "mustToRawJson" | "toYaml"
         | "toYamlPretty" => return transfer_serialize(input, state),
         "fromJson" | "mustFromJson" | "fromYaml" | "fromYamlArray" | "fromJsonArray" => {
@@ -880,7 +880,9 @@ fn transfer_join(input: TransferInput<'_>, state: &mut State) -> Result<Value, T
     Ok(Value::string(&strings.join(separator)))
 }
 
-fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Value {
+fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Result<Value, AbortReason> {
+    use super::kinds::GoType;
+
     let TransferInput {
         function: _,
         arguments: _,
@@ -889,8 +891,26 @@ fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Value {
         last: _,
     } = input;
 
-    if let Some(length) = state.map_length(&first) {
-        return length;
+    state.record_requirement(
+        &first,
+        &Predicate::True,
+        super::query::RequirementKind::Length,
+    );
+    let operand = state.heap.freeze(&first);
+    let kind = operand.go_type();
+    match kind {
+        GoType::String | GoType::Slice | GoType::Map | GoType::Unknown => {}
+        GoType::Nil
+        | GoType::Bool
+        | GoType::Int
+        | GoType::Int64
+        | GoType::Uint64
+        | GoType::Float64 => return Err(AbortReason::Type),
+    }
+    if kind == GoType::Map
+        && let Some(length) = state.map_length(&first)
+    {
+        return Ok(length);
     }
     let length = if let ValueNode::Leaf(Leaf {
         datum: Datum::Sequence(sequence),
@@ -909,12 +929,17 @@ fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Value {
     } else {
         None
     };
-    length
-        .and_then(|length| i64::try_from(length).ok())
-        .map_or_else(
-            || Value::influenced(influences.clone()),
-            |length| Value::literal(GuardValue::Int(length)),
-        )
+    if let Some(length) = length.and_then(|length| i64::try_from(length).ok()) {
+        return Ok(Value::literal(GuardValue::Int(length)));
+    }
+    let result = Value::scalar(super::ScalarType::Int, None);
+    if kind != GoType::Unknown || first.identity().is_some() {
+        let nonempty = state.test(&first);
+        if nonempty.certified_guards().is_some() {
+            return Ok(result.derived(operand, ValueOperation::Length { nonempty }));
+        }
+    }
+    Ok(result.with_influences(influences))
 }
 
 fn transfer_serialize(

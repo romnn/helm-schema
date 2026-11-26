@@ -3183,6 +3183,7 @@ impl<'a> LexicalTransfers<'a> {
             }
             super::relationship::ValueOperation::Decode(_)
             | super::relationship::ValueOperation::Capability { decision: _ }
+            | super::relationship::ValueOperation::Length { nonempty: _ }
             | super::relationship::ValueOperation::Trim
             | super::relationship::ValueOperation::SplitLiteral { separator: _ }
             | super::relationship::ValueOperation::SplitSegment(_)

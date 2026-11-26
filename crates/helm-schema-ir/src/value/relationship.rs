@@ -139,6 +139,7 @@ pub(super) enum TextFormat {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum ValueOperation {
     Capability { decision: Rc<super::FrozenTest> },
+    Length { nonempty: Rc<super::FrozenTest> },
     Decode(Decoder),
     Format(TextFormat),
     Text(TextTransform),
@@ -1589,6 +1590,7 @@ pub(super) fn structural_preimage(preimage: &[Preimage<'_>]) -> bool {
                 ValueOperation::Copy | ValueOperation::Omit(_) => {}
                 ValueOperation::Decode(_)
                 | ValueOperation::Capability { decision: _ }
+                | ValueOperation::Length { nonempty: _ }
                 | ValueOperation::Trim
                 | ValueOperation::Text(_)
                 | ValueOperation::SplitLiteral { separator: _ }
@@ -2108,6 +2110,7 @@ fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
     match operation {
         ValueOperation::Format(TextFormat::Value | TextFormat::String)
         | ValueOperation::Capability { decision: _ }
+        | ValueOperation::Length { nonempty: _ }
         | ValueOperation::Trim
         | ValueOperation::Text(_)
         | ValueOperation::SplitSegment(_)
@@ -2249,6 +2252,7 @@ impl<'a> RelationshipQuery<'a, '_> {
                 super::lexical::printed_preimage(&query.unmatched),
             ),
             ValueOperation::Capability { decision: _ }
+            | ValueOperation::Length { nonempty: _ }
             | ValueOperation::Decode(_)
             | ValueOperation::Trim
             | ValueOperation::SplitLiteral { separator: _ }

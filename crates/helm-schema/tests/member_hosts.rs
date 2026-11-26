@@ -3153,6 +3153,65 @@ fn index_requires_host_but_not_final_member() -> eyre::Result<()> {
 }
 
 #[test]
+fn length_guarded_range_operand() -> eyre::Result<()> {
+    let schema = schema_for(
+        "{}",
+        "{{ if len .Values.x }}{{ range .Values.x }}{{ end }}{{ end }}",
+    )?;
+    let validator = jsonschema::validator_for(&schema)?;
+    for (document, renders) in [
+        (json!({}), false),
+        (json!({"x": null}), false),
+        (json!({"x": true}), false),
+        (json!({"x": 3}), false),
+        (json!({"x": 1.5}), false),
+        (json!({"x": "xyz"}), false),
+        (json!({"x": ""}), true),
+        (json!({"x": []}), true),
+        (json!({"x": ["item"]}), true),
+        (json!({"x": {}}), true),
+        (json!({"x": {"key": "item"}}), true),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&document), want: renders, "{document}");
+    }
+
+    let mut expected = schema_for("{}", "{{ $_ := .Values.x }}")?;
+    expected["allOf"] = json!([
+        {
+            "if": {"anyOf": [
+                {"not": {"properties": {"x": {}}, "required": ["x"], "type": "object"}},
+                {"properties": {"x": {"enum": [null]}}, "required": ["x"], "type": "object"}
+            ]},
+            "then": false
+        },
+        {
+            "additionalProperties": {},
+            "properties": {"x": {"anyOf": [
+                {"type": "array"}, {"type": "object"}, {"type": "string"}
+            ]}}
+        },
+        {
+            "if": {
+                "properties": {"x": {"anyOf": [
+                    {"type": "object", "minProperties": 1},
+                    {"type": "number", "not": {"const": 0}},
+                    {"type": "string", "minLength": 1},
+                    {"type": "array", "minItems": 1},
+                    {"const": true}
+                ]}},
+                "required": ["x"],
+                "type": "object"
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {"x": {"type": ["array", "integer", "null", "object"]}}
+            }
+        }
+    ]);
+    assert_expanded_contracts(&[schema], &[expected])
+}
+
+#[test]
 fn map_range_member_hosts() -> eyre::Result<()> {
     let expected = json!({
         "$schema": "http://json-schema.org/draft-07/schema#",

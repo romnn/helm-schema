@@ -165,6 +165,7 @@ impl<'a> Transfer<'a> {
                 self.result.stringified = true;
             }
             ValueOperation::Capability { decision: _ }
+            | ValueOperation::Length { nonempty: _ }
             | ValueOperation::Decode(_)
             | ValueOperation::SplitLiteral { separator: _ }
             | ValueOperation::SplitSegment(_)

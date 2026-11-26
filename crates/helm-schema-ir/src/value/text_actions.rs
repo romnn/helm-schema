@@ -524,6 +524,7 @@ impl Query<'_> {
             }
             ValueOperation::Copy
             | ValueOperation::Capability { decision: _ }
+            | ValueOperation::Length { nonempty: _ }
             | ValueOperation::Decode(_)
             | ValueOperation::SplitLiteral { separator: _ }
             | ValueOperation::SplitSegment(_)

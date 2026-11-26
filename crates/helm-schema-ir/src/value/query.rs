@@ -18,6 +18,7 @@ pub(super) enum RequirementKind {
     Range {
         allow_integer: bool,
     },
+    Length,
     StrictArgument {
         kind: super::kinds::GoType,
         allows_nil: bool,
@@ -856,6 +857,7 @@ impl State {
                 allows_nil: allows_nil && path.item_parent().is_none(),
             },
             RequirementKind::Range { .. }
+            | RequirementKind::Length
             | RequirementKind::StrictArgument { .. }
             | RequirementKind::KnownAny
             | RequirementKind::OpaqueBlockText
@@ -1600,7 +1602,9 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
     }
     if let Some(super::relationship::Derivation {
         source: _,
-        operation: super::relationship::ValueOperation::Capability { decision },
+        operation:
+            super::relationship::ValueOperation::Capability { decision }
+            | super::relationship::ValueOperation::Length { nonempty: decision },
     }) = value.operation_preimage()
     {
         return Rc::clone(decision);
@@ -3041,6 +3045,15 @@ fn requirement_domain(kind: RequirementKind, member: bool) -> Option<super::Cons
         RequirementKind::Range { allow_integer } => {
             (FailValueRequirement::Iterable { allow_integer }, false)
         }
+        RequirementKind::Length => (
+            FailValueRequirement::AnyOf(
+                ["array", "object", "string"]
+                    .into_iter()
+                    .map(|kind| vec![FailValueRequirement::SchemaTypeEvenNull(kind.to_owned())])
+                    .collect(),
+            ),
+            true,
+        ),
         RequirementKind::StrictArgument { kind, allows_nil } => {
             let schema_type = match kind {
                 super::kinds::GoType::String => "string",
