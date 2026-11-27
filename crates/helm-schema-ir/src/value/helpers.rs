@@ -8,7 +8,7 @@ use super::{
     ScalarType, State, Value,
 };
 use crate::analysis_db::ParsedProgram;
-use helm_schema_core::{GuardValue, ValuesPath};
+use helm_schema_core::{GuardValue, Predicate, ValuesPath};
 
 struct HelperBranch {
     state: State,
@@ -144,6 +144,9 @@ impl Executor<'_> {
         state.calls.push(call);
         match target {
             HelperTarget::Abort(reason) => {
+                if reason == AbortReason::MissingTemplate {
+                    state.record_failure(&Predicate::True);
+                }
                 vec![Exit {
                     state,
                     flow: Flow::Abort(reason),

@@ -621,10 +621,13 @@ fn execute_lookup(
                 &body.occurrence,
             )
         }
-        TemplateResolution::Missing => vec![Exit {
-            state,
-            flow: Flow::Abort(AbortReason::MissingTemplate),
-        }],
+        TemplateResolution::Missing => {
+            state.record_failure(&helm_schema_core::Predicate::True);
+            vec![Exit {
+                state,
+                flow: Flow::Abort(AbortReason::MissingTemplate),
+            }]
+        }
         TemplateResolution::Unknown => {
             state.mark_invocation_incomplete();
             super::operations::invalidate(&mut state);

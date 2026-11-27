@@ -1239,6 +1239,10 @@ fn preserve_positive_self_type_domains(
     overlay: &ConditionalPathOverlay,
     mut branch_schema: Value,
 ) -> Value {
+    // A branch with no assertion already admits every type in its guard.
+    if is_empty_schema(&branch_schema) || branch_schema == Value::Bool(true) {
+        return branch_schema;
+    }
     // A branch keyed on the path's own positive type partition must stay
     // satisfiable for that type — the arm executes for it. A branch resolve
     // that contradicts its partition (an object guess for a `kindIs "slice"`

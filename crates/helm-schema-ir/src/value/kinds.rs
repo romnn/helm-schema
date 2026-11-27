@@ -556,12 +556,15 @@ pub(super) fn required_subject(state: super::State, subject: super::Value) -> Ve
         .decision(empty.clone(), empty.negated(), Coverage::Exact);
     let mut exits = Vec::new();
     for taken in [true, false] {
-        let branch = if taken {
+        let mut branch = if taken {
             state.fork(Rc::clone(&decision), taken)
         } else {
             state.survive(Rc::clone(&decision), taken)
         };
         if !branch.path_is_infeasible() {
+            if taken {
+                branch.record_failure(&Predicate::True);
+            }
             exits.push(Exit {
                 state: branch,
                 flow: if taken {

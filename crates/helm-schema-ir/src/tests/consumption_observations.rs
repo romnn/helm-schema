@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 use ahash::AHashMap;
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
-use helm_schema_core::{Guard, Predicate, ValuesPath};
+use helm_schema_core::{Guard, GuardValue, Predicate, ValuesPath};
 use test_util::prelude::sim_assert_eq;
 
 use super::{ConsumptionDomain, FrozenConsumption, FrozenRequirementGuard};
@@ -133,6 +133,36 @@ fn strict_argument_and_comparison_domains_have_their_own_observations() {
             .iter()
             .any(|consumption| matches!(consumption.domain, ConsumptionDomain::KnownFailure))
     );
+}
+
+#[test]
+fn required_records_failure_only_where_the_call_reaches_an_empty_subject() {
+    let consumptions = observations(indoc::indoc! {r#"
+        {{ if .Values.run }}{{ $_ := required "payload" .Values.payload }}{{ end }}
+        {{ $_ := tpl `{{ $_ := set .Values "payload" "late" }}` . }}
+    "#});
+    let actual = Predicate::Or(
+        consumptions
+            .iter()
+            .filter(|fact| matches!(fact.domain, ConsumptionDomain::KnownFailure))
+            .map(FrozenConsumption::test_condition)
+            .collect(),
+    );
+    let path = ValuesPath::parse("payload");
+    let empty = Predicate::Or(vec![
+        Predicate::from(Guard::Absent { path: path.clone() }),
+        Predicate::from(Guard::Eq {
+            path: path.clone(),
+            value: GuardValue::Null,
+        }),
+        Predicate::from(Guard::Eq {
+            path,
+            value: GuardValue::String(String::new()),
+        }),
+    ]);
+    let expected = Predicate::all(vec![Predicate::truthy_path("run"), empty]);
+    assert!(expected.exactly_implies(&actual), "{actual:?}");
+    assert!(actual.exactly_implies(&expected), "{actual:?}");
 }
 
 #[test]

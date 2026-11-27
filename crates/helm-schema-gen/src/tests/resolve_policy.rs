@@ -8,6 +8,55 @@ use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
 
 #[test]
+fn guard_types_do_not_constrain_an_untyped_conditional_branch() {
+    use crate::resolve_policy::{ConditionalTargetContext, conditional_target_schema};
+    use helm_schema_core::{
+        ConditionalGuard, ConditionalOverlayEvidence, ConditionalOverlayFlavor,
+        ConditionalPathOverlay, GuardValue, ValuesPath,
+    };
+
+    let path = ValuesPath::parse("component");
+    let overlay = ConditionalPathOverlay::new(
+        vec![ConditionalGuard::AnyOf(
+            vec![
+                ConditionalGuard::TypeIs {
+                    path: path.clone(),
+                    schema_type: "number".to_owned(),
+                },
+                ConditionalGuard::Eq {
+                    path: path.clone(),
+                    value: GuardValue::string("controller".to_owned()),
+                },
+            ]
+            .into(),
+        )],
+        ConditionalOverlayEvidence::default(),
+        false,
+        ConditionalOverlayFlavor::Ordinary,
+    );
+    let mut context = ConditionalTargetContext {
+        values_yaml_doc: &serde_yaml::Value::Null,
+        acceptance_memo: &mut ConditionalSchemaAcceptanceMemo::default(),
+        declared_types: crate::DeclaredTypes::Assert,
+        provider_resolutions: &crate::provider_resolution::ProviderSchemaResolutions::resolve(
+            &ContractSchemaSignals::default(),
+            &NoopProvider,
+        ),
+    };
+    let empty = serde_json::json!({});
+    let schema = conditional_target_schema(
+        &path,
+        &overlay,
+        &mut context,
+        empty.clone(),
+        &empty,
+        empty.clone(),
+        None,
+    );
+    sim_assert_eq!(have: schema, want: empty);
+}
+
+#[test]
 fn conditional_schema_acceptance_memo_uses_complete_document_keys() {
     let mut memo = ConditionalSchemaAcceptanceMemo::default();
     let string_schema = serde_json::json!({ "type": "string" });
