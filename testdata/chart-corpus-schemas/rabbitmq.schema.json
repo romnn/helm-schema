@@ -145,35 +145,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1auth.tls.existingSecret:t@3"
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1auth.tls.enabled:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "String to fully override common.names.namespace",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -391,7 +362,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@3"
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
                       },
                       {
                         "$ref": "#/definitions/constrains~1resources"
@@ -484,7 +455,7 @@
                         }
                       },
                       {
-                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@3"
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
                       },
                       {
                         "$ref": "#/definitions/constrains~1resources@2"
@@ -503,7 +474,7 @@
                         "$ref": "#/definitions/constrains~1resources.limits?@2"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@3"
+                        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
                       },
                       {
                         "$ref": "#/definitions/constrains~1resources.limits"
@@ -638,10 +609,10 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
+                              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
                             }
                           ]
                         },
@@ -964,7 +935,7 @@
             "else": {
               "else": {
                 "else": {
-                  "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
+                  "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
                 },
                 "if": {
                   "$ref": "#/definitions/constrains~1auth.tls.enabled:t"
@@ -974,7 +945,7 @@
                     "else": {
                       "else": {
                         "else": {
-                          "$ref": "#/definitions/constrains~1ldap+ldap.basedn:t+ldap.uri:t+ldap.userDnPattern:t+ldap.user_dn_pattern:t+13more"
+                          "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
                         },
                         "if": {
                           "$ref": "#/definitions/constrains~1ingress.enabled:t"
@@ -982,432 +953,68 @@
                         "then": {
                           "else": {
                             "else": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more"
+                              "else": {
+                                "else": {
+                                  "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
                                 },
-                                {
-                                  "else": {
-                                    "allOf": [
-                                      {
-                                        "else": {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                            },
-                                            {
-                                              "else": {
-                                                "allOf": [
-                                                  {
-                                                    "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-                                                  },
-                                                  {
-                                                    "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative~1else~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issu..."
-                                                  }
-                                                ]
-                                              },
-                                              "if": {
-                                                "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-                                              },
-                                              "then": {
-                                                "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative~1else~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issu..."
-                                              }
-                                            }
-                                          ]
-                                        },
-                                        "if": {
-                                          "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
-                                        },
-                                        "then": {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative~1else~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issu..."
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                                      }
-                                    ]
-                                  },
-                                  "if": {
-                                    "$ref": "#/definitions/constrains~1ingress.selfSigned:t@2"
-                                  },
-                                  "then": {
-                                    "allOf": [
-                                      {
-                                        "else": {
-                                          "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+4more@2"
-                                        },
-                                        "if": {
-                                          "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
-                                        },
-                                        "then": {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@4"
-                                            }
-                                          ]
-                                        }
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                                      }
-                                    ]
-                                  }
+                                "if": {
+                                  "$ref": "#/definitions/constrains~1ingress.tls:t"
                                 },
-                                {
+                                "then": {
                                   "else": {
                                     "else": {
-                                      "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark.type=absolute+1more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
+                                      "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
                                     },
                                     "if": {
-                                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+                                      "$ref": "#/definitions/constrains~1ldap.enabled:t"
                                     },
                                     "then": {
                                       "else": {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                          },
-                                          {
-                                            "else": {
-                                              "allOf": [
-                                                {
-                                                  "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1ingress+ingress.annotations+7more"
-                                                }
-                                              ]
-                                            },
-                                            "if": {
-                                              "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-                                            },
-                                            "then": {
-                                              "$ref": "#/definitions/constrains~1ingress+ingress.annotations+7more"
-                                            }
-                                          }
-                                        ]
+                                        "$ref": "#/definitions/when~1ldap.uri:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1any"
                                       },
                                       "if": {
-                                        "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
+                                        "$ref": "#/definitions/constrains~1ldap.servers:t"
                                       },
                                       "then": {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1ingress+ingress.annotations+7more"
-                                          }
-                                        ]
+                                        "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t@2"
                                       }
                                     }
                                   },
                                   "if": {
-                                    "$ref": "#/definitions/constrains~1ingress.selfSigned:t@2"
+                                    "$ref": "#/definitions/constrains~1ldap.basedn:t"
                                   },
                                   "then": {
                                     "else": {
-                                      "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark.type=absolute+1more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
+                                      "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
                                     },
                                     "if": {
-                                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
+                                      "$ref": "#/definitions/constrains~1ldap.enabled:t"
                                     },
                                     "then": {
-                                      "else": {
-                                        "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+4more"
-                                      },
-                                      "if": {
-                                        "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
-                                      },
-                                      "then": {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@3"
-                                          }
-                                        ]
-                                      }
-                                    }
-                                  }
-                                },
-                                {
-                                  "else": {
-                                    "allOf": [
-                                      {
-                                        "$ref": "#/definitions/when~1ingress.annotations+ingress.annotations=null~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative~1else~1ingress.annotations+ingress.annotations.'cert-manager.io~1cluster-issu..."
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                                      }
-                                    ]
-                                  },
-                                  "if": {
-                                    "$ref": "#/definitions/constrains~1ingress.selfSigned:t@2"
-                                  },
-                                  "then": {
-                                    "allOf": [
-                                      {
-                                        "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+memoryHighWatermark.type=absolute+2more@2"
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "else": {
-                                    "else": {
-                                      "$ref": "#/definitions/constrains~1ldap.enabled:t+memoryHighWatermark.type=absolute+1more"
-                                    },
-                                    "if": {
-                                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                                    },
-                                    "then": {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1ingress+ingress.annotations+7more"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  "if": {
-                                    "$ref": "#/definitions/constrains~1ingress.selfSigned:t@2"
-                                  },
-                                  "then": {
-                                    "else": {
-                                      "$ref": "#/definitions/constrains~1ldap.enabled:t+memoryHighWatermark.type=absolute+1more"
-                                    },
-                                    "if": {
-                                      "$ref": "#/definitions/constrains~1ingress.tls:t@2"
-                                    },
-                                    "then": {
-                                      "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+memoryHighWatermark.type=absolute+2more"
+                                      "$ref": "#/definitions/when~1ldap.servers:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.uri:t@2"
                                     }
                                   }
                                 }
-                              ]
+                              },
+                              "if": {
+                                "$ref": "#/definitions/constrains~1ingress.selfSigned:t"
+                              },
+                              "then": {
+                                "$ref": "#/definitions/when~1ingress.tls:t~1then~1ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+ldap.userDnPattern:t+12more~1else~1any"
+                              }
                             },
                             "if": {
                               "$ref": "#/definitions/constrains~1ingress.extraTls:t"
                             },
                             "then": {
-                              "else": {
-                                "$ref": "#/definitions/constrains~1ldap+ldap.basedn:t+ldap.uri:t+ldap.userDnPattern:t+ldap.user_dn_pattern:t+13more"
-                              },
-                              "if": {
-                                "$ref": "#/definitions/constrains~1ingress.tls:t"
-                              },
-                              "then": {
-                                "else": {
-                                  "anyOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more"
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                        },
-                                        {
-                                          "else": {
-                                            "allOf": [
-                                              {
-                                                "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-                                              },
-                                              {
-                                                "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark.type=absolute+9more~1else~1any@2"
-                                              }
-                                            ]
-                                          },
-                                          "if": {
-                                            "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-                                          },
-                                          "then": {
-                                            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark.type=absolute+9more~1else~1any@2"
-                                          }
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark.type=absolute+9more~1else~1any"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+memoryHighWatermark.type=absolute+2more@2"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+4more"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+4more@2"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1ingress.annotations+ldap.enabled:t+memoryHighWatermark.type=absolute+2more"
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark.type=absolute+9more~1else~1any@2"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                        },
-                                        {
-                                          "else": {
-                                            "allOf": [
-                                              {
-                                                "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-                                              },
-                                              {
-                                                "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark.type=absolute+9more~1else~1any"
-                                              }
-                                            ]
-                                          },
-                                          "if": {
-                                            "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-                                          },
-                                          "then": {
-                                            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark.type=absolute+9more~1else~1any"
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                "if": {
-                                  "$ref": "#/definitions/constrains~1ldap.basedn:t"
-                                },
-                                "then": {
-                                  "$ref": "#/definitions/when~1ldap.enabled:t~1then~1ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1any"
-                                }
-                              }
+                              "$ref": "#/definitions/when~1ingress.tls:t~1then~1ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+ldap.userDnPattern:t+12more~1else~1any"
                             }
                           },
                           "if": {
                             "$ref": "#/definitions/constrains~1ingress.existingSecret:t"
                           },
                           "then": {
-                            "else": {
-                              "else": {
-                                "else": {
-                                  "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
-                                },
-                                "if": {
-                                  "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                },
-                                "then": {
-                                  "else": {
-                                    "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
-                                  },
-                                  "if": {
-                                    "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                  },
-                                  "then": {
-                                    "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t"
-                                  }
-                                }
-                              },
-                              "if": {
-                                "$ref": "#/definitions/constrains~1ldap.basedn:t"
-                              },
-                              "then": {
-                                "else": {
-                                  "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
-                                },
-                                "if": {
-                                  "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-                                },
-                                "then": {
-                                  "$ref": "#/definitions/when~1ldap.uri:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1any@2"
-                                }
-                              }
-                            },
-                            "if": {
-                              "$ref": "#/definitions/constrains~1ingress.tls:t"
-                            },
-                            "then": {
-                              "else": {
-                                "else": {
-                                  "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
-                                },
-                                "if": {
-                                  "$ref": "#/definitions/constrains~1ldap.enabled:t"
-                                },
-                                "then": {
-                                  "else": {
-                                    "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
-                                  },
-                                  "if": {
-                                    "$ref": "#/definitions/constrains~1ldap.uri:t"
-                                  },
-                                  "then": {
-                                    "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t"
-                                  }
-                                }
-                              },
-                              "if": {
-                                "$ref": "#/definitions/constrains~1ldap.basedn:t"
-                              },
-                              "then": {
-                                "$ref": "#/definitions/when~1ldap.enabled:t~1then~1ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1any"
-                              }
-                            }
+                            "$ref": "#/definitions/when~1ingress.tls:t~1then~1ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+ldap.userDnPattern:t+12more~1else~1any"
                           }
                         }
                       },
@@ -1439,7 +1046,7 @@
                         "type": "object"
                       },
                       "then": {
-                        "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+26more~1else~1any@2"
+                        "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
                       }
                     },
                     "if": {
@@ -1470,14 +1077,14 @@
                       "type": "object"
                     },
                     "then": {
-                      "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+26more~1else~1any@2"
+                      "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
                     }
                   },
                   "if": {
                     "$ref": "#/definitions/constrains~1auth.tls.existingSecret:t"
                   },
                   "then": {
-                    "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+26more~1else~1any"
+                    "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
                   }
                 }
               },
@@ -1509,7 +1116,7 @@
                 "type": "object"
               },
               "then": {
-                "$ref": "#/definitions/when~1auth.tls.enabled:t~1then~1auth.tls.existingSecret:t+ingress+ingress.annotations+25more~1else~1any"
+                "$ref": "#/definitions/when~1auth.tls.enabled:t~1then~1auth.tls.existingSecret:t+ingress+ingress.annotations+26more~1else~1any"
               }
             },
             "if": {
@@ -1540,7 +1147,7 @@
               "type": "object"
             },
             "then": {
-              "$ref": "#/definitions/when~1auth.tls.enabled:t~1then~1auth.tls.existingSecret:t+ingress+ingress.annotations+25more~1else~1any"
+              "$ref": "#/definitions/when~1auth.tls.enabled:t~1then~1auth.tls.existingSecret:t+ingress+ingress.annotations+26more~1else~1any"
             }
           },
           {
@@ -1646,6 +1253,35 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1auth.tls.existingSecret:t@3"
+            }
+          },
+          {
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1auth.tls.enabled:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "String to fully override common.names.namespace",
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1825,53 +1461,6 @@
         }
       ]
     },
-    "constrains/ingress+ingress.annotations+7more": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@2"
-        },
-        {
-          "else": {
-            "else": {
-              "$ref": "#/definitions/constrains~1ingress.annotations.'kubernetes.io~1tls-acme'?"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1issuer'?"
-            },
-            "then": true
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-          },
-          "then": true
-        }
-      ]
-    },
     "constrains/ingress.annotations": {
       "not": {
         "$ref": "#/definitions/constrains~1ingress.annotations@2"
@@ -1921,262 +1510,7 @@
         }
       ]
     },
-    "constrains/ingress.annotations+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+4more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ldap.uri:t"
-        },
-        {
-          "else": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@3"
-              }
-            ]
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@3"
-          }
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ldap.uri:t"
-        },
-        {
-          "else": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@4"
-              }
-            ]
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@4"
-          }
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ldap.enabled:t+memoryHighWatermark.type=absolute+2more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+ldap.enabled:t+memoryHighWatermark.type=absolute+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@4"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+memoryHighWatermark.type=absolute+2more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=relative+tags.bitnami-common=false"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+memoryHighWatermark.type=absolute+2more@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=relative+tags.bitnami-common=false@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+memoryHighWatermark.type=absolute+2more@3": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=relative+tags.bitnami-common=false"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+memoryHighWatermark.type=absolute+2more@4": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=relative+tags.bitnami-common=false@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+memoryHighWatermark.type=relative+tags.bitnami-common=false": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+tags.bitnami-common=false"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+memoryHighWatermark.type=relative+tags.bitnami-common=false@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-          }
-        },
-        {
-          "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress.annotations"
-        }
-      ]
-    },
     "constrains/ingress.annotations+resources+resources.limits+resources.limits.memory?": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+resources+resources.limits+resources.limits.memory?+1more": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?"
-        }
-      ]
-    },
-    "constrains/ingress.annotations+resources+resources.limits+resources.limits.memory?+4more": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1resourcesPreset=none"
-          }
-        },
-        {
-          "else": {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-                }
-              },
-              {
-                "else": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-                    }
-                  ]
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-                },
-                "then": {
-                  "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?"
-                }
-              }
-            ]
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+1more"
-          }
-        }
-      ]
-    },
-    "constrains/ingress.annotations+resources+resources.limits+resources.limits.memory?+4more@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1resourcesPreset=none"
-          }
-        },
-        {
-          "else": {
-            "else": {
-              "else": {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1ingress.annotations@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-                  }
-                ]
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?@2"
-              }
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1resourcesPreset+resourcesPreset=null~1then~1resources+resources.limits+resources.limits.memory?~1else~1resourcesPreset"
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1resources+resources.limits+resources.limits.memory?~1else~1ingress.annotations"
-          }
-        }
-      ]
-    },
-    "constrains/ingress.annotations+resources+resources.limits+resources.limits.memory?@2": {
       "allOf": [
         {
           "not": {
@@ -2188,75 +1522,53 @@
         }
       ]
     },
-    "constrains/ingress.annotations+tags.bitnami-common=false": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
+      "not": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "annotations": {
+                "required": [
+                  "cert-manager.io/cluster-issuer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
           }
         },
-        {
-          "$ref": "#/definitions/constrains~1ingress.annotations@2"
-        }
-      ]
-    },
-    "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?": {
-      "properties": {
-        "ingress": {
-          "properties": {
-            "annotations": {
-              "required": [
-                "cert-manager.io/cluster-issuer"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?+2more": {
       "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-          }
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1issuer'?"
-          }
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1issuer'?"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'kubernetes.io~1tls-acme'?"
-          }
+          "$ref": "#/definitions/constrains~1ingress.annotations.'kubernetes.io~1tls-acme'?"
         }
       ]
     },
     "constrains/ingress.annotations.'cert-manager.io/cluster-issuer'?+4more": {
       "allOf": [
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
-          }
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1cluster-issuer'?"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1issuer'?"
-          }
+          "$ref": "#/definitions/constrains~1ingress.annotations.'cert-manager.io~1issuer'?"
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1ingress.annotations.'kubernetes.io~1tls-acme'?"
-          }
+          "$ref": "#/definitions/constrains~1ingress.annotations.'kubernetes.io~1tls-acme'?"
         },
         {
           "$ref": "#/definitions/constrains~1resources.limits.memory?+resources.limits?"
@@ -2298,48 +1610,52 @@
       ]
     },
     "constrains/ingress.annotations.'cert-manager.io/issuer'?": {
-      "properties": {
-        "ingress": {
-          "properties": {
-            "annotations": {
-              "required": [
-                "cert-manager.io/issuer"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
+      "not": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "annotations": {
+                "required": [
+                  "cert-manager.io/issuer"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ingress.annotations.'kubernetes.io/tls-acme'?": {
-      "properties": {
-        "ingress": {
-          "properties": {
-            "annotations": {
-              "required": [
-                "kubernetes.io/tls-acme"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "annotations"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
+      "not": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "annotations": {
+                "required": [
+                  "kubernetes.io/tls-acme"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ingress.annotations@2": {
       "properties": {
@@ -2418,9 +1734,6 @@
       "type": "object"
     },
     "constrains/ingress.selfSigned:t": {
-      "$ref": "#/definitions/constrains~1ingress.selfSigned:t@2"
-    },
-    "constrains/ingress.selfSigned:t@2": {
       "properties": {
         "ingress": {
           "properties": {
@@ -2461,75 +1774,6 @@
       ],
       "type": "object"
     },
-    "constrains/ldap+ldap.basedn:t+ldap.uri:t+ldap.userDnPattern:t+ldap.user_dn_pattern:t+13more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative+resources+6more~1else~1any"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more"
-        },
-        {
-          "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark.type=absolute+1more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t+memoryHighWatermark.type=absolute+1more"
-        },
-        {
-          "else": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ldap.uri:t"
-              },
-              {
-                "else": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-                    },
-                    {
-                      "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative+resources+6more~1else~1any"
-                    }
-                  ]
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-                },
-                "then": {
-                  "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative+resources+6more~1else~1any"
-                }
-              }
-            ]
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
-          },
-          "then": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ldap.uri:t"
-              },
-              {
-                "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative+resources+6more~1else~1any"
-              }
-            ]
-          }
-        }
-      ]
-    },
     "constrains/ldap.basedn:t": {
       "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
     },
@@ -2553,27 +1797,31 @@
       "type": "object"
     },
     "constrains/ldap.enabled:t": {
-      "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-    },
-    "constrains/ldap.enabled:t+memoryHighWatermark.type=absolute+1more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
-        }
-      ]
+      "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
     },
     "constrains/ldap.enabled:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-      }
-    },
-    "constrains/ldap.enabled:t@3": {
       "properties": {
         "ldap": {
           "$ref": "#/definitions/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ldap"
+      ],
+      "type": "object"
+    },
+    "constrains/ldap.servers:t": {
+      "properties": {
+        "ldap": {
+          "properties": {
+            "servers": {
+              "$ref": "#/definitions/t"
+            }
+          },
+          "required": [
+            "servers"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -2637,71 +1885,6 @@
         "ldap"
       ],
       "type": "object"
-    },
-    "constrains/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1resources:t@2"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-            },
-            {
-              "else": {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-                  }
-                ]
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null"
-              }
-            }
-          ]
-        }
-      ]
     },
     "constrains/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null": {
       "allOf": [
@@ -2788,28 +1971,6 @@
       "type": "object"
     },
     "constrains/memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-        },
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
-        }
-      ]
-    },
-    "constrains/memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@2": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative"
-        }
-      ]
-    },
-    "constrains/memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@3": {
       "not": {
         "allOf": [
           {
@@ -2991,7 +2152,9 @@
           "$ref": "#/definitions/constrains~1resources.limits@2"
         },
         {
-          "$ref": "#/definitions/constrains~1resourcesPreset@3"
+          "not": {
+            "$ref": "#/definitions/constrains~1resourcesPreset@3"
+          }
         },
         {
           "$ref": "#/definitions/constrains~1resources.limits.memory?+resources.limits?"
@@ -3006,7 +2169,7 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more@2"
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
         }
       ]
     },
@@ -3018,45 +2181,7 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset@2"
-        }
-      ]
-    },
-    "constrains/resources+resources.limits+resources.limits.memory?+resourcesPreset+2more": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1resourcesPreset=none"
-          }
-        },
-        {
-          "else": {
-            "$ref": "#/definitions/when~1resourcesPreset+resourcesPreset=null~1then~1resources+resources.limits+resources.limits.memory?~1else~1resourcesPreset"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?"
-          }
-        }
-      ]
-    },
-    "constrains/resources+resources.limits+resources.limits.memory?+resourcesPreset@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1resources@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1resources.limits@2"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1resourcesPreset@3"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1resources.limits.memory?+resources.limits?"
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
         }
       ]
     },
@@ -3393,22 +2518,22 @@
         }
       ]
     },
-    "when/auth.tls.enabled:t/then/auth.tls.existingSecret:t+ingress+ingress.annotations+25more/else/any": {
+    "when/auth.tls.enabled:t/then/auth.tls.existingSecret:t+ingress+ingress.annotations+26more/else/any": {
       "else": {
-        "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+26more~1else~1any"
+        "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
       },
       "if": {
         "$ref": "#/definitions/constrains~1auth.tls.enabled:t"
       },
       "then": {
         "else": {
-          "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+26more~1else~1any@2"
+          "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
         },
         "if": {
           "$ref": "#/definitions/constrains~1auth.tls.existingSecret:t"
         },
         "then": {
-          "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+26more~1else~1any"
+          "$ref": "#/definitions/when~1ingress.enabled:t~1then~1ingress+ingress.annotations+27more~1else~1any"
         }
       }
     },
@@ -3437,31 +2562,6 @@
       },
       "then": {
         "$ref": "#/definitions/when~1memoryHighWatermark.type=relative~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null~1else~1any"
-      }
-    },
-    "when/ingress.annotations+ingress.annotations=null/then/memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative/else/ingress.annotations+ingress.annotations.'cert-manager.io/cluster-issu...": {
-      "else": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress+ingress.annotations+4more"
-          }
-        ]
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-      },
-      "then": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@2"
       }
     },
     "when/ingress.annotations/then/ingress.annotations.'cert-manager.io/cluster-issuer'?+2more/else/any": {
@@ -3512,9 +2612,9 @@
         "$ref": "#/definitions/constrains~1memoryHighWatermark.type"
       }
     },
-    "when/ingress.enabled:t/then/ingress+ingress.annotations+26more/else/any": {
+    "when/ingress.enabled:t/then/ingress+ingress.annotations+27more/else/any": {
       "else": {
-        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
+        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1ingress.enabled:t"
@@ -3523,103 +2623,65 @@
         "else": {
           "else": {
             "else": {
-              "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress+ingress.annotations+22more~1else~1any"
+              "else": {
+                "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t@2"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1ingress.tls:t"
+              },
+              "then": {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress+ingress.annotations+17more~1else~1any"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1ldap.enabled:t"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1ldap.servers:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1ldap.uri:t@2"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1ldap.basedn:t"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress+ingress.annotations+17more~1else~1any"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1ldap.enabled:t"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/when~1ldap.servers:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.uri:t"
+                  }
+                }
+              }
             },
             "if": {
               "$ref": "#/definitions/constrains~1ingress.selfSigned:t"
             },
             "then": {
-              "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more~1else~1any"
+              "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+15more~1else~1any"
             }
           },
           "if": {
             "$ref": "#/definitions/constrains~1ingress.extraTls:t"
           },
           "then": {
-            "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more~1else~1any"
+            "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+15more~1else~1any"
           }
         },
         "if": {
           "$ref": "#/definitions/constrains~1ingress.existingSecret:t"
         },
         "then": {
-          "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more~1else~1any"
+          "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+15more~1else~1any"
         }
       }
     },
-    "when/ingress.enabled:t/then/ingress+ingress.annotations+26more/else/any@2": {
+    "when/ingress.tls:t/then/ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+15more/else/any": {
       "else": {
-        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1ingress.enabled:t"
-      },
-      "then": {
-        "else": {
-          "else": {
-            "else": {
-              "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress+ingress.annotations+22more~1else~1any"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1ingress.selfSigned:t"
-            },
-            "then": {
-              "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more~1else~1any@2"
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ingress.extraTls:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more~1else~1any@2"
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ingress.existingSecret:t"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1ingress.tls:t~1then~1ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more~1else~1any@2"
-        }
-      }
-    },
-    "when/ingress.tls:t/then/ingress+ingress.annotations+22more/else/any": {
-      "else": {
-        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1ingress.tls:t"
-      },
-      "then": {
-        "else": {
-          "else": {
-            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress+ingress.annotations+17more~1else~1any"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ldap.enabled:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1ldap.uri:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1any"
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ldap.basedn:t"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress+ingress.annotations+17more~1else~1any"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ldap.enabled:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1ldap.uri:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1any"
-          }
-        }
-      }
-    },
-    "when/ingress.tls:t/then/ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more/else/any": {
-      "else": {
-        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
+        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1ingress.tls:t@2"
@@ -3630,23 +2692,31 @@
             "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark+memoryHighWatermark.type+11more~1else~1any"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
+            "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
           },
           "then": {
-            "$ref": "#/definitions/when~1ldap.uri:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1any"
+            "$ref": "#/definitions/when~1ldap.servers:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1ldap.uri:t@2"
           }
         },
         "if": {
           "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
         },
         "then": {
-          "$ref": "#/definitions/when~1ldap.enabled:t~1then~1ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ingress.annotations+resourcesPreset=none+tags.bitnami-common=false"
+          "else": {
+            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark+memoryHighWatermark.type+11more~1else~1any"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1ldap.servers:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.uri:t"
+          }
         }
       }
     },
-    "when/ingress.tls:t/then/ingress.annotations+ldap.basedn:t+ldap.enabled:t+ldap.uri:t+ldap.userDnPattern:t+14more/else/any@2": {
+    "when/ingress.tls:t/then/ldap.basedn:t+ldap.enabled:t+ldap.servers:t+ldap.uri:t+ldap.userDnPattern:t+12more/else/any": {
       "else": {
-        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
+        "$ref": "#/definitions/when~1ldap.basedn:t~1then~1ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more~1else~1ldap.userDnPattern:t+ldap.user_dn_pattern:t"
       },
       "if": {
         "$ref": "#/definitions/constrains~1ingress.tls:t"
@@ -3654,33 +2724,52 @@
       "then": {
         "else": {
           "else": {
-            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark+memoryHighWatermark.type+11more~1else~1any"
+            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
           },
           "if": {
             "$ref": "#/definitions/constrains~1ldap.enabled:t"
           },
           "then": {
-            "$ref": "#/definitions/when~1ldap.uri:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1any"
+            "$ref": "#/definitions/when~1ldap.servers:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1ldap.uri:t"
           }
         },
         "if": {
           "$ref": "#/definitions/constrains~1ldap.basedn:t"
         },
         "then": {
-          "$ref": "#/definitions/when~1ldap.enabled:t~1then~1ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1ingress.annotations+resourcesPreset=none+tags.bitnami-common=false"
+          "$ref": "#/definitions/when~1ldap.enabled:t~1then~1ldap.servers:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1any"
         }
       }
     },
-    "when/ldap.basedn:t/then/ldap.enabled:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more/else/ldap.userDnPattern:t+ldap.user_dn_pattern:t": {
+    "when/ldap.basedn:t/then/ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more/else/ldap.userDnPattern:t+ldap.user_dn_pattern:t": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1ldap.servers:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1ldap.uri:t"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1ldap.enabled:t~1then~1ldap.servers:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more~1else~1any"
+      }
+    },
+    "when/ldap.basedn:t/then/ldap.enabled:t+ldap.servers:t+ldap.uri:t+memoryHighWatermark+10more/else/ldap.userDnPattern:t+ldap.user_dn_pattern:t@2": {
       "else": {
         "else": {
           "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
+          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
         },
         "then": {
-          "$ref": "#/definitions/when~1ldap.uri:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1any"
+          "$ref": "#/definitions/when~1ldap.servers:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1ldap.uri:t@2"
         }
       },
       "if": {
@@ -3691,79 +2780,90 @@
           "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
+          "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
         },
         "then": {
-          "$ref": "#/definitions/when~1ldap.uri:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1any"
+          "$ref": "#/definitions/when~1ldap.servers:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.uri:t"
         }
       }
     },
-    "when/ldap.basedn:t/then/ldap.enabled:t+ldap.uri:t+memoryHighWatermark.type=absolute+1more/else/ldap.userDnPattern:t+ldap.user_dn_pattern:t": {
-      "else": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ldap.uri:t"
-          },
-          {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@2"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
-            },
-            "then": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@2"
-            }
-          }
-        ]
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1ldap.basedn:t@2"
-      },
-      "then": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ldap.uri:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative@2"
-          }
-        ]
-      }
-    },
-    "when/ldap.enabled:t/then/ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more/else/any": {
+    "when/ldap.enabled:t/then/ldap.servers:t+ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more/else/any": {
       "else": {
         "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1ldap.enabled:t"
+        "$ref": "#/definitions/constrains~1ldap.enabled:t@2"
       },
       "then": {
-        "$ref": "#/definitions/when~1ldap.uri:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1any@2"
+        "$ref": "#/definitions/when~1ldap.servers:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.uri:t@2"
       }
     },
-    "when/ldap.enabled:t/then/ldap.uri:t+memoryHighWatermark+memoryHighWatermark.type+9more/else/ingress.annotations+resourcesPreset=none+tags.bitnami-common=false": {
+    "when/ldap.servers:t/then/ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more/else/ldap.uri:t": {
       "else": {
-        "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1ingress.annotations+memoryHighWatermark+memoryHighWatermark.type+11more~1else~1any"
+        "$ref": "#/definitions/when~1ldap.uri:t~1then~1ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more~1else~1any"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1ldap.enabled:t@3"
+        "$ref": "#/definitions/constrains~1ldap.servers:t"
       },
       "then": {
-        "$ref": "#/definitions/when~1ldap.uri:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1any"
+        "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t@2"
+      }
+    },
+    "when/ldap.servers:t/then/ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more/else/ldap.uri:t@2": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ldap.uri:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1ldap.servers:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t"
+      }
+    },
+    "when/ldap.servers:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/ldap.uri:t": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ldap.uri:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1ldap.servers:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
+      }
+    },
+    "when/ldap.servers:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/ldap.uri:t@2": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1ldap.uri:t"
+        },
+        "then": {
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1ldap.servers:t"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
       }
     },
     "when/ldap.uri:t/then/ldap.userDnPattern:t+ldap.user_dn_pattern:t+memoryHighWatermark+11more/else/any": {
@@ -3774,48 +2874,29 @@
         "$ref": "#/definitions/constrains~1ldap.uri:t"
       },
       "then": {
+        "$ref": "#/definitions/when~1ldap.userDnPattern:t~1then~1memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more~1else~1ldap.user_dn_pattern:t@2"
+      }
+    },
+    "when/ldap.userDnPattern:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/ldap.user_dn_pattern:t": {
+      "else": {
         "else": {
-          "else": {
-            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
-          },
-          "then": {
-            "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
-          }
+          "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
+          "$ref": "#/definitions/constrains~1ldap.user_dn_pattern:t"
         },
         "then": {
           "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
         }
-      }
-    },
-    "when/ldap.uri:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/any": {
-      "else": {
-        "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1ldap.uri:t"
+        "$ref": "#/definitions/constrains~1ldap.userDnPattern:t"
       },
       "then": {
         "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more~1else~1any"
       }
     },
-    "when/ldap.uri:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/any@2": {
-      "else": {
-        "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1ldap.uri:t"
-      },
-      "then": {
-        "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+8more~1else~1any"
-      }
-    },
-    "when/ldap.userDnPattern:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/ldap.user_dn_pattern:t": {
+    "when/ldap.userDnPattern:t/then/memoryHighWatermark+memoryHighWatermark.enabled:t+memoryHighWatermark.type+9more/else/ldap.user_dn_pattern:t@2": {
       "else": {
         "else": {
           "$ref": "#/definitions/when~1memoryHighWatermark.enabled:t~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+7more~1else~1any"
@@ -4042,198 +3123,6 @@
         }
       }
     },
-    "when/memoryHighWatermark.enabled:t/then/ingress.annotations+memoryHighWatermark.type=absolute+9more/else/any": {
-      "else": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1ingress.annotations+tags.bitnami-common=false"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-        },
-        "then": {
-          "$ref": "#/definitions/constrains~1ingress.annotations+tags.bitnami-common=false"
-        }
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-      },
-      "then": {
-        "else": {
-          "else": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+4more"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+tags.bitnami-common=false"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+4more"
-              }
-            }
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1resources:t@2"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+1more"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+tags.bitnami-common=false"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+1more"
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/memoryHighWatermark.enabled:t/then/ingress.annotations+memoryHighWatermark.type=absolute+9more/else/any@2": {
-      "else": {
-        "else": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-            },
-            {
-              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress.annotations"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-        },
-        "then": {
-          "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress.annotations"
-        }
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-      },
-      "then": {
-        "else": {
-          "else": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@2"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+4more@2"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress.annotations"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?+4more@2"
-              }
-            }
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1resources:t@2"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/constrains~1ingress.annotations+memoryHighWatermark.type=absolute+2more@2"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                },
-                {
-                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1resources+resources.limits+resources.limits.memory?~1else~1ingress.annotations"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            },
-            "then": {
-              "else": {
-                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress.annotations"
-              },
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1resources+resources.limits+resources.limits.memory?~1else~1ingress.annotations"
-              }
-            }
-          }
-        }
-      }
-    },
     "when/memoryHighWatermark.enabled:t/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=absolute+8more/else/any": {
       "else": {
         "$ref": "#/definitions/when~1memoryHighWatermark.type=absolute~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null~1else~1memoryHighWatermark.type=relative"
@@ -4331,89 +3220,6 @@
           },
           "then": {
             "$ref": "#/definitions/when~1memoryHighWatermark.type=relative~1then~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+3more~1else~1any"
-          }
-        }
-      }
-    },
-    "when/memoryHighWatermark.enabled:t/then/memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative+resources+6more/else/any": {
-      "else": {
-        "else": {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-        },
-        "then": true
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1memoryHighWatermark.enabled:t"
-      },
-      "then": {
-        "else": {
-          "else": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+2more"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            },
-            "then": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+2more"
-              }
-            }
-          }
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1resources:t@2"
-        },
-        "then": {
-          "else": {
-            "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute+memoryHighWatermark.type=relative"
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1resources.limits.memory:t@2"
-          },
-          "then": {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1memoryHighWatermark.type=absolute"
-            },
-            "then": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1memoryHighWatermark.type=relative@2"
-              },
-              "then": {
-                "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?"
-              }
-            }
           }
         }
       }
@@ -4519,7 +3325,7 @@
           "$ref": "#/definitions/constrains~1resourcesPreset=none"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more@2"
         }
       }
     },
@@ -4563,7 +3369,19 @@
         "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
       },
       "then": {
-        "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress+ingress.annotations+4more"
+        "else": {
+          "else": {
+            "$ref": "#/definitions/when~1ingress.annotations~1then~1ingress.annotations.'cert-manager.io~1cluster-issuer'?+2more~1else~1any"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        "then": true
       }
     },
     "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/ingress+ingress.annotations+8more/else/memoryHighWatermark.type": {
@@ -4667,7 +3485,7 @@
           "$ref": "#/definitions/constrains~1resourcesPreset=none"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more@2"
         }
       }
     },
@@ -4699,7 +3517,13 @@
         "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
       },
       "then": {
-        "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1ingress.annotations"
+        "else": {
+          "$ref": "#/definitions/constrains~1ingress.annotations"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        "then": true
       }
     },
     "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits+resources.limits.memory?+resourcesPreset+1more/else/memoryHighWatermark.type": {
@@ -4710,7 +3534,7 @@
         "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
+        "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more@2"
       }
     },
     "when/memoryHighWatermark.type+memoryHighWatermark.type=null/then/resources+resources.limits+resources.limits.memory?/else/memoryHighWatermark.type": {
@@ -4730,7 +3554,7 @@
         "$ref": "#/definitions/constrains~1memoryHighWatermark.type@3"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset@2"
+        "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
       }
     },
     "when/memoryHighWatermark.type/then/resources+resources.limits+resources.limits.memory?/else/any": {
@@ -4828,7 +3652,7 @@
             "$ref": "#/definitions/constrains~1resourcesPreset=none"
           },
           "then": {
-            "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
+            "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more@2"
           }
         }
       }
@@ -4870,14 +3694,14 @@
           "$ref": "#/definitions/constrains~1ingress.annotations@2"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset@2"
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
         }
       },
       "if": {
         "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
       },
       "then": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?@2"
+        "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?"
       }
     },
     "when/resourcesPreset+resourcesPreset=null/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null/else/resources+resources.limits+resources.limits.memory?+resourcesPreset": {
@@ -4897,7 +3721,7 @@
           "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more@2"
+          "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset+1more"
         }
       },
       "if": {
@@ -4906,41 +3730,6 @@
       "then": {
         "$ref": "#/definitions/constrains~1memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null@2"
       }
-    },
-    "when/resourcesPreset+resourcesPreset=null/then/resources+resources.limits+resources.limits.memory?/else/resourcesPreset": {
-      "else": {
-        "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?+resourcesPreset"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1resourcesPreset+resourcesPreset=null"
-      },
-      "then": {
-        "$ref": "#/definitions/constrains~1resources+resources.limits+resources.limits.memory?"
-      }
-    },
-    "when/tags.bitnami-common=false/then/any/else/ingress+ingress.annotations+4more": {
-      "else": {
-        "else": {
-          "$ref": "#/definitions/when~1ingress.annotations~1then~1ingress.annotations.'cert-manager.io~1cluster-issuer'?+2more~1else~1any"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1ingress.annotations+ingress.annotations=null"
-        },
-        "then": true
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-      },
-      "then": true
-    },
-    "when/tags.bitnami-common=false/then/any/else/ingress.annotations": {
-      "else": {
-        "$ref": "#/definitions/constrains~1ingress.annotations"
-      },
-      "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-      },
-      "then": true
     },
     "when/tags.bitnami-common=false/then/memoryHighWatermark+memoryHighWatermark.type+memoryHighWatermark.type=null+3more/else/ingress+ingress.annotations+4more": {
       "else": {
@@ -4978,7 +3767,7 @@
           "$ref": "#/definitions/constrains~1memoryHighWatermark.type+memoryHighWatermark.type=null"
         },
         "then": {
-          "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?@2"
+          "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?"
         }
       },
       "if": {
@@ -5009,7 +3798,7 @@
     },
     "when/tags.bitnami-common=false/then/resources+resources.limits+resources.limits.memory?/else/ingress.annotations": {
       "else": {
-        "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?@2"
+        "$ref": "#/definitions/constrains~1ingress.annotations+resources+resources.limits+resources.limits.memory?"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
