@@ -166,125 +166,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1kafka.enabled=false+kafka.serviceAccount.create:t+tags.bitnami-common=false+1more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels:helm-no-template-actions"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels:helm-no-template-actions"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1kafka.commonLabels!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "$ref": "#/definitions/constrains~1kafka.enabled=false"
           },
           {
@@ -308,6 +189,130 @@
           "kafka": {
             "description": "Kafka chart configuration\nFor information about these parameters, refer to:\nhttps://github.com/bitnami/charts/blob/main/bitnami/kafka/values.yaml",
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1kafka.enabled=false+kafka.serviceAccount.create:t+tags.bitnami-common=false+1more"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1kafka.enabled=false@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1kafka.enabled=false@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1ingress.secrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "Configure the ingress resource that allows you to access Schema Registry",
+            "properties": {
+              "secrets": {
+                "description": "Custom TLS certificates as secrets\nNOTE: 'key' and 'certificate' are expected in PEM format\nNOTE: 'name' should line up with a 'secretName' set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\nsecrets:\n- name: schema-registry.local-tls\nkey: |-\n...\ncertificate: |-\n...",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1kafka.enabled=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1kafka.enabled=true"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1kafka.fullnameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kafka": {
+            "additionalProperties": {},
+            "description": "Kafka chart configuration\nFor information about these parameters, refer to:\nhttps://github.com/bitnami/charts/blob/main/bitnami/kafka/values.yaml",
+            "properties": {
+              "fullnameOverride": {
+                "description": "String to fully override common.names.fullname",
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -368,6 +373,16 @@
                                     {
                                       "allOf": [
                                         {
+                                          "$ref": "#/definitions/constrains~1kafka.namespaceOverride@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true+8more"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
                                           "$ref": "#/definitions/constrains~1kafka.namespaceOverride"
                                         },
                                         {
@@ -386,16 +401,6 @@
                                               ]
                                             }
                                           ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1kafka.namespaceOverride@2"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true+8more"
                                         }
                                       ]
                                     }
@@ -420,7 +425,26 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kafka.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kafka.nameOverride+kafka.nameOverride:t"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
                   },
                   {
                     "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
@@ -439,7 +463,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
                   },
                   {
                     "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
@@ -459,7 +483,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
                   },
                   {
                     "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
@@ -472,26 +496,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1kafka.fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1kafka.nameOverride+kafka.nameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
                   },
                   {
                     "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
@@ -561,94 +566,6 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1kafka.enabled=false+kafka.serviceAccount.create:t+tags.bitnami-common=false+1more"
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create!=null"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1ingress.secrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "description": "Configure the ingress resource that allows you to access Schema Registry",
-            "properties": {
-              "secrets": {
-                "description": "Custom TLS certificates as secrets\nNOTE: 'key' and 'certificate' are expected in PEM format\nNOTE: 'name' should line up with a 'secretName' set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\nsecrets:\n- name: schema-registry.local-tls\nkey: |-\n...\ncertificate: |-\n...",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-          },
-          {
-            "else": {
-              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1kafka.enabled=false@2"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1kafka.enabled=true"
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1kafka.fullnameOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "kafka": {
-            "additionalProperties": {},
-            "description": "Kafka chart configuration\nFor information about these parameters, refer to:\nhttps://github.com/bitnami/charts/blob/main/bitnami/kafka/values.yaml",
-            "properties": {
-              "fullnameOverride": {
-                "description": "String to fully override common.names.fullname",
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1kafka.enabled=false+kafka.enabled=true+kafka.serviceAccount.create:t"
@@ -700,9 +617,154 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels:helm-no-template-actions"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1kafka.commonLabels+kafka.commonLabels=null@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1kafka.enabled=false+kafka.serviceAccount.create:t+tags.bitnami-common=false+1more"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1kafka.commonLabels!=null"
+            }
+          ]
+        },
+        "then": false
+      }
     }
   ],
   "definitions": {
+    "constrains/bitnami-common=false": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
+    "constrains/bitnami-common=true": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
     "constrains/group-0": {
       "anyOf": [
         {
@@ -772,16 +834,19 @@
     "constrains/kafka+kafka.commonLabels+kafka.commonLabels:helm-no-template-actions+13more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t@2"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
         },
         {
           "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t"
         },
         {
+          "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t@2"
+        },
+        {
           "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1kafka+kafka.commonLabels+kafka.commonLabels:helm-no-template-actions+9more"
         },
         {
           "not": {
@@ -789,7 +854,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1kafka.enabled=false"
@@ -799,16 +864,19 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+                    "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
                   },
                   {
                     "not": {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t@2"
+                          "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t"
+                          "$ref": "#/definitions/constrains~1kafka+kafka.serviceAccount+kafka.serviceAccount.name+kafka.serviceAccount.name:t@2"
                         },
                         {
                           "$ref": "#/definitions/constrains~1kafka.serviceAccount.name:t@2"
@@ -817,18 +885,12 @@
                     }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1kafka+kafka.commonLabels+kafka.commonLabels:helm-no-template-actions+9more"
                   }
                 ]
               }
             ]
           }
-        },
-        {
-          "$ref": "#/definitions/constrains~1kafka+kafka.commonLabels+kafka.commonLabels:helm-no-template-actions+9more"
         },
         {
           "$ref": "#/definitions/constrains~1kafka.serviceAccount.name:t@2"
@@ -851,7 +913,7 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+                              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
                             },
                             {
                               "$ref": "#/definitions/constrains~1kafka.commonLabels@4"
@@ -1204,12 +1266,12 @@
         {
           "anyOf": [
             {
-              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+                  "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
                 },
                 {
                   "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true+3more"
@@ -1387,14 +1449,7 @@
               "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false"
             },
             {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1tags.bitnami-common!=false"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1tags.bitnami-common"
-                }
-              ]
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
             }
           ]
         },
@@ -1407,7 +1462,14 @@
               "$ref": "#/definitions/constrains~1kafka.enabled+kafka.enabled!=false"
             },
             {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common!=false"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common"
+                }
+              ]
             }
           ]
         }
@@ -1416,12 +1478,12 @@
     "constrains/kafka.enabled+kafka.enabled!=false+kafka.enabled!=true+kafka.enabled=true+4more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
@@ -1547,7 +1609,7 @@
     "constrains/kafka.enabled=false+kafka.enabled=true+kafka.serviceAccount.create:t": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
         },
         {
           "$ref": "#/definitions/when~1kafka.enabled=false~1then~1kafka.enabled=true~1else~1any"
@@ -1557,13 +1619,13 @@
     "constrains/kafka.enabled=false+kafka.serviceAccount.create:t+tags.bitnami-common=false+1more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1kafka.enabled=false"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
           "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
@@ -1670,24 +1732,24 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1kafka.namespaceOverride"
+            },
+            {
               "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1kafka.namespaceOverride:t+kafka.serviceAccount.create:t"
+                },
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1kafka.fullnameOverride+kafka.fullnameOverride:t+kafka.nameOverride+5more"
+                      "$ref": "#/definitions/constrains~1kafka.namespaceOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1kafka.namespaceOverride:t"
+                      "$ref": "#/definitions/constrains~1kafka.fullnameOverride+kafka.fullnameOverride:t+kafka.nameOverride+5more"
                     }
                   ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1kafka.namespaceOverride:t+kafka.serviceAccount.create:t"
                 }
               ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1kafka.namespaceOverride"
             }
           ]
         }
@@ -1739,7 +1801,7 @@
     "constrains/kafka.fullnameOverride:t+kafka.serviceAccount.create:t": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1kafka.fullnameOverride:t@2"
@@ -1793,10 +1855,10 @@
       "not": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1kafka.nameOverride:t"
+            "$ref": "#/definitions/constrains~1kafka.nameOverride@2"
           },
           {
-            "$ref": "#/definitions/constrains~1kafka.nameOverride@2"
+            "$ref": "#/definitions/constrains~1kafka.nameOverride:t"
           }
         ]
       }
@@ -1809,7 +1871,7 @@
     "constrains/kafka.nameOverride:t+kafka.serviceAccount.create:t": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1kafka.nameOverride:t@2"
@@ -1867,7 +1929,7 @@
     "constrains/kafka.namespaceOverride:t+kafka.serviceAccount.create:t": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1kafka.namespaceOverride:t@2"
@@ -1944,16 +2006,14 @@
       "type": "object"
     },
     "constrains/kafka.serviceAccount.create:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
-      }
+      "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
     },
     "constrains/kafka.serviceAccount.create:t+tags.bitnami-common+tags.bitnami-common!=false+1more": {
       "anyOf": [
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
+              "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
@@ -1961,11 +2021,16 @@
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t"
+          "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@2"
         }
       ]
     },
     "constrains/kafka.serviceAccount.create:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1kafka.serviceAccount.create:t@3"
+      }
+    },
+    "constrains/kafka.serviceAccount.create:t@3": {
       "properties": {
         "kafka": {
           "properties": {
@@ -3238,19 +3303,12 @@
       ]
     },
     "constrains/tags.bitnami-common=false": {
+      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+    },
+    "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                false
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1bitnami-common=false"
         }
       },
       "required": [
@@ -3266,17 +3324,7 @@
     "constrains/tags.bitnami-common=true@2": {
       "properties": {
         "tags": {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1bitnami-common=true"
         }
       },
       "required": [
@@ -3351,7 +3399,7 @@
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
@@ -3573,6 +3621,23 @@
     "startupProbe": {},
     "tags": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1bitnami-common=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1bitnami-common=false"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

@@ -272,15 +272,7 @@
             ]
           },
           {
-            "properties": {
-              "valkey": {
-                "$ref": "#/definitions/constrains~1enabled=true"
-              }
-            },
-            "required": [
-              "valkey"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1valkey.enabled=true"
           }
         ]
       },
@@ -432,6 +424,65 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1valkey.enabled=false@2"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1valkey.enabled=true"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "tags": {
+                  "properties": {
+                    "bitnami-common": {
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tags"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "valkey": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "valkey"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
     }
   ],
   "definitions": {
@@ -582,26 +633,29 @@
     },
     "constrains/tags.bitnami-common=false": {
       "not": {
-        "properties": {
-          "tags": {
-            "properties": {
-              "bitnami-common": {
-                "enum": [
-                  false
-                ]
-              }
-            },
-            "required": [
-              "bitnami-common"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tags"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       }
+    },
+    "constrains/tags.bitnami-common=false@2": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
     },
     "constrains/valkey-cluster.enabled": {
       "not": {
@@ -653,16 +707,30 @@
     },
     "constrains/valkey.enabled=false": {
       "not": {
-        "properties": {
-          "valkey": {
-            "$ref": "#/definitions/constrains~1enabled=false"
-          }
-        },
-        "required": [
-          "valkey"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1valkey.enabled=false@2"
       }
+    },
+    "constrains/valkey.enabled=false@2": {
+      "properties": {
+        "valkey": {
+          "$ref": "#/definitions/constrains~1enabled=false"
+        }
+      },
+      "required": [
+        "valkey"
+      ],
+      "type": "object"
+    },
+    "constrains/valkey.enabled=true": {
+      "properties": {
+        "valkey": {
+          "$ref": "#/definitions/constrains~1enabled=true"
+        }
+      },
+      "required": [
+        "valkey"
+      ],
+      "type": "object"
     }
   },
   "properties": {

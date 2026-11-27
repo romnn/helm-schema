@@ -4,102 +4,165 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "tags": {
-                      "properties": {
-                        "bitnami-common": {
-                          "not": {
-                            "enum": [
-                              false
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "bitnami-common"
-                      ],
-                      "type": "object"
-                    }
+            "else": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1sentinel.enabled:t"
+            },
+            "then": {
+              "else": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
                   },
-                  "required": [
-                    "tags"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1architecture=replication"
+                    }
+                  }
+                ]
+              },
+              "if": {
+                "properties": {
+                  "sentinel": {
                     "properties": {
-                      "tags": {
+                      "service": {
                         "properties": {
-                          "bitnami-common": {}
+                          "nodePorts": {
+                            "properties": {
+                              "redis": {
+                                "$ref": "#/definitions/t"
+                              }
+                            },
+                            "required": [
+                              "redis"
+                            ],
+                            "type": "object"
+                          }
                         },
                         "required": [
-                          "bitnami-common"
+                          "nodePorts"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "tags"
+                      "service"
                     ],
                     "type": "object"
                   }
                 },
-                {
-                  "properties": {
-                    "tags": {
-                      "properties": {
-                        "bitnami-common": {
-                          "enum": [
-                            true
-                          ]
-                        }
-                      },
-                      "required": [
-                        "bitnami-common"
-                      ],
-                      "type": "object"
-                    }
+                "required": [
+                  "sentinel"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
                   },
-                  "required": [
-                    "tags"
-                  ],
-                  "type": "object"
-                }
-              ]
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1architecture=replication"
+                    }
+                  }
+                ]
+              }
             }
           },
           {
-            "anyOf": [
+            "allOf": [
               {
                 "not": {
-                  "$ref": "#/definitions/constrains~1sentinel.enabled!=0+sentinel.enabled=true"
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
+                  "anyOf": [
+                    {
                       "properties": {
-                        "architecture": {
-                          "enum": [
-                            "replication"
-                          ]
+                        "tags": {
+                          "properties": {
+                            "bitnami-common": {
+                              "not": {
+                                "enum": [
+                                  false
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "bitnami-common"
+                          ],
+                          "type": "object"
                         }
                       },
                       "required": [
-                        "architecture"
+                        "tags"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "tags": {
+                            "properties": {
+                              "bitnami-common": {}
+                            },
+                            "required": [
+                              "bitnami-common"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tags"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "tags": {
+                          "properties": {
+                            "bitnami-common": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          },
+                          "required": [
+                            "bitnami-common"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tags"
                       ],
                       "type": "object"
                     }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1sentinel.enabled:t"
+                    }
                   },
                   {
-                    "$ref": "#/definitions/constrains~1sentinel.enabled!=0+sentinel.enabled=true"
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1architecture=replication"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1sentinel.enabled:t"
+                      }
+                    ]
                   }
                 ]
               }
@@ -111,34 +174,25 @@
     }
   ],
   "definitions": {
-    "constrains/sentinel.enabled!=0+sentinel.enabled=true": {
+    "constrains/architecture=replication": {
+      "properties": {
+        "architecture": {
+          "enum": [
+            "replication"
+          ]
+        }
+      },
+      "required": [
+        "architecture"
+      ],
+      "type": "object"
+    },
+    "constrains/sentinel.enabled:t": {
       "properties": {
         "sentinel": {
           "properties": {
             "enabled": {
-              "anyOf": [
-                {
-                  "minProperties": 1,
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "const": 0
-                  },
-                  "type": "number"
-                },
-                {
-                  "minLength": 1,
-                  "type": "string"
-                },
-                {
-                  "minItems": 1,
-                  "type": "array"
-                },
-                {
-                  "const": true
-                }
-              ]
+              "$ref": "#/definitions/t"
             }
           },
           "required": [
@@ -151,6 +205,52 @@
         "sentinel"
       ],
       "type": "object"
+    },
+    "constrains/tags.bitnami-common=false": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "bitnami-common": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "bitnami-common"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
     }
   },
   "properties": {

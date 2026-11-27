@@ -98,6 +98,27 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1ingress.secrets:t"
+                    }
+                  }
+                ]
+              },
+              {
                 "not": {
                   "anyOf": [
                     {
@@ -145,17 +166,7 @@
                     {
                       "properties": {
                         "tags": {
-                          "properties": {
-                            "bitnami-common": {
-                              "enum": [
-                                true
-                              ]
-                            }
-                          },
-                          "required": [
-                            "bitnami-common"
-                          ],
-                          "type": "object"
+                          "$ref": "#/definitions/constrains~1bitnami-common=true"
                         }
                       },
                       "required": [
@@ -165,27 +176,6 @@
                     }
                   ]
                 }
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                    }
-                  }
-                ]
               }
             ]
           },
@@ -251,6 +241,19 @@
     }
   ],
   "definitions": {
+    "constrains/bitnami-common=true": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
     "constrains/ingress.enabled:t": {
       "properties": {
         "ingress": {
@@ -393,6 +396,33 @@
     },
     "tags": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1bitnami-common=true"
+                }
+              },
+              {
+                "properties": {
+                  "bitnami-common": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                },
+                "required": [
+                  "bitnami-common"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

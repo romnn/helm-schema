@@ -29,6 +29,178 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1global.postgresql.auth"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.global.postgresql"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.postgresql"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth"
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.nameOverride+postgresql.nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.namespaceOverride+postgresql.namespaceOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.nameOverride+postgresql.nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+4more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+37more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "postgresql": {
@@ -118,17 +290,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
           },
           {
-            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
           },
           {
             "else": {
               "$ref": "#/definitions/when~1mariadb.enabled=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+mariadb.enabled=true+2more~1else~1any"
             },
             "if": {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
             },
             "then": {
               "else": {
@@ -167,7 +339,7 @@
           },
           {
             "not": {
-              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
             }
           }
         ]
@@ -206,7 +378,7 @@
                 "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1mariadb.enabled=false+mariadb.enabled=true+postgresql+postgresql.commonLabels+7more~1else~1any"
               },
               {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
               }
             ]
           },
@@ -219,7 +391,7 @@
                 "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
               },
               {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
               }
             ]
           }
@@ -238,178 +410,103 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1ingress.enabled:t"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1ingress.secrets:t"
+              },
+              "then": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1nameOverride:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                }
+              }
+            }
+          },
+          {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
               },
               {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                              },
-                              {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-                                  },
-                                  {
-                                    "allOf": [
-                                      {
-                                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                                      },
-                                      {
-                                        "not": {
-                                          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-                                        }
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-                  }
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.enabled:t"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-                              }
-                            ]
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                          }
-                        ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+4more@2"
               }
-            ]
-          },
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-19"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
               {
                 "$ref": "#/definitions/constrains~1group-16"
               },
               {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
               }
             ]
           },
@@ -419,170 +516,10 @@
                 "$ref": "#/definitions/constrains~1group-15"
               },
               {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-17"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-17"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-14"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-16"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-15"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-17"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-14"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-16"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
               }
             ]
           }
@@ -592,10 +529,42 @@
         "if": {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb!=null"
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql!=null"
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql!=null"
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth!=null"
+            },
+            {
+              "properties": {
+                "postgresql": {
+                  "properties": {
+                    "fullnameOverride": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "fullnameOverride"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "postgresql"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username!=null"
             }
           ]
         },
@@ -604,399 +573,403 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
+                "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+10more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword@2"
+                        }
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1mariadb.nameOverride+mariadb.nameOverride:t"
+                        }
+                      }
+                    ]
                   },
                   {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+10more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
-                    }
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
+                        }
+                      }
+                    ]
                   }
                 ]
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1mariadb.fullnameOverride"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1mariadb.nameOverride+mariadb.nameOverride:t"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "allOf": [
+                "not": {
+                  "anyOf": [
                     {
-                      "not": {
-                        "properties": {
-                          "mariadb": {
-                            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password"
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "mariadb": {
+                                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password"
+                              }
+                            },
+                            "required": [
+                              "mariadb"
+                            ],
+                            "type": "object"
                           }
                         },
-                        "required": [
-                          "mariadb"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more"
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1group-13"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1group-13"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1group-13"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1group-13"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
-                    },
-                    {
-                      "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                          "not": {
+                            "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more"
+                          }
                         },
                         {
-                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+                          "$ref": "#/definitions/constrains~1group-14"
                         }
                       ]
                     },
                     {
-                      "anyOf": [
+                      "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword"
+                          "$ref": "#/definitions/constrains~1group-14"
                         },
                         {
-                          "allOf": [
+                          "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-14"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.password+2more"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-14"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+8more"
+                        },
+                        {
+                          "anyOf": [
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@3"
+                              "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
                             },
                             {
-                              "anyOf": [
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword"
+                            },
+                            {
+                              "allOf": [
                                 {
-                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=''"
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@3"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword+1more"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=null"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=''"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword+1more"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword=null"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.replicationPassword@2"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1mariadb+mariadb.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+                                    }
+                                  ]
                                 }
                               ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1group-11"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
-                            }
-                          ]
                         },
                         {
-                          "allOf": [
+                          "anyOf": [
                             {
-                              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1group-12"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1group-11"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.enabled=true"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                                }
+                              ]
                             },
                             {
                               "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1group-10"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1group-10"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1group-9"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1group-12"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1group-11"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1group-10"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1group-12"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1group-11"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1group-10"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+                                }
+                              ]
                             },
                             {
-                              "$ref": "#/definitions/constrains~1group-9"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1group-10"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels:helm-no-template-actions"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1group-9"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.enabled=true"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.enabled=false"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1group-11"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.commonLabels"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                                }
+                              ]
                             }
                           ]
                         }
@@ -1004,8 +977,126 @@
                     }
                   ]
                 }
-              ]
-            }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                }
+              },
+              {
+                "else": {
+                  "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1mariadb.enabled=false+postgresql.enabled=false+3more~1else~1any"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+mariadb.enabled=false+4more"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+mariadb.enabled=false+4more"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                      },
+                      "then": {
+                        "allOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+                            }
+                          },
+                          {
+                            "else": {
+                              "else": {
+                                "else": {
+                                  "allOf": [
+                                    {
+                                      "not": {
+                                        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+                                      }
+                                    },
+                                    {
+                                      "else": {
+                                        "allOf": [
+                                          {
+                                            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword+1more"
+                                          },
+                                          {
+                                            "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1mariadb.commonLabels~1else~1postgresql"
+                                          }
+                                        ]
+                                      },
+                                      "if": {
+                                        "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
+                                      },
+                                      "then": {
+                                        "allOf": [
+                                          {
+                                            "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
+                                          },
+                                          {
+                                            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword+1more"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "if": {
+                                  "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                                },
+                                "then": {
+                                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+2more"
+                                }
+                              },
+                              "if": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword=null"
+                                  }
+                                ]
+                              },
+                              "then": {
+                                "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+tags.bitnami-common=false~1else~1postgresql"
+                              }
+                            },
+                            "if": {
+                              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword=''"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+tags.bitnami-common=false~1else~1postgresql"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+mariadb.enabled=false+4more"
+                    }
+                  }
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              }
+            ]
           }
         ]
       },
@@ -1126,7 +1217,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1group-8"
+                "$ref": "#/definitions/constrains~1group-9"
               },
               {
                 "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+3more@2"
@@ -1136,7 +1227,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-8"
+                "$ref": "#/definitions/constrains~1group-9"
               },
               {
                 "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+3more"
@@ -1149,7 +1240,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-8"
+                "$ref": "#/definitions/constrains~1group-9"
               },
               {
                 "$ref": "#/definitions/constrains~1global+global.postgresql+global.postgresql.auth+global.postgresql.auth!=null+2more"
@@ -1167,7 +1258,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1group-8"
+                "$ref": "#/definitions/constrains~1group-9"
               }
             ]
           }
@@ -1223,7 +1314,7 @@
             "$ref": "#/definitions/constrains~1global.postgresql"
           },
           {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
           }
         ]
       },
@@ -1245,385 +1336,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress.secrets:t"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1ingress.enabled:t"
-                }
-              }
-            ]
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1global.postgresql.auth"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.global.postgresql"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.postgresql"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth"
-          },
-          {
-            "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
-          },
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.nameOverride+postgresql.nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.namespaceOverride+postgresql.namespaceOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.nameOverride+postgresql.nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+4more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1global+global.postgresql.auth+global.postgresql.auth.username+37more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth!=null"
-            },
-            {
-              "properties": {
-                "postgresql": {
-                  "properties": {
-                    "fullnameOverride": {
-                      "not": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "postgresql"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql!=null"
-        },
-        "then": false
       }
     },
     {
@@ -1676,7 +1388,7 @@
             "$ref": "#/definitions/constrains~1ingress.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1ingress.secrets:t"
+            "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
           }
         ]
       },
@@ -1790,10 +1502,515 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+                              }
+                            ]
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                              },
+                              {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+                                  },
+                                  {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                                      },
+                                      {
+                                        "not": {
+                                          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+4more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+4more@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1mariadb.enabled=false+postgresql.enabled=false+3more~1else~1any"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1mariadb.enabled=false+postgresql.enabled=false+3more~1else~1any"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1mariadb.enabled=false+postgresql.enabled=false+3more~1else~1any"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1mariadb.enabled=false+postgresql.enabled=false+3more~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1postgresql.enabled=false+3more~1else~1any"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "else": {
+                          "allOf": [
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                              }
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1mariadb.enabled=false+postgresql.enabled=false+tags.bitnami-common=false"
+                            }
+                          ]
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1mariadb.enabled=false+postgresql.enabled=false+tags.bitnami-common=false"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+                      }
+                    ]
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1postgresql.enabled=false+3more~1else~1any"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/when~1postgresql.passwordUpdateJob.enabled:t~1then~1postgresql.enabled=false+3more~1else~1any"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false+postgresql.enabled=false+tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-19"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1postgresql.enabled=true~1else~1any"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
               }
             ]
           },
@@ -1803,7 +2020,7 @@
                 "$ref": "#/definitions/constrains~1postgresql.enabled=false"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
               }
             ]
           }
@@ -1816,6 +2033,51 @@
             "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.namespaceOverride+postgresql.namespaceOverride:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -1936,19 +2198,77 @@
       "if": {
         "anyOf": [
           {
+            "else": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+                }
+              ]
+            }
+          },
+          {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-6"
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-5"
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.namespaceOverride+postgresql.namespaceOverride:t@2"
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
               }
             ]
           }
@@ -1956,23 +2276,7 @@
       },
       "then": {
         "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username!=null"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1postgresql!=null"
         },
         "then": false
       }
@@ -2292,280 +2596,6 @@
         ]
       }
     },
-    "constrains/global+global.postgresql.auth+global.postgresql.auth.username+37more": {
-      "not": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.replicationPassword+2more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.postgresPassword+2more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null+postgresql.enabled=false+4more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+7more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+5more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+5more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1group-2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels:helm-no-template-actions"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@4"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1group-2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels:helm-no-template-actions"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1group-2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword@3"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=null"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword+1more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.postgresPassword+2more"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "postgresql": {
-                      "properties": {
-                        "passwordUpdateJob": {
-                          "properties": {
-                            "previousPasswords": {
-                              "properties": {
-                                "postgresPassword": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "postgresPassword"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "previousPasswords"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "passwordUpdateJob"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "postgresql"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.password+2more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.password+2more"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "postgresql": {
-                      "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password"
-                    }
-                  },
-                  "required": [
-                    "postgresql"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              }
-            ]
-          }
-        ]
-      }
-    },
     "constrains/global.postgresql": {
       "not": {
         "$ref": "#/definitions/constrains~1global.postgresql@2"
@@ -2699,6 +2729,280 @@
         }
       ]
     },
+    "constrains/global.postgresql.auth+global.postgresql.auth.username+37more": {
+      "not": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.password+2more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.replicationPassword+2more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.postgresPassword+2more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword@3"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=null"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword+1more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.replicationPassword+2more@2"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null+postgresql.enabled=false+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+7more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+5more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql+postgresql.commonLabels+postgresql.commonLabels=null+5more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+2more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-1"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-1"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels:helm-no-template-actions"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1group-1"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels:helm-no-template-actions"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.commonLabels@4"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.password+2more"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "postgresql": {
+                      "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.password"
+                    }
+                  },
+                  "required": [
+                    "postgresql"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "postgresql": {
+                      "properties": {
+                        "passwordUpdateJob": {
+                          "properties": {
+                            "previousPasswords": {
+                              "properties": {
+                                "postgresPassword": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "postgresPassword"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "previousPasswords"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "passwordUpdateJob"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "postgresql"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql+postgresql.passwordUpdateJob.previousPasswords.postgresPassword+2more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              }
+            ]
+          }
+        ]
+      }
+    },
     "constrains/global.postgresql.auth+global.postgresql.auth.username+3more": {
       "anyOf": [
         {
@@ -2751,7 +3055,7 @@
         }
       ]
     },
-    "constrains/global.postgresql.auth+global.postgresql.auth.username+5more": {
+    "constrains/global.postgresql.auth+global.postgresql.auth.username+4more@2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+3more@2"
@@ -2759,19 +3063,6 @@
         {
           "not": {
             "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username?"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username!=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username=postgres"
-                  }
-                ]
-              },
               {
                 "allOf": [
                   {
@@ -2787,6 +3078,19 @@
                   },
                   {
                     "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username?"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username!=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1global.postgresql.auth.username=postgres"
                   }
                 ]
               }
@@ -3011,7 +3315,7 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-3"
+          "$ref": "#/definitions/constrains~1group-2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.enabled=false"
@@ -3024,36 +3328,26 @@
     "constrains/group-1": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
+          "$ref": "#/definitions/constrains~1group-2"
         },
         {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+4more"
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+5more"
+          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
         }
       ]
     },
     "constrains/group-10": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-12"
+          "$ref": "#/definitions/constrains~1group-13"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
-        }
-      ]
-    },
-    "constrains/group-11": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-12"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
           "$ref": "#/definitions/constrains~1mariadb.enabled=false"
@@ -3063,32 +3357,55 @@
         }
       ]
     },
+    "constrains/group-11": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.enabled=true"
+        }
+      ]
+    },
     "constrains/group-12": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1group-13"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null"
         }
       ]
     },
     "constrains/group-13": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+        }
+      ]
+    },
+    "constrains/group-14": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
         },
         {
           "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
         },
         {
           "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false+mariadb.enabled!=true+1more"
@@ -3118,53 +3435,61 @@
           "$ref": "#/definitions/constrains~1mariadb.namespaceOverride+mariadb.namespaceOverride:t"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
-        }
-      ]
-    },
-    "constrains/group-14": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-20"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword@2"
         }
       ]
     },
     "constrains/group-15": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-20"
+          "$ref": "#/definitions/constrains~1group-17"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username"
         }
       ]
     },
     "constrains/group-16": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-        },
-        {
           "$ref": "#/definitions/constrains~1group-17"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.nameOverride+postgresql.nameOverride:t@2"
         }
       ]
     },
     "constrains/group-17": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+          "$ref": "#/definitions/constrains~1group-19"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.postgresql"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.postgresql.auth"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.global.postgresql"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+37more"
         }
       ]
     },
@@ -3191,23 +3516,17 @@
     "constrains/group-2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-3"
+          "$ref": "#/definitions/constrains~1group-19"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         }
       ]
     },
     "constrains/group-20": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
@@ -3217,10 +3536,13 @@
     "constrains/group-3": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-19"
+          "$ref": "#/definitions/constrains~1group-4"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+4more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1global.postgresql.auth+global.postgresql.auth.username+4more@2"
         }
       ]
     },
@@ -3258,58 +3580,50 @@
     "constrains/group-5": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-7"
+          "$ref": "#/definitions/constrains~1group-20"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
         }
       ]
     },
     "constrains/group-6": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-7"
+          "$ref": "#/definitions/constrains~1group-20"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth.username"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.nameOverride+postgresql.nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
         }
       ]
     },
     "constrains/group-7": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-19"
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false+tags.bitnami-common=true"
+          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
         },
         {
-          "$ref": "#/definitions/constrains~1global.postgresql"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false+postgresql.enabled!=true+1more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.global.postgresql"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global.postgresql.auth.username"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.global.postgresql.auth"
-        },
-        {
-          "$ref": "#/definitions/constrains~1global+global.postgresql.auth+global.postgresql.auth.username+37more"
+          "$ref": "#/definitions/constrains~1group-8"
         }
       ]
     },
     "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        }
+      ]
+    },
+    "constrains/group-9": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1group-18"
@@ -3331,16 +3645,6 @@
         }
       ]
     },
-    "constrains/group-9": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mariadb.enabled=true"
-        }
-      ]
-    },
     "constrains/ingress.enabled:t": {
       "properties": {
         "ingress": {
@@ -3353,6 +3657,9 @@
       "type": "object"
     },
     "constrains/ingress.secrets:t": {
+      "$ref": "#/definitions/constrains~1ingress.secrets:t@2"
+    },
+    "constrains/ingress.secrets:t@2": {
       "properties": {
         "ingress": {
           "properties": {
@@ -3391,7 +3698,17 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+5more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
             },
             {
               "anyOf": [
@@ -3417,16 +3734,6 @@
               ]
             }
           ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1mariadb+mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+5more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.commonLabels@2"
-            }
-          ]
         }
       ]
     },
@@ -3442,10 +3749,20 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1mariadb.enabled=false"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+                      "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
                     },
                     {
                       "$ref": "#/definitions/constrains~1mariadb.enabled=true"
@@ -3455,26 +3772,16 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+                      "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
                     },
                     {
                       "$ref": "#/definitions/constrains~1mariadb.enabled=false"
                     },
                     {
                       "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1mariadb.enabled=false"
                     }
                   ]
                 }
@@ -3490,20 +3797,55 @@
         }
       ]
     },
+    "constrains/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+mariadb.enabled=false+4more": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+          }
+        },
+        {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+2more"
+            },
+            "if": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword=null"
+                }
+              ]
+            },
+            "then": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword=''"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null"
+          }
+        }
+      ]
+    },
     "constrains/mariadb+mariadb.enabled=false+mariadb.enabled=true+11more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
         },
         {
-          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
         },
         {
           "else": {
             "$ref": "#/definitions/when~1mariadb.enabled=false~1then~1mariadb.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
           },
           "then": {
             "else": {
@@ -3542,7 +3884,7 @@
         },
         {
           "not": {
-            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
           }
         }
       ]
@@ -3622,99 +3964,23 @@
       "not": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "mariadb": {
-                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword"
-                }
-              },
-              "required": [
-                "mariadb"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword"
           },
           {
-            "properties": {
-              "mariadb": {
-                "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword=null"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword=null"
           },
           {
-            "properties": {
-              "mariadb": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword=null"
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword+1more"
           },
           {
-            "properties": {
-              "mariadb": {
-                "properties": {
-                  "passwordUpdateJob": {
-                    "properties": {
-                      "previousPasswords": {
-                        "properties": {
-                          "rootPassword": {
-                            "enum": [
-                              ""
-                            ]
-                          }
-                        },
-                        "required": [
-                          "rootPassword"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "previousPasswords"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "passwordUpdateJob"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "mariadb"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword=''"
           }
         ]
       }
     },
     "constrains/mariadb.commonLabels": {
       "not": {
-        "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
       }
     },
     "constrains/mariadb.commonLabels+mariadb.commonLabels:helm-no-template-actions+1more": {
@@ -3758,13 +4024,13 @@
     },
     "constrains/mariadb.commonLabels@2": {
       "not": {
-        "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
       }
     },
     "constrains/mariadb.commonLabels@3": {
       "properties": {
         "mariadb": {
-          "$ref": "#/definitions/constrains~1commonLabels@2"
+          "$ref": "#/definitions/constrains~1commonLabels"
         }
       },
       "required": [
@@ -3775,7 +4041,7 @@
     "constrains/mariadb.commonLabels@4": {
       "properties": {
         "mariadb": {
-          "$ref": "#/definitions/constrains~1commonLabels"
+          "$ref": "#/definitions/constrains~1commonLabels@2"
         }
       },
       "required": [
@@ -3852,7 +4118,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.enabled=true@2"
+              "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=true"
             },
             {
               "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
@@ -3875,10 +4144,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1mariadb.enabled+mariadb.enabled!=true"
+              "$ref": "#/definitions/constrains~1mariadb.enabled=true@2"
             },
             {
               "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
@@ -3914,6 +4180,28 @@
       "not": {
         "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
       }
+    },
+    "constrains/mariadb.enabled=false+postgresql.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+        }
+      ]
+    },
+    "constrains/mariadb.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      ]
     },
     "constrains/mariadb.enabled=false@2": {
       "properties": {
@@ -4081,11 +4369,14 @@
       "type": "object"
     },
     "constrains/mariadb.passwordUpdateJob.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@2"
-      }
+      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
     },
     "constrains/mariadb.passwordUpdateJob.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.enabled:t@3"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.enabled:t@3": {
       "properties": {
         "mariadb": {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
@@ -4097,11 +4388,14 @@
       "type": "object"
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2"
-      }
+      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.existingSecret:t@3": {
       "properties": {
         "mariadb": {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t"
@@ -4175,6 +4469,54 @@
       "type": "object"
     },
     "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword": {
+      "not": {
+        "properties": {
+          "mariadb": {
+            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword"
+          }
+        },
+        "required": [
+          "mariadb"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword+1more": {
+      "properties": {
+        "mariadb": {
+          "allOf": [
+            {
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword=null"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
+      "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3"
+      }
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@3": {
       "properties": {
         "mariadb": {
           "properties": {
@@ -4183,7 +4525,7 @@
                 "previousPasswords": {
                   "properties": {
                     "rootPassword": {
-                      "type": "string"
+                      "$ref": "#/definitions/t"
                     }
                   },
                   "required": [
@@ -4209,12 +4551,7 @@
       ],
       "type": "object"
     },
-    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2"
-      }
-    },
-    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword:t@2": {
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword=''": {
       "properties": {
         "mariadb": {
           "properties": {
@@ -4223,7 +4560,55 @@
                 "previousPasswords": {
                   "properties": {
                     "rootPassword": {
-                      "$ref": "#/definitions/t"
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  },
+                  "required": [
+                    "rootPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword=null": {
+      "properties": {
+        "mariadb": {
+          "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.rootPassword=null"
+        }
+      },
+      "required": [
+        "mariadb"
+      ],
+      "type": "object"
+    },
+    "constrains/mariadb.passwordUpdateJob.previousPasswords.rootPassword@2": {
+      "properties": {
+        "mariadb": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "rootPassword": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -4788,30 +5173,14 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels:helm-no-template-actions+1more"
-            },
-            {
               "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
-                    }
-                  ]
-                },
                 {
                   "allOf": [
                     {
                       "$ref": "#/definitions/constrains~1postgresql.enabled=false"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
                     },
                     {
                       "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
@@ -4824,14 +5193,30 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
                     },
                     {
                       "$ref": "#/definitions/constrains~1postgresql.enabled=false"
                     }
                   ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql.commonLabels@3"
+                    }
+                  ]
                 }
               ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels:helm-no-template-actions+1more"
             }
           ]
         },
@@ -4865,7 +5250,7 @@
           "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t+1more"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
         },
         {
           "allOf": [
@@ -4882,7 +5267,7 @@
               "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
             }
           ]
         },
@@ -4916,7 +5301,7 @@
     "constrains/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+5more@2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.enabled=false"
@@ -4934,7 +5319,7 @@
           "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
         }
       ]
     },
@@ -5185,7 +5570,7 @@
     "constrains/postgresql.commonLabels+postgresql.commonLabels=null+postgresql.enabled=false+4more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.enabled=false"
@@ -5200,7 +5585,7 @@
           "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
         }
       ]
     },
@@ -5312,6 +5697,26 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1postgresql.enabled+postgresql.enabled!=false"
             },
             {
@@ -5332,26 +5737,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
             }
           ]
         }
@@ -5388,7 +5773,7 @@
     "constrains/postgresql.enabled=false+postgresql.enabled=true+5more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
         },
         {
           "not": {
@@ -5415,6 +5800,18 @@
               }
             ]
           }
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
         }
       ]
     },
@@ -5677,14 +6074,12 @@
       "type": "object"
     },
     "constrains/postgresql.passwordUpdateJob.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
-      }
+      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
     },
     "constrains/postgresql.passwordUpdateJob.enabled:t+1more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
@@ -5700,11 +6095,16 @@
           "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
         }
       ]
     },
     "constrains/postgresql.passwordUpdateJob.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+      }
+    },
+    "constrains/postgresql.passwordUpdateJob.enabled:t@3": {
       "properties": {
         "postgresql": {
           "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
@@ -5943,11 +6343,24 @@
       }
     },
     "constrains/tags.bitnami-common=false": {
-      "not": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-      }
+      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+    },
+    "constrains/tags.bitnami-common=false+tags.bitnami-common=true": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        }
+      ]
     },
     "constrains/tags.bitnami-common=false@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+      }
+    },
+    "constrains/tags.bitnami-common=false@3": {
       "properties": {
         "tags": {
           "properties": {
@@ -6073,24 +6486,7 @@
     },
     "when/mariadb.commonLabels+mariadb.commonLabels=null/then/postgresql+postgresql.commonLabels/else/mariadb": {
       "else": {
-        "else": {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1mariadb.commonLabels@3"
-              }
-            },
-            {
-              "$ref": "#/definitions/constrains~1postgresql.commonLabels"
-            }
-          ]
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
-        },
-        "then": {
-          "$ref": "#/definitions/constrains~1mariadb.commonLabels"
-        }
+        "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1mariadb.commonLabels~1else~1postgresql"
       },
       "if": {
         "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
@@ -6153,6 +6549,26 @@
       },
       "then": true
     },
+    "when/postgresql.commonLabels+postgresql.commonLabels=null/then/mariadb.commonLabels/else/postgresql": {
+      "else": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels@4"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.commonLabels"
+          }
+        ]
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.commonLabels+postgresql.commonLabels=null@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+      }
+    },
     "when/postgresql.enabled=false/then/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+postgresql+4more/else/any": {
       "else": {
         "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+postgresql+2more~1else~1any"
@@ -6170,6 +6586,26 @@
         "then": {
           "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null+postgresql+2more~1else~1any"
         }
+      }
+    },
+    "when/postgresql.enabled=false/then/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+tags.bitnami-common=false/else/postgresql": {
+      "else": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+            }
+          },
+          {
+            "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1postgresql+postgresql.commonLabels~1else~1mariadb"
+          }
+        ]
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1mariadb+mariadb.commonLabels+mariadb.commonLabels=null"
       }
     },
     "when/postgresql.enabled=false/then/postgresql+postgresql.commonLabels+postgresql.commonLabels=null+3more/else/any": {
@@ -6222,7 +6658,7 @@
         "$ref": "#/definitions/when~1mariadb.enabled=false~1then~1mariadb.enabled=true~1else~1any"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
       },
       "then": {
         "else": {
@@ -6259,12 +6695,112 @@
         }
       }
     },
+    "when/postgresql.passwordUpdateJob.enabled:t/then/mariadb.enabled=false+postgresql.enabled=false+3more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1mariadb.enabled=false+tags.bitnami-common=false"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+      },
+      "then": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1mariadb.enabled=false+tags.bitnami-common=false"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+          },
+          "then": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1mariadb.enabled=false@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              }
+            ]
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1mariadb.enabled=false+tags.bitnami-common=false"
+        }
+      }
+    },
+    "when/postgresql.passwordUpdateJob.enabled:t/then/postgresql.enabled=false+3more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@3"
+      },
+      "then": {
+        "else": {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+            }
+          ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+        }
+      }
+    },
+    "when/tags.bitnami-common=false/then/any/else/mariadb+mariadb.commonLabels+mariadb.commonLabels=null": {
+      "else": {
+        "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1any~1else~1mariadb.commonLabels"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+      },
+      "then": true
+    },
+    "when/tags.bitnami-common=false/then/any/else/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+2more": {
+      "else": {
+        "else": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1mariadb.commonLabels"
+            }
+          ]
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1mariadb.commonLabels+mariadb.commonLabels=null@2"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1mariadb.passwordUpdateJob.previousPasswords.rootPassword+1more"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+      },
+      "then": true
+    },
     "when/tags.bitnami-common=false/then/mariadb+mariadb.commonLabels+mariadb.commonLabels=null+postgresql+2more/else/any": {
       "else": {
         "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1postgresql+postgresql.commonLabels~1else~1mariadb"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
       },
       "then": {
         "allOf": [
@@ -6282,7 +6818,7 @@
         "$ref": "#/definitions/when~1mariadb.commonLabels+mariadb.commonLabels=null~1then~1any~1else~1mariadb.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
       },
       "then": {
         "allOf": [
@@ -6300,7 +6836,7 @@
         "$ref": "#/definitions/when~1postgresql.commonLabels+postgresql.commonLabels=null~1then~1any~1else~1postgresql.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
       },
       "then": {
         "allOf": [
@@ -6316,7 +6852,7 @@
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
       },
       "then": {
         "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"

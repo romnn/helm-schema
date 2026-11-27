@@ -6,67 +6,6 @@
       "if": {
         "anyOf": [
           {
-            "else": {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
-                }
-              ]
-            }
-          },
-          {
-            "else": {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
@@ -272,61 +211,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1clickhouse"
       },
       "then": {
@@ -370,30 +254,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
-          },
-          {
-            "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
-        },
-        "then": false
       }
     },
     {
@@ -621,189 +481,81 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "clickhouse": {}
-                  },
-                  "required": [
-                    "clickhouse"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "clickhouse": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "clickhouse"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
+            "else": {
+              "$ref": "#/definitions/when~1clickhouse.zookeeper.enabled=false~1then~1signoz-otel-gateway+signoz-otel-gateway.enabled=true+3more~1else~1signoz-otel-gateway.postgresql.architecture=replication+1more"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+            },
+            "then": {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.secret.password"
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
                 },
                 {
-                  "not": {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+3more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+8more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.namespace+clickhouse.namespace:t"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.nameOverride"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.nameOverride:t"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.nameOverride+clickhouse.nameOverride:t"
+                  "$ref": "#/definitions/when~1clickhouse.zookeeper.enabled=false~1then~1signoz-otel-gateway+signoz-otel-gateway.enabled=true+3more~1else~1signoz-otel-gateway.postgresql.architecture=replication+1more"
                 }
               ]
             }
           },
           {
-            "anyOf": [
+            "allOf": [
               {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.secret.password"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.nameOverride+clickhouse.nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false@2"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.nameOverride+clickhouse.nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@2"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
               },
               {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+8more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.namespace+clickhouse.namespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@2"
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+4more"
           }
         ]
       },
       "then": {
         "if": {
-          "properties": {
-            "clickhouse": {
-              "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password!=null"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
             }
-          },
-          "required": [
-            "clickhouse"
-          ],
-          "type": "object"
+          ]
         },
         "then": false
       }
@@ -1778,396 +1530,6 @@
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "signoz": {}
-              },
-              "required": [
-                "signoz"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "signoz": {
-                        "$ref": "#/definitions/constrains~1image=null"
-                      }
-                    },
-                    "required": [
-                      "signoz"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "signoz": {
-                          "$ref": "#/definitions/constrains~1image"
-                        }
-                      },
-                      "required": [
-                        "signoz"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz+signoz=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "signoz": {
-                        "$ref": "#/definitions/constrains~1service=null"
-                      }
-                    },
-                    "required": [
-                      "signoz"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "signoz": {
-                          "$ref": "#/definitions/constrains~1service"
-                        }
-                      },
-                      "required": [
-                        "signoz"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz+signoz=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "signoz": {
-                            "properties": {
-                              "configVars": {
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "configVars"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "signoz"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "not": {
-                            "properties": {
-                              "signoz": {
-                                "properties": {
-                                  "additionalEnvs": {
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "additionalEnvs"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "signoz"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        {
-                          "not": {
-                            "anyOf": [
-                              {
-                                "properties": {
-                                  "signoz": {
-                                    "properties": {
-                                      "additionalEnvs": {
-                                        "enum": [
-                                          null
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "additionalEnvs"
-                                    ],
-                                    "type": "object"
-                                  }
-                                },
-                                "required": [
-                                  "signoz"
-                                ],
-                                "type": "object"
-                              },
-                              {
-                                "not": {
-                                  "properties": {
-                                    "signoz": {
-                                      "properties": {
-                                        "additionalEnvs": {}
-                                      },
-                                      "required": [
-                                        "additionalEnvs"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "signoz"
-                                  ],
-                                  "type": "object"
-                                }
-                              }
-                            ]
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "properties": {
-              "alertmanager": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "alertmanager"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "signoz": {
-                          "properties": {
-                            "cache": {}
-                          },
-                          "required": [
-                            "cache"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "signoz"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "signoz": {
-                        "properties": {
-                          "cache": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "cache"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "signoz"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz+signoz=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "signoz": {
-                          "properties": {
-                            "configVars": {}
-                          },
-                          "required": [
-                            "configVars"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "signoz"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "signoz": {
-                        "$ref": "#/definitions/constrains~1configVars=null"
-                      }
-                    },
-                    "required": [
-                      "signoz"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz+signoz=null"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "global": {}
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "signoz": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "signoz"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1signoz+signoz=null"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "signoz": {
-                        "$ref": "#/definitions/constrains~1serviceAccount=null"
-                      }
-                    },
-                    "required": [
-                      "signoz"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "signoz": {
-                          "properties": {
-                            "serviceAccount": {}
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "signoz"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "alertmanager": {}
-              },
-              "required": [
-                "alertmanager"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "global": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "signoz-otel-gateway": {
@@ -2339,36 +1701,6 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/when~1clickhouse.enabled=false~1then~1clickhouse.enabled=true~1else~1any"
           },
           {
@@ -2390,6 +1722,61 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+4more"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false+signoz-otel-gateway.postgresql+4more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -2447,6 +1834,562 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+1more"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more@2"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+4more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+3more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more@2"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=false@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@3"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels:helm-no-template-actions"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@4"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+1more"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@2"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels:helm-no-template-actions"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@4"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-5"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@3"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@2"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more@2"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+2more"
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=false+clickhouse.enabled=true+clickhouse.zookeeper+3more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more@2"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+2more"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=false+clickhouse.enabled=true+clickhouse.zookeeper+3more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled+4more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more"
+                }
+              ]
+            }
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway.enabled=false+5more"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway.enabled=false+5more"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false+signoz-otel-gateway.enabled=true+1more"
@@ -2480,87 +2423,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "else": {
-              "$ref": "#/definitions/when~1clickhouse.zookeeper.enabled=false~1then~1signoz-otel-gateway+signoz-otel-gateway.enabled=true+3more~1else~1signoz-otel-gateway.postgresql.architecture=replication"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                },
-                {
-                  "$ref": "#/definitions/when~1clickhouse.zookeeper.enabled=false~1then~1signoz-otel-gateway+signoz-otel-gateway.enabled=true+3more~1else~1signoz-otel-gateway.postgresql.architecture=replication"
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+4more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
-            }
-          ]
-        },
-        "then": false
       }
     },
     {
@@ -2614,6 +2476,451 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "signoz": {}
+              },
+              "required": [
+                "signoz"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "signoz": {
+                        "$ref": "#/definitions/constrains~1image=null"
+                      }
+                    },
+                    "required": [
+                      "signoz"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "signoz": {
+                          "$ref": "#/definitions/constrains~1image"
+                        }
+                      },
+                      "required": [
+                        "signoz"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz+signoz=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "signoz": {
+                        "$ref": "#/definitions/constrains~1service=null"
+                      }
+                    },
+                    "required": [
+                      "signoz"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "signoz": {
+                          "$ref": "#/definitions/constrains~1service"
+                        }
+                      },
+                      "required": [
+                        "signoz"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz+signoz=null"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "alertmanager": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "alertmanager"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "signoz": {
+                          "properties": {
+                            "cache": {}
+                          },
+                          "required": [
+                            "cache"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "signoz"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "signoz": {
+                        "properties": {
+                          "cache": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "cache"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "signoz"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz+signoz=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "signoz": {
+                          "properties": {
+                            "configVars": {}
+                          },
+                          "required": [
+                            "configVars"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "signoz"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "signoz": {
+                        "$ref": "#/definitions/constrains~1configVars=null"
+                      }
+                    },
+                    "required": [
+                      "signoz"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz+signoz=null"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "signoz": {
+                                "properties": {
+                                  "additionalEnvs": {
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "additionalEnvs"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "signoz"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "properties": {
+                                  "signoz": {
+                                    "properties": {
+                                      "additionalEnvs": {
+                                        "enum": [
+                                          null
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "additionalEnvs"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "signoz"
+                                ],
+                                "type": "object"
+                              },
+                              {
+                                "not": {
+                                  "properties": {
+                                    "signoz": {
+                                      "properties": {
+                                        "additionalEnvs": {}
+                                      },
+                                      "required": [
+                                        "additionalEnvs"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "signoz"
+                                  ],
+                                  "type": "object"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "not": {
+                        "properties": {
+                          "signoz": {
+                            "properties": {
+                              "configVars": {
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "configVars"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "signoz"
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "signoz": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "signoz"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1signoz+signoz=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "signoz": {
+                        "$ref": "#/definitions/constrains~1serviceAccount=null"
+                      }
+                    },
+                    "required": [
+                      "signoz"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "signoz": {
+                          "properties": {
+                            "serviceAccount": {}
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "signoz"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "alertmanager": {}
+              },
+              "required": [
+                "alertmanager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "global": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -2697,6 +3004,67 @@
             "type": "string"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
+                }
+              ]
+            }
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -2789,6 +3157,195 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "clickhouse": {}
+                  },
+                  "required": [
+                    "clickhouse"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "clickhouse": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "clickhouse"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.secret.password"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.nameOverride+clickhouse.nameOverride:t"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
+                },
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.nameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1clickhouse.nameOverride:t"
+                    }
+                  ]
+                },
+                {
+                  "not": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+8more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+3more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.namespace+clickhouse.namespace:t"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.nameOverride+clickhouse.nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.fullnameOverride"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+8more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator+clickhouse.clickhouseOperator.name+3more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.namespace+clickhouse.namespace:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.secret.password"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.nameOverride+clickhouse.nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false+clickhouse.enabled!=true+1more"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "clickhouse": {
+              "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password!=null"
+            }
+          },
+          "required": [
+            "clickhouse"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
       },
       "then": {
@@ -2863,480 +3420,15 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+2more"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=false+clickhouse.enabled=true+clickhouse.zookeeper+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=false+clickhouse.enabled=true+clickhouse.zookeeper+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more"
-                  }
-                ]
-              }
-            ]
+            "not": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
+            }
           },
           {
-            "not": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more"
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+1more"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more@2"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.nameOverride:t@2"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more@2"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels:helm-no-template-actions"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@4"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=false@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-5"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouse.enabled=true@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels+1more@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@2"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels:helm-no-template-actions"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels@4"
-                        }
-                      ]
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more"
-                    }
-                  ]
-                },
-                {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+4more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+3more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+1more@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.zookeeper+clickhouse.zookeeper.enabled=true+2more"
-                    }
-                  ]
-                },
-                {
-                  "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+2more"
-                }
-              ]
-            }
+            "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
           }
         ]
       },
@@ -3344,13 +3436,10 @@
         "if": {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.commonLabels!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
-            },
-            {
               "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse!=null"
             }
           ]
         },
@@ -3698,64 +3787,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "else": {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more"
-                }
-              ]
-            }
-          },
-          {
-            "else": {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/when~1signoz-otel-gateway.enabled=false~1then~1signoz-otel-gateway.enabled=true~1else~1any"
       },
       "then": {
@@ -3976,6 +4007,248 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1clickhouse.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/when~1clickhouse.zookeeper.enabled=false~1then~1clickhouse.zookeeper.enabled=true+tags.bitnami-common=false+1more~1else~1any"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=false@3"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/when~1clickhouse.zookeeper.enabled=false~1then~1clickhouse.zookeeper.enabled=true+tags.bitnami-common=false+1more~1else~1any"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1clickhouse.zookeeper!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1clickhouse"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "externalClickhouse": {}
+                      },
+                      "required": [
+                        "externalClickhouse"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "externalClickhouse": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "externalClickhouse"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "else": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "$ref": "#/definitions/constrains~1clickhouse+externalClickhouse.host+externalClickhouse.host=null"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1externalClickhouse.cluster+externalClickhouse.cluster=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1clickhouse"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1externalClickhouse.host+externalClickhouse.host=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1clickhouse"
+                    }
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1externalClickhouse.host=''"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1clickhouse"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1externalClickhouse.cluster+externalClickhouse.cluster=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1clickhouse"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1externalClickhouse.cluster=''"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1clickhouse"
+              }
+            },
+            "if": {
+              "properties": {
+                "externalClickhouse": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "externalClickhouse"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": {
+                            "else": {
+                              "$ref": "#/definitions/constrains~1clickhouse+externalClickhouse.host+externalClickhouse.host=null"
+                            },
+                            "if": {
+                              "$ref": "#/definitions/constrains~1externalClickhouse.existingSecretPasswordKey+1more"
+                            },
+                            "then": {
+                              "$ref": "#/definitions/constrains~1clickhouse"
+                            }
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1externalClickhouse.cluster+externalClickhouse.cluster=null"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1clickhouse"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1externalClickhouse.host+externalClickhouse.host=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1clickhouse"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1externalClickhouse.host=''"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1clickhouse"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1externalClickhouse.existingSecretPasswordKey+1more"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1clickhouse"
+                    }
+                  },
+                  "if": {
+                    "properties": {
+                      "externalClickhouse": {
+                        "properties": {
+                          "existingSecretPasswordKey": {
+                            "enum": [
+                              ""
+                            ]
+                          }
+                        },
+                        "required": [
+                          "existingSecretPasswordKey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "externalClickhouse"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1clickhouse"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1externalClickhouse.cluster+externalClickhouse.cluster=null"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1clickhouse"
+                }
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1externalClickhouse.cluster=''"
+              },
+              "then": {
+                "$ref": "#/definitions/constrains~1clickhouse"
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1clickhouse!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/definitions/constrains~1clickhouse+clickhouse.clickhouseOperator.logger+4more"
           },
           {
@@ -4023,49 +4296,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1clickhouse"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "externalClickhouse": {}
-                  },
-                  "required": [
-                    "externalClickhouse"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "externalClickhouse": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "externalClickhouse"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1clickhouse!=null"
-        },
-        "then": false
       }
     },
     {
@@ -4274,61 +4504,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+4more"
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1clickhouse.enabled=false"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture!=null"
-            }
-          ]
-        },
-        "then": false
-      }
     }
   ],
   "definitions": {
@@ -4435,11 +4610,6 @@
                 {
                   "allOf": [
                     {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.name@3"
-                      }
-                    },
-                    {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.name+clickhouse.clickhouseOperator.name=null"
@@ -4501,6 +4671,11 @@
                             "type": "object"
                           }
                         ]
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1clickhouse.clickhouseOperator.name@3"
                       }
                     }
                   ]
@@ -4715,6 +4890,143 @@
           "$ref": "#/definitions/constrains~1clickhouse.enabled=false+clickhouse.enabled=true+signoz-otel-gateway+3more"
         }
       ]
+    },
+    "constrains/clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.enabled=true+clickhouse.zookeeper+6more"
+      }
     },
     "constrains/clickhouse+clickhouse.namespace": {
       "allOf": [
@@ -4944,142 +5256,15 @@
         }
       ]
     },
-    "constrains/clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more": {
-      "anyOf": [
+    "constrains/clickhouse+externalClickhouse.host+externalClickhouse.host=null": {
+      "allOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1clickhouse"
         },
         {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled=true@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1clickhouse.enabled+clickhouse.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1externalClickhouse.host+externalClickhouse.host=null"
         }
       ]
-    },
-    "constrains/clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1clickhouse+clickhouse.zookeeper.enabled+clickhouse.zookeeper.enabled!=false+5more"
-      }
     },
     "constrains/clickhouse.clickhouseOperator.logger+clickhouse.clickhouseOperator.logger=null": {
       "not": {
@@ -5597,16 +5782,6 @@
       ],
       "type": "object"
     },
-    "constrains/clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false"
-        }
-      ]
-    },
     "constrains/clickhouse.zookeeper+signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more": {
       "allOf": [
         {
@@ -5631,6 +5806,16 @@
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.enabled=false+7more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false"
+        }
+      ]
+    },
+    "constrains/clickhouse.zookeeper+signoz-otel-gateway.enabled=false+5more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false+signoz-otel-gateway.postgresql+4more"
         },
         {
           "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false"
@@ -7496,6 +7681,180 @@
       ],
       "type": "object"
     },
+    "constrains/externalClickhouse.cluster+externalClickhouse.cluster=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "externalClickhouse": {
+                "properties": {
+                  "cluster": {}
+                },
+                "required": [
+                  "cluster"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "externalClickhouse"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "externalClickhouse": {
+              "properties": {
+                "cluster": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "cluster"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "externalClickhouse"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/externalClickhouse.cluster=''": {
+      "properties": {
+        "externalClickhouse": {
+          "properties": {
+            "cluster": {
+              "enum": [
+                ""
+              ]
+            }
+          },
+          "required": [
+            "cluster"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "externalClickhouse"
+      ],
+      "type": "object"
+    },
+    "constrains/externalClickhouse.existingSecretPasswordKey+1more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "externalClickhouse": {
+                "properties": {
+                  "existingSecretPasswordKey": {}
+                },
+                "required": [
+                  "existingSecretPasswordKey"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "externalClickhouse"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "externalClickhouse": {
+              "properties": {
+                "existingSecretPasswordKey": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "existingSecretPasswordKey"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "externalClickhouse"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/externalClickhouse.host+externalClickhouse.host=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "externalClickhouse": {
+              "properties": {
+                "host": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "host"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "externalClickhouse"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "externalClickhouse": {
+                "properties": {
+                  "host": {}
+                },
+                "required": [
+                  "host"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "externalClickhouse"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/externalClickhouse.host=''": {
+      "properties": {
+        "externalClickhouse": {
+          "properties": {
+            "host": {
+              "enum": [
+                ""
+              ]
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "externalClickhouse"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "not": {
         "$ref": "#/definitions/constrains~1fullnameOverride@3"
@@ -7506,16 +7865,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
@@ -7523,6 +7872,16 @@
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
             }
           ]
         },
@@ -9326,6 +9685,29 @@
         }
       ]
     },
+    "constrains/signoz-otel-gateway+signoz-otel-gateway.enabled+4more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true+signoz-otel-gateway.postgresql.enabled+2more"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
+            }
+          ]
+        }
+      ]
+    },
     "constrains/signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more": {
       "allOf": [
         {
@@ -9336,46 +9718,38 @@
         }
       ]
     },
-    "constrains/signoz-otel-gateway+signoz-otel-gateway.enabled=false+4more@2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@2"
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
-        }
-      ]
-    },
     "constrains/signoz-otel-gateway+signoz-otel-gateway.enabled=false+5more": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
+          "else": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+3more"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false"
+                  },
+                  {
+                    "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
+                  }
+                ]
+              }
+            ]
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+3more"
+          }
         }
       ]
     },
@@ -9385,7 +9759,7 @@
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@2"
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@4"
         },
         {
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false"
@@ -9417,7 +9791,7 @@
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@2"
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@4"
         },
         {
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false"
@@ -9453,7 +9827,17 @@
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
         },
         {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+3more"
+          "not": {
+            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@3"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
         }
       ]
     },
@@ -9469,31 +9853,7 @@
           "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=null"
         },
         {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@3"
-        }
-      ]
-    },
-    "constrains/signoz-otel-gateway+signoz-otel-gateway.postgresql+3more": {
-      "allOf": [
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=null"
-              }
-            ]
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@3"
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@5"
         }
       ]
     },
@@ -9513,29 +9873,6 @@
         }
       ]
     },
-    "constrains/signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+2more"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false+2more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true+signoz-otel-gateway.postgresql.enabled+2more"
-        }
-      ]
-    },
     "constrains/signoz-otel-gateway+signoz-otel-gateway.postgresql.enabled+6more": {
       "anyOf": [
         {
@@ -9544,25 +9881,6 @@
               "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled+1more@2"
             },
             {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=true"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled+1more@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled+1more"
             },
             {
@@ -9585,10 +9903,7 @@
               "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
             },
             {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=true"
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
             }
           ]
         },
@@ -9598,13 +9913,10 @@
               "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=true"
             },
             {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false"
-            },
-            {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=true"
             }
           ]
         },
@@ -9649,7 +9961,10 @@
               "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
             },
             {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=true"
             }
           ]
         },
@@ -9659,10 +9974,32 @@
               "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=true"
             },
             {
-              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
+              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
             },
             {
-              "$ref": "#/definitions/constrains~1tags.bitnami-common+tags.bitnami-common!=false"
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled+1more@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=false"
+            },
+            {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled+signoz-otel-gateway.enabled!=true"
             }
           ]
         }
@@ -9743,6 +10080,22 @@
         }
       ]
     },
+    "constrains/signoz-otel-gateway.enabled=false+signoz-otel-gateway.postgresql+4more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@4"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false+tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
+        }
+      ]
+    },
     "constrains/signoz-otel-gateway.enabled=false@2": {
       "not": {
         "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=false"
@@ -9816,7 +10169,7 @@
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@3"
+            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@5"
           }
         },
         {
@@ -9861,21 +10214,27 @@
       "type": "object"
     },
     "constrains/signoz-otel-gateway.postgresql.architecture+1more": {
-      "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@3"
+      "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@5"
     },
     "constrains/signoz-otel-gateway.postgresql.architecture+1more@2": {
-      "not": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=null"
-          }
-        ]
-      }
+      "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@3"
     },
     "constrains/signoz-otel-gateway.postgresql.architecture+1more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=null"
+        }
+      ]
+    },
+    "constrains/signoz-otel-gateway.postgresql.architecture+1more@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@2"
+      }
+    },
+    "constrains/signoz-otel-gateway.postgresql.architecture+1more@5": {
       "properties": {
         "signoz-otel-gateway": {
           "properties": {
@@ -9915,6 +10274,16 @@
         "signoz-otel-gateway"
       ],
       "type": "object"
+    },
+    "constrains/signoz-otel-gateway.postgresql.architecture+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false+tags.bitnami-common=false"
+        }
+      ]
     },
     "constrains/signoz-otel-gateway.postgresql.architecture=null": {
       "properties": {
@@ -10342,6 +10711,16 @@
         "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@3"
       }
     },
+    "constrains/signoz-otel-gateway.postgresql.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      ]
+    },
     "constrains/signoz-otel-gateway.postgresql.enabled=false@2": {
       "not": {
         "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@3"
@@ -10602,6 +10981,16 @@
     },
     "constrains/tags.bitnami-common=false": {
       "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+    },
+    "constrains/tags.bitnami-common=false+tags.bitnami-common=true": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        }
+      ]
     },
     "constrains/tags.bitnami-common=false@2": {
       "not": {
@@ -10927,17 +11316,35 @@
         "$ref": "#/definitions/constrains~1clickhouse.enabled=true"
       }
     },
-    "when/clickhouse.zookeeper.enabled=false/then/signoz-otel-gateway+signoz-otel-gateway.enabled=true+3more/else/signoz-otel-gateway.postgresql.architecture=replication": {
+    "when/clickhouse.zookeeper.enabled=false/then/clickhouse.zookeeper.enabled=true+tags.bitnami-common=false+1more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=false@3"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1clickhouse.zookeeper.enabled=true@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+          }
+        ]
+      }
+    },
+    "when/clickhouse.zookeeper.enabled=false/then/signoz-otel-gateway+signoz-otel-gateway.enabled=true+3more/else/signoz-otel-gateway.postgresql.architecture=replication+1more": {
       "else": {
         "else": {
           "else": {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+3more"
+            "$ref": "#/definitions/when~1signoz-otel-gateway.postgresql.architecture+1more~1then~1signoz-otel-gateway.postgresql.enabled=false+tags.bitnami-common=false~1else~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql..."
           },
           "if": {
             "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture=replication"
           },
           "then": {
-            "$ref": "#/definitions/constrains~1signoz-otel-gateway+signoz-otel-gateway.postgresql+3more"
+            "$ref": "#/definitions/when~1signoz-otel-gateway.postgresql.architecture+1more~1then~1signoz-otel-gateway.postgresql.enabled=false+tags.bitnami-common=false~1else~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql..."
           }
         },
         "if": {
@@ -10989,6 +11396,44 @@
       "then": {
         "$ref": "#/definitions/constrains~1signoz-otel-gateway.enabled=true@2"
       }
+    },
+    "when/signoz-otel-gateway.postgresql.architecture+1more/then/signoz-otel-gateway.postgresql.enabled=false+tags.bitnami-common=false/else/signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql...": {
+      "else": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@3"
+            }
+          },
+          {
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1any~1else~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
+          }
+        ]
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.architecture+1more@3"
+      },
+      "then": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql.enabled=false@3"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          }
+        ]
+      }
+    },
+    "when/tags.bitnami-common=false/then/any/else/signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more": {
+      "else": {
+        "$ref": "#/definitions/constrains~1signoz-otel-gateway.postgresql+signoz-otel-gateway.postgresql.architecture+1more"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+      },
+      "then": true
     },
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
       "else": true,
@@ -11495,217 +11940,6 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more"
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password+enabled=false+enabled=true+fullnameOverride+3more"
-                        },
-                        {
-                          "not": {
-                            "allOf": [
-                              {
-                                "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more"
-                              },
-                              {
-                                "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more@2"
-                              }
-                            ]
-                          }
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more@2"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more"
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@2"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            }
-                          ]
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+2more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled=false"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1namespace+namespace:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more@2"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password"
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+2more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled=false"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespace+namespace:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more@2"
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password+enabled=false+enabled=true+fullnameOverride+3more"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password!=null"
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
@@ -11897,6 +12131,217 @@
                   "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password!=null"
                 }
               ]
+            },
+            "then": false
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+2more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled=false"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1namespace+namespace:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more@2"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1fullnameOverride"
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride@3"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@2"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            }
+                          ]
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespace+namespace:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more@2"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.name+clickhouseOperator.name=false+7more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password+enabled=false+enabled=true+fullnameOverride+3more"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password+enabled=false+enabled=true+fullnameOverride+3more"
+                        },
+                        {
+                          "not": {
+                            "allOf": [
+                              {
+                                "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more"
+                              },
+                              {
+                                "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more@2"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1clickhouseOperator+clickhouseOperator.logger+clickhouseOperator.logger:t+9more@2"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "$ref": "#/definitions/constrains~1clickhouseOperator.secret.password!=null"
             },
             "then": false
           }
@@ -12759,233 +13204,6 @@
           "if": {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled=false+serviceAccount.create:t+serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled=false+serviceAccount.create:t+serviceAccount.name:t"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "then": {
-            "if": {
-              "allOf": [
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {
-                          "not": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "name": {
-                          "not": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              ]
-            },
-            "then": false
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
                 "properties": {
                   "serviceAccount": {
                     "properties": {
@@ -13207,13 +13425,29 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride"
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1enabled=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride"
                   }
                 ]
               },
@@ -13235,26 +13469,237 @@
                     "$ref": "#/definitions/constrains~1nameOverride"
                   }
                 ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled=false"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride"
-                  }
-                ]
               }
             ]
           },
           "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled=false+serviceAccount.create:t+serviceAccount.name:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        }
+                      ]
+                    },
+                    {
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled=false+serviceAccount+serviceAccount.create:t+serviceAccount.name+1more@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1serviceAccount.create:t+serviceAccount.name:t"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled=false+serviceAccount.create:t+serviceAccount.name:t"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@3"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "then": {
+            "if": {
+              "allOf": [
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "name": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "then": false
+          }
         }
       ],
       "properties": {

@@ -4,44 +4,6 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1aggregator.ingress.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "aggregator": {
-            "additionalProperties": {},
-            "description": "Aggregator parameters",
-            "properties": {
-              "ingress": {
-                "additionalProperties": {},
-                "description": "Configure the ingress resource that allows you to access the\nFluentd aggregator. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
-                "properties": {
-                  "secrets": {
-                    "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: fluentd.local-tls\nkey:\ncertificate:",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -97,6 +59,27 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1aggregator.ingress.enabled:t"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
+                    }
+                  }
+                ]
+              },
+              {
                 "not": {
                   "anyOf": [
                     {
@@ -144,17 +127,7 @@
                     {
                       "properties": {
                         "tags": {
-                          "properties": {
-                            "bitnami-common": {
-                              "enum": [
-                                true
-                              ]
-                            }
-                          },
-                          "required": [
-                            "bitnami-common"
-                          ],
-                          "type": "object"
+                          "$ref": "#/definitions/constrains~1bitnami-common=true"
                         }
                       },
                       "required": [
@@ -164,27 +137,6 @@
                     }
                   ]
                 }
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "$ref": "#/definitions/constrains~1aggregator.ingress.enabled:t"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
-                    }
-                  }
-                ]
               }
             ]
           },
@@ -194,6 +146,44 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1aggregator.ingress.secrets:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1aggregator.ingress.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "aggregator": {
+            "additionalProperties": {},
+            "description": "Aggregator parameters",
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "description": "Configure the ingress resource that allows you to access the\nFluentd aggregator. Set up the URL\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/",
+                "properties": {
+                  "secrets": {
+                    "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using cert-manager, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\ne.g:\n- name: fluentd.local-tls\nkey:\ncertificate:",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -387,6 +377,19 @@
       ],
       "type": "object"
     },
+    "constrains/bitnami-common=true": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
     "constrains/ingress=null": {
       "properties": {
         "ingress": {
@@ -510,6 +513,33 @@
     },
     "tags": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1bitnami-common=true"
+                }
+              },
+              {
+                "properties": {
+                  "bitnami-common": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                },
+                "required": [
+                  "bitnami-common"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

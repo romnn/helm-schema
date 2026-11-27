@@ -154,47 +154,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1openShift.securityContextConstraints.create:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1openShift.enabled:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+12more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/t"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1openShift.enabled:t+serviceMonitor+serviceMonitor.metricRelabelings+1more"
       },
       "then": {
@@ -414,38 +373,6 @@
               }
             ],
             "description": "- port: 5170\ncontainerPort: 5170\nprotocol: TCP\nname: tcp\nnodePort: 30517"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/t"
-                }
-              }
-            ]
           }
         }
       }

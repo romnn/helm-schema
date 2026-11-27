@@ -4,64 +4,6 @@
   "allOf": [
     {
       "if": {
-        "else": {
-          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+nameOverride:t+tags.bitnami-common=false+1more"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+nameOverride:t+tags.bitnami-common=false+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "String to partially override common.names.fullname template (will maintain the release name)",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "else": {
-          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+fullnameOverride:t+tags.bitnami-common=false+1more"
-        },
-        "if": {
-          "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-        },
-        "then": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+fullnameOverride:t+tags.bitnami-common=false+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-            }
-          ]
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "description": "String to fully override common.names.fullname template",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -132,19 +74,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
+                "$ref": "#/definitions/constrains~1group-3"
               },
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
+                "$ref": "#/definitions/constrains~1group-2"
               }
             ]
           },
@@ -154,7 +87,26 @@
                 "$ref": "#/definitions/constrains~1group-3"
               },
               {
-                "$ref": "#/definitions/constrains~1group-2"
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
               }
             ]
           },
@@ -183,7 +135,45 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-3"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -193,10 +183,23 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                "$ref": "#/definitions/constrains~1group-1"
               },
               {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -218,20 +221,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-1"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
               },
               {
                 "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
@@ -240,7 +233,7 @@
                 "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               },
               {
                 "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
@@ -253,13 +246,58 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1namespaceOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride:t"
@@ -278,99 +316,16 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
                 "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
@@ -383,19 +338,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t"
               },
               {
@@ -410,19 +352,20 @@
             ]
           },
           {
+            "not": {
+              "properties": {
+                "cluster": {}
+              },
+              "required": [
+                "cluster"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "allOf": [
               {
                 "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
-                      }
-                    ]
-                  },
                   {
                     "allOf": [
                       {
@@ -446,6 +389,16 @@
                             "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
                           }
                         ]
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1cluster.update.addNodes:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
                       }
                     ]
                   }
@@ -505,22 +458,69 @@
             ]
           },
           {
-            "not": {
-              "properties": {
-                "cluster": {}
-              },
-              "required": [
-                "cluster"
-              ],
-              "type": "object"
-            }
-          },
-          {
             "$ref": "#/definitions/constrains~1cluster=null"
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+nameOverride:t+tags.bitnami-common=false+1more"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+nameOverride:t+tags.bitnami-common=false+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "description": "String to partially override common.names.fullname template (will maintain the release name)",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+fullnameOverride:t+tags.bitnami-common=false+1more"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1cluster.update.addNodes:t+fullnameOverride:t+tags.bitnami-common=false+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+            }
+          ]
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "description": "String to fully override common.names.fullname template",
+            "type": "string"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -605,6 +605,32 @@
     }
   ],
   "definitions": {
+    "constrains/bitnami-common=false": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
+    "constrains/bitnami-common=true": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
     "constrains/cluster.externalAccess.enabled:t": {
       "not": {
         "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
@@ -778,7 +804,7 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
+          "$ref": "#/definitions/constrains~1group-5"
         },
         {
           "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
@@ -791,7 +817,7 @@
     "constrains/group-1": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
+          "$ref": "#/definitions/constrains~1group-5"
         },
         {
           "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
@@ -814,30 +840,14 @@
     "constrains/group-3": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
+          "$ref": "#/definitions/constrains~1group-5"
         },
         {
-          "$ref": "#/definitions/constrains~1group-5"
+          "$ref": "#/definitions/constrains~1group-4"
         }
       ]
     },
     "constrains/group-4": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1namespaceOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1namespaceOverride:t"
-        }
-      ]
-    },
-    "constrains/group-5": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1cluster.externalAccess.enabled:t@2"
@@ -850,6 +860,22 @@
         },
         {
           "$ref": "#/definitions/constrains~1fullnameOverride@2"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1cluster.update.addNodes:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1namespaceOverride:t"
         }
       ]
     },
@@ -917,17 +943,7 @@
     "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                false
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1bitnami-common=false"
         }
       },
       "required": [
@@ -943,17 +959,7 @@
     "constrains/tags.bitnami-common=true@2": {
       "properties": {
         "tags": {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1bitnami-common=true"
         }
       },
       "required": [
@@ -1246,6 +1252,23 @@
     },
     "tags": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1bitnami-common=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1bitnami-common=false"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

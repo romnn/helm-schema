@@ -4,6 +4,63 @@
   "allOf": [
     {
       "if": {
+        "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceMonitor": {
+            "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1installCRDs=false"
+          },
+          {
+            "not": {
+              "properties": {
+                "eck-operator-crds": {
+                  "$ref": "#/definitions/constrains~1nameOverride@2"
+                }
+              },
+              "required": [
+                "eck-operator-crds"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "eck-operator-crds": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "eck-operator-crds"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -365,41 +422,13 @@
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "kubeAPIServerIP": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kubeAPIServerIP"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1kubeAPIServerIP=null"
                   },
                   {
-                    "properties": {
-                      "kubeAPIServerIP": {
-                        "enum": [
-                          ""
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kubeAPIServerIP"
-                    ],
-                    "type": "object"
+                    "$ref": "#/definitions/constrains~1kubeAPIServerIP=''"
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "kubeAPIServerIP": {}
-                      },
-                      "required": [
-                        "kubeAPIServerIP"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/definitions/constrains~1kubeAPIServerIP"
                   }
                 ]
               }
@@ -1258,13 +1287,13 @@
           },
           {
             "else": {
-              "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more~1else~1webhook"
+              "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP+6more~1else~1webhook"
             },
             "if": {
               "$ref": "#/definitions/constrains~1config.enableLeaderElection:t@2"
             },
             "then": {
-              "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more~1else~1webhook"
+              "$ref": "#/definitions/when~1config.validateStorageClass:t~1then~1createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP+6more~1else~1webhook"
             }
           },
           {
@@ -1333,63 +1362,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1config.metrics.secureMode.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceMonitor": {
-            "description": "Prometheus ServiceMonitor configuration\nOnly used when config.enableSecureMetrics is true\nReference: https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#servicemonitor",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1eck-operator-crds.nameOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1installCRDs=false"
-          },
-          {
-            "not": {
-              "properties": {
-                "eck-operator-crds": {
-                  "$ref": "#/definitions/constrains~1nameOverride@2"
-                }
-              },
-              "required": [
-                "eck-operator-crds"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "eck-operator-crds": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "eck-operator-crds"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
     },
     {
       "if": {
@@ -2987,6 +2959,27 @@
       ],
       "type": "object"
     },
+    "constrains/kubeAPIServerIP": {
+      "not": {
+        "properties": {
+          "kubeAPIServerIP": {}
+        },
+        "required": [
+          "kubeAPIServerIP"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/kubeAPIServerIP+kubeAPIServerIP=null": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP"
+        }
+      ]
+    },
     "constrains/kubeAPIServerIP:t": {
       "not": {
         "$ref": "#/definitions/constrains~1kubeAPIServerIP:t@2"
@@ -2996,6 +2989,32 @@
       "properties": {
         "kubeAPIServerIP": {
           "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "kubeAPIServerIP"
+      ],
+      "type": "object"
+    },
+    "constrains/kubeAPIServerIP=''": {
+      "properties": {
+        "kubeAPIServerIP": {
+          "enum": [
+            ""
+          ]
+        }
+      },
+      "required": [
+        "kubeAPIServerIP"
+      ],
+      "type": "object"
+    },
+    "constrains/kubeAPIServerIP=null": {
+      "properties": {
+        "kubeAPIServerIP": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
@@ -3350,7 +3369,7 @@
         ]
       }
     },
-    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP:t+3more/else/webhook": {
+    "when/config.validateStorageClass:t/then/createClusterScopedResources:t+extraObjects+extraObjects:t+kubeAPIServerIP+6more/else/webhook": {
       "else": {
         "else": {
           "else": {
@@ -3375,7 +3394,21 @@
                   "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
                 },
                 "then": {
-                  "$ref": "#/definitions/constrains~1webhook.enabled:t"
+                  "else": {
+                    "$ref": "#/definitions/constrains~1webhook.enabled:t"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+                  },
+                  "then": {
+                    "else": {
+                      "$ref": "#/definitions/when~1kubeAPIServerIP=''~1then~1any~1else~1kubeAPIServerIP+kubeAPIServerIP=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+                    },
+                    "then": true
+                  }
                 }
               },
               "if": {
@@ -3409,7 +3442,21 @@
                   "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
                 },
                 "then": {
-                  "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1extraObjects"
+                  "else": {
+                    "$ref": "#/definitions/when~1webhook.enabled:t~1then~1any~1else~1extraObjects"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+                  },
+                  "then": {
+                    "else": {
+                      "$ref": "#/definitions/when~1kubeAPIServerIP=''~1then~1any~1else~1extraObjects+kubeAPIServerIP+kubeAPIServerIP=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1webhook.enabled:t@3"
+                    },
+                    "then": true
+                  }
                 }
               },
               "if": {
@@ -3423,7 +3470,7 @@
           "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
         },
         "then": {
-          "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
+          "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP+kubeAPIServerIP:t+kubeAPIServerIP=''+4more~1else~1any"
         }
       },
       "if": {
@@ -3435,11 +3482,11 @@
           "$ref": "#/definitions/constrains~1createClusterScopedResources:t@2"
         },
         "then": {
-          "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more~1else~1any"
+          "$ref": "#/definitions/when~1extraObjects:t~1then~1extraObjects+kubeAPIServerIP+kubeAPIServerIP:t+kubeAPIServerIP=''+4more~1else~1any"
         }
       }
     },
-    "when/extraObjects:t/then/extraObjects+kubeAPIServerIP:t+managedNamespaceSelector:t+managedNamespaces:t+1more/else/any": {
+    "when/extraObjects:t/then/extraObjects+kubeAPIServerIP+kubeAPIServerIP:t+kubeAPIServerIP=''+4more/else/any": {
       "else": {
         "else": {
           "else": {
@@ -3457,16 +3504,22 @@
         },
         "then": {
           "else": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+            "else": {
+              "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+                },
+                {
+                  "$ref": "#/definitions/when~1kubeAPIServerIP=''~1then~1any~1else~1kubeAPIServerIP+kubeAPIServerIP=null"
                 }
-              }
-            ]
+              ]
+            }
           },
           "if": {
             "$ref": "#/definitions/constrains~1managedNamespaceSelector:t@2"
@@ -3503,7 +3556,15 @@
               "$ref": "#/definitions/constrains~1managedNamespaces:t@2"
             },
             "then": {
-              "$ref": "#/definitions/constrains~1extraObjects"
+              "else": {
+                "$ref": "#/definitions/constrains~1extraObjects"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1softMultiTenancy.enabled:t@3"
+              },
+              "then": {
+                "$ref": "#/definitions/when~1kubeAPIServerIP=''~1then~1any~1else~1extraObjects+kubeAPIServerIP+kubeAPIServerIP=null"
+              }
             }
           },
           "if": {
@@ -3514,6 +3575,42 @@
           }
         }
       }
+    },
+    "when/kubeAPIServerIP=''/then/any/else/extraObjects+kubeAPIServerIP+kubeAPIServerIP=null": {
+      "else": {
+        "else": {
+          "else": {
+            "$ref": "#/definitions/constrains~1extraObjects"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1kubeAPIServerIP+kubeAPIServerIP=null"
+          },
+          "then": true
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP+kubeAPIServerIP=null"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1kubeAPIServerIP=''"
+      },
+      "then": true
+    },
+    "when/kubeAPIServerIP=''/then/any/else/kubeAPIServerIP+kubeAPIServerIP=null": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP+kubeAPIServerIP=null"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1kubeAPIServerIP+kubeAPIServerIP=null"
+        },
+        "then": true
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1kubeAPIServerIP=''"
+      },
+      "then": true
     },
     "when/managedNamespaces:t/then/any/else/extraObjects+softMultiTenancy.enabled:t": {
       "else": {

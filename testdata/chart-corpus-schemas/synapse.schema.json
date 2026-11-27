@@ -6,34 +6,6 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+redis.enabled=false+redis.sentinel.enabled:t+2more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+5more"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1redis!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "properties": {
               "serviceAccount": {
                 "enum": [
@@ -54,16 +26,16 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride@2"
                         },
                         {
                           "$ref": "#/definitions/constrains~1serviceAccount.create:t"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                          "$ref": "#/definitions/constrains~1nameOverride:t"
                         }
                       ]
                     },
@@ -75,16 +47,32 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride@2"
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
                         },
                         {
                           "$ref": "#/definitions/constrains~1serviceAccount.create:t"
                         },
                         {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                        },
+                        {
                           "$ref": "#/definitions/constrains~1nameOverride:t"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
                         }
                       ]
                     },
@@ -104,22 +92,6 @@
                         },
                         {
                           "$ref": "#/definitions/constrains~1fullnameOverride"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride:t"
                         }
                       ]
                     }
@@ -209,19 +181,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
@@ -242,6 +201,19 @@
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
               }
             ]
           },
@@ -384,6 +356,247 @@
       }
     },
     {
+      "if": {
+        "else": {
+          "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more@2"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.commonLabels:t"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more@2"
+        }
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis.commonLabels!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1redis.enabled=false~1then~1redis.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/when~1redis.enabled=false~1then~1redis.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
+                  }
+                ]
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/constrains~1redis.architecture=replication+redis.enabled=false+redis.enabled=true+2more"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1redis.architecture=replication+redis.enabled=false+redis.enabled=true+2more"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+redis.enabled=false+redis.sentinel.enabled:t+2more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+5more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.enabled=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1redis.enabled=true"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1redis.architecture!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.enabled=false"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false+1more"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1redis.architecture!=null"
+        },
+        "then": false
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "redis": {
@@ -417,14 +630,14 @@
               "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.commonLabels+4more"
             },
             "if": {
-              "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+              "$ref": "#/definitions/constrains~1redis.commonLabels:t@2"
             },
             "then": {
               "else": {
                 "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.commonLabels+4more"
               },
               "if": {
-                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
               },
               "then": {
                 "allOf": [
@@ -454,15 +667,7 @@
             }
           },
           {
-            "properties": {
-              "postgresql": {
-                "$ref": "#/definitions/constrains~1commonLabels:t"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
+            "$ref": "#/definitions/constrains~1postgresql.commonLabels:t@2"
           }
         ]
       },
@@ -490,40 +695,6 @@
             "object"
           ]
         }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.architecture=replication"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false+1more"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1redis.architecture!=null"
-        },
-        "then": false
       }
     },
     {
@@ -585,11 +756,121 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false+1more"
+        "anyOf": [
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql+postgresql.enabled=false+postgresql.enabled=true+5more~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled=false+redis.architecture=replication+2more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+                  }
+                ]
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels:t"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql+postgresql.enabled=false+postgresql.enabled=true+5more~1else~1any"
+                }
+              ]
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.commonLabels:t"
+              },
+              {
+                "else": {
+                  "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled=false+redis.architecture=replication+2more"
+                },
+                "if": {
+                  "properties": {
+                    "redis": {
+                      "properties": {
+                        "sentinel": {
+                          "properties": {
+                            "service": {
+                              "properties": {
+                                "nodePorts": {
+                                  "properties": {
+                                    "redis": {
+                                      "$ref": "#/definitions/t"
+                                    }
+                                  },
+                                  "required": [
+                                    "redis"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "nodePorts"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "sentinel"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "redis"
+                  ],
+                  "type": "object"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1postgresql+postgresql.enabled=false+redis.architecture=replication+2more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+              }
+            ]
+          }
+        ]
       },
       "then": {
         "if": {
-          "$ref": "#/definitions/constrains~1redis!=null"
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.commonLabels!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis.architecture!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis.commonLabels!=null"
+            }
+          ]
         },
         "then": false
       }
@@ -655,115 +936,31 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.architecture=replication"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false+1more"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.architecture=replication"
-              }
-            ]
-          },
+            "$ref": "#/definitions/when~1redis.enabled=false~1then~1redis.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1redis!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "$ref": "#/definitions/constrains~1postgresql.architecture=replication+redis.enabled=false+redis.sentinel.enabled:t+2more"
           },
           {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+5more"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1redis.enabled=true"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis.architecture=replication"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-              }
-            ]
-          },
-          {
             "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+5more"
           }
         ]
       },
@@ -771,10 +968,10 @@
         "if": {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1redis.architecture!=null"
+              "$ref": "#/definitions/constrains~1postgresql!=null"
             },
             {
-              "$ref": "#/definitions/constrains~1postgresql!=null"
+              "$ref": "#/definitions/constrains~1redis!=null"
             }
           ]
         },
@@ -785,71 +982,73 @@
       "if": {
         "else": {
           "else": {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+2more"
+            "$ref": "#/definitions/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql.enabled=false+postgresql.enabled=true+tags.bitnami-common=false+1more~1else~1postgresql+postgresql.architecture"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
           },
           "then": {
-            "allOf": [
-              {
-                "else": {
-                  "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.enabled=false+3more~1else~1any"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-                },
-                "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.enabled=false+3more~1else~1any"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
-                    }
-                  ]
-                }
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.enabled=false+3more~1else~1any"
               },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              "if": {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                  },
+                  {
+                    "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.enabled=false+3more~1else~1any"
+                  }
+                ]
               }
-            ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1postgresql.enabled=true+redis.architecture=replication+redis.enabled=false+3more~1else~1any"
+            }
           }
         },
         "if": {
-          "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+          "$ref": "#/definitions/constrains~1redis.commonLabels:t@2"
         },
         "then": {
           "else": {
-            "$ref": "#/definitions/constrains~1postgresql+postgresql.architecture+postgresql.architecture=null+2more"
+            "$ref": "#/definitions/when~1postgresql.architecture+postgresql.architecture=null~1then~1postgresql.enabled=false+postgresql.enabled=true+tags.bitnami-common=false+1more~1else~1postgresql+postgresql.architecture"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
           },
           "then": {
-            "allOf": [
-              {
-                "else": {
-                  "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.commonLabels+4more~1else~1any"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-                },
-                "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.commonLabels+4more~1else~1any"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
-                    }
-                  ]
-                }
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.commonLabels+4more~1else~1any"
               },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              "if": {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1redis.architecture=replication~1then~1postgresql.architecture+postgresql.architecture=null+redis.commonLabels+4more~1else~1any"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                  }
+                ]
               }
-            ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+            },
+            "then": {
+              "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1postgresql.enabled=true+redis.architecture=replication+redis.enabled=false+3more~1else~1any"
+            }
           }
         }
       },
@@ -860,27 +1059,7 @@
               "$ref": "#/definitions/constrains~1redis.architecture!=null"
             },
             {
-              "properties": {
-                "redis": {
-                  "properties": {
-                    "commonLabels": {
-                      "not": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    }
-                  },
-                  "required": [
-                    "commonLabels"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "redis"
-              ],
-              "type": "object"
+              "$ref": "#/definitions/constrains~1redis.commonLabels!=null"
             },
             {
               "$ref": "#/definitions/constrains~1postgresql!=null"
@@ -922,6 +1101,21 @@
       "properties": {
         "commonLabels": {
           "type": "string"
+        }
+      },
+      "required": [
+        "commonLabels"
+      ],
+      "type": "object"
+    },
+    "constrains/commonLabels!=null": {
+      "properties": {
+        "commonLabels": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
         }
       },
       "required": [
@@ -1106,28 +1300,35 @@
       ],
       "type": "object"
     },
-    "constrains/postgresql+postgresql.architecture+postgresql.architecture=null+2more": {
+    "constrains/postgresql+postgresql.enabled=false+redis.architecture=replication+2more": {
       "allOf": [
         {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+          }
+        },
+        {
           "else": {
-            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
           },
           "if": {
-            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+            "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
           },
           "then": {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+                "$ref": "#/definitions/constrains~1redis.enabled=false@2"
               },
               {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               }
             ]
           }
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+          }
         }
       ]
     },
@@ -1186,40 +1387,38 @@
       ]
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@2": {
-      "not": {
-        "anyOf": [
-          {
+      "anyOf": [
+        {
+          "properties": {
+            "postgresql": {
+              "$ref": "#/definitions/constrains~1architecture=null"
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
             "properties": {
               "postgresql": {
-                "$ref": "#/definitions/constrains~1architecture=null"
+                "properties": {
+                  "architecture": {}
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
               }
             },
             "required": [
               "postgresql"
             ],
             "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "postgresql": {
-                  "properties": {
-                    "architecture": {}
-                  },
-                  "required": [
-                    "architecture"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "postgresql"
-              ],
-              "type": "object"
-            }
           }
-        ]
-      }
+        }
+      ]
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@3": {
       "not": {
@@ -1289,23 +1488,48 @@
     "constrains/postgresql.architecture=replication+postgresql.enabled=false+3more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-        },
-        {
           "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
         },
         {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+        },
+        {
           "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
         }
       ]
     },
     "constrains/postgresql.architecture=replication+postgresql.enabled=false+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+          }
+        }
+      ]
+    },
+    "constrains/postgresql.architecture=replication+postgresql.enabled=false+3more@3": {
       "allOf": [
         {
           "else": {
@@ -1333,44 +1557,44 @@
     "constrains/postgresql.architecture=replication+postgresql.enabled=false+5more": {
       "allOf": [
         {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        },
+        {
           "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
         },
         {
-          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-        },
-        {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1redis.enabled=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=true"
         }
       ]
     },
     "constrains/postgresql.architecture=replication+redis.enabled=false+redis.sentinel.enabled:t+2more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
-        },
-        {
           "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
         },
         {
-          "$ref": "#/definitions/constrains~1redis.enabled=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.enabled=false"
         }
       ]
     },
@@ -1387,6 +1611,31 @@
     },
     "constrains/postgresql.commonLabels": {
       "$ref": "#/definitions/constrains~1postgresql.commonLabels@2"
+    },
+    "constrains/postgresql.commonLabels!=null": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1commonLabels!=null"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.commonLabels:t": {
+      "$ref": "#/definitions/constrains~1postgresql.commonLabels:t@2"
+    },
+    "constrains/postgresql.commonLabels:t@2": {
+      "properties": {
+        "postgresql": {
+          "$ref": "#/definitions/constrains~1commonLabels:t"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
     },
     "constrains/postgresql.commonLabels@2": {
       "properties": {
@@ -1513,6 +1762,18 @@
         "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
       }
     },
+    "constrains/redis.architecture=replication+redis.enabled=false+redis.enabled=true+2more": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/when~1redis.enabled=false~1then~1redis.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
+        }
+      ]
+    },
     "constrains/redis.architecture=replication@2": {
       "properties": {
         "redis": {
@@ -1537,7 +1798,21 @@
         "type": "object"
       }
     },
+    "constrains/redis.commonLabels!=null": {
+      "properties": {
+        "redis": {
+          "$ref": "#/definitions/constrains~1commonLabels!=null"
+        }
+      },
+      "required": [
+        "redis"
+      ],
+      "type": "object"
+    },
     "constrains/redis.commonLabels:t": {
+      "$ref": "#/definitions/constrains~1redis.commonLabels:t@2"
+    },
+    "constrains/redis.commonLabels:t@2": {
       "properties": {
         "redis": {
           "$ref": "#/definitions/constrains~1commonLabels:t"
@@ -1575,13 +1850,13 @@
     "constrains/redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false+1more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
-        },
-        {
           "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1redis.enabled=false"
@@ -1631,11 +1906,14 @@
       "type": "object"
     },
     "constrains/redis.sentinel.enabled:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
-      }
+      "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
     },
     "constrains/redis.sentinel.enabled:t@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+      }
+    },
+    "constrains/redis.sentinel.enabled:t@3": {
       "properties": {
         "redis": {
           "properties": {
@@ -1665,17 +1943,17 @@
     "constrains/serviceAccount+serviceAccount.create:t+serviceAccount.name+serviceAccount.name:t": {
       "allOf": [
         {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-            }
-          ]
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            }
+          ]
         },
         {
           "anyOf": [
@@ -2967,6 +3245,19 @@
       "type": "object"
     },
     "constrains/tags.bitnami-common=false": {
+      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+    },
+    "constrains/tags.bitnami-common=false+tags.bitnami-common=true": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        }
+      ]
+    },
+    "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
           "properties": {
@@ -3071,6 +3362,68 @@
       ],
       "type": "string"
     },
+    "when/postgresql.architecture+postgresql.architecture=null/then/postgresql.enabled=false+postgresql.enabled=true+tags.bitnami-common=false+1more/else/postgresql+postgresql.architecture": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true~1else~1any@2"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+        },
+        "then": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true~1else~1any@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+            }
+          ]
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1postgresql.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
+      }
+    },
+    "when/postgresql.enabled=false/then/postgresql.enabled=true+redis.architecture=replication+redis.enabled=false+3more/else/any": {
+      "else": {
+        "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+redis.enabled=true+tags.bitnami-common=false+1more~1else~1any"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+redis.enabled=true+tags.bitnami-common=false+1more~1else~1any"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+          }
+        ]
+      }
+    },
+    "when/postgresql.enabled=false/then/postgresql.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=true@2"
+          }
+        ]
+      }
+    },
     "when/redis.architecture=replication/then/postgresql+redis.commonLabels+redis.enabled=false+redis.enabled=true+2more/else/any": {
       "else": {
         "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.commonLabels+tags.bitnami-common=true~1else~1any"
@@ -3100,7 +3453,7 @@
     },
     "when/redis.architecture=replication/then/postgresql.architecture+postgresql.architecture=null+redis.commonLabels+4more/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+        "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true~1else~1any@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
@@ -3114,7 +3467,7 @@
         },
         "then": {
           "else": {
-            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true~1else~1any@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1redis.enabled=true"
@@ -3127,7 +3480,7 @@
     },
     "when/redis.architecture=replication/then/postgresql.architecture+postgresql.architecture=null+redis.enabled=false+3more/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+        "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true~1else~1any@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
@@ -3141,7 +3494,7 @@
         },
         "then": {
           "else": {
-            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+            "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true~1else~1any@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1redis.enabled=true"
@@ -3179,19 +3532,42 @@
         }
       }
     },
-    "when/redis.commonLabels:t/then/postgresql+postgresql.enabled=false+postgresql.enabled=true+7more/else/any": {
+    "when/redis.architecture=replication/then/redis.enabled=false+redis.enabled=true+tags.bitnami-common=false+1more/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more@2"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1redis.commonLabels:t"
+        "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1redis.enabled=true"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+          }
+        ]
+      }
+    },
+    "when/redis.commonLabels:t/then/postgresql+postgresql.enabled=false+postgresql.enabled=true+7more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more@3"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1redis.commonLabels:t@2"
       },
       "then": {
         "else": {
-          "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more@2"
+          "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more@3"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
         },
         "then": {
           "allOf": [
@@ -3220,12 +3596,59 @@
         }
       }
     },
+    "when/redis.enabled=false/then/redis.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.enabled=true"
+          }
+        ]
+      }
+    },
+    "when/redis.sentinel.enabled:t/then/postgresql+postgresql.enabled=false+postgresql.enabled=true+5more/else/any": {
+      "else": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1postgresql.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+            }
+          }
+        ]
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@3"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1postgresql.enabled=true+redis.architecture=replication+redis.enabled=false+3more~1else~1any"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+            }
+          }
+        ]
+      }
+    },
     "when/tags.bitnami-common=false/then/postgresql+redis.commonLabels+tags.bitnami-common=true/else/any": {
       "else": {
         "$ref": "#/definitions/constrains~1postgresql+redis.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "allOf": [
@@ -3243,7 +3666,7 @@
         "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null+redis.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "allOf": [
@@ -3261,7 +3684,7 @@
         "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "allOf": [
@@ -3274,12 +3697,29 @@
         ]
       }
     },
+    "when/tags.bitnami-common=false/then/postgresql.architecture+postgresql.architecture=null+tags.bitnami-common=true/else/any@2": {
+      "else": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      },
+      "then": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null"
+        }
+      }
+    },
     "when/tags.bitnami-common=false/then/postgresql.commonLabels+tags.bitnami-common=true/else/any": {
       "else": {
         "$ref": "#/definitions/constrains~1postgresql.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "allOf": [
@@ -3297,7 +3737,7 @@
         "$ref": "#/definitions/constrains~1redis.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "allOf": [
@@ -3313,7 +3753,7 @@
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"

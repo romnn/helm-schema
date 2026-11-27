@@ -6,505 +6,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.port"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-17"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.port"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
-            "properties": {
-              "port": {
-                "$ref": "#/definitions/values~1not~1array"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-17"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.port@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.port@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
-            "properties": {
-              "port": {
-                "allOf": [
-                  {
-                    "not": {
-                      "additionalProperties": {
-                        "$ref": "#/definitions/values~1anyOf~1array+null,boolean,number+object+string"
-                      },
-                      "propertyNames": {
-                        "$ref": "#/definitions/values~1string@3"
-                      },
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheusRule": {
-            "additionalProperties": {},
-            "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1string@2"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1object"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/values~1not~1keywords~1pattern"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/values~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/definitions/values~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/values~1not~1keywords~1pattern@3"
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "customLabels": {
-                              "required": [
-                                "app.kubernetes.io/name"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "customLabels"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1customLabels:helm-marker-free"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1customLabels:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/definitions/values~1not~1:t"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1customLabels:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheusRule": {
-            "additionalProperties": {},
-            "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
-            "properties": {
-              "additionalLabels": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
-                            }
-                          },
-                          {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
-                            }
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1object,null"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.portName@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-16"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.portName@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
-            "properties": {
-              "portName": {
-                "$ref": "#/definitions/values~1not~1array"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-          },
-          {
-            "properties": {
-              "prometheusRule": {
-                "properties": {
-                  "namespace": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "namespace"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheusRule"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "prometheusRule": {
-            "additionalProperties": {},
-            "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1not~1array"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "properties": {
               "serviceAccount": {
                 "enum": [
@@ -557,34 +58,34 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+20more"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more@2"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more"
               },
               {
                 "not": {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                      "not": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more"
+                          }
+                        ]
+                      }
                     },
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                     },
                     {
-                      "not": {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+20more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more"
-                          }
-                        ]
-                      }
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
                     },
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
@@ -608,10 +109,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more@2"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more@2"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more"
               },
               {
                 "not": {
@@ -620,22 +121,22 @@
                       "not": {
                         "allOf": [
                           {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more@2"
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more@2"
                           },
                           {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+12more"
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more"
                           }
                         ]
                       }
                     },
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                     },
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
                     },
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
@@ -685,19 +186,22 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more@2"
+              },
+              {
                 "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more"
               },
               {
                 "not": {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                     },
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
                     },
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
@@ -706,26 +210,23 @@
                       "not": {
                         "allOf": [
                           {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more"
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more@2"
                           },
                           {
-                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more@2"
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more"
                           }
                         ]
                       }
                     }
                   ]
                 }
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more@2"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+25more"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+25more"
               },
               {
                 "not": {
@@ -733,13 +234,13 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                         },
                         {
                           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
                         },
                         {
                           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
@@ -748,10 +249,10 @@
                           "not": {
                             "allOf": [
                               {
-                                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+25more"
+                                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+25more"
                               },
                               {
-                                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+25more"
+                                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+25more@2"
                               }
                             ]
                           }
@@ -761,23 +262,10 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                        },
-                        {
                           "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
                         },
                         {
                           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
@@ -793,10 +281,23 @@
                           "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                         },
                         {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                        },
+                        {
                           "$ref": "#/definitions/constrains~1fullnameOverride"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t"
                         },
                         {
                           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
                         }
                       ]
                     }
@@ -804,20 +305,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+25more"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:t+customLabels=null+fullnameOverride+25more@2"
               }
             ]
           },
@@ -834,16 +322,29 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride@3"
               },
               {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1nameOverride"
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
               }
             ]
           },
@@ -854,19 +355,6 @@
               },
               {
                 "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride@7"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
                   {
                     "allOf": [
                       {
@@ -893,6 +381,19 @@
                         ]
                       }
                     ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride@7"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
                   }
                 ]
               }
@@ -903,6 +404,22 @@
               {
                 "not": {
                   "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                        }
+                      ]
+                    },
                     {
                       "allOf": [
                         {
@@ -925,19 +442,6 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
                           "$ref": "#/definitions/constrains~1fullnameOverride:t"
                         },
                         {
@@ -951,16 +455,13 @@
                     {
                       "allOf": [
                         {
+                          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                        },
+                        {
                           "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                          "$ref": "#/definitions/constrains~1fullnameOverride"
                         }
                       ]
                     }
@@ -1003,44 +504,27 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-15"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-14"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-13"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-12"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-14"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1customLabels:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
           }
         ]
       },
@@ -1051,71 +535,38 @@
             "additionalProperties": {},
             "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
             "properties": {
-              "rules": {
+              "additionalLabels": {
                 "anyOf": [
                   {
-                    "not": {
-                      "$ref": "#/definitions/helm-template-marker-free"
-                    }
-                  },
-                  {
-                    "description": "List of alerting and recording rules.",
-                    "items": {
-                      "additionalProperties": false,
-                      "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
-                      "properties": {
-                        "alert": {
-                          "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
-                          "type": "string"
-                        },
-                        "annotations": {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
-                          "type": "object"
-                        },
-                        "expr": {
-                          "anyOf": [
-                            {
-                              "type": "integer"
-                            },
-                            {
-                              "type": "string"
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
                             }
-                          ],
-                          "description": "PromQL expression to evaluate.",
-                          "x-kubernetes-int-or-string": true
-                        },
-                        "for": {
-                          "description": "Alerts are considered firing once they have been returned for this long.",
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "keep_firing_for": {
-                          "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
-                          "minLength": 1,
-                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
-                          "type": "string"
-                        },
-                        "labels": {
-                          "additionalProperties": {
-                            "type": "string"
                           },
-                          "description": "Labels to add or overwrite.",
-                          "type": "object"
-                        },
-                        "record": {
-                          "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
-                          "type": "string"
-                        }
+                          {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          }
+                        ]
                       },
-                      "required": [
-                        "expr"
-                      ],
-                      "type": "object"
-                    },
-                    "type": "array"
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
+                            }
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1object,null"
+                          }
+                        ]
+                      }
+                    ]
                   },
                   {
                     "$ref": "#/definitions/values~1not~1:t"
@@ -1129,56 +580,12 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1customLabels:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-          }
-        ]
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
-            "properties": {
-              "labels": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1object,null;map-of-string-keys"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
+          "nameOverride": {
             "type": "string"
           }
         }
@@ -1187,6 +594,22 @@
     {
       "if": {
         "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              }
+            ]
+          },
           {
             "allOf": [
               {
@@ -1211,22 +634,6 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
               }
             ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-              }
-            ]
           }
         ]
       },
@@ -1243,7 +650,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+                          "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
                         }
                       },
                       {
@@ -1360,29 +767,32 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1group-17"
               },
               {
-                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type@3"
+                "$ref": "#/definitions/constrains~1service.portName@3"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-11"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1service.type@3"
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.portName@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
               }
             ]
           }
@@ -1395,10 +805,58 @@
             "additionalProperties": {},
             "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
             "properties": {
-              "type": {
+              "portName": {
                 "$ref": "#/definitions/values~1not~1object"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1customLabels@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1customLabels@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1rbac.create:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customLabels": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1object,null"
+              },
+              {
+                "$ref": "#/definitions/values~1not~1:t"
+              }
+            ],
+            "description": "global custom labels, applied to all resrouces"
           }
         }
       }
@@ -1414,25 +872,6 @@
           },
           {
             "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-          },
-          {
-            "properties": {
-              "prometheusRule": {
-                "properties": {
-                  "namespace": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "namespace"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "prometheusRule"
-            ],
-            "type": "object"
           }
         ]
       },
@@ -1446,7 +885,60 @@
               "namespace": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/values~1not~1object"
+                    "$ref": "#/definitions/values~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1string@2"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/values~1not~1keywords~1pattern"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/values~1not~1keywords~1pattern@2"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1not~1keywords~1pattern@4"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/values~1not~1keywords~1pattern@3"
+                      }
+                    ],
+                    "type": "string"
                   },
                   {
                     "$ref": "#/definitions/values~1not~1:t"
@@ -1464,7 +956,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-17"
+                "$ref": "#/definitions/constrains~1group-16"
               }
             ]
           },
@@ -1474,6 +966,9 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
               },
               {
@@ -1481,9 +976,6 @@
               },
               {
                 "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
@@ -1554,49 +1046,68 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-11"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+          },
+          {
+            "properties": {
+              "prometheusRule": {
+                "properties": {
+                  "namespace": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "namespace"
+                ],
+                "type": "object"
               }
-            ]
+            },
+            "required": [
+              "prometheusRule"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "service": {
+          "prometheusRule": {
             "additionalProperties": {},
-            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+            "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
             "properties": {
-              "type": {
-                "$ref": "#/definitions/values~1not~1array"
+              "namespace": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1not~1array"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ]
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
           }
         }
       }
@@ -1607,14 +1118,10 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-16"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
               },
               {
                 "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
@@ -1623,10 +1130,14 @@
                 "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
                 "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-17"
               }
             ]
           }
@@ -1728,7 +1239,7 @@
                 "$ref": "#/definitions/constrains~1group-16"
               },
               {
-                "$ref": "#/definitions/constrains~1service.portName@3"
+                "$ref": "#/definitions/constrains~1service.port"
               }
             ]
           },
@@ -1738,16 +1249,19 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
+                "$ref": "#/definitions/constrains~1service.port"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
               },
               {
                 "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.portName@3"
+                "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
               },
               {
                 "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
@@ -1763,8 +1277,109 @@
             "additionalProperties": {},
             "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
             "properties": {
-              "portName": {
+              "port": {
+                "$ref": "#/definitions/values~1not~1array"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+            "properties": {
+              "type": {
                 "$ref": "#/definitions/values~1not~1object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.portName@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-17"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.portName@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+            "properties": {
+              "portName": {
+                "$ref": "#/definitions/values~1not~1array"
               }
             }
           }
@@ -1778,43 +1393,50 @@
             "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1customLabels@2"
-          },
-          {
             "$ref": "#/definitions/constrains~1fullnameOverride@2"
           },
           {
-            "$ref": "#/definitions/constrains~1customLabels@3"
+            "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
           },
           {
-            "$ref": "#/definitions/constrains~1rbac.create:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+            "properties": {
+              "prometheusRule": {
+                "properties": {
+                  "namespace": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "namespace"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheusRule"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "customLabels": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1object,null"
-              },
-              {
-                "$ref": "#/definitions/values~1not~1:t"
+          "prometheusRule": {
+            "additionalProperties": {},
+            "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1not~1object"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ]
               }
-            ],
-            "description": "global custom labels, applied to all resrouces"
+            }
           }
         }
       }
@@ -1823,13 +1445,13 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+          },
+          {
             "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
           },
           {
             "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
           },
           {
             "$ref": "#/definitions/constrains~1customLabels@2"
@@ -1852,7 +1474,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
                 }
               },
               {
@@ -1863,6 +1485,295 @@
               }
             ],
             "description": "global custom labels, applied to all resrouces"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-14"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-12"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-11"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-13"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheusRule": {
+            "additionalProperties": {},
+            "description": "Custom PrometheusRules to be defined\nThe value is evaluated as a template, so, for example, the value can depend on .Release or .Chart\nref: https://github.com/coreos/prometheus-operator#customresourcedefinitions",
+            "properties": {
+              "rules": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/helm-template-marker-free"
+                    }
+                  },
+                  {
+                    "description": "List of alerting and recording rules.",
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Rule describes an alerting or recording rule\nSee Prometheus documentation: [alerting](https://www.prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) or [recording](https://www.prometheus.io/docs/prometheus/latest/configuration/recording_rules/#recording-rules) rule",
+                      "properties": {
+                        "alert": {
+                          "description": "Name of the alert. Must be a valid label value.\nOnly one of `record` and `alert` must be set.",
+                          "type": "string"
+                        },
+                        "annotations": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "description": "Annotations to add to each alert.\nOnly valid for alerting rules.",
+                          "type": "object"
+                        },
+                        "expr": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ],
+                          "description": "PromQL expression to evaluate.",
+                          "x-kubernetes-int-or-string": true
+                        },
+                        "for": {
+                          "description": "Alerts are considered firing once they have been returned for this long.",
+                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                          "type": "string"
+                        },
+                        "keep_firing_for": {
+                          "description": "KeepFiringFor defines how long an alert will continue firing after the condition that triggered it has cleared.",
+                          "minLength": 1,
+                          "pattern": "^(0|(([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?)$",
+                          "type": "string"
+                        },
+                        "labels": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "description": "Labels to add or overwrite.",
+                          "type": "object"
+                        },
+                        "record": {
+                          "description": "Name of the time series to output to. Must be a valid metric name.\nOnly one of `record` and `alert` must be set.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "expr"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.port@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-16"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.port@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+            "properties": {
+              "port": {
+                "allOf": [
+                  {
+                    "not": {
+                      "additionalProperties": {
+                        "$ref": "#/definitions/values~1anyOf~1array+null,boolean,number+object+string"
+                      },
+                      "propertyNames": {
+                        "$ref": "#/definitions/values~1string@3"
+                      },
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1customLabels:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/values~1object,null;map-of-string-keys"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-15"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "- name: REDIS_PASSWORD\nvalueFrom:\nsecretKeyRef:\nkey: redis-password\nname: redis-config-0.0.2",
+            "properties": {
+              "type": {
+                "$ref": "#/definitions/values~1not~1array"
+              }
+            }
           }
         }
       }
@@ -1896,10 +1807,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
             },
             {
               "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -1911,10 +1822,7 @@
               "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t"
+              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             }
           ]
         },
@@ -1943,10 +1851,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -1958,27 +1866,10 @@
               "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-10"
+              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-10"
-            },
-            {
-              "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
+              "$ref": "#/definitions/constrains~1image.tag:t"
             }
           ]
         },
@@ -1997,13 +1888,33 @@
               "$ref": "#/definitions/constrains~1customLabels:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
-            },
-            {
               "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
             },
             {
+              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1image.tag:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-10"
+            },
+            {
+              "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-10"
+            },
+            {
+              "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
             }
           ]
         }
@@ -2015,79 +1926,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+7more@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+2more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+7more@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
@@ -2130,6 +1968,25 @@
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+3more@2"
               }
             ]
           },
@@ -2158,7 +2015,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
@@ -2167,10 +2024,29 @@
                 "$ref": "#/definitions/constrains~1customLabels:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+3more@2"
+                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+2more@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+7more@2"
               }
             ]
           },
@@ -2192,12 +2068,63 @@
                 "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+2more@2"
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.pspEnabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+7more@2"
+              }
+            ]
           }
         ]
       }
     },
     "constrains/customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+14more": {
       "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1rbac.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+6more"
+            }
+          ]
+        },
         {
           "allOf": [
             {
@@ -2210,7 +2137,7 @@
               "$ref": "#/definitions/constrains~1customLabels:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+10more"
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+8more"
             }
           ]
         },
@@ -2242,7 +2169,7 @@
               "$ref": "#/definitions/constrains~1rbac.create:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+4more"
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+6more"
             }
           ]
         },
@@ -2274,39 +2201,7 @@
               "$ref": "#/definitions/constrains~1customLabels:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+8more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1rbac.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+6more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1rbac.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+6more"
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+10more"
             }
           ]
         },
@@ -2325,6 +2220,22 @@
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+serviceAccount+serviceAccount.name+1more"
             }
           ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1rbac.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+4more"
+            }
+          ]
         }
       ]
     },
@@ -2333,6 +2244,42 @@
         "anyOf": [
           {
             "$ref": "#/definitions/constrains~1rbac.create:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+6more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1rbac.create:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t+serviceAccount+2more"
+                }
+              }
+            ]
           },
           {
             "allOf": [
@@ -2391,17 +2338,17 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
                 "$ref": "#/definitions/constrains~1rbac.create:t@2"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
                 "not": {
-                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+6more"
+                  "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+6more"
                 }
               }
             ]
@@ -2437,43 +2384,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+6more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "not": {
                   "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+4more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1rbac.create:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t+serviceAccount+2more"
                 }
               }
             ]
@@ -2486,19 +2397,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+15more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1customLabels:t"
             },
             {
@@ -2508,10 +2406,23 @@
               "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+15more"
             }
           ]
         }
@@ -2538,10 +2449,10 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t"
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@2"
                     }
                   ]
                 }
@@ -2587,6 +2498,38 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+16more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+14more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
@@ -2619,38 +2562,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels=null+fullnameOverride+image.tag+image.tag:t+13more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+16more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1customLabels:t"
             },
             {
@@ -2666,87 +2577,124 @@
         }
       ]
     },
-    "constrains/customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+25more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+18more"
+    "constrains/customLabels+customLabels:helm-marker-free+customLabels:t+customLabels=null+20more@2": {
+      "not": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+14more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
             }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+17more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+22more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t+service+15more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+service+service.annotations+14more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1customLabels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+19more"
-            }
-          ]
-        }
-      ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+16more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+13more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+image.tag+image.tag:t+image.tag=null+nameOverride+11more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+13more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+prometheusRule+9more"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     "constrains/customLabels+customLabels:helm-marker-free+customLabels=null": {
       "anyOf": [
@@ -2754,10 +2702,57 @@
           "$ref": "#/definitions/constrains~1customLabels"
         },
         {
-          "$ref": "#/definitions/constrains~1customLabels:helm-marker-free"
+          "properties": {
+            "customLabels": {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
+            }
+          },
+          "required": [
+            "customLabels"
+          ],
+          "type": "object"
         },
         {
           "$ref": "#/definitions/constrains~1customLabels=null"
+        }
+      ]
+    },
+    "constrains/customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+14more": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1fullnameOverride+prometheusRule+prometheusRule.namespace+1more"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-8"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-7"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            }
+          ]
         }
       ]
     },
@@ -2771,20 +2766,16 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@10"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
                 },
                 {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceAccount.name@8"
-                    }
-                  ]
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
                 }
               ]
             }
@@ -2802,29 +2793,6 @@
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@10"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
@@ -2862,13 +2830,40 @@
               "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
             },
             {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceAccount.name@8"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -2878,22 +2873,6 @@
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+3more"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-9"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.port"
-            }
-          ]
         },
         {
           "allOf": [
@@ -2945,13 +2924,29 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1group-6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.port"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1group-20"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1group-8"
+              "$ref": "#/definitions/constrains~1group-5"
             },
             {
               "$ref": "#/definitions/constrains~1service.annotations:helm-marker-free"
@@ -3020,7 +3015,7 @@
               "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
             }
           ]
         },
@@ -3039,10 +3034,10 @@
               "$ref": "#/definitions/constrains~1customLabels@3"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
+              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             }
           ]
         }
@@ -3056,13 +3051,38 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1customLabels@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
               "$ref": "#/definitions/constrains~1customLabels@2"
@@ -3077,31 +3097,6 @@
               "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
             }
           ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1customLabels@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
-            }
-          ]
         }
       ]
     },
@@ -3113,26 +3108,26 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
+              "$ref": "#/definitions/constrains~1group-8"
             },
             {
-              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1group-7"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-6"
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
             },
             {
-              "$ref": "#/definitions/constrains~1group-5"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             }
           ]
         }
@@ -3146,13 +3141,13 @@
               "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
             },
             {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -3165,7 +3160,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-7"
+              "$ref": "#/definitions/constrains~1group-9"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -3174,7 +3169,7 @@
               "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1group-5"
+              "$ref": "#/definitions/constrains~1group-7"
             }
           ]
         }
@@ -3184,22 +3179,6 @@
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+7more"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.port"
-            }
-          ]
         },
         {
           "allOf": [
@@ -3230,7 +3209,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-7"
+              "$ref": "#/definitions/constrains~1group-9"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -3240,6 +3219,22 @@
             },
             {
               "$ref": "#/definitions/constrains~1service.labels:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.port"
             }
           ]
         },
@@ -3264,10 +3259,10 @@
           "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
         },
         {
-          "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -3283,22 +3278,6 @@
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+2more"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-20"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-8"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.annotations:helm-marker-free"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-1"
-            }
-          ]
         },
         {
           "allOf": [
@@ -3328,20 +3307,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-9"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-1"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.portName"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-9"
+              "$ref": "#/definitions/constrains~1group-6"
             },
             {
               "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
@@ -3351,6 +3317,22 @@
             },
             {
               "$ref": "#/definitions/constrains~1service+service.port"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-20"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.annotations:helm-marker-free"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-1"
             }
           ]
         },
@@ -3376,6 +3358,19 @@
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-1"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.portName"
             }
           ]
         }
@@ -3416,10 +3411,10 @@
               "$ref": "#/definitions/constrains~1customLabels@3"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -3473,7 +3468,7 @@
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -3492,13 +3487,13 @@
               "$ref": "#/definitions/constrains~1customLabels@3"
             },
             {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+            },
+            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -3506,6 +3501,9 @@
           ]
         }
       ]
+    },
+    "constrains/customLabels+customLabels:helm-marker-free+customLabels=null/:helm-marker-free": {
+      "$ref": "#/definitions/helm-marker-free"
     },
     "constrains/customLabels+customLabels:helm-marker-free+customLabels=null/object,null": {
       "additionalProperties": {
@@ -3583,143 +3581,91 @@
         }
       ]
     },
-    "constrains/customLabels+customLabels:t+customLabels=null+fullnameOverride+20more": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1customLabels+customLabels=null+fullnameOverride+image.tag+image.tag:t+13more"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+13more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+16more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+prometheusRule+9more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+image.tag+image.tag:t+image.tag=null+nameOverride+11more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1prometheusRule.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+13more"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
     "constrains/customLabels+customLabels:t+customLabels=null+fullnameOverride+25more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null+nameOverride+nameOverride:t+19more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+service+service.annotations+14more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t+service+15more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+fullnameOverride+18more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag+22more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+17more"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/customLabels+customLabels:t+customLabels=null+fullnameOverride+25more@2": {
       "not": {
         "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1customLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+service+service.annotations+14more"
-                }
-              }
-            ]
-          },
           {
             "allOf": [
               {
@@ -3738,14 +3684,14 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1customLabels:t"
+              },
+              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1customLabels:t@2"
-              },
-              {
                 "not": {
-                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+17more"
+                  "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t+service+service.annotations+14more"
                 }
               }
             ]
@@ -3794,62 +3740,24 @@
                 }
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1customLabels:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null+image.tag:t+17more"
+                }
+              }
+            ]
           }
         ]
       }
-    },
-    "constrains/customLabels+customLabels=null+fullnameOverride+image.tag+image.tag:t+13more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-6"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-5"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride+prometheusRule+prometheusRule.namespace+1more"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/customLabels:helm-marker-free": {
-      "properties": {
-        "customLabels": {
-          "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
-        }
-      },
-      "required": [
-        "customLabels"
-      ],
-      "type": "object"
-    },
-    "constrains/customLabels:helm-marker-free/:helm-marker-free": {
-      "$ref": "#/definitions/helm-marker-free"
     },
     "constrains/customLabels:t": {
       "not": {
@@ -3921,12 +3829,26 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
-        },
-        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride@7"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "anyOf": [
@@ -3944,30 +3866,42 @@
                   ]
                 }
               ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride@7"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride"
-                    }
-                  ]
-                }
-              ]
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.create:t"
         }
       ]
     },
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more": {
       "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more~1string;pattern-x20@2"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          ]
+        },
         {
           "allOf": [
             {
@@ -4107,6 +4041,37 @@
         {
           "allOf": [
             {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
             },
             {
@@ -4174,63 +4139,6 @@
                   "type": "object"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-            },
-            {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more~1string;pattern-x20@2"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
             }
           ]
         }
@@ -4428,16 +4336,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -4454,13 +4362,10 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -4470,10 +4375,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              "$ref": "#/definitions/constrains~1nameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -4487,29 +4395,35 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              "$ref": "#/definitions/constrains~1service.labels:t"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.type"
+              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels=null"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              "$ref": "#/definitions/constrains~1service.annotations:helm-marker-free"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.portName"
+              "$ref": "#/definitions/constrains~1service.annotations+service.annotations=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.annotations"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.annotations"
             }
           ]
         },
@@ -4535,35 +4449,29 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
             },
             {
-              "$ref": "#/definitions/constrains~1service.annotations:helm-marker-free"
+              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1service.annotations"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.annotations"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.annotations+service.annotations=null"
+              "$ref": "#/definitions/constrains~1service+service.portName"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service.labels:t"
+              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
               "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels=null"
+              "$ref": "#/definitions/constrains~1service+service.type"
             }
           ]
         }
@@ -4584,10 +4492,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+              "$ref": "#/definitions/constrains~1fullnameOverride+image.tag:t+nameOverride+nameOverride:t"
             }
           ]
         }
@@ -4702,7 +4610,7 @@
     "constrains/group-10": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-12"
+          "$ref": "#/definitions/constrains~1group-11"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -4721,27 +4629,14 @@
     "constrains/group-11": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-20"
+          "$ref": "#/definitions/constrains~1group-14"
         },
         {
           "$ref": "#/definitions/constrains~1customLabels:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-18"
         }
       ]
     },
     "constrains/group-12": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-15"
-        },
-        {
-          "$ref": "#/definitions/constrains~1customLabels:t@2"
-        }
-      ]
-    },
-    "constrains/group-13": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null"
@@ -4754,7 +4649,7 @@
         }
       ]
     },
-    "constrains/group-14": {
+    "constrains/group-13": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -4770,13 +4665,26 @@
         }
       ]
     },
-    "constrains/group-15": {
+    "constrains/group-14": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+        }
+      ]
+    },
+    "constrains/group-15": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-20"
+        },
+        {
+          "$ref": "#/definitions/constrains~1customLabels:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-18"
         }
       ]
     },
@@ -4787,6 +4695,9 @@
         },
         {
           "$ref": "#/definitions/constrains~1group-18"
+        },
+        {
+          "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
         }
       ]
     },
@@ -4797,9 +4708,6 @@
         },
         {
           "$ref": "#/definitions/constrains~1group-18"
-        },
-        {
-          "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
         }
       ]
     },
@@ -4832,7 +4740,7 @@
           "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
         },
         {
-          "$ref": "#/definitions/constrains~1group-8"
+          "$ref": "#/definitions/constrains~1group-5"
         }
       ]
     },
@@ -4858,7 +4766,7 @@
           "$ref": "#/definitions/constrains~1group-20"
         },
         {
-          "$ref": "#/definitions/constrains~1group-15"
+          "$ref": "#/definitions/constrains~1group-14"
         }
       ]
     },
@@ -4868,7 +4776,7 @@
           "$ref": "#/definitions/constrains~1group-20"
         },
         {
-          "$ref": "#/definitions/constrains~1group-15"
+          "$ref": "#/definitions/constrains~1group-14"
         },
         {
           "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
@@ -4876,36 +4784,6 @@
       ]
     },
     "constrains/group-5": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
-        },
-        {
-          "$ref": "#/definitions/constrains~1prometheusRule.additionalLabels:t"
-        }
-      ]
-    },
-    "constrains/group-6": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
-        }
-      ]
-    },
-    "constrains/group-7": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-13"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-15"
-        }
-      ]
-    },
-    "constrains/group-8": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1service+service.annotations"
@@ -4918,7 +4796,7 @@
         }
       ]
     },
-    "constrains/group-9": {
+    "constrains/group-6": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1group-20"
@@ -4928,12 +4806,44 @@
         }
       ]
     },
+    "constrains/group-7": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheusRule.additionalLabels:t"
+        }
+      ]
+    },
+    "constrains/group-8": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        },
+        {
+          "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-12"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-14"
+        }
+      ]
+    },
     "constrains/image.tag+image.tag:t+image.tag=null": {
       "anyOf": [
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag=null"
+              "not": {
+                "$ref": "#/definitions/constrains~1image.tag+image.tag=null"
+              }
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -4943,9 +4853,7 @@
         {
           "allOf": [
             {
-              "not": {
-                "$ref": "#/definitions/constrains~1image.tag+image.tag=null"
-              }
+              "$ref": "#/definitions/constrains~1image.tag+image.tag=null"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -4962,16 +4870,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
               "$ref": "#/definitions/constrains~1prometheusRule.additionalLabels:t"
@@ -4994,35 +4902,10 @@
               "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.port"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -5035,19 +4918,19 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.labels:t"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels=null"
+              "$ref": "#/definitions/constrains~1service+service.type"
             }
           ]
         },
@@ -5057,7 +4940,7 @@
               "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1group-15"
+              "$ref": "#/definitions/constrains~1group-14"
             },
             {
               "$ref": "#/definitions/constrains~1group-2"
@@ -5070,19 +4953,44 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+            },
+            {
               "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.port"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.labels:t"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.type"
+              "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels=null"
             }
           ]
         }
@@ -5093,26 +5001,26 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
               "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -5132,16 +5040,16 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace+prometheusRule.namespace:t+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
+              "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.additionalLabels+2more"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1image.tag+image.tag:t+image.tag=null"
             },
             {
               "$ref": "#/definitions/constrains~1prometheusRule.additionalLabels:t"
@@ -5249,13 +5157,13 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+            },
+            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -5291,13 +5199,10 @@
               "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
-            },
-            {
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.port"
+              "$ref": "#/definitions/constrains~1service+service.portName"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -5313,10 +5218,13 @@
               "$ref": "#/definitions/constrains~1service+service.labels+service.labels:helm-marker-free+service.labels:t+1more"
             },
             {
+              "$ref": "#/definitions/constrains~1service+service.portName+service.portName=false+service.portName=null+1more"
+            },
+            {
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.portName"
+              "$ref": "#/definitions/constrains~1service+service.port"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -5335,13 +5243,13 @@
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
+              "$ref": "#/definitions/constrains~1service.annotations+service.annotations=null"
+            },
+            {
               "$ref": "#/definitions/constrains~1service.annotations"
             },
             {
               "$ref": "#/definitions/constrains~1service+service.annotations"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.annotations+service.annotations=null"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -5374,7 +5282,7 @@
               "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -5384,10 +5292,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
+              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@4"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name+serviceAccount.name:t@3"
+              "$ref": "#/definitions/constrains~1image.tag:t+nameOverride+nameOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1image.tag:t"
@@ -5404,10 +5312,10 @@
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride@7"
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
+          "$ref": "#/definitions/constrains~1nameOverride@3"
         }
       ]
     },
@@ -5483,6 +5391,23 @@
                         {
                           "allOf": [
                             {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1nameOverride@4"
+                              }
+                            },
+                            {
+                              "not": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1nameOverride=null"
+                                  }
+                                ]
+                              }
+                            },
+                            {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -5526,23 +5451,6 @@
                                   "$ref": "#/definitions/constrains~1nameOverride@4"
                                 }
                               ]
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/definitions/constrains~1nameOverride@4"
-                              }
-                            },
-                            {
-                              "not": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1nameOverride@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1nameOverride=null"
-                                  }
-                                ]
-                              }
                             }
                           ]
                         }
@@ -5603,16 +5511,16 @@
     "constrains/nameOverride+nameOverride:t@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride@3"
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
       }
     },
     "constrains/nameOverride:t": {
@@ -5864,7 +5772,7 @@
                 "prometheusRule": {
                   "properties": {
                     "namespace": {
-                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object@5"
                     }
                   },
                   "required": [
@@ -5890,7 +5798,7 @@
                 "prometheusRule": {
                   "properties": {
                     "namespace": {
-                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object@5"
+                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -7154,7 +7062,7 @@
             "prometheusRule": {
               "properties": {
                 "additionalLabels": {
-                  "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
                 }
               },
               "required": [
@@ -7405,25 +7313,6 @@
             },
             {
               "not": {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1service.labels@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1service.labels@2"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1service.labels+service.labels:helm-marker-free+service.labels=null"
-            },
-            {
-              "not": {
                 "anyOf": [
                   {
                     "properties": {
@@ -7468,6 +7357,25 @@
                   },
                   {
                     "$ref": "#/definitions/constrains~1service.labels"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.labels+service.labels:helm-marker-free+service.labels=null"
+            },
+            {
+              "not": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1service.labels@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1service.labels@2"
                   }
                 ]
               }
@@ -7614,32 +7522,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service+service.port@2"
-            },
-            {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "port": {
-                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object@5"
-                    }
-                  },
-                  "required": [
-                    "port"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "service": {
                   "properties": {
@@ -7660,6 +7542,32 @@
             },
             {
               "$ref": "#/definitions/constrains~1service+service.port@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service+service.port@2"
+            },
+            {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "port": {
+                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object@5"
+                    }
+                  },
+                  "required": [
+                    "port"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -8317,7 +8225,7 @@
                 "service": {
                   "properties": {
                     "type": {
-                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object@5"
+                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -8343,7 +8251,7 @@
                 "service": {
                   "properties": {
                     "type": {
-                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1prometheusRule+prometheusRule.namespace~1allOf~1not~1object+object@5"
                     }
                   },
                   "required": [
@@ -8673,7 +8581,7 @@
         "service": {
           "properties": {
             "annotations": {
-              "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+              "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
             }
           },
           "required": [
@@ -8732,7 +8640,7 @@
             "service": {
               "properties": {
                 "labels": {
-                  "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+                  "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
                 }
               },
               "required": [
@@ -9040,16 +8948,16 @@
             {
               "anyOf": [
                 {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@10"
+                },
+                {
                   "$ref": "#/definitions/constrains~1serviceAccount.name"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@12"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@11"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@7"
@@ -9062,10 +8970,10 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@10"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@11"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@7"
@@ -9091,21 +8999,53 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@3"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@11"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@12"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@9"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name:t"
                 }
               ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@12"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@11"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
             },
             {
               "anyOf": [
@@ -9125,6 +9065,25 @@
                   "$ref": "#/definitions/constrains~1serviceAccount.name:t"
                 }
               ]
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@12"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@5"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                }
+              ]
             }
           ]
         },
@@ -9132,25 +9091,6 @@
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@9"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                }
-              ]
             },
             {
               "anyOf": [
@@ -9170,52 +9110,20 @@
                   "$ref": "#/definitions/constrains~1serviceAccount.name:t"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
             },
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@10"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-                },
-                {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@6"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name@9"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                }
-              ]
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@10"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@12"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@7"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceAccount.name:t"
@@ -9572,7 +9480,7 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
           },
           "propertyNames": {
             "not": {
@@ -9586,7 +9494,7 @@
         },
         {
           "items": {
-            "$ref": "#/definitions/constrains~1customLabels:helm-marker-free~1:helm-marker-free"
+            "$ref": "#/definitions/constrains~1customLabels+customLabels:helm-marker-free+customLabels=null~1:helm-marker-free"
           },
           "type": "array"
         },

@@ -33,16 +33,35 @@
             "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "maxUnavailable": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "maxUnavailable"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
             "$ref": "#/definitions/constrains~1fullnameOverride@2"
           },
           {
             "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
           }
         ]
       },
@@ -55,10 +74,9 @@
               "maxUnavailable": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/values~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                    "not": {
+                      "$ref": "#/definitions/values~1array"
+                    }
                   },
                   {
                     "$ref": "#/definitions/values~1not~1:t"
@@ -160,15 +178,18 @@
             "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
           {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
             "properties": {
               "podDisruptionBudget": {
                 "properties": {
-                  "maxUnavailable": {
-                    "type": "array"
+                  "minAvailable": {
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "maxUnavailable"
+                  "minAvailable"
                 ],
                 "type": "object"
               }
@@ -177,18 +198,18 @@
               "podDisruptionBudget"
             ],
             "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
           },
           {
             "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
           },
           {
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+          },
+          {
             "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
           },
           {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
           }
         ]
       },
@@ -198,69 +219,18 @@
           "podDisruptionBudget": {
             "additionalProperties": {},
             "properties": {
-              "maxUnavailable": {
+              "minAvailable": {
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/definitions/values~1array"
+                      "$ref": "#/definitions/values~1object@2"
                     }
                   },
                   {
                     "$ref": "#/definitions/values~1not~1:t"
                   }
                 ],
-                "description": "Maximum number/percentage of pods that may be made unavailable\ntype: [null, string]"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "unhealthyPodEvictionPolicy": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "unhealthyPodEvictionPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1group-20"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "additionalProperties": {},
-            "properties": {
-              "unhealthyPodEvictionPolicy": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/values~1array"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "How are unhealthy, but running, pods counted for eviction"
+                "description": "Minimum number/percentage of pods that should remain scheduled.\nWhen it's set, maxUnavailable must be disabled by `maxUnavailable: null`\ntype: [null, integer, string]"
               }
             }
           }
@@ -436,96 +406,643 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1service+service.clusterIP:t+service.type+service.type=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+42more"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
+            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
                 "anyOf": [
                   {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1service.clusterIP:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
-                      }
+                    "not": {
+                      "$ref": "#/definitions/helm-marker-free"
+                    }
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                    "type": [
+                      "object",
+                      "null"
                     ]
                   },
                   {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+42more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                    "$ref": "#/definitions/values~1not~1:t"
                   }
-                ]
+                ],
+                "description": "Annotations to add to the service account"
               }
-            ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1pluginsManager.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "pluginsManager": {
+            "additionalProperties": {},
+            "description": "Plugin Manager Sidecar Container Configuration",
+            "properties": {
+              "configContent": {
+                "description": "Plugin configuration content in YAML format. This is required if plugins.enabled is true.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
           },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "properties": {
+              "maxUnavailable": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "Maximum number/percentage of pods that may be made unavailable\ntype: [null, string]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "properties": {
+              "minAvailable": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/values~1string;pattern-r-n"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "Minimum number/percentage of pods that should remain scheduled.\nWhen it's set, maxUnavailable must be disabled by `maxUnavailable: null`\ntype: [null, integer, string]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "additionalProperties": {},
+          "properties": {
+            "extraServicePorts": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/values~1object@3"
+                },
+                {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                {
+                  "maximum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Additional ports to expose on the Service in addition to the default\nhttp port. Each entry must have a unique `name` and a `port`. `targetPort`\ndefaults to `port` when omitted. `nodePort` is only honored when\n`service.type` is `NodePort` or `LoadBalancer`. A matching containerPort\nmust be provided by the user (e.g. via a sidecar) for traffic to actually\nbe routed.\n- name: extra\nport: 9090\ntargetPort: extra\nprotocol: TCP\nnodePort: null"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc.validatorClientID:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "properties": {
+              "oidc": {
+                "additionalProperties": {},
+                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                "properties": {
+                  "validatorClientID": {
+                    "description": "OIDC client to be used during token validation",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc.scopes:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "properties": {
+              "oidc": {
+                "additionalProperties": {},
+                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                "properties": {
+                  "scopes": {
+                    "description": "OIDC scopes to be used",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc.clientID:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "properties": {
+              "oidc": {
+                "additionalProperties": {},
+                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                "properties": {
+                  "clientID": {
+                    "description": "OIDC client ID",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "maxUnavailable": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "maxUnavailable"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "properties": {
+              "maxUnavailable": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/values~1object@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "Maximum number/percentage of pods that may be made unavailable\ntype: [null, string]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "Override the deployment namespace; defaults to .Release.Namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "minAvailable": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "minAvailable"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "properties": {
+              "minAvailable": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/values~1array"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "Minimum number/percentage of pods that should remain scheduled.\nWhen it's set, maxUnavailable must be disabled by `maxUnavailable: null`\ntype: [null, integer, string]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc.clientSecret:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "properties": {
+              "oidc": {
+                "additionalProperties": {},
+                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                "properties": {
+                  "clientSecret": {
+                    "description": "OIDC client secret",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1config.oidc:t@2"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "properties": {
+                  "oidc": {
+                    "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "additionalProperties": {},
+                "properties": {
+                  "oidc": {
+                    "additionalProperties": {},
+                    "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                    "properties": {
+                      "secret": {
+                        "description": "- OIDC secret configuration\nIf you want to use an existing secret, set create to false and provide the name of the secret.\nIf you want to create a new secret, set create to true and provide the name of the secret.\nAlso provide the values for clientID, clientSecret, issuerURL, and scopes.\nExample:\nconfig:\noidc:\nsecret:\ncreate: true\nname: oidc",
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "unhealthyPodEvictionPolicy": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "unhealthyPodEvictionPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1group-20"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "properties": {
+              "unhealthyPodEvictionPolicy": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/values~1array"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "How are unhealthy, but running, pods counted for eviction"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "unhealthyPodEvictionPolicy": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "unhealthyPodEvictionPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1group-20"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "properties": {
+              "unhealthyPodEvictionPolicy": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/values~1object@2"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/values~1not~1:t"
+                  }
+                ],
+                "description": "How are unhealthy, but running, pods counted for eviction"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "properties": {
               "serviceAccount": {
@@ -553,6 +1070,92 @@
             "type": "object"
           },
           {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.enabled:t"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.enabled:t"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more@2"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1group-19"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1group-18"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t+persistentVolumeClaim.size+2more"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1pluginsManager.configContent+pluginsManager.enabled:t"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1podDisruptionBudget"
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1podDisruptionBudget@3"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "not": {
+                                    "allOf": [
+                                      {
+                                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more"
+                                      },
+                                      {
+                                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more@2"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1group-17"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1pluginsManager.configContent+pluginsManager.enabled:t"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "not": {
               "properties": {
                 "persistentVolumeClaim": {}
@@ -566,13 +1169,38 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1podDisruptionBudget@2"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
                 "not": {
                   "allOf": [
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
                     },
                     {
                       "$ref": "#/definitions/constrains~1service+service.clusterIP:t+service.type+service.type=null"
@@ -581,13 +1209,156 @@
                       "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
                     },
                     {
-                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
                     },
                     {
                       "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
                     },
                     {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+42more"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+42more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1service+service.type+service.type=null@3"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1service.clusterIP:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service+service.type+service.type=null@3"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "config": {}
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "pluginsManager": {}
+              },
+              "required": [
+                "pluginsManager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
+          },
+          {
+            "properties": {
+              "pluginsManager": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "pluginsManager"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1service+service.clusterIP:t+service.type+service.type=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t+nameOverride+nameOverride:t"
+                    },
+                    {
                       "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
                     },
                     {
                       "not": {
@@ -599,54 +1370,6 @@
               },
               {
                 "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc.callbackURL:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "config": {
-                              "properties": {
-                                "oidc": {
-                                  "properties": {
-                                    "callbackURL": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "callbackURL"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "oidc"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "config"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc:t"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1config+config.oidc+config.oidc.secret+config.oidc.secret.create:t+3more"
-                  },
                   {
                     "allOf": [
                       {
@@ -788,52 +1511,7 @@
                         "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc.clientID:t"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "config": {
-                              "properties": {
-                                "oidc": {
-                                  "properties": {
-                                    "clientID": {
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "clientID"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "oidc"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "config"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1config.oidc.clientSecret:t"
+                        "$ref": "#/definitions/constrains~1config.oidc.meUserInfoURL:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
@@ -845,12 +1523,12 @@
                               "properties": {
                                 "oidc": {
                                   "properties": {
-                                    "clientSecret": {
+                                    "meUserInfoURL": {
                                       "type": "string"
                                     }
                                   },
                                   "required": [
-                                    "clientSecret"
+                                    "meUserInfoURL"
                                   ],
                                   "type": "object"
                                 }
@@ -923,7 +1601,7 @@
                         "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1config.oidc.meUserInfoURL:t"
+                        "$ref": "#/definitions/constrains~1config.oidc.clientSecret:t"
                       },
                       {
                         "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
@@ -935,12 +1613,105 @@
                               "properties": {
                                 "oidc": {
                                   "properties": {
-                                    "meUserInfoURL": {
+                                    "clientSecret": {
                                       "type": "string"
                                     }
                                   },
                                   "required": [
-                                    "meUserInfoURL"
+                                    "clientSecret"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "oidc"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config+config.oidc+config.oidc.secret+config.oidc.secret.create:t+3more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc.callbackURL:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "oidc": {
+                                  "properties": {
+                                    "callbackURL": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "callbackURL"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "oidc"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1config.oidc.clientID:t"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "oidc": {
+                                  "properties": {
+                                    "clientID": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "clientID"
                                   ],
                                   "type": "object"
                                 }
@@ -967,159 +1738,6 @@
             ]
           },
           {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+16more"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+16more"
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1podDisruptionBudget@2"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "config": {}
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "pluginsManager": {}
-              },
-              "required": [
-                "pluginsManager"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget=null"
-          },
-          {
-            "properties": {
-              "pluginsManager": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "pluginsManager"
-            ],
-            "type": "object"
-          },
-          {
             "properties": {
               "config": {
                 "enum": [
@@ -1144,90 +1762,64 @@
             }
           },
           {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.enabled:t"
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.enabled:t"
-                  },
-                  {
-                    "allOf": [
+            "else": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                },
+                {
+                  "not": {
+                    "anyOf": [
                       {
-                        "not": {
-                          "anyOf": [
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1group-19"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1group-18"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t+persistentVolumeClaim.size+2more"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1pluginsManager.configContent+pluginsManager.enabled:t"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1podDisruptionBudget"
-                                }
-                              ]
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "anyOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1podDisruptionBudget@3"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "not": {
-                                    "allOf": [
-                                      {
-                                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more"
-                                      },
-                                      {
-                                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more@2"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1group-17"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1pluginsManager.configContent+pluginsManager.enabled:t"
-                                }
-                              ]
-                            }
-                          ]
-                        }
+                        "$ref": "#/definitions/constrains~1service.type"
                       },
                       {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+21more@2"
+                        "$ref": "#/definitions/constrains~1service.type=null"
                       }
                     ]
                   }
-                ]
-              }
-            ]
+                }
+              ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1persistentVolumeClaim.size+persistentVolumeClaim.size=null"
+                    },
+                    "then": true
+                  },
+                  "if": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1service.type"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1service.type=null"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1persistentVolumeClaim.size+persistentVolumeClaim.size=null"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1persistentVolumeClaim.size+persistentVolumeClaim.size=null"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1persistentVolumeClaim.size=''"
+              },
+              "then": true
+            }
           },
           {
             "allOf": [
@@ -1241,6 +1833,9 @@
           },
           {
             "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+22more"
+              },
               {
                 "not": {
                   "anyOf": [
@@ -1283,9 +1878,6 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+22more"
-              },
-              {
                 "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+22more@2"
               }
             ]
@@ -1316,6 +1908,80 @@
               "ingress"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@3"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+16more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+16more"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
           }
         ]
       },
@@ -1323,18 +1989,22 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1pluginsManager.enabled:t"
+        "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "pluginsManager": {
+          "persistentVolumeClaim": {
             "additionalProperties": {},
-            "description": "Plugin Manager Sidecar Container Configuration",
             "properties": {
-              "configContent": {
-                "description": "Plugin configuration content in YAML format. This is required if plugins.enabled is true.",
-                "type": "string"
+              "accessModes": {
+                "description": "accessModes for the persistent volume claim, eg: ReadWriteOnce, ReadOnlyMany, ReadWriteMany etc.",
+                "type": [
+                  "array",
+                  "integer",
+                  "null",
+                  "object"
+                ]
               }
             }
           }
@@ -1342,32 +2012,14 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "extraServicePorts": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/values~1object@3"
-                },
-                {
-                  "items": {
-                    "type": "object"
-                  },
-                  "type": "array"
-                },
-                {
-                  "maximum": 0,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Additional ports to expose on the Service in addition to the default\nhttp port. Each entry must have a unique `name` and a `port`. `targetPort`\ndefaults to `port` when omitted. `nodePort` is only honored when\n`service.type` is `NodePort` or `LoadBalancer`. A matching containerPort\nmust be provided by the user (e.g. via a sidecar) for traffic to actually\nbe routed.\n- name: extra\nport: 9090\ntargetPort: extra\nprotocol: TCP\nnodePort: null"
-            }
+      "if": {
+        "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "type": "object"
           }
         }
       }
@@ -1376,189 +2028,47 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            "$ref": "#/definitions/constrains~1config.oidc.meUserInfoURL:t"
           },
           {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
           },
           {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
+            "$ref": "#/definitions/constrains~1config.oidc:t"
           }
         ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "properties": {
+              "oidc": {
+                "additionalProperties": {},
+                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
+                "properties": {
+                  "meUserInfoURL": {
+                    "description": "URL to fetch additional user info for the /me endpoint.\nFor oauth2proxy /oauth2/userinfo can be used. Empty and it will not be used.",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t@2"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/definitions/values~1not~1:t"
-              }
-            ],
-            "description": "Overrides the name of the chart"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc.validatorClientID:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "properties": {
-              "oidc": {
-                "additionalProperties": {},
-                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                "properties": {
-                  "validatorClientID": {
-                    "description": "OIDC client to be used during token validation",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc.scopes:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "properties": {
-              "oidc": {
-                "additionalProperties": {},
-                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                "properties": {
-                  "scopes": {
-                    "description": "OIDC scopes to be used",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc.clientID:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "properties": {
-              "oidc": {
-                "additionalProperties": {},
-                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                "properties": {
-                  "clientID": {
-                    "description": "OIDC client ID",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "description": "Override the deployment namespace; defaults to .Release.Namespace",
+            "description": "Overrides the name of the chart",
             "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc.clientSecret:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "properties": {
-              "oidc": {
-                "additionalProperties": {},
-                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                "properties": {
-                  "clientSecret": {
-                    "description": "OIDC client secret",
-                    "type": "string"
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -1662,358 +2172,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "unhealthyPodEvictionPolicy": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "unhealthyPodEvictionPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1group-20"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "additionalProperties": {},
-            "properties": {
-              "unhealthyPodEvictionPolicy": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/values~1object@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "How are unhealthy, but running, pods counted for eviction"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc:t@2"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "properties": {
-                  "oidc": {
-                    "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "additionalProperties": {},
-                "properties": {
-                  "oidc": {
-                    "additionalProperties": {},
-                    "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                    "properties": {
-                      "secret": {
-                        "description": "- OIDC secret configuration\nIf you want to use an existing secret, set create to false and provide the name of the secret.\nIf you want to create a new secret, set create to true and provide the name of the secret.\nAlso provide the values for clientID, clientSecret, issuerURL, and scopes.\nExample:\nconfig:\noidc:\nsecret:\ncreate: true\nname: oidc",
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "persistentVolumeClaim": {
-            "additionalProperties": {},
-            "properties": {
-              "accessModes": {
-                "description": "accessModes for the persistent volume claim, eg: ReadWriteOnce, ReadOnlyMany, ReadWriteMany etc.",
-                "type": [
-                  "array",
-                  "integer",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1config.oidc.meUserInfoURL:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc+config.oidc.secret.create:t+config.oidc=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1config.oidc:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "properties": {
-              "oidc": {
-                "additionalProperties": {},
-                "description": "Option 1:\n- OIDC env configuration\n- External OIDC secret configuration",
-                "properties": {
-                  "meUserInfoURL": {
-                    "description": "URL to fetch additional user info for the /me endpoint.\nFor oauth2proxy /oauth2/userinfo can be used. Empty and it will not be used.",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "additionalProperties": {},
-            "properties": {
-              "minAvailable": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Minimum number/percentage of pods that should remain scheduled.\nWhen it's set, maxUnavailable must be disabled by `maxUnavailable: null`\ntype: [null, integer, string]"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "description": "Overrides the name of the chart",
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/helm-marker-free"
-                    }
-                  },
-                  {
-                    "additionalProperties": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Annotations to add to the service account"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "maxUnavailable": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "maxUnavailable"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "additionalProperties": {},
-            "properties": {
-              "maxUnavailable": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/values~1object@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Maximum number/percentage of pods that may be made unavailable\ntype: [null, string]"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       },
       "then": {
@@ -2022,138 +2180,6 @@
           "fullnameOverride": {
             "description": "Overrides the full name of the chart",
             "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "minAvailable": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "minAvailable"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "additionalProperties": {},
-            "properties": {
-              "minAvailable": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/values~1object@2"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Minimum number/percentage of pods that should remain scheduled.\nWhen it's set, maxUnavailable must be disabled by `maxUnavailable: null`\ntype: [null, integer, string]"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1fullnameOverride@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-          },
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "minAvailable": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "minAvailable"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "additionalProperties": {},
-            "properties": {
-              "minAvailable": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/values~1array"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/values~1not~1:t"
-                  }
-                ],
-                "description": "Minimum number/percentage of pods that should remain scheduled.\nWhen it's set, maxUnavailable must be disabled by `maxUnavailable: null`\ntype: [null, integer, string]"
-              }
-            }
           }
         }
       }
@@ -2249,6 +2275,24 @@
               {
                 "allOf": [
                   {
+                    "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config.oidc:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1config+config.oidc+config.oidc.secret+config.oidc.secret.name"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
                     "$ref": "#/definitions/constrains~1config.oidc:t@2"
                   },
                   {
@@ -2272,24 +2316,6 @@
                 "not": {
                   "$ref": "#/definitions/constrains~1config.oidc:t"
                 }
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1config.oidc+config.oidc=null@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1config.oidc:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1config.oidc.secret.create:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1config+config.oidc+config.oidc.secret+config.oidc.secret.name"
-                    }
-                  }
-                ]
               }
             ]
           }
@@ -2496,40 +2522,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1config.oidc.secret+config.oidc.secret.name"
-            },
-            {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "oidc": {
-                      "properties": {
-                        "secret": {
-                          "$ref": "#/definitions/constrains~1name@8"
-                        }
-                      },
-                      "required": [
-                        "secret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "oidc"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "config": {
                   "properties": {
@@ -2558,6 +2550,40 @@
             },
             {
               "$ref": "#/definitions/constrains~1config.oidc.secret+config.oidc.secret.name"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1config.oidc.secret+config.oidc.secret.name"
+            },
+            {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "oidc": {
+                      "properties": {
+                        "secret": {
+                          "$ref": "#/definitions/constrains~1name@8"
+                        }
+                      },
+                      "required": [
+                        "secret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "oidc"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -3065,34 +3091,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
-                },
-                {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/definitions/constrains~1name@5"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "serviceAccount": {
                   "$ref": "#/definitions/constrains~1annotations:t"
@@ -3115,10 +3113,26 @@
               "type": "object"
             },
             {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
+            },
+            {
+              "not": {
+                "properties": {
+                  "serviceAccount": {
+                    "$ref": "#/definitions/constrains~1annotations"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
             },
             {
               "not": {
@@ -3142,19 +3156,6 @@
             },
             {
               "not": {
-                "properties": {
-                  "serviceAccount": {
-                    "$ref": "#/definitions/constrains~1annotations"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "not": {
                 "anyOf": [
                   {
                     "properties": {
@@ -3172,9 +3173,6 @@
                   }
                 ]
               }
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more"
             }
           ]
         },
@@ -3306,6 +3304,34 @@
               ]
             }
           ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name@2"
+                },
+                {
+                  "properties": {
+                    "serviceAccount": {
+                      "$ref": "#/definitions/constrains~1name@5"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount+serviceAccount.name"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -3345,19 +3371,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+16more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
@@ -3378,6 +3391,19 @@
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+15more"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+16more"
             }
           ]
         }
@@ -3442,13 +3468,13 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1group-16"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-13"
+            },
+            {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+19more"
             }
           ]
         },
@@ -3468,13 +3494,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-16"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-13"
-            },
-            {
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+19more"
             }
           ]
         },
@@ -3541,37 +3567,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+17more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
-              },
-              {
-                "not": {
                   "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+6more"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+16more"
                 }
               }
             ]
@@ -3616,6 +3612,36 @@
               },
               {
                 "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+16more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+17more"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1persistentVolumeClaim.enabled:t@2"
+              },
+              {
+                "not": {
                   "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+5more"
                 }
               }
@@ -3629,6 +3655,104 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride@5"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1nameOverride@5"
             },
             {
@@ -3705,13 +3829,10 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride:t"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t"
             }
           ]
         },
@@ -3721,108 +3842,13 @@
               "$ref": "#/definitions/constrains~1fullnameOverride:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@5"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.create:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride:t"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1serviceAccount.create:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride:t"
             }
           ]
         }
@@ -3831,54 +3857,8 @@
     "constrains/fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+42more": {
       "allOf": [
         {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+40more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+service+36more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+38more"
-                }
-              ]
-            }
-          ]
-        },
-        {
           "not": {
             "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+service+36more"
-                    }
-                  }
-                ]
-              },
               {
                 "allOf": [
                   {
@@ -3902,9 +3882,55 @@
                     }
                   }
                 ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+service+36more"
+                    }
+                  }
+                ]
               }
             ]
           }
+        },
+        {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+38more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+service+36more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+40more"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -3913,43 +3939,12 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+              "not": {
+                "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+              }
             },
             {
-              "properties": {
-                "serviceAccount": {
-                  "properties": {
-                    "name": {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more~1string;pattern-x20@2"
-                    }
-                  },
-                  "required": [
-                    "name"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-                    }
-                  ]
-                },
                 {
                   "allOf": [
                     {
@@ -3959,13 +3954,18 @@
                       "$ref": "#/definitions/constrains~1fullnameOverride@2"
                     }
                   ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+                    }
+                  ]
                 }
               ]
-            },
-            {
-              "not": {
-                "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-              }
             }
           ]
         },
@@ -4177,6 +4177,32 @@
               ]
             }
           ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+            },
+            {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "name": {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+9more~1string;pattern-x20@2"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          ]
         }
       ]
     },
@@ -4375,10 +4401,10 @@
               "$ref": "#/definitions/constrains~1podDisruptionBudget.maxUnavailable:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable@2"
@@ -4394,10 +4420,10 @@
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.minAvailable@2"
@@ -4422,6 +4448,31 @@
     "constrains/fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+17more": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+6more"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode@2"
+            }
+          ]
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
@@ -4430,16 +4481,16 @@
               "$ref": "#/definitions/constrains~1persistentVolumeClaim.storageClassName:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode+4more"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode+4more"
             },
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.storageClassName@2"
@@ -4452,55 +4503,20 @@
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size@2"
             }
           ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode@2"
-            }
-          ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+6more"
         }
       ]
     },
     "constrains/fullnameOverride+nameOverride+nameOverride:t+namespaceOverride+38more": {
       "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-9"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.port@2"
-            }
-          ]
-        },
         {
           "allOf": [
             {
@@ -4517,13 +4533,23 @@
               "$ref": "#/definitions/constrains~1fullnameOverride@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1service+service.type@2"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-9"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.port@2"
             }
           ]
         },
@@ -4562,16 +4588,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-23"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-5"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1service.type=ClusterIP"
             },
             {
@@ -4581,16 +4597,26 @@
               "$ref": "#/definitions/constrains~1service.clusterIP:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1service+service.clusterIP@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-23"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-5"
             }
           ]
         }
@@ -4791,7 +4817,7 @@
           "$ref": "#/definitions/constrains~1service+service.clusterIP:t+service.type+service.type=null"
         },
         {
-          "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+          "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
         }
       ]
     },
@@ -6006,10 +6032,10 @@
               "$ref": "#/definitions/constrains~1podDisruptionBudget.minAvailable:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.minAvailable@2"
@@ -6028,10 +6054,10 @@
               "$ref": "#/definitions/constrains~1podDisruptionBudget.maxUnavailable:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable@2"
@@ -6051,10 +6077,10 @@
               "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -6070,10 +6096,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -6089,19 +6115,19 @@
               "$ref": "#/definitions/constrains~1persistentVolumeClaim.storageClassName:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             },
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode+4more"
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode+4more"
             },
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.storageClassName@2"
@@ -6143,12 +6169,66 @@
                       }
                     },
                     {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride"
+                          },
+                          {
+                            "properties": {
+                              "nameOverride": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "nameOverride"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride=null"
+                          },
+                          {
+                            "properties": {
+                              "nameOverride": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "nameOverride"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride@4"
+                          }
+                        ]
+                      }
+                    },
+                    {
                       "anyOf": [
                         {
                           "$ref": "#/definitions/constrains~1nameOverride@2"
                         },
                         {
                           "allOf": [
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1nameOverride@2"
+                              }
+                            },
+                            {
+                              "not": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1nameOverride"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1nameOverride=null"
+                                  }
+                                ]
+                              }
+                            },
                             {
                               "anyOf": [
                                 {
@@ -6193,64 +6273,10 @@
                                   "$ref": "#/definitions/constrains~1nameOverride@2"
                                 }
                               ]
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/definitions/constrains~1nameOverride@2"
-                              }
-                            },
-                            {
-                              "not": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1nameOverride"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1nameOverride=null"
-                                  }
-                                ]
-                              }
                             }
                           ]
                         }
                       ]
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride"
-                          },
-                          {
-                            "properties": {
-                              "nameOverride": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "nameOverride"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride=null"
-                          },
-                          {
-                            "properties": {
-                              "nameOverride": {
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "nameOverride"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@4"
-                          }
-                        ]
-                      }
                     }
                   ]
                 }
@@ -6262,6 +6288,64 @@
     },
     "constrains/nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+40more": {
       "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-16"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-5"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-6"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.type=ClusterIP"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.clusterIP:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.clusterIP@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-8"
+            }
+          ]
+        },
         {
           "allOf": [
             {
@@ -6284,68 +6368,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-8"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1service.type=ClusterIP"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.clusterIP:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.clusterIP@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-6"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-16"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-5"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
@@ -6382,22 +6408,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1podDisruptionBudget.maxUnavailable:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1group-24"
             },
             {
@@ -6414,10 +6424,10 @@
               "$ref": "#/definitions/constrains~1podDisruptionBudget.minAvailable:t"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.minAvailable@2"
@@ -6426,43 +6436,53 @@
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable+4more"
             }
           ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1podDisruptionBudget.maxUnavailable:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable@2"
+            }
+          ]
         }
       ]
     },
     "constrains/nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+16more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+5more"
-        },
-        {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim.storageClassName:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
             },
             {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode+4more"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.storageClassName@2"
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode@2"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size@2"
@@ -6472,21 +6492,27 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim.storageClassName:t"
             },
             {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.size+3more"
             },
             {
-              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode@2"
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode+4more"
+            },
+            {
+              "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.storageClassName@2"
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+namespaceOverride+namespaceOverride:t+5more"
         }
       ]
     },
@@ -6499,19 +6525,19 @@
           "$ref": "#/definitions/constrains~1persistentVolumeClaim.annotations:t"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-        },
-        {
           "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1persistentVolumeClaim.annotations+persistentVolumeClaim.annotations=null"
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.annotations"
         },
         {
           "$ref": "#/definitions/constrains~1persistentVolumeClaim.annotations@2"
         },
         {
-          "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.annotations"
+          "$ref": "#/definitions/constrains~1persistentVolumeClaim.annotations+persistentVolumeClaim.annotations=null"
         }
       ]
     },
@@ -6530,23 +6556,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
               "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.type@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1group-8"
+              "$ref": "#/definitions/constrains~1service+service.type@2"
             }
           ]
         },
@@ -6569,6 +6585,38 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1group-0"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-8"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service.type=ClusterIP"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.clusterIP:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.clusterIP@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1group-1"
             },
             {
@@ -6582,47 +6630,25 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service.type=ClusterIP"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service.clusterIP:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.type+service.type=false+service.type=null+service.type=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.clusterIP@2"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1service.annotations:t"
             },
             {
               "$ref": "#/definitions/constrains~1service.annotations:helm-marker-free"
             },
             {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
             },
             {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t@2"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
             },
             {
               "$ref": "#/definitions/constrains~1service.annotations@2"
             },
             {
-              "$ref": "#/definitions/constrains~1service.annotations+service.annotations=null"
+              "$ref": "#/definitions/constrains~1service+service.annotations"
             },
             {
-              "$ref": "#/definitions/constrains~1service+service.annotations"
+              "$ref": "#/definitions/constrains~1service.annotations+service.annotations=null"
             }
           ]
         }
@@ -7446,7 +7472,7 @@
                 "persistentVolumeClaim": {
                   "properties": {
                     "storageClassName": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
                     }
                   },
                   "required": [
@@ -7472,7 +7498,7 @@
                 "persistentVolumeClaim": {
                   "properties": {
                     "storageClassName": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -7702,6 +7728,11 @@
           "type": "object"
         },
         {
+          "not": {
+            "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
+          }
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1persistentVolumeClaim+persistentVolumeClaim.volumeMode"
@@ -7726,11 +7757,6 @@
               "type": "object"
             }
           ]
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1persistentVolumeClaim.volumeMode:t"
-          }
         }
       ]
     },
@@ -7860,7 +7886,7 @@
                 "persistentVolumeClaim": {
                   "properties": {
                     "volumeMode": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
                     }
                   },
                   "required": [
@@ -7886,7 +7912,7 @@
                 "persistentVolumeClaim": {
                   "properties": {
                     "volumeMode": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -8032,14 +8058,7 @@
             },
             {
               "not": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1persistentVolumeClaim.size"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1persistentVolumeClaim.size=null"
-                  }
-                ]
+                "$ref": "#/definitions/constrains~1persistentVolumeClaim.size+persistentVolumeClaim.size=null"
               }
             }
           ]
@@ -8081,6 +8100,16 @@
         {
           "$ref": "#/definitions/constrains~1persistentVolumeClaim.size=''"
         },
+        {
+          "$ref": "#/definitions/constrains~1persistentVolumeClaim.size"
+        },
+        {
+          "$ref": "#/definitions/constrains~1persistentVolumeClaim.size=null"
+        }
+      ]
+    },
+    "constrains/persistentVolumeClaim.size+persistentVolumeClaim.size=null": {
+      "anyOf": [
         {
           "$ref": "#/definitions/constrains~1persistentVolumeClaim.size"
         },
@@ -8227,10 +8256,10 @@
     "constrains/podDisruptionBudget+podDisruptionBudget.enabled:t": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget"
+          "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1podDisruptionBudget.enabled:t@2"
+          "$ref": "#/definitions/constrains~1podDisruptionBudget"
         }
       ]
     },
@@ -8613,32 +8642,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable"
-            },
-            {
-              "properties": {
-                "podDisruptionBudget": {
-                  "properties": {
-                    "maxUnavailable": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "maxUnavailable"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "podDisruptionBudget": {
                   "properties": {
@@ -8659,6 +8662,32 @@
             },
             {
               "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1podDisruptionBudget+podDisruptionBudget.maxUnavailable"
+            },
+            {
+              "properties": {
+                "podDisruptionBudget": {
+                  "properties": {
+                    "maxUnavailable": {
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                    }
+                  },
+                  "required": [
+                    "maxUnavailable"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -9316,7 +9345,7 @@
                 "podDisruptionBudget": {
                   "properties": {
                     "unhealthyPodEvictionPolicy": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
                     }
                   },
                   "required": [
@@ -9342,7 +9371,7 @@
                 "podDisruptionBudget": {
                   "properties": {
                     "unhealthyPodEvictionPolicy": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -9756,6 +9785,18 @@
           "type": "object"
         },
         {
+          "not": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1service.type=ClusterIP"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.clusterIP:t"
+              }
+            ]
+          }
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1service+service.clusterIP"
@@ -9780,18 +9821,6 @@
               "type": "object"
             }
           ]
-        },
-        {
-          "not": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1service.type=ClusterIP"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.clusterIP:t"
-              }
-            ]
-          }
         },
         {
           "properties": {
@@ -9989,32 +10018,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1service+service.clusterIP"
-            },
-            {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "clusterIP": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
-                    }
-                  },
-                  "required": [
-                    "clusterIP"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "properties": {
                 "service": {
                   "properties": {
@@ -10035,6 +10038,32 @@
             },
             {
               "$ref": "#/definitions/constrains~1service+service.clusterIP"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1service+service.clusterIP"
+            },
+            {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "clusterIP": {
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
+                    }
+                  },
+                  "required": [
+                    "clusterIP"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -10265,6 +10294,18 @@
           "type": "object"
         },
         {
+          "not": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1service.loadBalancerIP:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
+              }
+            ]
+          }
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1service+service.loadBalancerIP"
@@ -10289,18 +10330,6 @@
               "type": "object"
             }
           ]
-        },
-        {
-          "not": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1service.loadBalancerIP:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1service.type=LoadBalancer"
-              }
-            ]
-          }
         },
         {
           "$ref": "#/definitions/constrains~1service.loadBalancerIP"
@@ -11180,32 +11209,6 @@
         {
           "allOf": [
             {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "port": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
-                    }
-                  },
-                  "required": [
-                    "port"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/definitions/constrains~1service+service.port"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1service+service.port"
             },
             {
@@ -11226,6 +11229,32 @@
                 "service"
               ],
               "type": "object"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "port": {
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                    }
+                  },
+                  "required": [
+                    "port"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1service+service.port"
             }
           ]
         },
@@ -11469,6 +11498,27 @@
       ]
     },
     "constrains/service+service.type+service.type=null": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1service.type@2"
+          }
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1service.type"
+              },
+              {
+                "$ref": "#/definitions/constrains~1service.type=null"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "constrains/service+service.type+service.type=null@2": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1service.type"
@@ -11481,9 +11531,9 @@
         }
       ]
     },
-    "constrains/service+service.type+service.type=null@2": {
+    "constrains/service+service.type+service.type=null@3": {
       "not": {
-        "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
+        "$ref": "#/definitions/constrains~1service+service.type+service.type=null@2"
       }
     },
     "constrains/service+service.type@2": {
@@ -11631,7 +11681,7 @@
                 "service": {
                   "properties": {
                     "type": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
                     }
                   },
                   "required": [
@@ -11657,7 +11707,7 @@
                 "service": {
                   "properties": {
                     "type": {
-                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object@5"
+                      "$ref": "#/definitions/constrains~1name~1allOf~1not~1object+object"
                     }
                   },
                   "required": [
@@ -11909,6 +11959,11 @@
         },
         {
           "not": {
+            "$ref": "#/definitions/constrains~1service.type=LoadBalancer+service.type=NodePort"
+          }
+        },
+        {
+          "not": {
             "anyOf": [
               {
                 "$ref": "#/definitions/constrains~1service.externalTrafficPolicy"
@@ -11917,11 +11972,6 @@
                 "$ref": "#/definitions/constrains~1service.externalTrafficPolicy=null"
               }
             ]
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1service.type=LoadBalancer+service.type=NodePort"
           }
         },
         {
@@ -12389,36 +12439,6 @@
         "serviceAccount"
       ],
       "type": "object"
-    },
-    "constrains/type+type=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "type": {}
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "type": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        ]
-      }
     },
     "helm-marker-free": {
       "anyOf": [
@@ -13327,34 +13347,6 @@
     },
     "service": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1type+type=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1type+type=null"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "annotations": {
           "description": "Annotations to add to the service"

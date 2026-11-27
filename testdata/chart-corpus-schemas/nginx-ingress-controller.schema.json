@@ -44,6 +44,63 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1udp:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaceOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1udp:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1udp:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
                 "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
               },
               {
@@ -115,67 +172,10 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
                 "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
-                "$ref": "#/definitions/constrains~1udp:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride"
-              },
-              {
                 "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1udp:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1namespaceOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1udp:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
                 "$ref": "#/definitions/constrains~1udp:t"
@@ -261,6 +261,32 @@
     }
   ],
   "definitions": {
+    "constrains/bitnami-common=false": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
+    "constrains/bitnami-common=true": {
+      "properties": {
+        "bitnami-common": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "bitnami-common"
+      ],
+      "type": "object"
+    },
     "constrains/fullnameOverride": {
       "properties": {
         "fullnameOverride": {
@@ -368,17 +394,7 @@
     "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                false
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1bitnami-common=false"
         }
       },
       "required": [
@@ -394,17 +410,7 @@
     "constrains/tags.bitnami-common=true@2": {
       "properties": {
         "tags": {
-          "properties": {
-            "bitnami-common": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "bitnami-common"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1bitnami-common=true"
         }
       },
       "required": [
@@ -664,6 +670,23 @@
     },
     "tags": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1bitnami-common=true"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1bitnami-common=false"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "bitnami-common": {
           "type": "boolean"

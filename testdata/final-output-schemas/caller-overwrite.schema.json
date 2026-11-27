@@ -12,221 +12,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "guard": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "guard"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "dynamic": {}
-              },
-              "required": [
-                "dynamic"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1host+host=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1host+host=null@2"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "dynamic": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "dynamic"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "guard": {}
-              },
-              "required": [
-                "guard"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "local": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "local"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "version": {}
-              },
-              "required": [
-                "version"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1requiredText=''"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1requiredText"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1requiredText=null"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1group-2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1replicas"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1replicas@2"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "properties": {
-                        "version": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "version"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1version"
-                    }
-                  ]
-                }
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "version": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "version"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1version"
-                    }
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1replicas"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1replicas@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText=''"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1requiredText=null"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "properties": {
-              "version": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "version"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "local": {}
-              },
-              "required": [
-                "local"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "allOf": [
           {
             "not": {
@@ -421,6 +206,286 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "guard": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "guard"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "dynamic": {}
+              },
+              "required": [
+                "dynamic"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "else": {
+              "else": {
+                "else": {
+                  "else": {
+                    "else": {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1local.kind@2"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1requiredText+requiredText=null@2"
+                    },
+                    "then": true
+                  },
+                  "if": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1local.kind"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1local.kind=null"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1requiredText+requiredText=null"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1requiredText+requiredText=null@2"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1requiredText=''"
+              },
+              "then": true
+            },
+            "if": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1local.kind"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1local.kind=null"
+                }
+              ]
+            },
+            "then": {
+              "else": {
+                "else": {
+                  "$ref": "#/definitions/constrains~1requiredText+requiredText=null"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1requiredText+requiredText=null@2"
+                },
+                "then": true
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1requiredText=''"
+              },
+              "then": true
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1host+host=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1host+host=null@2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "dynamic": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "dynamic"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "guard": {}
+              },
+              "required": [
+                "guard"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "local": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "local"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "version": {}
+              },
+              "required": [
+                "version"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1requiredText=''"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1requiredText"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1requiredText=null"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1group-2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1replicas"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1replicas@2"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
+                    },
+                    {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "version"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1version"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "version": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "version"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1version"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1local+local.kind+local.kind=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1replicas"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1replicas@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1requiredText"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1requiredText=''"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1requiredText=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "version": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "version"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "local": {}
+              },
+              "required": [
+                "local"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "version": {
@@ -605,7 +670,13 @@
           "not": {
             "properties": {
               "dynamic": {
-                "$ref": "#/definitions/constrains~1kind"
+                "properties": {
+                  "kind": {}
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
               }
             },
             "required": [
@@ -1856,39 +1927,6 @@
         "$ref": "#/definitions/constrains~1host+host=null"
       }
     },
-    "constrains/kind": {
-      "properties": {
-        "kind": {}
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
-    "constrains/kind+kind=null": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1kind"
-            }
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
     "constrains/kind=ConfigMap": {
       "not": {
         "$ref": "#/definitions/constrains~1kind=ConfigMap@2"
@@ -1923,62 +1961,40 @@
     "constrains/local+local.kind+local.kind=null": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "local": {
-                "$ref": "#/definitions/constrains~1kind"
-              }
-            },
-            "required": [
-              "local"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/definitions/constrains~1local.kind"
         },
         {
-          "properties": {
-            "local": {
-              "properties": {
-                "kind": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "local"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1local.kind@2"
         },
         {
-          "properties": {
-            "local": {
-              "properties": {
-                "kind": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "local"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/constrains~1local.kind=null"
         }
       ]
     },
     "constrains/local+local.kind=ConfigMap+local.kind=Service+local.setting": {
       "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-1"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local+local.setting"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.kind=Service"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@3"
+            },
+            {
+              "$ref": "#/definitions/constrains~1local.setting@4"
+            }
+          ]
+        },
         {
           "anyOf": [
             {
@@ -2017,10 +2033,7 @@
               "$ref": "#/definitions/constrains~1local+local.setting"
             },
             {
-              "$ref": "#/definitions/constrains~1local.kind=ConfigMap@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1local.kind=Service"
+              "$ref": "#/definitions/constrains~1local.kind=ConfigMap"
             },
             {
               "$ref": "#/definitions/constrains~1local.setting@3"
@@ -2045,25 +2058,6 @@
               "$ref": "#/definitions/constrains~1local.setting@12"
             }
           ]
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-1"
-            },
-            {
-              "$ref": "#/definitions/constrains~1local+local.setting"
-            },
-            {
-              "$ref": "#/definitions/constrains~1local.kind=ConfigMap"
-            },
-            {
-              "$ref": "#/definitions/constrains~1local.setting@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1local.setting@4"
-            }
-          ]
         }
       ]
     },
@@ -2077,6 +2071,25 @@
             "$ref": "#/definitions/constrains~1local.setting"
           }
         ]
+      }
+    },
+    "constrains/local.kind": {
+      "not": {
+        "properties": {
+          "local": {
+            "properties": {
+              "kind": {}
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "local"
+        ],
+        "type": "object"
       }
     },
     "constrains/local.kind=ConfigMap": {
@@ -2104,6 +2117,46 @@
       "properties": {
         "local": {
           "$ref": "#/definitions/constrains~1kind=Service"
+        }
+      },
+      "required": [
+        "local"
+      ],
+      "type": "object"
+    },
+    "constrains/local.kind=null": {
+      "properties": {
+        "local": {
+          "properties": {
+            "kind": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "local"
+      ],
+      "type": "object"
+    },
+    "constrains/local.kind@2": {
+      "properties": {
+        "local": {
+          "properties": {
+            "kind": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -2511,6 +2564,19 @@
         "type": "object"
       }
     },
+    "constrains/requiredText+requiredText=null": {
+      "$ref": "#/definitions/constrains~1requiredText+requiredText=null@2"
+    },
+    "constrains/requiredText+requiredText=null@2": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1requiredText"
+        },
+        {
+          "$ref": "#/definitions/constrains~1requiredText=null"
+        }
+      ]
+    },
     "constrains/requiredText=''": {
       "properties": {
         "requiredText": {
@@ -2742,32 +2808,6 @@
     "local": {
       "additionalProperties": {},
       "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1kind+kind=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1kind+kind=null"
-              }
-            ]
-          },
-          "then": false
-        },
         {
           "if": {
             "allOf": [
@@ -3143,35 +3183,25 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "replicas": {
-                    "type": "array"
-                  }
-                },
-                "required": [
-                  "replicas"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1enabled=false"
               },
               {
-                "$ref": "#/definitions/constrains~1enabled=false"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "replicas": {
-                "$ref": "#/definitions/values~1local~1not~1array"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1enabled=false"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1replicas@3"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1group-0"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1replicas@4"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1replicas@7"
+                  }
+                ]
               },
               {
                 "anyOf": [
@@ -3193,56 +3223,10 @@
                     "$ref": "#/definitions/constrains~1replicas@14"
                   }
                 ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1replicas@3"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-0"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1replicas@4"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1replicas@7"
-                  }
-                ]
               }
             ]
           },
           "then": false
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1enabled=false"
-              },
-              {
-                "properties": {
-                  "replicas": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "replicas"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "replicas": {
-                "$ref": "#/definitions/values~1local~1allOf~1not~1object"
-              }
-            }
-          }
         },
         {
           "if": {
@@ -3276,6 +3260,62 @@
                     "$ref": "#/definitions/values~1local~1string;pattern-null-null-null"
                   }
                 ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "replicas": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled=false"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "$ref": "#/definitions/values~1local~1not~1array"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1enabled=false"
+              },
+              {
+                "properties": {
+                  "replicas": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "replicas": {
+                "$ref": "#/definitions/values~1local~1allOf~1not~1object"
               }
             }
           }

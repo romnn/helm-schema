@@ -175,6 +175,208 @@
       "if": {
         "anyOf": [
           {
+            "else": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+                },
+                {
+                  "not": {
+                    "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                  }
+                },
+                {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+                }
+              ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1global.postgresql.auth.username:t@2"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
+              },
+              "then": {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
+                  },
+                  "then": {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                        },
+                        "if": {
+                          "anyOf": [
+                            {
+                              "properties": {
+                                "passwordUpdateJob": {
+                                  "properties": {
+                                    "previousPasswords": {
+                                      "properties": {
+                                        "password": {
+                                          "enum": [
+                                            null
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "password"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "previousPasswords"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "passwordUpdateJob"
+                              ],
+                              "type": "object"
+                            },
+                            {
+                              "not": {
+                                "properties": {
+                                  "passwordUpdateJob": {
+                                    "properties": {
+                                      "previousPasswords": {
+                                        "properties": {
+                                          "password": {}
+                                        },
+                                        "required": [
+                                          "password"
+                                        ],
+                                        "type": "object"
+                                      }
+                                    },
+                                    "required": [
+                                      "previousPasswords"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "passwordUpdateJob"
+                                ],
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        },
+                        "then": {
+                          "else": {
+                            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                          },
+                          "if": {
+                            "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword=''"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.replicationPassword=''~1then~1tags.bitnami-common=false~1else~1passwordUpdateJob.previousPasswords.replicationPassword+1more"
+                          }
+                        }
+                      },
+                      "if": {
+                        "properties": {
+                          "passwordUpdateJob": {
+                            "properties": {
+                              "previousPasswords": {
+                                "properties": {
+                                  "password": {
+                                    "enum": [
+                                      ""
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "password"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "previousPasswords"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "passwordUpdateJob"
+                        ],
+                        "type": "object"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.postgresPassword=''~1then~1passwordUpdateJob.previousPasswords.replicationPassword+3more~1else~1passwordUpdateJob.previousPasswords.postgresPassword+1more"
+                      }
+                    },
+                    "if": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "postgresql": {
+                              "properties": {
+                                "auth": {
+                                  "properties": {
+                                    "username": {
+                                      "enum": [
+                                        "postgres"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "username"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "auth"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "postgresql"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.postgresPassword=''~1then~1passwordUpdateJob.previousPasswords.replicationPassword+3more~1else~1passwordUpdateJob.previousPasswords.postgresPassword+1more"
+                    }
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.existingSecret:t@2"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                }
+              }
+            }
+          },
+          {
             "allOf": [
               {
                 "$ref": "#/definitions/constrains~1group-1"
@@ -293,15 +495,13 @@
                 "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
               },
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-                }
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
               },
               {
                 "$ref": "#/definitions/constrains~1passwordUpdateJob.enabled:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
               }
             ]
           },
@@ -643,7 +843,7 @@
                       }
                     },
                     {
-                      "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
                     }
                   ]
                 }
@@ -762,40 +962,43 @@
     },
     "constrains/global.postgresql.auth.username:t": {
       "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "postgresql": {
-                "properties": {
-                  "auth": {
-                    "properties": {
-                      "username": {
-                        "$ref": "#/definitions/t"
-                      }
-                    },
-                    "required": [
-                      "username"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "auth"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
+        "$ref": "#/definitions/constrains~1global.postgresql.auth.username:t@2"
       }
+    },
+    "constrains/global.postgresql.auth.username:t@2": {
+      "properties": {
+        "global": {
+          "properties": {
+            "postgresql": {
+              "properties": {
+                "auth": {
+                  "properties": {
+                    "username": {
+                      "$ref": "#/definitions/t"
+                    }
+                  },
+                  "required": [
+                    "username"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "auth"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
     },
     "constrains/group-0": {
       "allOf": [
@@ -831,7 +1034,7 @@
           "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword:t"
         },
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         }
       ]
     },
@@ -907,10 +1110,10 @@
         {
           "else": true,
           "if": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
           },
           "then": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
           }
         },
         {
@@ -985,12 +1188,44 @@
       ],
       "type": "object"
     },
+    "constrains/passwordUpdateJob.previousPasswords.postgresPassword=''": {
+      "properties": {
+        "passwordUpdateJob": {
+          "properties": {
+            "previousPasswords": {
+              "properties": {
+                "postgresPassword": {
+                  "enum": [
+                    ""
+                  ]
+                }
+              },
+              "required": [
+                "postgresPassword"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "previousPasswords"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "passwordUpdateJob"
+      ],
+      "type": "object"
+    },
     "constrains/tags.bitnami-common=false": {
-      "not": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-      }
+      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
     },
     "constrains/tags.bitnami-common=false@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+      }
+    },
+    "constrains/tags.bitnami-common=false@3": {
       "properties": {
         "tags": {
           "properties": {
@@ -1012,6 +1247,11 @@
       "type": "object"
     },
     "constrains/tags.bitnami-common=true": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+      }
+    },
+    "constrains/tags.bitnami-common=true@2": {
       "properties": {
         "tags": {
           "properties": {
@@ -1090,6 +1330,184 @@
           "const": true
         }
       ]
+    },
+    "when/passwordUpdateJob.previousPasswords.postgresPassword=''/then/passwordUpdateJob.previousPasswords.replicationPassword+3more/else/passwordUpdateJob.previousPasswords.postgresPassword+1more": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.replicationPassword=''~1then~1tags.bitnami-common=false~1else~1passwordUpdateJob.previousPasswords.replicationPassword+1more"
+        },
+        "if": {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "passwordUpdateJob": {
+                    "properties": {
+                      "previousPasswords": {
+                        "properties": {
+                          "postgresPassword": {}
+                        },
+                        "required": [
+                          "postgresPassword"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "previousPasswords"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "passwordUpdateJob"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "passwordUpdateJob": {
+                  "properties": {
+                    "previousPasswords": {
+                      "properties": {
+                        "postgresPassword": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "postgresPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "previousPasswords"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "then": {
+          "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.replicationPassword=''~1then~1tags.bitnami-common=false~1else~1passwordUpdateJob.previousPasswords.replicationPassword+1more"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1passwordUpdateJob.previousPasswords.postgresPassword=''"
+      },
+      "then": {
+        "$ref": "#/definitions/when~1passwordUpdateJob.previousPasswords.replicationPassword=''~1then~1tags.bitnami-common=false~1else~1passwordUpdateJob.previousPasswords.replicationPassword+1more"
+      }
+    },
+    "when/passwordUpdateJob.previousPasswords.replicationPassword=''/then/tags.bitnami-common=false/else/passwordUpdateJob.previousPasswords.replicationPassword+1more": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        "if": {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "passwordUpdateJob": {
+                    "properties": {
+                      "previousPasswords": {
+                        "properties": {
+                          "replicationPassword": {}
+                        },
+                        "required": [
+                          "replicationPassword"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "previousPasswords"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "passwordUpdateJob"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "passwordUpdateJob": {
+                  "properties": {
+                    "previousPasswords": {
+                      "properties": {
+                        "replicationPassword": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "replicationPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "previousPasswords"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      },
+      "if": {
+        "properties": {
+          "passwordUpdateJob": {
+            "properties": {
+              "previousPasswords": {
+                "properties": {
+                  "replicationPassword": {
+                    "enum": [
+                      ""
+                    ]
+                  }
+                },
+                "required": [
+                  "replicationPassword"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "previousPasswords"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "passwordUpdateJob"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+      }
     }
   },
   "properties": {

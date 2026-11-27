@@ -4,6 +4,75 @@
   "allOf": [
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1nameOverride"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -94,6 +163,388 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@4"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-10"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@4"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-9"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-4"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1group-8"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
+              }
+            ]
+          },
+          {
+            "else": {
+              "else": {
+                "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1mysql.architecture+mysql.architecture=null+tags.bitnami-common=true~1else~1any"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1mysql.architecture+mysql.architecture=null+tags.bitnami-common=true~1else~1any"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.enabled=true"
+                  }
+                ]
+              }
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
+            },
+            "then": {
+              "else": {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+              },
+              "if": {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false@2"
+              },
+              "then": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1mysql.enabled=true"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.secondary+mysql.secondary=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mysql.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1mysql.architecture=replication+mysql.enabled=false+mysql.enabled=true+2more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1mysql.secondary+mysql.secondary=null"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "mysql": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "mysql"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -112,82 +563,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1nameOverride"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1fullnameOverride"
-                }
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "ingress": {}
-              },
-              "required": [
-                "ingress"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ingress": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ingress"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -431,347 +806,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-9"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-7"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-10"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-8"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mysql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mysql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-7"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-9"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.secondary+mysql.secondary=null"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mysql.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1mysql.architecture=replication+mysql.enabled=false+mysql.enabled=true+2more"
-              },
-              {
-                "$ref": "#/definitions/constrains~1mysql.secondary+mysql.secondary=null"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "mysql": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "mysql"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1mysql.architecture=replication+mysql.enabled=false+mysql.enabled=true+2more"
@@ -798,56 +832,6 @@
     }
   ],
   "definitions": {
-    "constrains/architecture": {
-      "properties": {
-        "architecture": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture+architecture=null": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1architecture"
-          }
-        },
-        {
-          "not": {
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1architecture=null"
-        },
-        {
-          "not": {
-            "properties": {
-              "architecture": {}
-            },
-            "required": [
-              "architecture"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
     "constrains/architecture=null": {
       "properties": {
         "architecture": {
@@ -858,32 +842,6 @@
       },
       "required": [
         "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled=false": {
-      "properties": {
-        "enabled": {
-          "enum": [
-            false
-          ]
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled=true": {
-      "properties": {
-        "enabled": {
-          "enum": [
-            true
-          ]
-        }
-      },
-      "required": [
-        "enabled"
       ],
       "type": "object"
     },
@@ -912,17 +870,10 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
+          "$ref": "#/definitions/constrains~1group-10"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
-        }
-      ]
-    },
-    "constrains/group-1": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-10"
+          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
@@ -932,10 +883,20 @@
         }
       ]
     },
+    "constrains/group-1": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@5"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+        }
+      ]
+    },
     "constrains/group-10": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
         },
         {
           "$ref": "#/definitions/constrains~1mysql.architecture=replication@2"
@@ -951,23 +912,23 @@
     "constrains/group-2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-10"
+          "$ref": "#/definitions/constrains~1mysql.architecture@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
         }
       ]
     },
     "constrains/group-3": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mysql.architecture@2"
+          "$ref": "#/definitions/constrains~1group-10"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
+          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@4"
         }
       ]
     },
@@ -977,13 +938,7 @@
           "$ref": "#/definitions/constrains~1group-10"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
+          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
         }
       ]
     },
@@ -994,6 +949,15 @@
         },
         {
           "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@4"
         }
       ]
     },
@@ -1003,7 +967,7 @@
           "$ref": "#/definitions/constrains~1mysql.architecture@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
         }
       ]
     },
@@ -1013,26 +977,23 @@
           "$ref": "#/definitions/constrains~1group-10"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
-        },
-        {
           "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
         },
         {
           "$ref": "#/definitions/constrains~1mysql.namespaceOverride:t"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@4"
         }
       ]
     },
     "constrains/group-8": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
+          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.fullnameOverride:t"
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@5"
         }
       ]
     },
@@ -1040,9 +1001,6 @@
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1group-10"
-        },
-        {
-          "$ref": "#/definitions/constrains~1mysql.nameOverride:t@2"
         },
         {
           "$ref": "#/definitions/constrains~1mysql.namespaceOverride"
@@ -1096,36 +1054,30 @@
       }
     },
     "constrains/mysql.architecture+mysql.architecture=null": {
-      "not": {
-        "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@3"
-      }
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1mysql.architecture"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@5"
+          }
+        }
+      ]
     },
     "constrains/mysql.architecture+mysql.architecture=null@2": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "mysql": {
-                  "properties": {
-                    "architecture": {}
-                  },
-                  "required": [
-                    "architecture"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "mysql"
-              ],
-              "type": "object"
-            }
-          },
-          {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
               "mysql": {
-                "$ref": "#/definitions/constrains~1architecture=null"
+                "properties": {
+                  "architecture": {}
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
               }
             },
             "required": [
@@ -1133,10 +1085,31 @@
             ],
             "type": "object"
           }
-        ]
-      }
+        },
+        {
+          "properties": {
+            "mysql": {
+              "$ref": "#/definitions/constrains~1architecture=null"
+            }
+          },
+          "required": [
+            "mysql"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/mysql.architecture+mysql.architecture=null@3": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@2"
+      }
+    },
+    "constrains/mysql.architecture+mysql.architecture=null@4": {
+      "not": {
+        "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null@5"
+      }
+    },
+    "constrains/mysql.architecture+mysql.architecture=null@5": {
       "properties": {
         "mysql": {
           "allOf": [
@@ -1144,7 +1117,22 @@
               "type": "object"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1architecture=null"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "architecture": {}
+                    },
+                    "required": [
+                      "architecture"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
             }
           ]
         }
@@ -1208,7 +1196,15 @@
     "constrains/mysql.architecture@2": {
       "properties": {
         "mysql": {
-          "$ref": "#/definitions/constrains~1architecture"
+          "properties": {
+            "architecture": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1243,7 +1239,17 @@
     "constrains/mysql.enabled=false@2": {
       "properties": {
         "mysql": {
-          "$ref": "#/definitions/constrains~1enabled=false"
+          "properties": {
+            "enabled": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1254,7 +1260,17 @@
     "constrains/mysql.enabled=true": {
       "properties": {
         "mysql": {
-          "$ref": "#/definitions/constrains~1enabled=true"
+          "properties": {
+            "enabled": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1436,6 +1452,16 @@
         "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       }
     },
+    "constrains/tags.bitnami-common=false+tags.bitnami-common=true": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        }
+      ]
+    },
     "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
@@ -1507,6 +1533,23 @@
           "const": true
         }
       ]
+    },
+    "when/tags.bitnami-common=false/then/mysql.architecture+mysql.architecture=null+tags.bitnami-common=true/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+      },
+      "then": {
+        "else": true,
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1mysql.architecture+mysql.architecture=null"
+        }
+      }
     },
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
       "else": true,
@@ -1629,38 +1672,6 @@
     },
     "mysql": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "else": {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1enabled=false"
-                },
-                "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1enabled=true"
-                    }
-                  ]
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                }
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "properties": {
         "architecture": {
           "anyOf": [

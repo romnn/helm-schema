@@ -24,7 +24,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
           },
           {
             "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+postgresql.enabled=true+redis+7more~1else~1any"
@@ -96,6 +96,113 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''+3more"
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword=''"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword=''"
+            }
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword+1more"
+            }
+          },
+          {
+            "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null"
+            }
+          ]
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/definitions/constrains~1extraSecretConfig:t"
           },
           {
@@ -154,24 +261,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1existingSecret:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1redis"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1redis!=null"
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
         "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+postgresql.enabled=true+redis+7more~1else~1any"
       },
       "then": {
@@ -223,6 +312,170 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword+1more"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword+1more"
+                      },
+                      {
+                        "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword=''"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword=''"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''+3more"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword=''"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''"
+                }
+              },
+              {
+                "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword+1more"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -884,6 +1137,51 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1existingSecret:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.enabled=false+tags.bitnami-common=false@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1redis!=null"
+        },
+        "then": false
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "redis": {
@@ -892,6 +1190,311 @@
             "object"
           ]
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1existingSecret:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1existingSecret:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1adminUser"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1emailPassword"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1adminPassword"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1redis"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1postgresql"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1emailUser"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+3more"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "else": {
+                          "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more"
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+                      }
+                    ]
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+3more"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+3more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+tags.bitnami-common=false@2"
+                      }
+                    ]
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              },
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more@2"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+                    },
+                    {
+                      "else": {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more@3"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more@3"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more~1else~1any"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              },
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more~1else~1any"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more~1else~1any"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "else": {
+                  "$ref": "#/definitions/constrains~1redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false"
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1redis.architecture=replication"
+                      }
+                    },
+                    {
+                      "else": {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+tags.bitnami-common=false"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1redis.architecture+redis.architecture=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+tags.bitnami-common=false"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
+              },
+              {
+                "else": {
+                  "else": {
+                    "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more~1else~1any"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
+                  },
+                  "then": {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false"
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1postgresql!=null"
+            },
+            {
+              "$ref": "#/definitions/constrains~1redis!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -1005,53 +1608,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1existingSecret:t"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1existingSecret:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1adminUser"
-              },
-              {
-                "$ref": "#/definitions/constrains~1emailPassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1adminPassword"
-              },
-              {
-                "$ref": "#/definitions/constrains~1redis"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql"
-              },
-              {
-                "$ref": "#/definitions/constrains~1emailUser"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1postgresql!=null"
-            },
-            {
-              "$ref": "#/definitions/constrains~1redis!=null"
-            }
-          ]
-        },
-        "then": false
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "not": {
               "properties": {
                 "gatewayApi": {
@@ -1085,6 +1641,165 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1redis.architecture=replication"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.architecture+redis.architecture=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.sentinel.service.type=NodePort"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null+1more"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1redis.architecture=replication"
+                    },
+                    {
+                      "else": {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.service.type+3more@2"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1redis.architecture+redis.architecture=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.service.type+3more@2"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+              },
+              {
+                "else": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1redis.architecture=replication"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.architecture+redis.architecture=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.sentinel.service.type=NodePort"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null+1more@2"
+                    }
+                  ]
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1redis.architecture=replication"
+                    },
+                    {
+                      "else": {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.service.type+3more"
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1redis.architecture+redis.architecture=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1redis.enabled=false+redis.sentinel.service.type+3more"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "allOf": [
+            {
+              "properties": {
+                "redis": {
+                  "properties": {
+                    "sentinel": {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "type": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "sentinel"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/constrains~1postgresql!=null"
+            }
+          ]
+        },
+        "then": false
       }
     },
     {
@@ -1478,6 +2193,9 @@
         },
         {
           "$ref": "#/definitions/constrains~1serviceAccount.name@7"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceAccount.name@8"
         }
       ]
     },
@@ -1573,6 +2291,159 @@
       }
     },
     "constrains/postgresql.enabled=false": {
+      "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+    },
+    "constrains/postgresql.enabled=false+postgresql.enabled=true+12more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+        },
+        {
+          "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+postgresql.enabled=true+redis+7more~1else~1any"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+postgresql.enabled=true+postgresql.passwordUpdateJob+11more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+        },
+        {
+          "else": {
+            "else": {
+              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                }
+              ]
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+          },
+          "then": {
+            "else": {
+              "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis+redis.commonLabels+redis.commonLabels=null+redis.enabled=false+3more~1else~1any@2"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis+redis.commonLabels+redis.commonLabels=null+redis.enabled=false+3more~1else~1any@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more@3": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+          }
+        },
+        {
+          "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any@2"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+3more": {
+      "allOf": [
+        {
+          "else": {
+            "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false~1else~1any"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.nodePorts.redis:t"
+          },
+          "then": {
+            "$ref": "#/definitions/when~1postgresql.enabled=false~1then~1redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false~1else~1any"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      ]
+    },
+    "constrains/postgresql.enabled=false@2": {
       "properties": {
         "postgresql": {
           "properties": {
@@ -1592,76 +2463,6 @@
         "postgresql"
       ],
       "type": "object"
-    },
-    "constrains/postgresql.enabled=false+postgresql.enabled=true+12more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "$ref": "#/definitions/when~1redis.sentinel.enabled:t~1then~1postgresql.enabled=false+postgresql.enabled=true+redis+7more~1else~1any"
-        }
-      ]
-    },
-    "constrains/postgresql.enabled=false+postgresql.enabled=true+postgresql.passwordUpdateJob+11more": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t"
-        },
-        {
-          "else": {
-            "else": {
-              "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-                }
-              ]
-            }
-          },
-          "if": {
-            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
-          },
-          "then": {
-            "else": {
-              "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis+redis.commonLabels+redis.commonLabels=null+redis.enabled=false+3more~1else~1any@2"
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-            },
-            "then": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis+redis.commonLabels+redis.commonLabels=null+redis.enabled=false+3more~1else~1any@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1postgresql.enabled=true"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t"
-        }
-      ]
     },
     "constrains/postgresql.enabled=true": {
       "properties": {
@@ -1685,6 +2486,9 @@
       "type": "object"
     },
     "constrains/postgresql.passwordUpdateJob.enabled:t": {
+      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.enabled:t@2"
+    },
+    "constrains/postgresql.passwordUpdateJob.enabled:t@2": {
       "properties": {
         "postgresql": {
           "properties": {
@@ -1703,36 +2507,194 @@
       ],
       "type": "object"
     },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret!=null": {
+      "properties": {
+        "postgresql": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "existingSecret": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
     "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret:t": {
-      "not": {
-        "properties": {
-          "postgresql": {
+      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.existingSecret:t@2": {
+      "properties": {
+        "postgresql": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "$ref": "#/definitions/constrains~1existingSecret:t@2"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword!=null": {
+      "properties": {
+        "postgresql": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "postgresPassword": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "postgresPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword+1more": {
+      "anyOf": [
+        {
+          "not": {
             "properties": {
-              "passwordUpdateJob": {
+              "postgresql": {
                 "properties": {
-                  "previousPasswords": {
-                    "$ref": "#/definitions/constrains~1existingSecret:t@2"
+                  "passwordUpdateJob": {
+                    "properties": {
+                      "previousPasswords": {
+                        "properties": {
+                          "postgresPassword": {}
+                        },
+                        "required": [
+                          "postgresPassword"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "previousPasswords"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "previousPasswords"
+                  "passwordUpdateJob"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "passwordUpdateJob"
+              "postgresql"
             ],
             "type": "object"
           }
         },
-        "required": [
-          "postgresql"
-        ],
-        "type": "object"
-      }
+        {
+          "properties": {
+            "postgresql": {
+              "properties": {
+                "passwordUpdateJob": {
+                  "properties": {
+                    "previousPasswords": {
+                      "properties": {
+                        "postgresPassword": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "postgresPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "previousPasswords"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t": {
+      "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword:t@2": {
       "properties": {
         "postgresql": {
           "properties": {
@@ -1767,6 +2729,205 @@
       ],
       "type": "object"
     },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.postgresPassword=''": {
+      "properties": {
+        "postgresql": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "postgresPassword": {
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  },
+                  "required": [
+                    "postgresPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.replicationPassword!=null": {
+      "properties": {
+        "postgresql": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "replicationPassword": {
+                      "not": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "replicationPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.replicationPassword+1more": {
+      "anyOf": [
+        {
+          "properties": {
+            "postgresql": {
+              "properties": {
+                "passwordUpdateJob": {
+                  "properties": {
+                    "previousPasswords": {
+                      "properties": {
+                        "replicationPassword": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "replicationPassword"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "previousPasswords"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "passwordUpdateJob"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "postgresql": {
+                "properties": {
+                  "passwordUpdateJob": {
+                    "properties": {
+                      "previousPasswords": {
+                        "properties": {
+                          "replicationPassword": {}
+                        },
+                        "required": [
+                          "replicationPassword"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "previousPasswords"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "passwordUpdateJob"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''": {
+      "properties": {
+        "postgresql": {
+          "properties": {
+            "passwordUpdateJob": {
+              "properties": {
+                "previousPasswords": {
+                  "properties": {
+                    "replicationPassword": {
+                      "enum": [
+                        ""
+                      ]
+                    }
+                  },
+                  "required": [
+                    "replicationPassword"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "previousPasswords"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "passwordUpdateJob"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "postgresql"
+      ],
+      "type": "object"
+    },
+    "constrains/postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.passwordUpdateJob.previousPasswords.replicationPassword=''"
+        },
+        {
+          "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis.enabled=false+tags.bitnami-common=false~1else~1any@2"
+        }
+      ]
+    },
     "constrains/redis": {
       "not": {
         "properties": {
@@ -1795,7 +2956,66 @@
       ],
       "type": "object"
     },
+    "constrains/redis.architecture+redis.architecture=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "architecture": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "architecture"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "redis": {
+                "properties": {
+                  "architecture": {}
+                },
+                "required": [
+                  "architecture"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/redis.architecture=replication": {
+      "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
+    },
+    "constrains/redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.architecture=replication"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.enabled=false+tags.bitnami-common=false@2"
+        }
+      ]
+    },
+    "constrains/redis.architecture=replication@2": {
       "properties": {
         "redis": {
           "properties": {
@@ -1836,6 +3056,84 @@
       }
     },
     "constrains/redis.enabled=false": {
+      "$ref": "#/definitions/constrains~1redis.enabled=false@3"
+    },
+    "constrains/redis.enabled=false+redis.sentinel.enabled:t+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.enabled=false+tags.bitnami-common=false@2"
+        }
+      ]
+    },
+    "constrains/redis.enabled=false+redis.sentinel.service.type+3more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+        },
+        {
+          "else": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null+1more@2"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type=NodePort"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null+1more@2"
+          }
+        }
+      ]
+    },
+    "constrains/redis.enabled=false+redis.sentinel.service.type+3more@2": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+        },
+        {
+          "else": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null+1more"
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type=NodePort"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null+1more"
+          }
+        }
+      ]
+    },
+    "constrains/redis.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1redis.enabled=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      ]
+    },
+    "constrains/redis.enabled=false+tags.bitnami-common=false@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.enabled=false@3"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      ]
+    },
+    "constrains/redis.enabled=false@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1redis.enabled=false"
+      }
+    },
+    "constrains/redis.enabled=false@3": {
       "properties": {
         "redis": {
           "properties": {
@@ -1878,11 +3176,192 @@
       "type": "object"
     },
     "constrains/redis.sentinel.enabled:t": {
+      "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+    },
+    "constrains/redis.sentinel.enabled:t@2": {
       "properties": {
         "redis": {
           "properties": {
             "sentinel": {
               "$ref": "#/definitions/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "sentinel"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "redis"
+      ],
+      "type": "object"
+    },
+    "constrains/redis.sentinel.service.nodePorts.redis:t": {
+      "properties": {
+        "redis": {
+          "properties": {
+            "sentinel": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "nodePorts": {
+                      "properties": {
+                        "redis": {
+                          "$ref": "#/definitions/t"
+                        }
+                      },
+                      "required": [
+                        "redis"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nodePorts"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "sentinel"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "redis"
+      ],
+      "type": "object"
+    },
+    "constrains/redis.sentinel.service.type+redis.sentinel.service.type=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "redis": {
+              "properties": {
+                "sentinel": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "redis"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "redis": {
+                "properties": {
+                  "sentinel": {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "type": {}
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "sentinel"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/redis.sentinel.service.type+redis.sentinel.service.type=null+1more": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null"
+        }
+      ]
+    },
+    "constrains/redis.sentinel.service.type+redis.sentinel.service.type=null+1more@2": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1redis.sentinel.service.type+redis.sentinel.service.type=null"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        }
+      ]
+    },
+    "constrains/redis.sentinel.service.type=NodePort": {
+      "properties": {
+        "redis": {
+          "properties": {
+            "sentinel": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "NodePort"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
             }
           },
           "required": [
@@ -1915,9 +3394,6 @@
           "anyOf": [
             {
               "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@8"
             },
             {
               "$ref": "#/definitions/constrains~1serviceAccount.name@9"
@@ -2032,9 +3508,6 @@
             },
             {
               "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceAccount.name@8"
             },
             {
               "$ref": "#/definitions/constrains~1serviceAccount.name@9"
@@ -3213,6 +4686,9 @@
       "type": "object"
     },
     "constrains/tags.bitnami-common=false": {
+      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+    },
+    "constrains/tags.bitnami-common=false@2": {
       "properties": {
         "tags": {
           "properties": {
@@ -3378,17 +4854,28 @@
       ],
       "type": "string"
     },
+    "when/postgresql.enabled=false/then/redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1redis.architecture=replication+redis.enabled=false+tags.bitnami-common=false"
+      }
+    },
     "when/redis.architecture=replication/then/redis+redis.commonLabels+redis.commonLabels=null+redis.enabled=false+3more/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1redis.architecture=replication"
+        "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
       },
       "then": {
         "else": {
           "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1redis+redis.commonLabels+redis.commonLabels=null+tags.bitnami-common=true~1else~1any"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1redis.enabled=false"
+          "$ref": "#/definitions/constrains~1redis.enabled=false@3"
         },
         "then": {
           "else": true,
@@ -3406,14 +4893,14 @@
         "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1tags.bitnami-common=true~1else~1any"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1redis.architecture=replication"
+        "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
       },
       "then": {
         "else": {
           "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1redis+redis.commonLabels+redis.commonLabels=null+tags.bitnami-common=true~1else~1any"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1redis.enabled=false"
+          "$ref": "#/definitions/constrains~1redis.enabled=false@3"
         },
         "then": {
           "else": {
@@ -3426,6 +4913,42 @@
             "$ref": "#/definitions/when~1tags.bitnami-common=false~1then~1redis+redis.commonLabels+redis.commonLabels=null+tags.bitnami-common=true~1else~1any"
           }
         }
+      }
+    },
+    "when/redis.architecture=replication/then/redis.enabled=false+tags.bitnami-common=false/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1redis.architecture=replication@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1redis.enabled=false@3"
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          }
+        ]
+      }
+    },
+    "when/redis.architecture=replication/then/redis.enabled=false+tags.bitnami-common=false/else/any@2": {
+      "else": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1redis.architecture=replication"
+      },
+      "then": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          },
+          {
+            "$ref": "#/definitions/constrains~1redis.enabled=false"
+          }
+        ]
       }
     },
     "when/redis.commonLabels+redis.commonLabels=null/then/any/else/redis.commonLabels": {
@@ -3499,21 +5022,21 @@
       "else": {
         "else": true,
         "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
         },
         "then": {
           "$ref": "#/definitions/constrains~1postgresql.enabled=true"
         }
       },
       "if": {
-        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t"
+        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
       },
       "then": {
         "else": {
           "$ref": "#/definitions/when~1redis.architecture=replication~1then~1redis+redis.commonLabels+redis.commonLabels=null+redis.enabled=false+3more~1else~1any"
         },
         "if": {
-          "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+          "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
         },
         "then": {
           "allOf": [
@@ -3527,12 +5050,23 @@
         }
       }
     },
+    "when/redis.sentinel.enabled:t/then/postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more/else/any": {
+      "else": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1redis.sentinel.enabled:t@2"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1postgresql.enabled=false+redis.architecture=replication+redis.enabled=false+1more@2"
+      }
+    },
     "when/tags.bitnami-common=false/then/redis+redis.commonLabels+redis.commonLabels=null+tags.bitnami-common=true/else/any": {
       "else": {
         "$ref": "#/definitions/when~1redis.commonLabels+redis.commonLabels=null~1then~1any~1else~1redis.commonLabels"
       },
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "allOf": [
@@ -3548,7 +5082,7 @@
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
       "else": true,
       "if": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       },
       "then": {
         "$ref": "#/definitions/constrains~1tags.bitnami-common=true"

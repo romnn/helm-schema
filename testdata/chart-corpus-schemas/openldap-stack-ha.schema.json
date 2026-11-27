@@ -6,93 +6,98 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/definitions/when~1ltb-passwd.enabled=false~1then~1ltb-passwd+ltb-passwd.enabled=true+ltb-passwd.image+ltb-passwd.image=null+2more~1else~1any"
+            "properties": {
+              "service": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1ltb-passwd.image+ltb-passwd.image=null@2"
+                "$ref": "#/definitions/constrains~1global+global=null"
               },
               {
-                "$ref": "#/definitions/constrains~1ltb-passwd.image+ltb-passwd.image=null"
+                "$ref": "#/definitions/when~1global:t~1then~1service.enableLdapPort:t+service.enableSslLdapPort:t+tags.bitnami-common=false+1more~1else~1any"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1global+global=null"
               },
               {
-                "$ref": "#/definitions/constrains~1ltb-passwd.enabled=false"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1nameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1nameOverride"
               },
               {
                 "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
               }
             ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {}
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ltb-passwd": {
-            "additionalProperties": {},
-            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1phpldapadmin.ingress.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "phpldapadmin": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "phpldapadmin"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
+      "then": false
     },
     {
       "if": {
@@ -177,55 +182,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "global": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/definitions/t"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
-          },
-          {
-            "$ref": "#/definitions/when~1global:t~1then~1service.enableLdapPort:t+service.enableSslLdapPort:t+tags.bitnami-common=false+1more~1else~1any"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/when~1ltb-passwd.enabled=false~1then~1ltb-passwd.enabled=true+tags.bitnami-common=false+tags.bitnami-common=true~1else~1any"
@@ -304,40 +260,53 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/definitions/when~1phpldapadmin.enabled=false~1then~1phpldapadmin+phpldapadmin.enabled=true+phpldapadmin.image+3more~1else~1any"
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ltb-passwd.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              }
+            ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false"
+                "$ref": "#/definitions/constrains~1ltb-passwd.enabled=false"
               },
               {
-                "$ref": "#/definitions/constrains~1phpldapadmin.image+phpldapadmin.image=null@2"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
               },
               {
-                "$ref": "#/definitions/constrains~1phpldapadmin.image+phpldapadmin.image=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
               }
             ]
           }
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "phpldapadmin": {
-            "additionalProperties": {},
-            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
-            "properties": {
-              "image": {
-                "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
-                "type": "object"
+        "if": {
+          "properties": {
+            "ltb-passwd": {
+              "not": {
+                "enum": [
+                  null
+                ]
               }
             }
-          }
-        }
+          },
+          "required": [
+            "ltb-passwd"
+          ],
+          "type": "object"
+        },
+        "then": false
       }
     },
     {
@@ -507,15 +476,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "phpldapadmin": {
-                    "$ref": "#/definitions/constrains~1service.type+service.type=null"
-                  }
-                },
-                "required": [
-                  "phpldapadmin"
-                ],
-                "type": "object"
+                "$ref": "#/definitions/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
               },
               {
                 "properties": {
@@ -637,7 +598,7 @@
                   {
                     "properties": {
                       "phpldapadmin": {
-                        "$ref": "#/definitions/constrains~1service.loadBalancerIP"
+                        "$ref": "#/definitions/constrains~1service.loadBalancerIP@2"
                       }
                     },
                     "required": [
@@ -727,7 +688,7 @@
               {
                 "properties": {
                   "phpldapadmin": {
-                    "$ref": "#/definitions/constrains~1service.loadBalancerIP@2"
+                    "$ref": "#/definitions/constrains~1service.loadBalancerIP@3"
                   }
                 },
                 "required": [
@@ -771,7 +732,7 @@
               {
                 "properties": {
                   "phpldapadmin": {
-                    "$ref": "#/definitions/constrains~1service.loadBalancerIP@3"
+                    "$ref": "#/definitions/constrains~1service.loadBalancerIP"
                   }
                 },
                 "required": [
@@ -924,6 +885,55 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/definitions/t"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
+          },
+          {
+            "$ref": "#/definitions/when~1global:t~1then~1service.enableLdapPort:t+service.enableSslLdapPort:t+tags.bitnami-common=false+1more~1else~1any"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "description": "Global Docker image parameters\nPlease, note that this will override the image parameters, including dependencies, configured to use the global value\nCurrent available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
       },
       "then": {
@@ -992,38 +1002,56 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+                "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false"
               },
               {
-                "$ref": "#/definitions/constrains~1ltb-passwd.enabled=false"
+                "$ref": "#/definitions/constrains~1phpldapadmin.ingress.enabled:t"
               },
               {
                 "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ltb-passwd.enabled=false"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ltb-passwd.ingress.enabled:t"
+                "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false"
               },
               {
                 "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
               }
             ]
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1tags.bitnami-common=false+tags.bitnami-common=true~1else~1phpldapadmin+phpldapadmin.service.type"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false@2"
+            },
+            "then": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1phpldapadmin.enabled=true"
+                },
+                {
+                  "$ref": "#/definitions/when~1phpldapadmin.service.type+phpldapadmin.service.type=null~1then~1tags.bitnami-common=false+tags.bitnami-common=true~1else~1phpldapadmin+phpldapadmin.service.type"
+                }
+              ]
+            }
           }
         ]
       },
       "then": {
         "if": {
           "properties": {
-            "ltb-passwd": {
+            "phpldapadmin": {
               "not": {
                 "enum": [
                   null
@@ -1032,116 +1060,12 @@
             }
           },
           "required": [
-            "ltb-passwd"
+            "phpldapadmin"
           ],
           "type": "object"
         },
         "then": false
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "service": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global+global=null"
-              },
-              {
-                "$ref": "#/definitions/when~1global:t~1then~1service.enableLdapPort:t+service.enableSslLdapPort:t+tags.bitnami-common=false+1more~1else~1any"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1global+global=null"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1service.enableLdapPort:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1service.enableSslLdapPort:t"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {}
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -1196,6 +1120,45 @@
             "null",
             "object"
           ]
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1ltb-passwd.enabled=false~1then~1ltb-passwd+ltb-passwd.enabled=true+ltb-passwd.image+ltb-passwd.image=null+2more~1else~1any"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ltb-passwd.image+ltb-passwd.image=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ltb-passwd.image+ltb-passwd.image=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ltb-passwd.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "additionalProperties": {},
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          }
         }
       }
     },
@@ -1359,6 +1322,46 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1phpldapadmin.enabled=false~1then~1phpldapadmin+phpldapadmin.enabled=true+phpldapadmin.image+3more~1else~1any"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1phpldapadmin.enabled=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1phpldapadmin.image+phpldapadmin.image=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1phpldapadmin.image+phpldapadmin.image=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "additionalProperties": {},
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "properties": {
+              "image": {
+                "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/definitions/when~1phpldapadmin.enabled=false~1then~1phpldapadmin+phpldapadmin.enabled=true+phpldapadmin.image+3more~1else~1any"
       },
       "then": {
@@ -1467,38 +1470,6 @@
       "not": {
         "$ref": "#/definitions/constrains~1enabled=false@2"
       }
-    },
-    "constrains/enabled=false+enabled=true+ingress+ingress=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress+ingress=null"
-        },
-        {
-          "else": true,
-          "if": {
-            "$ref": "#/definitions/constrains~1enabled=false@2"
-          },
-          "then": {
-            "$ref": "#/definitions/constrains~1enabled=true@2"
-          }
-        }
-      ]
-    },
-    "constrains/enabled=false+ingress+ingress=null": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress+ingress=null"
-        },
-        {
-          "$ref": "#/definitions/constrains~1enabled=false"
-        }
-      ]
     },
     "constrains/enabled=false@2": {
       "properties": {
@@ -3167,6 +3138,44 @@
       ],
       "type": "object"
     },
+    "constrains/phpldapadmin.service+phpldapadmin.service.type+phpldapadmin.service.type=null": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.service.type+phpldapadmin.service.type=null"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "phpldapadmin": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "phpldapadmin"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
     "constrains/phpldapadmin.service.loadBalancerIP": {
       "not": {
         "properties": {
@@ -3192,6 +3201,17 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/phpldapadmin.service.type+phpldapadmin.service.type=null": {
+      "properties": {
+        "phpldapadmin": {
+          "$ref": "#/definitions/constrains~1service.type+service.type=null"
+        }
+      },
+      "required": [
+        "phpldapadmin"
+      ],
+      "type": "object"
     },
     "constrains/service+service.loadBalancerIP+service.loadBalancerIP:t+4more": {
       "anyOf": [
@@ -3219,7 +3239,7 @@
               ]
             },
             {
-              "$ref": "#/definitions/constrains~1service.loadBalancerIP"
+              "$ref": "#/definitions/constrains~1service.loadBalancerIP@2"
             }
           ]
         },
@@ -3245,10 +3265,10 @@
           "$ref": "#/definitions/constrains~1service.loadBalancerIP@7"
         },
         {
-          "$ref": "#/definitions/constrains~1service.loadBalancerIP@2"
+          "$ref": "#/definitions/constrains~1service.loadBalancerIP@3"
         },
         {
-          "$ref": "#/definitions/constrains~1service.loadBalancerIP@3"
+          "$ref": "#/definitions/constrains~1service.loadBalancerIP"
         },
         {
           "$ref": "#/definitions/constrains~1service.loadBalancerIP@4"
@@ -3315,41 +3335,6 @@
         }
       ]
     },
-    "constrains/service+service.type+service.type=null": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-          }
-        },
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1service.type+service.type=null"
-          }
-        },
-        {
-          "not": {
-            "properties": {
-              "service": {
-                "properties": {
-                  "type": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
     "constrains/service.enableLdapPort:t": {
       "properties": {
         "service": {
@@ -3393,7 +3378,7 @@
         "service": {
           "properties": {
             "loadBalancerIP": {
-              "$ref": "#/definitions/constrains~1service.loadBalancerIP~1object"
+              "$ref": "#/definitions/constrains~1service.loadBalancerIP~1string;pattern-x20"
             }
           },
           "required": [
@@ -3538,7 +3523,7 @@
         "service": {
           "properties": {
             "loadBalancerIP": {
-              "$ref": "#/definitions/constrains~1service.loadBalancerIP~1string;pattern-x20@2"
+              "$ref": "#/definitions/constrains~1service.loadBalancerIP~1object"
             }
           },
           "required": [
@@ -3557,7 +3542,7 @@
         "service": {
           "properties": {
             "loadBalancerIP": {
-              "$ref": "#/definitions/constrains~1service.loadBalancerIP~1string;pattern-x20"
+              "$ref": "#/definitions/constrains~1service.loadBalancerIP~1string;pattern-x20@2"
             }
           },
           "required": [
@@ -3710,37 +3695,16 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1service.type+service.type=null@2"
-        }
-      ]
-    },
-    "constrains/service.type+service.type=null@2": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1service.type@9"
-          }
-        },
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/definitions/constrains~1service.type@9"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1service.type=null"
             }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
+          ]
         }
       ]
     },
@@ -3772,6 +3736,27 @@
             "type": {
               "enum": [
                 false
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "constrains/service.type=null": {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "enum": [
+                null
               ]
             }
           },
@@ -3963,6 +3948,16 @@
       "not": {
         "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
       }
+    },
+    "constrains/tags.bitnami-common=false+tags.bitnami-common=true": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+        }
+      ]
     },
     "constrains/tags.bitnami-common=false@2": {
       "properties": {
@@ -4265,6 +4260,45 @@
       "description": "Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/",
       "type": "object"
     },
+    "when/enabled=false+enabled=true+ingress+ingress=null/then/fail": {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress+ingress=null"
+              },
+              {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1enabled=false@2"
+                },
+                "then": {
+                  "$ref": "#/definitions/constrains~1enabled=true@2"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress+ingress=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
     "when/global:t/then/service.enableLdapPort:t+service.enableSslLdapPort:t+tags.bitnami-common=false+1more/else/any": {
       "else": {
         "else": {
@@ -4390,6 +4424,46 @@
       },
       "then": {
         "$ref": "#/definitions/constrains~1phpldapadmin.enabled=true"
+      }
+    },
+    "when/phpldapadmin.service.type+phpldapadmin.service.type=null/then/tags.bitnami-common=false+tags.bitnami-common=true/else/phpldapadmin+phpldapadmin.service.type": {
+      "else": {
+        "else": {
+          "$ref": "#/definitions/constrains~1phpldapadmin.service+phpldapadmin.service.type+phpldapadmin.service.type=null"
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+        },
+        "then": {
+          "else": true,
+          "if": {
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=true@2"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1phpldapadmin.service+phpldapadmin.service.type+phpldapadmin.service.type=null"
+          }
+        }
+      },
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "phpldapadmin": {
+                "$ref": "#/definitions/constrains~1service.type=null"
+              }
+            },
+            "required": [
+              "phpldapadmin"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1phpldapadmin.service.type"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false+tags.bitnami-common=true"
       }
     },
     "when/tags.bitnami-common=false/then/tags.bitnami-common=true/else/any": {
@@ -4585,31 +4659,110 @@
           "if": {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled=false"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                    "$ref": "#/definitions/values~1ltb-passwd~1string;pattern-r-n"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    "$ref": "#/definitions/values~1ltb-passwd~1string@2"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1ltb-passwd~1string;pattern-a-za-z0-9-t"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1ltb-passwd~1object"
+                  },
+                  {
+                    "pattern": "^[ \\t]*(#.*)?$",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/values~1ltb-passwd~1string;pattern-null-null-null"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern@2"
+                      },
+                      {
+                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern@4"
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern@3"
+                      }
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/t"
+                    }
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
               {
                 "anyOf": [
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1enabled=false"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled=true"
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
                   }
                 ]
               },
@@ -4648,13 +4801,67 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1enabled=true@2"
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1enabled=false"
                   },
                   {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=true"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=false@2"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1nameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=false@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=true@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1enabled=false"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -4664,19 +4871,35 @@
               {
                 "anyOf": [
                   {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
                     "$ref": "#/definitions/constrains~1enabled=false"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1enabled=true"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1group-1"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
+                    "$ref": "#/definitions/constrains~1group-0"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    "$ref": "#/definitions/constrains~1nameOverride@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1nameOverride@8"
                   }
                 ]
               },
@@ -4779,70 +5002,19 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1group-1"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1group-0"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride@8"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1enabled=false"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled=true"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1enabled=false@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1nameOverride:t"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride@2"
-                  },
-                  {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1enabled=false@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                    "$ref": "#/definitions/constrains~1enabled=true"
                   }
                 ]
               },
@@ -4852,10 +5024,10 @@
                     "$ref": "#/definitions/constrains~1enabled=true@2"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                    "$ref": "#/definitions/constrains~1enabled=false"
                   },
                   {
-                    "$ref": "#/definitions/constrains~1enabled=false"
+                    "$ref": "#/definitions/constrains~1nameOverride:t"
                   },
                   {
                     "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -4903,115 +5075,7 @@
           }
         },
         {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled=false"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/values~1ltb-passwd~1string;pattern-r-n"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1ltb-passwd~1string@2"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1ltb-passwd~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1ltb-passwd~1object"
-                  },
-                  {
-                    "pattern": "^[ \\t]*(#.*)?$",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/definitions/values~1ltb-passwd~1string;pattern-null-null-null"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern@2"
-                      },
-                      {
-                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern@4"
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "$ref": "#/definitions/values~1ltb-passwd~1not~1keywords~1pattern@3"
-                      }
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/t"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1enabled=false+enabled=true+ingress+ingress=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled=false+ingress+ingress=null"
-              }
-            ]
-          },
-          "then": false
+          "$ref": "#/definitions/when~1enabled=false+enabled=true+ingress+ingress=null~1then~1fail"
         }
       ],
       "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
@@ -5384,37 +5448,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1enabled=false+enabled=true+ingress+ingress=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1enabled=false+ingress+ingress=null"
-              },
-              {
-                "else": {
-                  "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1enabled=false@2"
-                },
-                "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1enabled=true@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1service+service.type+service.type=null"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "then": false
         },
         {
           "if": {
@@ -5843,6 +5876,9 @@
               }
             }
           }
+        },
+        {
+          "$ref": "#/definitions/when~1enabled=false+enabled=true+ingress+ingress=null~1then~1fail"
         },
         {
           "if": {

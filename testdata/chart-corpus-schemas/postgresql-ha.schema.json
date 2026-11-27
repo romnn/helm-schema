@@ -81,7 +81,7 @@
                 "$ref": "#/definitions/constrains~1witness.create:t"
               },
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
               }
             ]
           },
@@ -96,7 +96,7 @@
                 }
               },
               {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
               },
               {
                 "$ref": "#/definitions/constrains~1witness.labels+witness.labels=null"
@@ -136,6 +136,17 @@
                 "$ref": "#/definitions/constrains~1fullnameOverride"
               }
             ]
+          },
+          {
+            "else": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1witness.create:t"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+            }
           },
           {
             "not": {
@@ -278,7 +289,7 @@
     "constrains/group-2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
           "$ref": "#/definitions/constrains~1witness.create:t"
@@ -338,16 +349,14 @@
       "type": "object"
     },
     "constrains/tags.bitnami-common=false": {
-      "not": {
-        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-      }
+      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
     },
     "constrains/tags.bitnami-common=false+tags.bitnami-common=true+witness.create:t": {
       "allOf": [
         {
           "else": true,
           "if": {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+            "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
           },
           "then": {
             "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
@@ -359,6 +368,11 @@
       ]
     },
     "constrains/tags.bitnami-common=false@2": {
+      "not": {
+        "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+      }
+    },
+    "constrains/tags.bitnami-common=false@3": {
       "properties": {
         "tags": {
           "properties": {

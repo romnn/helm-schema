@@ -6,195 +6,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1commonLabels:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+13more"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1commonLabels:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null+5more"
-                    }
-                  ]
-                }
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceMonitor.labels.'app.kubernetes.io~1name'?"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceMonitor.labels:helm-marker-free"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:helm-marker-free"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels.'app.kubernetes.io~1name'?"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:helm-marker-free"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels.'app.kubernetes.io~1name'?"
-                                  }
-                                ]
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "not": {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null"
-                                    }
-                                  },
-                                  {
-                                    "anyOf": [
-                                      {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:helm-marker-free"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t@2"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels.'app.kubernetes.io~1name'?"
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels@3"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.labels"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.labels.'app.kubernetes.io~1name'?"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.labels:helm-marker-free"
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "allOf": [
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.labels@3"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.labels.'app.kubernetes.io~1name'?"
-                                          },
-                                          {
-                                            "$ref": "#/definitions/constrains~1serviceMonitor.labels:helm-marker-free"
-                                          }
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/t"
-                }
-              }
-            ],
-            "description": "Override resource names to avoid name conflicts when deploying multiple\nreleases in the same namespace.\nExample:\n```yaml\ncoordinatorNameOverride: trino-coordinator-adhoc\nworkerNameOverride: trino-worker-adhoc\nnameOverride: trino-adhoc\nfullnameOverride: trino-adhoc\n```"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/definitions/constrains~1group-23"
           },
           {
@@ -280,190 +91,6 @@
           }
         }
       }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+9more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+10more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceMonitor.worker"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceMonitor"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+23more"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+29more"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.worker"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor"
-                    }
-                  ]
-                }
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor@3"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.worker@3"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@11"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor+serviceMonitor.enabled+6more"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride@5"
-                            },
-                            {
-                              "anyOf": [
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more@2"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor+serviceMonitor.enabled+6more"
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+9more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+10more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+23more"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+29more"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor@2"
-          },
-          {
-            "$ref": "#/definitions/constrains~1serviceMonitor=null"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -642,6 +269,190 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.worker"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+9more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+10more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceMonitor.worker"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+23more"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+29more"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor@3"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.worker@3"
+                    },
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+9more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+10more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+11more@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+23more"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+29more"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@5"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor+serviceMonitor.enabled+6more"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1nameOverride:t@2"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more@2"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride@11"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceMonitor+serviceMonitor.enabled+6more"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor@2"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceMonitor=null"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "definitions": {
@@ -1937,13 +1748,13 @@
           "$ref": "#/definitions/constrains~1commonLabels:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1commonLabels:t+nameOverride+nameOverride:t+serviceMonitor+serviceMonitor.enabled+6more@2"
+          "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+13more@2"
         },
         {
           "$ref": "#/definitions/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
         },
         {
-          "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+13more@2"
+          "$ref": "#/definitions/constrains~1commonLabels:t+nameOverride+nameOverride:t+serviceMonitor+serviceMonitor.enabled+6more@2"
         },
         {
           "anyOf": [
@@ -2038,10 +1849,10 @@
           "$ref": "#/definitions/constrains~1commonLabels:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null+5more"
+          "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+13more@2"
         },
         {
-          "$ref": "#/definitions/constrains~1commonLabels:t+nameOverride+nameOverride:t+serviceMonitor+serviceMonitor.enabled+6more@2"
+          "$ref": "#/definitions/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
         },
         {
           "anyOf": [
@@ -2080,117 +1891,91 @@
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2"
+          "$ref": "#/definitions/constrains~1commonLabels:t+nameOverride+nameOverride:t+serviceMonitor+serviceMonitor.enabled+6more@2"
         },
         {
-          "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.apiVersion+13more@2"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker.labels:t+serviceMonitor.worker=null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-16"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
+                }
+              ]
+            }
+          ]
         },
         {
           "anyOf": [
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-19"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1group-25"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-18"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels+serviceMonitor.worker.labels:helm-marker-free+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker.labels"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-18"
+                  "$ref": "#/definitions/constrains~1group-14"
                 },
                 {
                   "$ref": "#/definitions/constrains~1commonLabels:t@2"
@@ -2212,26 +1997,13 @@
                   "$ref": "#/definitions/constrains~1group-15"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-17"
-                },
-                {
                   "$ref": "#/definitions/constrains~1group-25"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
@@ -2240,7 +2012,98 @@
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels@3"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null"
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-18"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels+serviceMonitor.worker.labels:helm-marker-free+1more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.labels+1more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker.labels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels+serviceMonitor.worker.labels:helm-marker-free+1more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-14"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels"
                 }
               ]
             },
@@ -2288,16 +2151,38 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1group-16"
+                  "$ref": "#/definitions/constrains~1group-17"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels+serviceMonitor.worker.labels:helm-marker-free+1more"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t@2"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.labels+1more"
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-19"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1group-25"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels:helm-marker-free+1more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null"
                 }
               ]
             }
@@ -2334,7 +2219,7 @@
     "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-14"
+          "$ref": "#/definitions/constrains~1group-13"
         },
         {
           "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more@2"
@@ -2344,7 +2229,7 @@
     "constrains/commonLabels:t+fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+11more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-14"
+          "$ref": "#/definitions/constrains~1group-13"
         },
         {
           "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
@@ -2386,7 +2271,7 @@
           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
         },
         {
-          "$ref": "#/definitions/constrains~1group-13"
+          "$ref": "#/definitions/constrains~1group-12"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion+serviceMonitor.apiVersion=null+6more@2"
@@ -2469,29 +2354,7 @@
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@5"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@6"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@7"
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@9"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
@@ -2517,6 +2380,44 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@5"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@7"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@6"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
                 },
                 {
@@ -2528,6 +2429,16 @@
                         },
                         {
                           "anyOf": [
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@10"
+                                }
+                              ]
+                            },
                             {
                               "allOf": [
                                 {
@@ -2555,17 +2466,10 @@
                                             {
                                               "allOf": [
                                                 {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t"
+                                                },
+                                                {
                                                   "anyOf": [
-                                                    {
-                                                      "allOf": [
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@9"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
-                                                        }
-                                                      ]
-                                                    },
                                                     {
                                                       "allOf": [
                                                         {
@@ -2589,11 +2493,18 @@
                                                           ]
                                                         }
                                                       ]
+                                                    },
+                                                    {
+                                                      "allOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@10"
+                                                        }
+                                                      ]
                                                     }
                                                   ]
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t"
                                                 }
                                               ]
                                             },
@@ -2612,16 +2523,6 @@
                                       ]
                                     }
                                   ]
-                                }
-                              ]
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@10"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?"
                                 }
                               ]
                             }
@@ -2653,6 +2554,16 @@
                     {
                       "allOf": [
                         {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@9"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
                         },
                         {
@@ -2667,16 +2578,6 @@
                                     {
                                       "allOf": [
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@12"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
                                           "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
                                         },
                                         {
@@ -2684,17 +2585,20 @@
                                             {
                                               "allOf": [
                                                 {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t@2"
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t"
                                                 },
                                                 {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@12"
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "allOf": [
-                                                {
                                                   "anyOf": [
+                                                    {
+                                                      "allOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@9"
+                                                        }
+                                                      ]
+                                                    },
                                                     {
                                                       "allOf": [
                                                         {
@@ -2718,25 +2622,32 @@
                                                           ]
                                                         }
                                                       ]
-                                                    },
-                                                    {
-                                                      "allOf": [
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@10"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
-                                                        }
-                                                      ]
                                                     }
                                                   ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "allOf": [
+                                                {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t@2"
                                                 },
                                                 {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t"
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@12"
                                                 }
                                               ]
                                             }
                                           ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@12"
                                         }
                                       ]
                                     }
@@ -2747,24 +2658,14 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@9"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?"
+                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@9"
                                 }
                               ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@9"
                         }
                       ]
                     }
@@ -2799,20 +2700,23 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@6"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?"
-                                }
-                              ]
-                            },
-                            {
-                              "allOf": [
-                                {
                                   "$ref": "#/definitions/constrains~1serviceMonitor.interval?@2"
                                 },
                                 {
                                   "anyOf": [
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@4"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@5"
+                                        }
+                                      ]
+                                    },
                                     {
                                       "allOf": [
                                         {
@@ -2823,20 +2727,10 @@
                                             {
                                               "allOf": [
                                                 {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t"
+                                                },
+                                                {
                                                   "anyOf": [
-                                                    {
-                                                      "allOf": [
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@6"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@7"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
-                                                        }
-                                                      ]
-                                                    },
                                                     {
                                                       "allOf": [
                                                         {
@@ -2877,11 +2771,21 @@
                                                           ]
                                                         }
                                                       ]
+                                                    },
+                                                    {
+                                                      "allOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@7"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@6"
+                                                        }
+                                                      ]
                                                     }
                                                   ]
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval:t"
                                                 }
                                               ]
                                             },
@@ -2901,21 +2805,18 @@
                                           ]
                                         }
                                       ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@4"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@5"
-                                        }
-                                      ]
                                     }
                                   ]
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@6"
                                 }
                               ]
                             }
@@ -2971,22 +2872,6 @@
                                     {
                                       "allOf": [
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@3"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@2"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
-                                        },
-                                        {
                                           "anyOf": [
                                             {
                                               "allOf": [
@@ -3001,9 +2886,6 @@
                                                           "anyOf": [
                                                             {
                                                               "allOf": [
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval"
-                                                                },
                                                                 {
                                                                   "anyOf": [
                                                                     {
@@ -3023,6 +2905,9 @@
                                                                       "$ref": "#/definitions/constrains~1serviceMonitor.interval@7"
                                                                     }
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.interval"
                                                                 }
                                                               ]
                                                             },
@@ -3043,13 +2928,13 @@
                                                     {
                                                       "allOf": [
                                                         {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@5"
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
                                                         },
                                                         {
                                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@4"
                                                         },
                                                         {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@5"
                                                         }
                                                       ]
                                                     }
@@ -3074,6 +2959,22 @@
                                               ]
                                             }
                                           ]
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@3"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@2"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null"
                                         }
                                       ]
                                     }
@@ -3088,27 +2989,11 @@
                   ]
                 }
               ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval?@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@9"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval+serviceMonitor.interval=null@2"
-                }
-              ]
             }
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1group-12"
+          "$ref": "#/definitions/constrains~1group-11"
         }
       ]
     },
@@ -3146,10 +3031,17 @@
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@6"
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@9"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@7"
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@10"
                 }
               ]
             },
@@ -3169,10 +3061,33 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@6"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@7"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
                 },
                 {
                   "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@6"
+                        }
+                      ]
+                    },
                     {
                       "allOf": [
                         {
@@ -3183,10 +3098,30 @@
                             {
                               "allOf": [
                                 {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@6"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?"
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
                                   "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?@2"
                                 },
                                 {
                                   "anyOf": [
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@12"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
+                                        }
+                                      ]
+                                    },
                                     {
                                       "allOf": [
                                         {
@@ -3195,16 +3130,6 @@
                                               "allOf": [
                                                 {
                                                   "anyOf": [
-                                                    {
-                                                      "allOf": [
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@10"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
-                                                        }
-                                                      ]
-                                                    },
                                                     {
                                                       "allOf": [
                                                         {
@@ -3226,6 +3151,16 @@
                                                               "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@2"
                                                             }
                                                           ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "allOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@10"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
                                                         }
                                                       ]
                                                     }
@@ -3252,42 +3187,12 @@
                                           "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@4"
                                         }
                                       ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@12"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
-                                        }
-                                      ]
                                     }
                                   ]
                                 }
                               ]
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@6"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?"
-                                }
-                              ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@6"
                         }
                       ]
                     }
@@ -3298,30 +3203,20 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@10"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@9"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
                 },
                 {
                   "anyOf": [
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@13"
+                        }
+                      ]
+                    },
                     {
                       "allOf": [
                         {
@@ -3349,55 +3244,11 @@
                                     {
                                       "allOf": [
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@11"
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "allOf": [
-                                        {
                                           "anyOf": [
                                             {
                                               "allOf": [
                                                 {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@11"
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "allOf": [
-                                                {
                                                   "anyOf": [
-                                                    {
-                                                      "allOf": [
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout@10"
-                                                        },
-                                                        {
-                                                          "anyOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@3"
-                                                            },
-                                                            {
-                                                              "allOf": [
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout@11"
-                                                                },
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@8"
-                                                                }
-                                                              ]
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    },
                                                     {
                                                       "allOf": [
                                                         {
@@ -3407,11 +3258,45 @@
                                                           "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
                                                         }
                                                       ]
+                                                    },
+                                                    {
+                                                      "allOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout@10"
+                                                        },
+                                                        {
+                                                          "anyOf": [
+                                                            {
+                                                              "allOf": [
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout@11"
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@8"
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@3"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
                                                     }
                                                   ]
                                                 },
                                                 {
                                                   "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "allOf": [
+                                                {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
+                                                },
+                                                {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@11"
                                                 }
                                               ]
                                             }
@@ -3421,22 +3306,22 @@
                                           "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@4"
                                         }
                                       ]
+                                    },
+                                    {
+                                      "allOf": [
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@11"
+                                        },
+                                        {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
                               ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@13"
                         }
                       ]
                     }
@@ -3471,6 +3356,16 @@
                             {
                               "allOf": [
                                 {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@7"
+                                }
+                              ]
+                            },
+                            {
+                              "allOf": [
+                                {
                                   "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?@2"
                                 },
                                 {
@@ -3478,21 +3373,27 @@
                                     {
                                       "allOf": [
                                         {
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@4"
+                                        },
+                                        {
                                           "anyOf": [
                                             {
                                               "allOf": [
+                                                {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t"
+                                                },
                                                 {
                                                   "anyOf": [
                                                     {
                                                       "allOf": [
                                                         {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
+                                                        },
+                                                        {
                                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@6"
                                                         },
                                                         {
                                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@7"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
                                                         }
                                                       ]
                                                     },
@@ -3516,6 +3417,9 @@
                                                             {
                                                               "allOf": [
                                                                 {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout"
+                                                                },
+                                                                {
                                                                   "anyOf": [
                                                                     {
                                                                       "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout@8"
@@ -3527,9 +3431,6 @@
                                                                       "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout"
                                                                     }
                                                                   ]
-                                                                },
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout"
                                                                 }
                                                               ]
                                                             }
@@ -3538,9 +3439,6 @@
                                                       ]
                                                     }
                                                   ]
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t"
                                                 }
                                               ]
                                             },
@@ -3550,44 +3448,31 @@
                                                   "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
                                                 },
                                                 {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@5"
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@4"
                                                 },
                                                 {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@4"
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@5"
                                                 }
                                               ]
                                             }
                                           ]
-                                        },
-                                        {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@4"
                                         }
                                       ]
                                     },
                                     {
                                       "allOf": [
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@5"
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
                                         },
                                         {
                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@4"
                                         },
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@5"
                                         }
                                       ]
                                     }
                                   ]
-                                }
-                              ]
-                            },
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@7"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?"
                                 }
                               ]
                             }
@@ -3609,30 +3494,10 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@10"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
                         },
                         {
                           "anyOf": [
-                            {
-                              "allOf": [
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?"
-                                },
-                                {
-                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@10"
-                                }
-                              ]
-                            },
                             {
                               "allOf": [
                                 {
@@ -3643,13 +3508,13 @@
                                     {
                                       "allOf": [
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
+                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@3"
                                         },
                                         {
                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@2"
                                         },
                                         {
-                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@3"
+                                          "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null"
                                         }
                                       ]
                                     },
@@ -3663,23 +3528,23 @@
                                             {
                                               "allOf": [
                                                 {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
+                                                },
+                                                {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@3"
+                                                },
+                                                {
+                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@2"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "allOf": [
+                                                {
                                                   "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t"
                                                 },
                                                 {
                                                   "anyOf": [
-                                                    {
-                                                      "allOf": [
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@5"
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@4"
-                                                        }
-                                                      ]
-                                                    },
                                                     {
                                                       "allOf": [
                                                         {
@@ -3689,19 +3554,6 @@
                                                           "anyOf": [
                                                             {
                                                               "allOf": [
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout@11"
-                                                                },
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@10"
-                                                                }
-                                                              ]
-                                                            },
-                                                            {
-                                                              "allOf": [
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout"
-                                                                },
                                                                 {
                                                                   "anyOf": [
                                                                     {
@@ -3721,27 +3573,40 @@
                                                                       ]
                                                                     }
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout"
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "allOf": [
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout@11"
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@10"
                                                                 }
                                                               ]
                                                             }
                                                           ]
                                                         }
                                                       ]
+                                                    },
+                                                    {
+                                                      "allOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@5"
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@4"
+                                                        }
+                                                      ]
                                                     }
                                                   ]
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "allOf": [
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@2"
-                                                },
-                                                {
-                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@3"
                                                 }
                                               ]
                                             }
@@ -3752,8 +3617,28 @@
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "allOf": [
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@10"
+                                },
+                                {
+                                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?"
+                                }
+                              ]
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@10"
                         }
                       ]
                     }
@@ -3768,42 +3653,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@3"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-17"
+                  "$ref": "#/definitions/constrains~1group-19"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@3"
@@ -3828,6 +3678,22 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout?@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
                   "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
                 },
                 {
@@ -3847,6 +3713,12 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
+                },
+                {
                   "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout:t"
                 },
                 {
@@ -3856,21 +3728,34 @@
                   "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout+serviceMonitor.scrapeTimeout=null@3"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.scrapeTimeout"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout:t@2"
                 }
               ]
             }
           ]
         },
         {
-          "$ref": "#/definitions/constrains~1group-12"
+          "$ref": "#/definitions/constrains~1group-11"
         }
       ]
     },
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-8"
+          "$ref": "#/definitions/constrains~1group-7"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t@2"
@@ -3883,7 +3768,7 @@
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-6"
+          "$ref": "#/definitions/constrains~1group-5"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled?@2"
@@ -3896,7 +3781,7 @@
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more@3": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-6"
+          "$ref": "#/definitions/constrains~1group-5"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
@@ -3909,7 +3794,7 @@
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more@4": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-5"
+          "$ref": "#/definitions/constrains~1group-4"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null@2"
@@ -3928,7 +3813,7 @@
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
         },
         {
-          "$ref": "#/definitions/constrains~1group-10"
+          "$ref": "#/definitions/constrains~1group-9"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
@@ -3938,7 +3823,7 @@
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more@6": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
+          "$ref": "#/definitions/constrains~1group-3"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled?@2"
@@ -3951,14 +3836,14 @@
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more@7": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-5"
+          "$ref": "#/definitions/constrains~1group-4"
         }
       ]
     },
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more@8": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
+          "$ref": "#/definitions/constrains~1group-3"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
@@ -3999,7 +3884,7 @@
     "constrains/commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+5more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-8"
+          "$ref": "#/definitions/constrains~1group-7"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t@2"
@@ -4142,6 +4027,9 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1fullnameOverride"
+            },
+            {
               "anyOf": [
                 {
                   "$ref": "#/definitions/constrains~1fullnameOverride:t"
@@ -4157,9 +4045,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride"
             }
           ]
         }
@@ -4177,7 +4062,7 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=false+2more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-2"
+          "$ref": "#/definitions/constrains~1group-1"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride@3"
@@ -4190,7 +4075,7 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=false+2more@2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-2"
+          "$ref": "#/definitions/constrains~1group-1"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride"
@@ -4200,7 +4085,7 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=false+2more@3": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-3"
+          "$ref": "#/definitions/constrains~1group-2"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride@8"
@@ -4219,7 +4104,7 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=false+2more@4": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-1"
+          "$ref": "#/definitions/constrains~1group-0"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null"
@@ -4229,7 +4114,7 @@
     "constrains/fullnameOverride:t+nameOverride+nameOverride:t+nameOverride=false+2more@5": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-1"
+          "$ref": "#/definitions/constrains~1group-0"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride@9"
@@ -4256,7 +4141,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/definitions/constrains~1group-3"
+          "$ref": "#/definitions/constrains~1group-2"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride@2"
@@ -4307,17 +4192,7 @@
     "constrains/group-0": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-15"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.labels@3"
-        }
-      ]
-    },
-    "constrains/group-1": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-3"
+          "$ref": "#/definitions/constrains~1group-2"
         },
         {
           "$ref": "#/definitions/constrains~1nameOverride@8"
@@ -4327,20 +4202,23 @@
         }
       ]
     },
-    "constrains/group-10": {
-      "anyOf": [
+    "constrains/group-1": {
+      "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-11"
+          "$ref": "#/definitions/constrains~1group-2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker=null"
+          "$ref": "#/definitions/constrains~1nameOverride@8"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker@2"
+          "$ref": "#/definitions/constrains~1nameOverride@11"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@2"
         }
       ]
     },
-    "constrains/group-11": {
+    "constrains/group-10": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1serviceMonitor=null"
@@ -4356,7 +4234,7 @@
         }
       ]
     },
-    "constrains/group-12": {
+    "constrains/group-11": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
@@ -4365,11 +4243,11 @@
           "$ref": "#/definitions/constrains~1commonLabels:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1group-13"
+          "$ref": "#/definitions/constrains~1group-12"
         }
       ]
     },
-    "constrains/group-13": {
+    "constrains/group-12": {
       "allOf": [
         {
           "$ref": "#/definitions/constrains~1commonLabels:t+serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+4more"
@@ -4409,7 +4287,7 @@
         }
       ]
     },
-    "constrains/group-14": {
+    "constrains/group-13": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t"
@@ -4437,13 +4315,26 @@
         }
       ]
     },
+    "constrains/group-14": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-15"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-24"
+        }
+      ]
+    },
     "constrains/group-15": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-16"
+          "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
         }
       ]
     },
@@ -4453,17 +4344,17 @@
           "$ref": "#/definitions/constrains~1group-17"
         },
         {
-          "$ref": "#/definitions/constrains~1group-24"
+          "$ref": "#/definitions/constrains~1serviceMonitor.labels@3"
         }
       ]
     },
     "constrains/group-17": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
+          "$ref": "#/definitions/constrains~1group-18"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
+          "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
         }
       ]
     },
@@ -4484,25 +4375,28 @@
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled:t+5more"
         }
       ]
     },
     "constrains/group-2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-3"
+          "$ref": "#/definitions/constrains~1fullnameOverride:t"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride@8"
+          "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride@11"
+          "$ref": "#/definitions/constrains~1nameOverride:t@2"
         },
         {
-          "$ref": "#/definitions/constrains~1nameOverride@2"
+          "$ref": "#/definitions/constrains~1nameOverride=false"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride=true"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride@7"
         }
       ]
     },
@@ -4589,58 +4483,36 @@
       ]
     },
     "constrains/group-3": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride+nameOverride=null@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride=false"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride=true"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride@7"
-        }
-      ]
-    },
-    "constrains/group-4": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-7"
-        },
-        {
-          "$ref": "#/definitions/constrains~1group-11"
-        }
-      ]
-    },
-    "constrains/group-5": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-9"
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
-        }
-      ]
-    },
-    "constrains/group-6": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-7"
+          "$ref": "#/definitions/constrains~1group-6"
         },
         {
           "$ref": "#/definitions/constrains~1group-10"
         }
       ]
     },
-    "constrains/group-7": {
+    "constrains/group-4": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-8"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
+        }
+      ]
+    },
+    "constrains/group-5": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1group-6"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-9"
+        }
+      ]
+    },
+    "constrains/group-6": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
@@ -4653,17 +4525,17 @@
         }
       ]
     },
-    "constrains/group-8": {
+    "constrains/group-7": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1group-9"
+          "$ref": "#/definitions/constrains~1group-8"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled?@2"
         }
       ]
     },
-    "constrains/group-9": {
+    "constrains/group-8": {
       "anyOf": [
         {
           "$ref": "#/definitions/constrains~1commonLabels:t"
@@ -4672,7 +4544,20 @@
           "$ref": "#/definitions/constrains~1serviceMonitor.enabled:t"
         },
         {
+          "$ref": "#/definitions/constrains~1group-9"
+        }
+      ]
+    },
+    "constrains/group-9": {
+      "anyOf": [
+        {
           "$ref": "#/definitions/constrains~1group-10"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.worker=null"
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.worker@2"
         }
       ]
     },
@@ -4813,20 +4698,6 @@
       "properties": {
         "labels": {
           "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-template-marker-free+commonLabels:t+23more~1object,null"
-        }
-      },
-      "required": [
-        "labels"
-      ],
-      "type": "object"
-    },
-    "constrains/labels.'app.kubernetes.io/name'?": {
-      "properties": {
-        "labels": {
-          "required": [
-            "app.kubernetes.io/name"
-          ],
-          "type": "object"
         }
       },
       "required": [
@@ -5224,7 +5095,7 @@
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@5"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion=false"
@@ -5243,13 +5114,13 @@
     "constrains/serviceMonitor+serviceMonitor.apiVersion+serviceMonitor.apiVersion=false+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion=false"
@@ -5411,7 +5282,7 @@
                                                     {
                                                       "allOf": [
                                                         {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
                                                         },
                                                         {
                                                           "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@9"
@@ -5496,6 +5367,145 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@11"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@11"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?@2"
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion+serviceMonitor.apiVersion=null@2"
+                                    },
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t"
+                                            },
+                                            {
+                                              "anyOf": [
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@10"
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@13"
+                                                    },
+                                                    {
+                                                      "anyOf": [
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@8"
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@2"
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t@2"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@13"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion+serviceMonitor.apiVersion=null"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@13"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
+            },
+            {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@10"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
                     },
                     {
@@ -5544,34 +5554,34 @@
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@13"
                                                     },
                                                     {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@9"
+                                                      "anyOf": [
+                                                        {
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@3"
+                                                        },
+                                                        {
+                                                          "allOf": [
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
+                                                            },
+                                                            {
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@7"
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
                                                     }
                                                   ]
                                                 },
                                                 {
                                                   "allOf": [
                                                     {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@13"
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
                                                     },
                                                     {
-                                                      "anyOf": [
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@7"
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@3"
-                                                        }
-                                                      ]
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@9"
                                                     }
                                                   ]
                                                 }
@@ -5600,16 +5610,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@10"
-                    }
-                  ]
                 }
               ]
             }
@@ -5625,20 +5625,20 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@9"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
                     },
                     {
                       "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@6"
-                            }
-                          ]
-                        },
                         {
                           "allOf": [
                             {
@@ -5660,6 +5660,19 @@
                                             },
                                             {
                                               "anyOf": [
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@5"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@4"
+                                                    }
+                                                  ]
+                                                },
                                                 {
                                                   "allOf": [
                                                     {
@@ -5675,13 +5688,20 @@
                                                             {
                                                               "anyOf": [
                                                                 {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@11"
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@15"
                                                                 },
                                                                 {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@17"
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@10"
                                                                 },
                                                                 {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion"
+                                                                  "allOf": [
+                                                                    {
+                                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@8"
+                                                                    },
+                                                                    {
+                                                                      "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@3"
+                                                                    }
+                                                                  ]
                                                                 }
                                                               ]
                                                             }
@@ -5690,27 +5710,14 @@
                                                         {
                                                           "allOf": [
                                                             {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
                                                             },
                                                             {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@6"
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@9"
                                                             }
                                                           ]
                                                         }
                                                       ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@7"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@6"
                                                     }
                                                   ]
                                                 }
@@ -5724,10 +5731,10 @@
                                               "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t@2"
                                             },
                                             {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@5"
+                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@3"
                                             },
                                             {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@4"
+                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@2"
                                             }
                                           ]
                                         }
@@ -5741,157 +5748,28 @@
                                       "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion+serviceMonitor.apiVersion=null"
                                     },
                                     {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@5"
+                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@3"
                                     },
                                     {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@4"
+                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@2"
                                     }
                                   ]
                                 }
                               ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@6"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@5"
-            },
-            {
-              "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@11"
                             }
                           ]
                         },
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?@2"
+                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?"
                             },
                             {
-                              "anyOf": [
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion+serviceMonitor.apiVersion=null@2"
-                                    },
-                                    {
-                                      "anyOf": [
-                                        {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t@2"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@13"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "allOf": [
-                                            {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t"
-                                            },
-                                            {
-                                              "anyOf": [
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@13"
-                                                    },
-                                                    {
-                                                      "anyOf": [
-                                                        {
-                                                          "allOf": [
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
-                                                            },
-                                                            {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@8"
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@2"
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@10"
-                                                    }
-                                                  ]
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion+serviceMonitor.apiVersion=null"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@13"
-                                    }
-                                  ]
-                                }
-                              ]
+                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@9"
                             }
                           ]
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@11"
                     }
                   ]
                 }
@@ -5962,10 +5840,10 @@
               "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@4"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@5"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@5"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@4"
             }
           ]
         },
@@ -5979,6 +5857,16 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@6"
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@4"
                     },
                     {
@@ -5989,7 +5877,7 @@
                               "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion?"
                             },
                             {
-                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@9"
+                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@6"
                             }
                           ]
                         },
@@ -6010,23 +5898,23 @@
                                         {
                                           "allOf": [
                                             {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t@2"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@2"
-                                            },
-                                            {
-                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@3"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "allOf": [
-                                            {
                                               "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t"
                                             },
                                             {
                                               "anyOf": [
+                                                {
+                                                  "allOf": [
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@7"
+                                                    },
+                                                    {
+                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@6"
+                                                    }
+                                                  ]
+                                                },
                                                 {
                                                   "allOf": [
                                                     {
@@ -6037,58 +5925,51 @@
                                                         {
                                                           "allOf": [
                                                             {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion"
                                                             },
                                                             {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@9"
+                                                              "anyOf": [
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@11"
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@17"
+                                                                },
+                                                                {
+                                                                  "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion"
+                                                                }
+                                                              ]
                                                             }
                                                           ]
                                                         },
                                                         {
                                                           "allOf": [
                                                             {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion"
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
                                                             },
                                                             {
-                                                              "anyOf": [
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@15"
-                                                                },
-                                                                {
-                                                                  "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@10"
-                                                                },
-                                                                {
-                                                                  "allOf": [
-                                                                    {
-                                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@8"
-                                                                    },
-                                                                    {
-                                                                      "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@3"
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              ]
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@6"
                                                             }
                                                           ]
                                                         }
                                                       ]
                                                     }
                                                   ]
-                                                },
-                                                {
-                                                  "allOf": [
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@4"
-                                                    },
-                                                    {
-                                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@5"
-                                                    }
-                                                  ]
                                                 }
                                               ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "allOf": [
+                                            {
+                                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion:t@2"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@5"
+                                            },
+                                            {
+                                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@4"
                                             }
                                           ]
                                         }
@@ -6102,10 +5983,10 @@
                                       "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion+serviceMonitor.apiVersion=null"
                                     },
                                     {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@2"
+                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@5"
                                     },
                                     {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@3"
+                                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@4"
                                     }
                                   ]
                                 }
@@ -6114,16 +5995,6 @@
                           ]
                         }
                       ]
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@9"
                     }
                   ]
                 }
@@ -6185,7 +6056,7 @@
                                                     {
                                                       "allOf": [
                                                         {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
                                                         },
                                                         {
                                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion+2more@3"
@@ -6207,7 +6078,7 @@
                                                               ]
                                                             },
                                                             {
-                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
+                                                              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
                                                             },
                                                             {
                                                               "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion=false"
@@ -6379,7 +6250,7 @@
                                                     {
                                                       "allOf": [
                                                         {
-                                                          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+                                                          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
                                                         },
                                                         {
                                                           "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion+1more"
@@ -6443,9 +6314,12 @@
     "constrains/serviceMonitor+serviceMonitor.apiVersion@10": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@2"
+        },
+        {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
             },
             {
               "anyOf": [
@@ -6461,9 +6335,6 @@
               ]
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.apiVersion@2"
         }
       ]
     },
@@ -6556,7 +6427,7 @@
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@15"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@2"
@@ -6585,7 +6456,7 @@
     "constrains/serviceMonitor+serviceMonitor.apiVersion@7": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@11"
@@ -6601,7 +6472,7 @@
     "constrains/serviceMonitor+serviceMonitor.apiVersion@8": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
+          "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@13"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@2"
@@ -6616,7 +6487,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+              "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
             },
             {
               "anyOf": [
@@ -6640,7 +6511,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-17"
+              "$ref": "#/definitions/constrains~1group-19"
             },
             {
               "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
@@ -6776,33 +6647,10 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t@2"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+1more@2"
-                    }
-                  ]
-                },
-                {
-                  "allOf": [
-                    {
                       "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t"
                     },
                     {
                       "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+1more@2"
-                            }
-                          ]
-                        },
                         {
                           "allOf": [
                             {
@@ -6818,6 +6666,9 @@
                                 },
                                 {
                                   "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null@3"
+                                    },
                                     {
                                       "anyOf": [
                                         {
@@ -6872,17 +6723,37 @@
                                           ]
                                         }
                                       ]
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null@3"
                                     }
                                   ]
                                 }
                               ]
                             }
                           ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+1more@2"
+                            }
+                          ]
                         }
                       ]
+                    }
+                  ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor.worker.enabled:t@2"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled+serviceMonitor.enabled=null+1more@2"
                     }
                   ]
                 }
@@ -6920,10 +6791,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled?+serviceMonitor=null"
+              "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null@3"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.enabled+serviceMonitor.enabled=null@3"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.enabled?+serviceMonitor=null"
             }
           ]
         }
@@ -6959,6 +6830,9 @@
     "constrains/serviceMonitor+serviceMonitor.interval@10": {
       "anyOf": [
         {
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@2"
+        },
+        {
           "allOf": [
             {
               "$ref": "#/definitions/constrains~1serviceMonitor.interval@9"
@@ -6966,10 +6840,10 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@6"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@12"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@12"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@5"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval"
@@ -6977,9 +6851,6 @@
               ]
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@3"
         }
       ]
     },
@@ -6990,6 +6861,9 @@
     },
     "constrains/serviceMonitor+serviceMonitor.interval@2": {
       "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.interval"
+        },
         {
           "anyOf": [
             {
@@ -7013,14 +6887,14 @@
               "type": "object"
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.interval"
         }
       ]
     },
     "constrains/serviceMonitor+serviceMonitor.interval@3": {
       "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor.interval"
+        },
         {
           "anyOf": [
             {
@@ -7044,9 +6918,6 @@
               "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval"
             }
           ]
-        },
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.interval"
         }
       ]
     },
@@ -7127,7 +6998,7 @@
     "constrains/serviceMonitor+serviceMonitor.interval@9": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@2"
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval@3"
         },
         {
           "allOf": [
@@ -7137,10 +7008,10 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@12"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@6"
                 },
                 {
-                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@5"
+                  "$ref": "#/definitions/constrains~1serviceMonitor.interval@12"
                 },
                 {
                   "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.interval"
@@ -7211,7 +7082,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-0"
+              "$ref": "#/definitions/constrains~1group-16"
             },
             {
               "$ref": "#/definitions/constrains~1serviceMonitor.labels:t@2"
@@ -7290,83 +7161,6 @@
         ]
       }
     },
-    "constrains/serviceMonitor+serviceMonitor.labels+serviceMonitor.labels=null+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker.labels:t+serviceMonitor.worker=null"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@3"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels+serviceMonitor.labels=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels?"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor=null@3"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker+serviceMonitor.worker=null@4"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1serviceMonitor.labels:t"
-            }
-          ]
-        }
-      ]
-    },
     "constrains/serviceMonitor+serviceMonitor.scrapeTimeout": {
       "allOf": [
         {
@@ -7379,9 +7173,6 @@
     },
     "constrains/serviceMonitor+serviceMonitor.scrapeTimeout@10": {
       "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@2"
-        },
         {
           "allOf": [
             {
@@ -7401,6 +7192,9 @@
               ]
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.scrapeTimeout@2"
         }
       ]
     },
@@ -7818,20 +7612,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@13"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@11"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@8"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion@13"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.apiVersion"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@8"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.apiVersion@11"
             }
           ]
         }
@@ -8027,10 +7821,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@9"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@9"
             }
           ]
         },
@@ -8051,10 +7845,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@10"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.interval"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.interval@10"
             }
           ]
         },
@@ -8298,20 +8092,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout@10"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@13"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@8"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@13"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout@10"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@8"
             }
           ]
         }
@@ -8322,20 +8116,20 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@6"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout@10"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@9"
             }
           ]
         },
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout@10"
+              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@6"
             },
             {
-              "$ref": "#/definitions/constrains~1serviceMonitor+serviceMonitor.worker+serviceMonitor.worker.scrapeTimeout@9"
+              "$ref": "#/definitions/constrains~1serviceMonitor.worker.scrapeTimeout"
             }
           ]
         }
@@ -8533,7 +8327,7 @@
     },
     "constrains/serviceMonitor.apiVersion": {
       "not": {
-        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@12"
+        "$ref": "#/definitions/constrains~1serviceMonitor.apiVersion@14"
       }
     },
     "constrains/serviceMonitor.apiVersion+serviceMonitor.apiVersion=null": {
@@ -8628,7 +8422,7 @@
     "constrains/serviceMonitor.apiVersion@12": {
       "properties": {
         "serviceMonitor": {
-          "$ref": "#/definitions/constrains~1apiVersion@19"
+          "$ref": "#/definitions/constrains~1apiVersion@18"
         }
       },
       "required": [
@@ -8639,7 +8433,7 @@
     "constrains/serviceMonitor.apiVersion@13": {
       "properties": {
         "serviceMonitor": {
-          "$ref": "#/definitions/constrains~1apiVersion@18"
+          "$ref": "#/definitions/constrains~1apiVersion@13"
         }
       },
       "required": [
@@ -8650,7 +8444,7 @@
     "constrains/serviceMonitor.apiVersion@14": {
       "properties": {
         "serviceMonitor": {
-          "$ref": "#/definitions/constrains~1apiVersion@13"
+          "$ref": "#/definitions/constrains~1apiVersion@19"
         }
       },
       "required": [
@@ -9109,7 +8903,15 @@
           "$ref": "#/definitions/constrains~1serviceMonitor.labels@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.labels:helm-marker-free"
+          "properties": {
+            "serviceMonitor": {
+              "$ref": "#/definitions/constrains~1labels:helm-marker-free"
+            }
+          },
+          "required": [
+            "serviceMonitor"
+          ],
+          "type": "object"
         }
       ]
     },
@@ -9134,30 +8936,6 @@
           }
         ]
       }
-    },
-    "constrains/serviceMonitor.labels.'app.kubernetes.io/name'?": {
-      "not": {
-        "properties": {
-          "serviceMonitor": {
-            "$ref": "#/definitions/constrains~1labels.'app.kubernetes.io~1name'?"
-          }
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/serviceMonitor.labels:helm-marker-free": {
-      "properties": {
-        "serviceMonitor": {
-          "$ref": "#/definitions/constrains~1labels:helm-marker-free"
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
     },
     "constrains/serviceMonitor.labels:t": {
       "properties": {
@@ -10302,7 +10080,23 @@
     "constrains/serviceMonitor.worker.labels+serviceMonitor.worker.labels:helm-marker-free+1more": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels:helm-marker-free"
+          "properties": {
+            "serviceMonitor": {
+              "properties": {
+                "worker": {
+                  "$ref": "#/definitions/constrains~1labels:helm-marker-free"
+                }
+              },
+              "required": [
+                "worker"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceMonitor"
+          ],
+          "type": "object"
         },
         {
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels@2"
@@ -10311,46 +10105,6 @@
           "$ref": "#/definitions/constrains~1serviceMonitor.worker.labels=null"
         }
       ]
-    },
-    "constrains/serviceMonitor.worker.labels.'app.kubernetes.io/name'?": {
-      "not": {
-        "properties": {
-          "serviceMonitor": {
-            "properties": {
-              "worker": {
-                "$ref": "#/definitions/constrains~1labels.'app.kubernetes.io~1name'?"
-              }
-            },
-            "required": [
-              "worker"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      }
-    },
-    "constrains/serviceMonitor.worker.labels:helm-marker-free": {
-      "properties": {
-        "serviceMonitor": {
-          "properties": {
-            "worker": {
-              "$ref": "#/definitions/constrains~1labels:helm-marker-free"
-            }
-          },
-          "required": [
-            "worker"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
     },
     "constrains/serviceMonitor.worker.labels:t": {
       "not": {

@@ -213,6 +213,113 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1community-operator+community-operator.namespace+9more"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "community-operator": {
+                "additionalProperties": {},
+                "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
+                "properties": {
+                  "resource": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "certificateKeySecretRef": {
+                            "$ref": "#/definitions/values~1anyOf~1object+string+string;name-of-the-secret+string;pattern-r-n"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "community-operator": {
+                "additionalProperties": {},
+                "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
+                "properties": {
+                  "resource": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "tls": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "caCertificateSecretRef": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/definitions/values~1string;pattern-r-n"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1string@3"
+                              },
+                              {
+                                "$ref": "#/definitions/values~1object@4"
+                              },
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@8"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@2"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@7"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[ \\t]#"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@3"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@5"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@6"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern"
+                                  },
+                                  {
+                                    "not": {
+                                      "pattern": "[\\r\\n]"
+                                    }
+                                  },
+                                  {
+                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@4"
+                                  }
+                                ],
+                                "description": "SecretName is the name of the secret used to sign Certificates issued\nby this Issuer.",
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -5363,134 +5470,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1community-operator+community-operator.namespace+9more"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "community-operator": {
-                "additionalProperties": {},
-                "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
-                "properties": {
-                  "resource": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tls": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "certificateKeySecretRef": {
-                            "$ref": "#/definitions/values~1anyOf~1object+string+string;name-of-the-secret+string;pattern-r-n"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "community-operator": {
-                "additionalProperties": {},
-                "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "community-operator": {
-                "additionalProperties": {},
-                "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
-                "properties": {
-                  "resource": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tls": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "caCertificateSecretRef": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/definitions/values~1string;pattern-r-n"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1string@3"
-                              },
-                              {
-                                "$ref": "#/definitions/values~1object@4"
-                              },
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@8"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@2"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@7"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[ \\t]#"
-                                    }
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@3"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@5"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@6"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern"
-                                  },
-                                  {
-                                    "not": {
-                                      "pattern": "[\\r\\n]"
-                                    }
-                                  },
-                                  {
-                                    "$ref": "#/definitions/values~1not~1keywords~1pattern@4"
-                                  }
-                                ],
-                                "description": "SecretName is the name of the secret used to sign Certificates issued\nby this Issuer.",
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {

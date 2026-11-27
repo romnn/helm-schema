@@ -3,214 +3,6 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "additionalProperties": {},
-      "properties": {
-        "postgresql": {
-          "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
-              },
-              {
-                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "properties": {
-            "postgresql": {
-              "not": {
-                "enum": [
-                  null
-                ]
-              }
-            }
-          },
-          "required": [
-            "postgresql"
-          ],
-          "type": "object"
-        },
-        "then": false
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -249,6 +41,9 @@
           {
             "allOf": [
               {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
                 "$ref": "#/definitions/constrains~1postgresql.architecture"
               },
               {
@@ -275,9 +70,6 @@
                 "not": {
                   "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
                 }
-              },
-              {
-                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
               }
             ]
           }
@@ -315,6 +107,18 @@
           ]
         },
         "then": false
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+          "type": [
+            "null",
+            "object"
+          ]
+        }
       }
     },
     {
@@ -462,6 +266,292 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "else": {
+                  "else": {
+                    "else": {
+                      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+                    },
+                    "then": true
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1postgresql.enabled=false@3"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=true"
+                      }
+                    ]
+                  }
+                },
+                "if": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+                },
+                "then": {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1postgresql.enabled=false@3"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-1"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-0"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=true"
+              },
+              {
+                "$ref": "#/definitions/constrains~1tags.bitnami-common=false@3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "postgresql": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "postgresql"
+          ],
+          "type": "object"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
+              },
+              {
+                "$ref": "#/definitions/constrains~1postgresql.enabled=false+tags.bitnami-common=false"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "$ref": "#/definitions/constrains~1postgresql.architecture!=null"
+        },
+        "then": false
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/definitions/constrains~1postgresql.architecture=replication+postgresql.enabled=false+3more"
@@ -485,42 +575,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1postgresql.architecture"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1postgresql.enabled=false"
-            }
-          },
-          {
-            "not": {
-              "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@2"
-            }
-          },
-          {
-            "$ref": "#/definitions/constrains~1postgresql.architecture=replication"
-          }
-        ]
-      },
-      "then": {
-        "if": {
-          "$ref": "#/definitions/constrains~1postgresql.architecture!=null"
-        },
-        "then": false
       }
     },
     {
@@ -749,56 +803,6 @@
     }
   ],
   "definitions": {
-    "constrains/architecture": {
-      "properties": {
-        "architecture": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture+architecture=null": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/definitions/constrains~1architecture"
-          }
-        },
-        {
-          "not": {
-            "allOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    "constrains/architecture+architecture=null@2": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1architecture=null"
-        },
-        {
-          "not": {
-            "properties": {
-              "architecture": {}
-            },
-            "required": [
-              "architecture"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
     "constrains/architecture=null": {
       "properties": {
         "architecture": {
@@ -809,45 +813,6 @@
       },
       "required": [
         "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/architecture=replication": {
-      "properties": {
-        "architecture": {
-          "enum": [
-            "replication"
-          ]
-        }
-      },
-      "required": [
-        "architecture"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled=false": {
-      "properties": {
-        "enabled": {
-          "enum": [
-            false
-          ]
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "constrains/enabled=true": {
-      "properties": {
-        "enabled": {
-          "enum": [
-            true
-          ]
-        }
-      },
-      "required": [
-        "enabled"
       ],
       "type": "object"
     },
@@ -876,7 +841,7 @@
           "$ref": "#/definitions/constrains~1postgresql.nameOverride:t"
         },
         {
-          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.architecture@2"
@@ -886,7 +851,7 @@
     "constrains/group-2": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
+          "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@5"
         },
         {
           "$ref": "#/definitions/constrains~1postgresql.architecture=replication@3"
@@ -928,12 +893,24 @@
       "type": "object"
     },
     "constrains/postgresql.architecture+postgresql.architecture=null": {
-      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
+      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@7"
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@2": {
-      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
+      "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@3": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1postgresql.architecture"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@7"
+          }
+        }
+      ]
+    },
+    "constrains/postgresql.architecture+postgresql.architecture=null@4": {
       "anyOf": [
         {
           "properties": {
@@ -967,17 +944,17 @@
         }
       ]
     },
-    "constrains/postgresql.architecture+postgresql.architecture=null@4": {
-      "not": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@3"
-      }
-    },
     "constrains/postgresql.architecture+postgresql.architecture=null@5": {
       "not": {
-        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@6"
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@4"
       }
     },
     "constrains/postgresql.architecture+postgresql.architecture=null@6": {
+      "not": {
+        "$ref": "#/definitions/constrains~1postgresql.architecture+postgresql.architecture=null@7"
+      }
+    },
+    "constrains/postgresql.architecture+postgresql.architecture=null@7": {
       "properties": {
         "postgresql": {
           "allOf": [
@@ -985,7 +962,22 @@
               "type": "object"
             },
             {
-              "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/constrains~1architecture=null"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "architecture": {}
+                    },
+                    "required": [
+                      "architecture"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
             }
           ]
         }
@@ -1031,7 +1023,17 @@
     "constrains/postgresql.architecture=replication@3": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture=replication"
+          "properties": {
+            "architecture": {
+              "enum": [
+                "replication"
+              ]
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1042,7 +1044,15 @@
     "constrains/postgresql.architecture@2": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1architecture"
+          "properties": {
+            "architecture": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1115,6 +1125,18 @@
     "constrains/postgresql.enabled=false": {
       "$ref": "#/definitions/constrains~1postgresql.enabled=false@3"
     },
+    "constrains/postgresql.enabled=false+tags.bitnami-common=false": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1tags.bitnami-common=false"
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1postgresql.enabled=false"
+          }
+        }
+      ]
+    },
     "constrains/postgresql.enabled=false@2": {
       "not": {
         "$ref": "#/definitions/constrains~1postgresql.enabled=false@3"
@@ -1123,7 +1145,17 @@
     "constrains/postgresql.enabled=false@3": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled=false"
+          "properties": {
+            "enabled": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1134,7 +1166,17 @@
     "constrains/postgresql.enabled=true": {
       "properties": {
         "postgresql": {
-          "$ref": "#/definitions/constrains~1enabled=true"
+          "properties": {
+            "enabled": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
         }
       },
       "required": [
@@ -1499,43 +1541,6 @@
     },
     "postgresql": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "else": {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                },
-                "if": {
-                  "$ref": "#/definitions/constrains~1enabled=false"
-                },
-                "then": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1architecture+architecture=null"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1enabled=true"
-                    }
-                  ]
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1architecture+architecture=null@2"
-                }
-              },
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1architecture=replication"
-                }
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
       "properties": {
         "architecture": {
