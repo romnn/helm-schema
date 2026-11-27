@@ -47,6 +47,19 @@
     },
     {
       "if": {
+        "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null+providers.kubernetesGateway+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbac": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -120,33 +133,16 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1hub+providers+providers.knative+providers.kubernetesCRD+1more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "providers": {
-            "additionalProperties": {},
-            "properties": {
-              "kubernetesIngress": {
-                "additionalProperties": {},
-                "properties": {
-                  "namespaces": {
-                    "description": "Array of namespaces to watch. If left empty, Traefik watches all namespaces. . When using `rbac.namespaced`, it will watch helm release namespace and namespaces listed in this array.",
-                    "type": "object"
-                  }
-                }
-              }
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null@2"
+          },
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
             }
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "not": {
-          "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
-        }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -155,1058 +151,18 @@
             "additionalProperties": {},
             "properties": {
               "kubernetesGateway": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1providers.kubernetesCRD+providers.kubernetesIngress.namespaces~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
-          },
-          {
-            "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null+providers.kubernetesGateway+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "providers": {
-            "additionalProperties": {},
-            "properties": {
-              "knative": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1providers+providers=null"
-              },
-              {
-                "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1providers.kubernetesCRD+providers.kubernetesIngress.namespaces~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
-              },
-              {
-                "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "hub": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "hub"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceAccount": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "oci_meta": {
-                        "properties": {
-                          "images": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "images"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "oci_meta"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "oci_meta": {
-                          "properties": {
-                            "images": {}
-                          },
-                          "required": [
-                            "images"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "oci_meta"
-                      ],
-                      "type": "object"
-                    }
+                "additionalProperties": {},
+                "properties": {
+                  "namespaces": {
+                    "description": "Array of namespaces to watch. If left empty, Traefik watches all namespaces. kubernetesGateway provider requires ClusterRole and as a consequence `rbac.namespaced` is not supported.",
+                    "type": "array"
                   }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "azure": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "azure"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "azure": {
-                            "properties": {
-                              "enabled": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "azure"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "oci_meta": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "oci_meta"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "oci_meta": {}
-                      },
-                      "required": [
-                        "oci_meta"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "rbac": {}
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "rbac": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1hub+providers+providers.knative+providers.kubernetesCRD+1more"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "providers": {
-                          "properties": {
-                            "kubernetesIngress": {
-                              "properties": {
-                                "namespaces": {}
-                              },
-                              "required": [
-                                "namespaces"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "kubernetesIngress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "providers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "providers": {
-                        "properties": {
-                          "kubernetesIngress": {
-                            "properties": {
-                              "namespaces": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "namespaces"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "kubernetesIngress"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "providers"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1providers.knative"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1providers.knative=null"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1providers.knative"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1providers.knative=null"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1namespaceOverride"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "image": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "oci_meta": {
-                        "properties": {
-                          "enabled": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "oci_meta"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "oci_meta": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "oci_meta"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "azure": {
-                            "$ref": "#/definitions/constrains~1images.hub=null"
-                          }
-                        },
-                        "required": [
-                          "azure"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "azure": {
-                              "$ref": "#/definitions/constrains~1images.hub"
-                            }
-                          },
-                          "required": [
-                            "azure"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1hub.token:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1providers+providers=null"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "providers": {
-                          "properties": {
-                            "kubernetesCRD": {}
-                          },
-                          "required": [
-                            "kubernetesCRD"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "providers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "providers": {
-                        "$ref": "#/definitions/constrains~1kubernetesCRD=null"
-                      }
-                    },
-                    "required": [
-                      "providers"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "hub": {}
-              },
-              "required": [
-                "hub"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "azure": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "azure"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "azure": {}
-                          },
-                          "required": [
-                            "azure"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "providers": {}
-              },
-              "required": [
-                "providers"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "oci_meta": {
-                          "$ref": "#/definitions/constrains~1images.hub"
-                        }
-                      },
-                      "required": [
-                        "oci_meta"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "oci_meta": {
-                        "$ref": "#/definitions/constrains~1images.hub=null"
-                      }
-                    },
-                    "required": [
-                      "oci_meta"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1hub.token:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "azure": {
-                            "properties": {
-                              "images": {
-                                "enum": [
-                                  null
-                                ]
-                              }
-                            },
-                            "required": [
-                              "images"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "azure"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "azure": {
-                              "properties": {
-                                "images": {}
-                              },
-                              "required": [
-                                "images"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "azure"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {}
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1hub.token:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "oci_meta": {
-                          "$ref": "#/definitions/constrains~1images.proxy"
-                        }
-                      },
-                      "required": [
-                        "oci_meta"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "oci_meta": {
-                        "$ref": "#/definitions/constrains~1images.proxy=null"
-                      }
-                    },
-                    "required": [
-                      "oci_meta"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1providers+providers=null"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "providers": {
-                          "$ref": "#/definitions/constrains~1kubernetesIngress"
-                        }
-                      },
-                      "required": [
-                        "providers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "providers": {
-                        "$ref": "#/definitions/constrains~1kubernetesIngress=null"
-                      }
-                    },
-                    "required": [
-                      "providers"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1versionOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1hub.token:t"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "azure": {
-                            "$ref": "#/definitions/constrains~1images.proxy=null"
-                          }
-                        },
-                        "required": [
-                          "azure"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "azure": {
-                              "$ref": "#/definitions/constrains~1images.proxy"
-                            }
-                          },
-                          "required": [
-                            "azure"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "allOf": [
-                            {
-                              "anyOf": [
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1instanceLabelOverride:t@2"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "allOf": [
-                                    {
-                                      "$ref": "#/definitions/constrains~1instanceLabelOverride:t"
-                                    },
-                                    {
-                                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "not": {
-                                "$ref": "#/definitions/constrains~1instanceLabelOverride"
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1instanceLabelOverride"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "not": {
-                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels:t+commonLabels=null+15more"
-                      }
-                    }
-                  ]
                 }
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1namespaceOverride"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                      },
-                      {
-                        "not": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/definitions/constrains~1instanceLabelOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1instanceLabelOverride"
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels:t+commonLabels=null+15more"
-                  }
-                ]
               }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1providers=null"
+            }
           }
-        ]
-      },
-      "then": false
+        }
+      }
     },
     {
       "if": {
@@ -1225,6 +181,87 @@
           "versionOverride": {
             "description": "This field overrides the default version extracted from image.tag. Required when pinning by `image.digest`, since the version cannot be derived from a digest.",
             "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "providers": {
+          "additionalProperties": {},
+          "properties": {
+            "kubernetesCRD": {
+              "$ref": "#/definitions/constrains~1namespaces"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-5"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1group-7"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1commonLabels:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccountAnnotations": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null~1:helm-marker-free"
+                }
+              },
+              {
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/t"
+                }
+              }
+            ],
+            "description": "Additional serviceAccount annotations (e.g. for oidc authentication)"
           }
         }
       }
@@ -1294,42 +331,75 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-7"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1commonLabels:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              }
-            ]
+            "$ref": "#/definitions/constrains~1versionOverride:t"
           },
           {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1commonLabels:t@2"
+            "$ref": "#/definitions/constrains~1hub.token:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "global": {
+                "additionalProperties": {},
+                "properties": {
+                  "azure": {
+                    "additionalProperties": {},
+                    "description": "Required for Azure Marketplace integration.\nSee https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-container-technical-assets-kubernetes?tabs=linux,linux2#update-the-helm-chart",
+                    "properties": {
+                      "images": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "proxy": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
-            ]
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "oci_meta": {
+                "additionalProperties": {},
+                "description": "Required for OCI Marketplace integration.\nSee https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Marketplace/understanding-helm-charts.htm",
+                "properties": {
+                  "images": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "proxy": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1group-5"
           }
         ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "serviceAccountAnnotations": {
+          "commonLabels": {
             "anyOf": [
               {
                 "not": {
@@ -1343,7 +413,7 @@
                     "null"
                   ]
                 },
-                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
                 "type": [
                   "object",
                   "null"
@@ -1355,7 +425,26 @@
                 }
               }
             ],
-            "description": "Additional serviceAccount annotations (e.g. for oidc authentication)"
+            "description": "Add additional label to all resources"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1hub.namespaces+providers.knative+providers.kubernetesCRD+1more~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hub": {
+            "additionalProperties": {},
+            "description": "Traefik Hub configuration. See https://doc.traefik.io/traefik-hub/",
+            "properties": {
+              "namespaces": {
+                "type": "array"
+              }
+            }
           }
         }
       }
@@ -1412,13 +501,18 @@
     },
     {
       "if": {
-        "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null+providers.kubernetesGateway+1more"
+        "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "rbac": {
-            "type": "object"
+          "providers": {
+            "additionalProperties": {},
+            "properties": {
+              "knative": {
+                "$ref": "#/definitions/constrains~1namespaces"
+              }
+            }
           }
         }
       }
@@ -1682,43 +776,1100 @@
       }
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1group-5"
+      "additionalProperties": {},
+      "properties": {
+        "providers": {
+          "additionalProperties": {},
+          "properties": {
+            "kubernetesIngress": {
+              "$ref": "#/definitions/constrains~1namespaces"
+            }
           }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "commonLabels": {
-            "anyOf": [
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "hub": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "hub"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
               {
-                "not": {
-                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null~1:helm-marker-free"
-                }
+                "$ref": "#/definitions/constrains~1hub+providers+providers.knative+providers.kubernetesCRD+1more"
               },
               {
-                "additionalProperties": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-                "type": [
-                  "object",
-                  "null"
+                "$ref": "#/definitions/constrains~1providers.kubernetesIngress.namespaces+1more"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "oci_meta": {
+                        "properties": {
+                          "images": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "images"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "oci_meta"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "oci_meta": {
+                          "properties": {
+                            "images": {}
+                          },
+                          "required": [
+                            "images"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "oci_meta"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "azure": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "azure"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "azure": {
+                            "properties": {
+                              "enabled": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "azure"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1hub.token:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "oci_meta": {
+                          "$ref": "#/definitions/constrains~1images.proxy"
+                        }
+                      },
+                      "required": [
+                        "oci_meta"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "oci_meta": {
+                        "$ref": "#/definitions/constrains~1images.proxy=null"
+                      }
+                    },
+                    "required": [
+                      "oci_meta"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "oci_meta": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "oci_meta"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "oci_meta": {}
+                      },
+                      "required": [
+                        "oci_meta"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1providers+providers=null"
+              },
+              {
+                "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1providers.kubernetesCRD+providers.kubernetesIngress.namespaces~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels+commonLabels:t+commonLabels=null+fullnameOverride+15more"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                      },
+                      {
+                        "not": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1instanceLabelOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1instanceLabelOverride:t"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1namespaceOverride"
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                      },
+                      {
+                        "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t@2"
+                      }
+                    ]
+                  }
                 ]
               },
               {
                 "not": {
-                  "$ref": "#/definitions/t"
+                  "allOf": [
+                    {
+                      "not": {
+                        "$ref": "#/definitions/constrains~1commonLabels+commonLabels:t+commonLabels=null+fullnameOverride+15more"
+                      }
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1instanceLabelOverride"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "not": {
+                                "$ref": "#/definitions/constrains~1instanceLabelOverride"
+                              }
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1instanceLabelOverride:t@2"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "allOf": [
+                                    {
+                                      "$ref": "#/definitions/constrains~1instanceLabelOverride:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+3more"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
                 }
               }
-            ],
-            "description": "Add additional label to all resources"
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "image": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "hub": {
+                        "$ref": "#/definitions/constrains~1namespaces=null"
+                      }
+                    },
+                    "required": [
+                      "hub"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "hub": {
+                          "$ref": "#/definitions/constrains~1namespaces@3"
+                        }
+                      },
+                      "required": [
+                        "hub"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1hub.namespaces+providers.knative+providers.kubernetesCRD+1more~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "oci_meta": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "oci_meta"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "oci_meta": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "oci_meta"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "azure": {
+                            "$ref": "#/definitions/constrains~1images.hub=null"
+                          }
+                        },
+                        "required": [
+                          "azure"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "azure": {
+                              "$ref": "#/definitions/constrains~1images.hub"
+                            }
+                          },
+                          "required": [
+                            "azure"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1hub.token:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1hub.token:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "azure": {
+                            "$ref": "#/definitions/constrains~1images.proxy=null"
+                          }
+                        },
+                        "required": [
+                          "azure"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "azure": {
+                              "$ref": "#/definitions/constrains~1images.proxy"
+                            }
+                          },
+                          "required": [
+                            "azure"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {}
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1providers+providers=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1providers.kubernetesCRD+providers.kubernetesCRD=null"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "hub": {}
+              },
+              "required": [
+                "hub"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "azure": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "azure"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "azure": {}
+                          },
+                          "required": [
+                            "azure"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.knative"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.knative=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1providers.knative"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1namespaceOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.kubernetesGateway"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1providers.knative=null"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "providers": {}
+              },
+              "required": [
+                "providers"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "oci_meta": {
+                          "$ref": "#/definitions/constrains~1images.hub"
+                        }
+                      },
+                      "required": [
+                        "oci_meta"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "oci_meta": {
+                        "$ref": "#/definitions/constrains~1images.hub=null"
+                      }
+                    },
+                    "required": [
+                      "oci_meta"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1hub.token:t@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "azure": {
+                            "properties": {
+                              "images": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "images"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "azure"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "azure": {
+                              "properties": {
+                                "images": {}
+                              },
+                              "required": [
+                                "images"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "azure"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1providers.kubernetesIngress+providers.kubernetesIngress=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1providers.kubernetesIngress.namespaces+1more"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1providers+providers=null"
+              },
+              {
+                "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "providers": {
+                          "$ref": "#/definitions/constrains~1knative.namespaces@2"
+                        }
+                      },
+                      "required": [
+                        "providers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "providers": {
+                        "$ref": "#/definitions/constrains~1knative.namespaces=null"
+                      }
+                    },
+                    "required": [
+                      "providers"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {}
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1versionOverride:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1providers.kubernetesCRD+providers.kubernetesCRD=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "providers": {
+                        "properties": {
+                          "kubernetesCRD": {
+                            "$ref": "#/definitions/constrains~1namespaces=null"
+                          }
+                        },
+                        "required": [
+                          "kubernetesCRD"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "providers"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "providers": {
+                          "properties": {
+                            "kubernetesCRD": {
+                              "$ref": "#/definitions/constrains~1namespaces@3"
+                            }
+                          },
+                          "required": [
+                            "kubernetesCRD"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "providers"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1providers+providers=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1providers.kubernetesIngress+providers.kubernetesIngress=null"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1providers=null"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "not": {
+          "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "providers": {
+            "additionalProperties": {},
+            "properties": {
+              "kubernetesGateway": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1hub+providers+providers.knative+providers.kubernetesCRD+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "providers": {
+            "additionalProperties": {},
+            "properties": {
+              "kubernetesIngress": {
+                "additionalProperties": {},
+                "properties": {
+                  "namespaces": {
+                    "description": "Array of namespaces to watch. If left empty, Traefik watches all namespaces. . When using `rbac.namespaced`, it will watch helm release namespace and namespaces listed in this array.",
+                    "type": "object"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1733,6 +1884,31 @@
           "namespaceOverride": {
             "description": "This field overrides the default Release Namespace for Helm.\nIt will not affect optional CRDs such as `ServiceMonitor` and `PrometheusRules`",
             "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1providers.knative+providers.knative=null~1then~1providers.kubernetesCRD+providers.kubernetesIngress.namespaces~1else~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+          },
+          {
+            "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null+providers.kubernetesGateway+1more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "providers": {
+            "additionalProperties": {},
+            "properties": {
+              "knative": {
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -1756,65 +1932,6 @@
             "type": "string"
           }
         }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1versionOverride:t"
-          },
-          {
-            "$ref": "#/definitions/constrains~1hub.token:t"
-          }
-        ]
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "azure": {
-                    "additionalProperties": {},
-                    "description": "Required for Azure Marketplace integration.\nSee https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-container-technical-assets-kubernetes?tabs=linux,linux2#update-the-helm-chart",
-                    "properties": {
-                      "images": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "proxy": {
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "oci_meta": {
-                "additionalProperties": {},
-                "description": "Required for OCI Marketplace integration.\nSee https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Marketplace/understanding-helm-charts.htm",
-                "properties": {
-                  "images": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "proxy": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -1851,260 +1968,8 @@
         "type": "object"
       }
     },
-    "constrains/commonLabels+commonLabels:helm-marker-free+commonLabels:t+commonLabels=null+15more": {
-      "allOf": [
-        {
-          "not": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+fullnameOverride+9more"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+9more"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-4"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1group-3"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+12more"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        },
-                        {
-                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                  },
-                  {
-                    "not": {
-                      "allOf": [
-                        {
-                          "$ref": "#/definitions/constrains~1group-2"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+fullnameOverride+9more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-1"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-1"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1group-4"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1group-3"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+12more"
-                }
-              ]
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+9more"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
     "constrains/commonLabels+commonLabels:helm-marker-free+commonLabels=null": {
       "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null@2"
-            },
-            {
-              "not": {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@3"
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1commonLabels@2"
-                  }
-                ]
-              }
-            }
-          ]
-        },
         {
           "allOf": [
             {
@@ -2154,6 +2019,25 @@
               }
             }
           ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null@2"
+            },
+            {
+              "not": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels@3"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels@2"
+                  }
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -2162,16 +2046,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1group-0"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
               "$ref": "#/definitions/constrains~1instanceLabelOverride:t+namespaceOverride+namespaceOverride:t"
             },
             {
@@ -2190,76 +2064,14 @@
               "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             }
           ]
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-marker-free+commonLabels=null+9more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1instanceLabelOverride:t+namespaceOverride+namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1instanceLabelOverride+instanceLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null"
-            }
-          ]
         },
         {
           "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-0"
-            }
-          ]
-        }
-      ]
-    },
-    "constrains/commonLabels+commonLabels:helm-marker-free+commonLabels=null+fullnameOverride+9more": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1group-4"
-            },
             {
               "$ref": "#/definitions/constrains~1group-3"
             },
             {
-              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1group-6"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1instanceLabelOverride:t+namespaceOverride+namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1instanceLabelOverride+instanceLabelOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride@2"
-            },
-            {
-              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null"
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
             }
           ]
         }
@@ -2286,6 +2098,311 @@
         },
         {
           "$ref": "#/definitions/constrains~1commonLabels=null"
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels:t+commonLabels=null+fullnameOverride+15more": {
+      "allOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+fullnameOverride+instanceLabelOverride+9more"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+instanceLabelOverride+instanceLabelOverride:t+8more"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+12more"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-2"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-4"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1group-1"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1commonLabels:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                  },
+                  {
+                    "not": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/constrains~1group-2"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+fullnameOverride+instanceLabelOverride+9more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels=null+instanceLabelOverride+instanceLabelOverride:t+8more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t@2"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null+12more"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-4"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1group-1"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1serviceAccount.name:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1commonLabels:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-0"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1group-0"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t+nameOverride=false+nameOverride=null+1more"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null+fullnameOverride+instanceLabelOverride+9more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-4"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-1"
+            },
+            {
+              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1group-6"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1instanceLabelOverride:t+namespaceOverride+namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride@2"
+            },
+            {
+              "$ref": "#/definitions/constrains~1instanceLabelOverride+instanceLabelOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/commonLabels+commonLabels=null+instanceLabelOverride+instanceLabelOverride:t+8more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1group-3"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1instanceLabelOverride:t+namespaceOverride+namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1instanceLabelOverride+instanceLabelOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1namespaceOverride+namespaceOverride:t"
+            },
+            {
+              "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null"
+            }
+          ]
         }
       ]
     },
@@ -2362,10 +2479,30 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1nameOverride@6"
+            },
+            {
+              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.name:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
               "$ref": "#/definitions/constrains~1nameOverride"
             },
             {
               "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.name:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride:t"
+                    }
+                  ]
+                },
                 {
                   "allOf": [
                     {
@@ -2375,28 +2512,8 @@
                       "$ref": "#/definitions/constrains~1nameOverride:t@2"
                     }
                   ]
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1nameOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.name:t"
-                    }
-                  ]
                 }
               ]
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1nameOverride@6"
-            },
-            {
-              "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+serviceAccount.name:t"
             }
           ]
         }
@@ -2407,17 +2524,10 @@
         {
           "allOf": [
             {
+              "$ref": "#/definitions/constrains~1namespaceOverride"
+            },
+            {
               "anyOf": [
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
-                    },
-                    {
-                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
-                    }
-                  ]
-                },
                 {
                   "allOf": [
                     {
@@ -2427,11 +2537,18 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
                     }
                   ]
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1namespaceOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1fullnameOverride+fullnameOverride:t+nameOverride+nameOverride:t+1more"
+                    }
+                  ]
                 }
               ]
-            },
-            {
-              "$ref": "#/definitions/constrains~1namespaceOverride"
             }
           ]
         },
@@ -2460,9 +2577,6 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
-                },
-                {
                   "allOf": [
                     {
                       "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
@@ -2471,6 +2585,9 @@
                       "$ref": "#/definitions/constrains~1serviceAccount.name:t@2"
                     }
                   ]
+                },
+                {
+                  "$ref": "#/definitions/constrains~1fullnameOverride:t"
                 }
               ]
             }
@@ -2548,26 +2665,20 @@
           "$ref": "#/definitions/constrains~1serviceAccountAnnotations@2"
         },
         {
-          "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null@2"
+          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
         },
         {
-          "$ref": "#/definitions/constrains~1group-6"
+          "$ref": "#/definitions/constrains~1commonLabels:t"
         }
       ]
     },
     "constrains/group-1": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1group-4"
-        },
-        {
           "$ref": "#/definitions/constrains~1serviceAccountAnnotations@2"
         },
         {
-          "$ref": "#/definitions/constrains~1serviceAccount.name:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1commonLabels:t"
+          "$ref": "#/definitions/constrains~1fullnameOverride@2"
         }
       ]
     },
@@ -2584,10 +2695,16 @@
     "constrains/group-3": {
       "allOf": [
         {
+          "$ref": "#/definitions/constrains~1group-4"
+        },
+        {
           "$ref": "#/definitions/constrains~1serviceAccountAnnotations@2"
         },
         {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
+          "$ref": "#/definitions/constrains~1commonLabels+commonLabels:helm-marker-free+commonLabels=null@2"
+        },
+        {
+          "$ref": "#/definitions/constrains~1group-6"
         }
       ]
     },
@@ -2663,50 +2780,6 @@
         {
           "allOf": [
             {
-              "$ref": "#/definitions/constrains~1providers.kubernetesCRD.namespaces"
-            },
-            {
-              "not": {
-                "properties": {
-                  "providers": {
-                    "properties": {
-                      "knative": {
-                        "$ref": "#/definitions/constrains~1namespaces"
-                      }
-                    },
-                    "required": [
-                      "knative"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "providers"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "not": {
-                "properties": {
-                  "hub": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "hub"
-                ],
-                "type": "object"
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/definitions/constrains~1providers.kubernetesCRD.namespaces"
-            },
-            {
               "not": {
                 "properties": {
                   "providers": {
@@ -2723,6 +2796,32 @@
                 },
                 "required": [
                   "providers"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1providers.kubernetesCRD.namespaces"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/definitions/constrains~1providers.kubernetesCRD.namespaces"
+            },
+            {
+              "$ref": "#/definitions/constrains~1providers.knative.namespaces"
+            },
+            {
+              "not": {
+                "properties": {
+                  "hub": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hub"
                 ],
                 "type": "object"
               }
@@ -2762,6 +2861,26 @@
             ],
             "type": "object"
           }
+        }
+      ]
+    },
+    "constrains/hub.namespaces+providers.knative+providers.kubernetesCRD+1more": {
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "hub": {
+                "$ref": "#/definitions/constrains~1namespaces@2"
+              }
+            },
+            "required": [
+              "hub"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces"
         }
       ]
     },
@@ -2917,9 +3036,6 @@
     "constrains/instanceLabelOverride+instanceLabelOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1instanceLabelOverride:t"
-        },
-        {
           "properties": {
             "instanceLabelOverride": {
               "$ref": "#/definitions/constrains~1fullnameOverride~1string;pattern-x30-x39-x41"
@@ -2929,6 +3045,9 @@
             "instanceLabelOverride"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1instanceLabelOverride:t"
         }
       ]
     },
@@ -2989,30 +3108,75 @@
         }
       ]
     },
-    "constrains/kubernetesCRD+kubernetesIngress.namespaces": {
+    "constrains/knative.namespaces": {
+      "properties": {
+        "knative": {
+          "$ref": "#/definitions/constrains~1namespaces@2"
+        }
+      },
+      "required": [
+        "knative"
+      ],
+      "type": "object"
+    },
+    "constrains/knative.namespaces+kubernetesCRD+kubernetesIngress": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/definitions/constrains~1kubernetesIngress.namespaces"
+            "$ref": "#/definitions/constrains~1knative.namespaces"
           }
         },
         {
-          "not": {
-            "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces"
-          }
+          "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces+kubernetesIngress"
         }
       ]
+    },
+    "constrains/knative.namespaces=null": {
+      "properties": {
+        "knative": {
+          "$ref": "#/definitions/constrains~1namespaces=null"
+        }
+      },
+      "required": [
+        "knative"
+      ],
+      "type": "object"
+    },
+    "constrains/knative.namespaces@2": {
+      "properties": {
+        "knative": {
+          "$ref": "#/definitions/constrains~1namespaces@3"
+        }
+      },
+      "required": [
+        "knative"
+      ],
+      "type": "object"
     },
     "constrains/kubernetesCRD.namespaces": {
       "properties": {
         "kubernetesCRD": {
-          "$ref": "#/definitions/constrains~1namespaces"
+          "$ref": "#/definitions/constrains~1namespaces@2"
         }
       },
       "required": [
         "kubernetesCRD"
       ],
       "type": "object"
+    },
+    "constrains/kubernetesCRD.namespaces+kubernetesIngress": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces"
+          }
+        },
+        {
+          "not": {
+            "$ref": "#/definitions/constrains~1kubernetesIngress.namespaces"
+          }
+        }
+      ]
     },
     "constrains/kubernetesCRD=null": {
       "properties": {
@@ -3073,7 +3237,7 @@
     "constrains/kubernetesIngress.namespaces": {
       "properties": {
         "kubernetesIngress": {
-          "$ref": "#/definitions/constrains~1namespaces"
+          "$ref": "#/definitions/constrains~1namespaces@2"
         }
       },
       "required": [
@@ -3102,9 +3266,6 @@
     "constrains/nameOverride+nameOverride:t": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        },
-        {
           "properties": {
             "nameOverride": {
               "$ref": "#/definitions/constrains~1fullnameOverride~1string;pattern-x30-x39-x41"
@@ -3114,6 +3275,9 @@
             "nameOverride"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/definitions/constrains~1nameOverride:t"
         }
       ]
     },
@@ -3141,6 +3305,43 @@
                 },
                 {
                   "allOf": [
+                    {
+                      "not": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride@2"
+                          },
+                          {
+                            "properties": {
+                              "nameOverride": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "nameOverride"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride=null"
+                          },
+                          {
+                            "properties": {
+                              "nameOverride": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "nameOverride"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1nameOverride@5"
+                          }
+                        ]
+                      }
+                    },
                     {
                       "$ref": "#/definitions/constrains~1nameOverride"
                     },
@@ -3216,43 +3417,6 @@
                           ]
                         }
                       ]
-                    },
-                    {
-                      "not": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@2"
-                          },
-                          {
-                            "properties": {
-                              "nameOverride": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "nameOverride"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride=null"
-                          },
-                          {
-                            "properties": {
-                              "nameOverride": {
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "nameOverride"
-                            ],
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1nameOverride@5"
-                          }
-                        ]
-                      }
                     }
                   ]
                 }
@@ -3414,10 +3578,41 @@
       "type": "object"
     },
     "constrains/namespaces": {
+      "additionalProperties": {},
+      "properties": {
+        "namespaces": {
+          "description": "Array of namespaces to watch. If left empty, Traefik watches all namespaces. . When using `rbac.namespaced`, it will watch helm release namespace and namespaces listed in this array.",
+          "type": "array"
+        }
+      }
+    },
+    "constrains/namespaces=null": {
+      "properties": {
+        "namespaces": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "namespaces"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaces@2": {
       "properties": {
         "namespaces": {
           "type": "object"
         }
+      },
+      "required": [
+        "namespaces"
+      ],
+      "type": "object"
+    },
+    "constrains/namespaces@3": {
+      "properties": {
+        "namespaces": {}
       },
       "required": [
         "namespaces"
@@ -3485,16 +3680,39 @@
     "constrains/providers.knative+providers.knative=null+providers.kubernetesGateway+1more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null@2"
+          "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null@2"
         },
         {
-          "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null@2"
+          "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null@2"
         }
       ]
     },
     "constrains/providers.knative+providers.knative=null@2": {
       "not": {
         "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
+      }
+    },
+    "constrains/providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/constrains~1providers.kubernetesCRD+providers.kubernetesIngress.namespaces"
+        },
+        {
+          "$ref": "#/definitions/constrains~1providers.knative.namespaces"
+        }
+      ]
+    },
+    "constrains/providers.knative.namespaces": {
+      "not": {
+        "properties": {
+          "providers": {
+            "$ref": "#/definitions/constrains~1knative.namespaces"
+          }
+        },
+        "required": [
+          "providers"
+        ],
+        "type": "object"
       }
     },
     "constrains/providers.knative=null": {
@@ -3517,6 +3735,40 @@
         "providers"
       ],
       "type": "object"
+    },
+    "constrains/providers.kubernetesCRD+providers.kubernetesCRD=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "providers": {
+                "properties": {
+                  "kubernetesCRD": {}
+                },
+                "required": [
+                  "kubernetesCRD"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "providers": {
+              "$ref": "#/definitions/constrains~1kubernetesCRD=null"
+            }
+          },
+          "required": [
+            "providers"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/providers.kubernetesCRD+providers.kubernetesIngress.namespaces": {
       "allOf": [
@@ -3592,6 +3844,78 @@
         "providers"
       ],
       "type": "object"
+    },
+    "constrains/providers.kubernetesIngress+providers.kubernetesIngress=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "providers": {
+                "$ref": "#/definitions/constrains~1kubernetesIngress"
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "providers": {
+              "$ref": "#/definitions/constrains~1kubernetesIngress=null"
+            }
+          },
+          "required": [
+            "providers"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/providers.kubernetesIngress.namespaces+1more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "providers": {
+                "properties": {
+                  "kubernetesIngress": {
+                    "$ref": "#/definitions/constrains~1namespaces@3"
+                  }
+                },
+                "required": [
+                  "kubernetesIngress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "providers": {
+              "properties": {
+                "kubernetesIngress": {
+                  "$ref": "#/definitions/constrains~1namespaces=null"
+                }
+              },
+              "required": [
+                "kubernetesIngress"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "providers"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "constrains/providers=null": {
       "properties": {
@@ -3843,12 +4167,95 @@
     },
     "values/providers.kubernetesCRD": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1namespaces@3"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1namespaces=null"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "namespaces": {
           "$ref": "#/definitions/values~1providers.knative.namespaces"
         }
       },
       "type": "object"
+    },
+    "when/providers.knative+providers.knative=null/then/hub.namespaces+providers.knative+providers.kubernetesCRD+1more/else/providers.kubernetesGateway+providers.kubernetesGateway=null": {
+      "else": {
+        "else": {
+          "else": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1hub.namespaces+providers.knative+providers.kubernetesCRD+1more"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1hub.namespaces+providers.knative+providers.kubernetesCRD+1more"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1hub.namespaces+providers.knative+providers.kubernetesCRD+1more"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1hub.namespaces+providers.knative+providers.kubernetesCRD+1more"
+      }
+    },
+    "when/providers.knative+providers.knative=null/then/providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces/else/providers.kubernetesGateway+providers.kubernetesGateway=null": {
+      "else": {
+        "else": {
+          "else": {
+            "else": true,
+            "if": {
+              "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+            },
+            "then": {
+              "$ref": "#/definitions/constrains~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces"
+            }
+          },
+          "if": {
+            "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
+          },
+          "then": {
+            "$ref": "#/definitions/constrains~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces"
+          }
+        },
+        "if": {
+          "$ref": "#/definitions/constrains~1providers.kubernetesGateway+providers.kubernetesGateway=null"
+        },
+        "then": {
+          "$ref": "#/definitions/constrains~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces"
+        }
+      },
+      "if": {
+        "$ref": "#/definitions/constrains~1providers.knative+providers.knative=null"
+      },
+      "then": {
+        "$ref": "#/definitions/constrains~1providers.knative+providers.kubernetesCRD+providers.kubernetesIngress.namespaces"
+      }
     },
     "when/providers.knative+providers.knative=null/then/providers.kubernetesCRD+providers.kubernetesIngress.namespaces/else/providers.kubernetesGateway+providers.kubernetesGateway=null": {
       "else": {
@@ -4017,25 +4424,13 @@
           "if": {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "not": {
-                      "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
-                    }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
-                  }
-                ]
-              },
-              {
                 "$ref": "#/definitions/constrains~1kubernetesCRD=null"
               },
               {
-                "$ref": "#/definitions/constrains~1kubernetesIngress=null"
-              },
-              {
                 "allOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1knative+knative=null"
+                  },
                   {
                     "else": {
                       "else": {
@@ -4045,34 +4440,34 @@
                             "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
                           },
                           "then": {
-                            "$ref": "#/definitions/constrains~1kubernetesCRD+kubernetesIngress.namespaces"
+                            "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces+kubernetesIngress"
                           }
                         },
                         "if": {
                           "$ref": "#/definitions/constrains~1knative+knative=null"
                         },
                         "then": {
-                          "$ref": "#/definitions/constrains~1kubernetesCRD+kubernetesIngress.namespaces"
+                          "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces+kubernetesIngress"
                         }
                       },
                       "if": {
                         "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
                       },
                       "then": {
-                        "$ref": "#/definitions/constrains~1kubernetesCRD+kubernetesIngress.namespaces"
+                        "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces+kubernetesIngress"
                       }
                     },
                     "if": {
                       "$ref": "#/definitions/constrains~1knative+knative=null"
                     },
                     "then": {
-                      "$ref": "#/definitions/constrains~1kubernetesCRD+kubernetesIngress.namespaces"
+                      "$ref": "#/definitions/constrains~1kubernetesCRD.namespaces+kubernetesIngress"
                     }
-                  },
-                  {
-                    "$ref": "#/definitions/constrains~1knative+knative=null"
                   }
                 ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1kubernetesIngress=null"
               },
               {
                 "not": {
@@ -4089,6 +4484,109 @@
                 "not": {
                   "$ref": "#/definitions/constrains~1kubernetesIngress"
                 }
+              },
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "kubernetesGateway": {
+                              "$ref": "#/definitions/constrains~1namespaces@3"
+                            }
+                          },
+                          "required": [
+                            "kubernetesGateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "kubernetesGateway": {
+                            "$ref": "#/definitions/constrains~1namespaces=null"
+                          }
+                        },
+                        "required": [
+                          "kubernetesGateway"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
+                    }
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/constrains~1knative.namespaces=null"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/definitions/constrains~1knative.namespaces@2"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "else": {
+                      "else": {
+                        "else": {
+                          "else": true,
+                          "if": {
+                            "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
+                          },
+                          "then": {
+                            "$ref": "#/definitions/constrains~1knative.namespaces+kubernetesCRD+kubernetesIngress"
+                          }
+                        },
+                        "if": {
+                          "$ref": "#/definitions/constrains~1knative+knative=null"
+                        },
+                        "then": {
+                          "$ref": "#/definitions/constrains~1knative.namespaces+kubernetesCRD+kubernetesIngress"
+                        }
+                      },
+                      "if": {
+                        "$ref": "#/definitions/constrains~1kubernetesGateway+kubernetesGateway=null"
+                      },
+                      "then": {
+                        "$ref": "#/definitions/constrains~1knative.namespaces+kubernetesCRD+kubernetesIngress"
+                      }
+                    },
+                    "if": {
+                      "$ref": "#/definitions/constrains~1knative+knative=null"
+                    },
+                    "then": {
+                      "$ref": "#/definitions/constrains~1knative.namespaces+kubernetesCRD+kubernetesIngress"
+                    }
+                  }
+                ]
               }
             ]
           },
