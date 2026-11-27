@@ -292,6 +292,57 @@ fn symbolic_semver_uses_the_canonical_string_consumption() {
     }
 }
 
+#[test]
+fn concat_requires_every_operand_to_be_a_sequence() {
+    use crate::value::ConsumptionDomain;
+    use helm_schema_core::FailValueRequirement;
+    use std::collections::BTreeSet;
+
+    let array = ConsumptionDomain::Known {
+        preimage: FailValueRequirement::SchemaTypeEvenNull("array".to_owned()),
+        requires_presence: true,
+    };
+    for (source, unconditional) in [
+        (r"{{ $_ := concat .Values.a .Values.b }}", true),
+        (
+            r"{{ if .Values.enabled }}{{ $_ := concat .Values.a .Values.b }}{{ end }}",
+            false,
+        ),
+    ] {
+        let execution = execute(source);
+        let demanded = execution
+            .observed_facts()
+            .consumptions
+            .iter()
+            .filter(|operand| operand.domain == array)
+            .map(|operand| (operand.path.clone(), operand.is_raw_unconditional()))
+            .collect::<BTreeSet<_>>();
+        sim_assert_eq!(
+            have: demanded,
+            want: BTreeSet::from([
+                (ValuesPath::parse("a"), unconditional),
+                (ValuesPath::parse("b"), unconditional),
+            ]),
+            "{source}"
+        );
+    }
+
+    for source in [
+        r"{{ concat .Values.a false }}",
+        r"{{ concat false .Values.b }}",
+        r"{{ concat nil }}",
+    ] {
+        sim_assert_eq!(have: execute(source).abort_predicate(), want: Predicate::True, "{source}");
+    }
+    let execution = execute(
+        r#"{{ $list := concat (concat) (list "first") (splitList "," "second,third") (keys (dict "last" 1)) }}{{ len $list }}|{{ index $list 0 }}|{{ index $list 2 }}"#,
+    );
+    sim_assert_eq!(
+        have: execution.text().map(|(_, text)| text.exact_text()).collect::<Vec<_>>(),
+        want: vec![Some("4|first|third".to_owned())]
+    );
+}
+
 /// Concrete calls use the repaired numeric owner before selecting a control arm.
 #[test]
 fn pinned_semver_comparisons_control_concrete_branches() {

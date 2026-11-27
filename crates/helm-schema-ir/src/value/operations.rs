@@ -177,9 +177,10 @@ fn transfer_known(input: TransferInput<'_>, state: &mut State) -> Result<Value, 
         "first" | "last" => transfer_sequence_edge(input, state),
         "without" | "mustWithout" => transfer_without(input, state),
         "append" | "mustAppend" | "push" | "prepend" | "mustPrepend" | "reverse"
-        | "mustReverse" | "rest" | "mustRest" | "initial" | "mustInitial" | "concat" => {
+        | "mustReverse" | "rest" | "mustRest" | "initial" | "mustInitial" => {
             transfer_sequence_edit(input, state)
         }
+        "concat" => transfer_concat(input, state),
         "split" | "splitn" => Ok(split_map(input.function, input.arguments, state)),
         "splitList" => Ok(transfer_split_list(input, state)),
         "regexSplit" => Ok(transfer_regex_split(input, state)),
@@ -718,21 +719,59 @@ fn transfer_sequence_edge(
     .unwrap_or_else(Value::nil))
 }
 
+fn transfer_concat(input: TransferInput<'_>, state: &mut State) -> Result<Value, AbortReason> {
+    let TransferInput {
+        function: _,
+        arguments,
+        influences,
+        first: _,
+        last: _,
+    } = input;
+
+    for operand in arguments {
+        state.record_requirement(
+            operand,
+            &Predicate::True,
+            super::query::RequirementKind::StrictArgument {
+                kind: super::kinds::GoType::Slice,
+                allows_nil: false,
+            },
+        );
+    }
+
+    let mut result = Some(Vec::new());
+    for operand in arguments {
+        if let Some(items) = result.as_mut()
+            && let Some(next) = sequence_items(operand, state)
+        {
+            items.extend(next);
+            if items.len() <= 128 {
+                continue;
+            }
+        } else if known_non_sequence(operand, state) {
+            return Err(AbortReason::Type);
+        }
+        result = None;
+    }
+    Ok(match result {
+        Some(items) if items.is_empty() => Value::nil_sequence(),
+        Some(items) => sequence_with_unknown_capacity(items),
+        None => Value::influenced(influences),
+    })
+}
+
 fn transfer_sequence_edit(
     input: TransferInput<'_>,
     state: &mut State,
 ) -> Result<Value, AbortReason> {
     let TransferInput {
         function,
-        arguments,
+        arguments: _,
         influences,
         first,
         last,
     } = input;
 
-    if function == "concat" && arguments.is_empty() {
-        return Ok(Value::nil_sequence());
-    }
     let Some(mut items) = sequence_items(&first, state) else {
         if known_non_sequence(&first, state) {
             return Err(AbortReason::Type);
@@ -757,37 +796,33 @@ fn transfer_sequence_edit(
             }
             items.truncate(items.len().saturating_sub(1));
         }
-        "concat" => {
-            for value in arguments.iter().skip(1) {
-                let Some(next) = sequence_items(value, state) else {
-                    if known_non_sequence(value, state) {
-                        return Err(AbortReason::Type);
-                    }
-                    return Ok(Value::influenced(influences.clone()));
-                };
-                items.extend(next);
-            }
-        }
         _ => return Ok(Value::influenced(influences.clone())),
     }
     if items.len() > 128 {
         return Ok(Value::influenced(influences.clone()));
     }
-    if function == "concat" && items.is_empty() {
-        return Ok(Value::nil_sequence());
-    }
+    Ok(
+        if matches!(
+            function,
+            "append" | "mustAppend" | "push" | "prepend" | "mustPrepend"
+        ) {
+            sequence_with_unknown_capacity(items)
+        } else {
+            Value::sequence(items)
+        },
+    )
+}
+
+fn sequence_with_unknown_capacity(items: Vec<Value>) -> Value {
     let mut result = Value::sequence(items);
-    if matches!(
-        function,
-        "append" | "mustAppend" | "push" | "prepend" | "mustPrepend" | "concat"
-    ) && let ValueNode::Leaf(Leaf {
+    if let ValueNode::Leaf(Leaf {
         datum: Datum::Sequence(sequence),
         origin: _,
     }) = Rc::make_mut(&mut result.node)
     {
         sequence.capacity = None;
     }
-    Ok(result)
+    result
 }
 
 fn transfer_without(input: TransferInput<'_>, state: &State) -> Result<Value, AbortReason> {

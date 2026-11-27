@@ -350,7 +350,7 @@ pub(crate) fn function_semantics(function: &str) -> FunctionSemantics {
         "b64dec" | "clean" | "lower" | "trim" | "upper" => TRANSFORM.fixed(&[Text], Text),
         "b64enc" => encoded(OutputAlphabet::Base64),
         "chunk" | "mustChunk" => UNKNOWN.selected(&[Int, Unknown], None),
-        "concat" => STRICT.selected(&[], Some(Unknown)),
+        "concat" => STRICT.variadic(&[], Unknown, Slice),
         "contains" | "hasPrefix" | "hasSuffix" | "mustRegexMatch" | "regexMatch" => STRING_MATCH,
         "default" => UNKNOWN.selected(&[Unknown], Some(Unknown)),
         "empty" | "not" => UNKNOWN.fixed(&[Unknown], Bool),
