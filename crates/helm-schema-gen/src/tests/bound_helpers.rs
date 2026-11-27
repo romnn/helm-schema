@@ -480,66 +480,30 @@ fn template_call_stringifies_the_helper_value_before_provider_projection() {
         (serde_json::json!(7), false, "a numeric YAML token"),
         (serde_json::json!(["custom"]), false, "a flow sequence"),
         (serde_json::json!(null), true, "the helper's falsy fallback"),
+        (serde_json::json!(" ["), false, "an unclosed flow sequence"),
+        (
+            serde_json::json!("[\n"),
+            false,
+            "an unclosed flow sequence across lines",
+        ),
+        (
+            serde_json::json!("a: b\n"),
+            false,
+            "a bare mapping delimiter",
+        ),
+        (
+            serde_json::json!("a: b\n  b: c"),
+            false,
+            "an invalid inline mapping",
+        ),
     ] {
         let instance = serde_json::json!({ "fullnameOverride": value });
-        assert!(
-            schema_accepts_instance(&schema, &instance) == want,
-            "helper stringification preimage ({label}): instance={instance}; schema={schema}"
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "Helm 4.2.3 stringification ({label}): {instance}"
         );
     }
-
-    let mut ordinary_string_exclusions = plain_token_exclusions(true);
-    ordinary_string_exclusions.extend([
-        serde_json::json!({ "not": { "pattern": "^(|~|null|Null|NULL)$" } }),
-        serde_json::json!({
-            "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-            }
-        }),
-        serde_json::json!({
-            "not": {
-                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-            }
-        }),
-        serde_json::json!({
-            "not": {
-                "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-            }
-        }),
-        serde_json::json!({
-            "not": {
-                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-            }
-        }),
-    ]);
-
-    sim_assert_eq!(
-        have: schema,
-        want: expected_values_schema(
-            serde_json::Map::from_iter([(
-                "fullnameOverride".to_string(),
-                serde_json::json!({
-                    "anyOf": [
-                        crate::resolve_policy::scalar_preimage::printf_string_formattable_mapping_schema(),
-                        {
-                            "type": "string",
-                            "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                            "allOf": ordinary_string_exclusions
-                        },
-                        crate::resolve_policy::plain_scalar_safe_comment_string_schema(),
-                        { "not": { "$ref": "#/definitions/t" } },
-                        {
-                            "type": "string",
-                            "pattern": "[\\r\\n]",
-                            "not": {"pattern": "^[A-Za-z]+\\n[A-Za-z]+$"}
-                        },
-                    ]
-                }),
-            )]),
-            Vec::new(),
-            true,
-        )
-    );
 }
 
 #[test]

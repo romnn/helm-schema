@@ -1,8 +1,8 @@
 use helm_schema_ast::DefineIndex;
 use indoc::indoc;
 
+use crate::CapabilityGuard;
 use crate::analysis_db::IrAnalysisDb;
-use crate::{CapabilityGuard, HelperBranchBody};
 use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
@@ -318,38 +318,21 @@ fn resolves_helper_returned_api_version() {
 
 #[test]
 fn preserves_inline_capability_branches() {
-    let resource = detect(
-        indoc! {r#"
-            {{- if .Capabilities.APIVersions.Has "policy/v1" }}
-            apiVersion: policy/v1
-            {{- else }}
-            apiVersion: policy/v1beta1
-            {{- end }}
-            kind: PodDisruptionBudget
-            metadata:
-              name: example
-        "#},
-        &DefineIndex::new(),
-    )
-    .expect("resource");
-
-    sim_assert_eq!(have: resource.kind, want: "PodDisruptionBudget");
-    sim_assert_eq!(have: resource.api_version, want: "policy/v1");
-    sim_assert_eq!(
-        have: resource.api_version_candidates,
-        want: vec!["policy/v1beta1".to_string()]
-    );
-    sim_assert_eq!(have: resource.api_version_branches.len(), want: 2);
-    sim_assert_eq!(
-        have: resource.api_version_branches[0].guard,
-        want: Some(CapabilityGuard::Has {
-            api: "policy/v1".to_string()
-        })
-    );
-    sim_assert_eq!(
-        have: resource.api_version_branches[1].body,
-        want: HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
-    );
+    let source = indoc! {r#"
+        {{- if .Capabilities.APIVersions.Has "example.com/v1" }}
+        apiVersion: policy/v1
+        {{- else }}
+        apiVersion: policy/v1beta1
+        {{- end }}
+        kind: PodDisruptionBudget
+        metadata:
+          name: example
+    "#};
+    let api = "example.com/v1".to_owned();
+    sim_assert_eq!(have: guarded_versions(source, "PodDisruptionBudget"), want: [
+        ("policy/v1".to_owned(), vec![CapabilityGuard::Has { api: api.clone() }]),
+        ("policy/v1beta1".to_owned(), vec![CapabilityGuard::NotHas { api }]),
+    ]);
 }
 
 #[test]
@@ -399,61 +382,62 @@ fn preserves_zalando_ingress_api_version_branches_with_later_ranges() {
             "../../../../../testdata/charts/zalando-postgres-operator-ui/templates/_helpers.tpl"
         ),
     );
-    let resource = detect(source, &defines).expect("resource");
-
-    sim_assert_eq!(have: resource.kind, want: "Ingress");
-    // Every arm survives; ADR 0009 ranks none of them as a primary over its candidates.
-    sim_assert_eq!(
-        have: std::iter::once(resource.api_version.clone())
-            .chain(resource.api_version_candidates.iter().cloned())
-            .collect::<std::collections::BTreeSet<_>>(),
-        want: std::collections::BTreeSet::from([
-            "networking.k8s.io/v1".to_string(),
-            "networking.k8s.io/v1beta1".to_string(),
-            "extensions/v1beta1".to_string(),
-        ])
-    );
-    sim_assert_eq!(have: resource.api_version_candidates.len(), want: 2);
+    let versions = placed_resources_with_defines(source, &defines)
+        .into_iter()
+        .map(|placed| {
+            sim_assert_eq!(have: placed.resource.kind, want: "Ingress");
+            placed.resource.api_version
+        })
+        .collect::<std::collections::BTreeSet<_>>();
+    sim_assert_eq!(have: versions, want: std::collections::BTreeSet::from([
+        "extensions/v1beta1".to_owned(),
+        "networking.k8s.io/v1".to_owned(),
+        "networking.k8s.io/v1beta1".to_owned(),
+    ]));
 }
 
 #[test]
 fn mixed_literal_and_nested_branch_preserves_nested_guards() {
-    let resource = detect(
-        indoc! {r#"
-            {{- if .Capabilities.APIVersions.Has "policy/v1" }}
-            apiVersion: policy/v1
-            {{- if .Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget" }}
-            apiVersion: policy/v1
-            {{- else }}
-            apiVersion: policy/v1beta1
-            {{- end }}
-            {{- else }}
-            apiVersion: policy/v1beta1
-            {{- end }}
-            kind: PodDisruptionBudget
-        "#},
-        &DefineIndex::new(),
-    )
-    .expect("resource");
+    let source = indoc! {r#"
+        {{- if .Capabilities.APIVersions.Has "example.com/v1" }}
+        apiVersion: policy/v1
+        {{- if .Capabilities.APIVersions.Has "example.com/v1/Example" }}
+        apiVersion: policy/v1
+        {{- else }}
+        apiVersion: policy/v1beta1
+        {{- end }}
+        {{- else }}
+        apiVersion: policy/v1beta1
+        {{- end }}
+        kind: PodDisruptionBudget
+    "#};
+    let api = "example.com/v1".to_owned();
+    let resource = "example.com/v1/Example".to_owned();
+    sim_assert_eq!(have: guarded_versions(source, "PodDisruptionBudget"), want: [
+        ("policy/v1".to_owned(), vec![
+            CapabilityGuard::Has { api: api.clone() },
+            CapabilityGuard::Has { api: resource.clone() },
+        ]),
+        ("policy/v1beta1".to_owned(), vec![
+            CapabilityGuard::Has { api: api.clone() },
+            CapabilityGuard::NotHas { api: resource },
+        ]),
+        ("policy/v1beta1".to_owned(), vec![CapabilityGuard::NotHas { api }]),
+    ]);
+}
 
-    let HelperBranchBody::Nested { branches } = &resource.api_version_branches[0].body else {
-        panic!("expected nested branch body");
-    };
-    sim_assert_eq!(have: branches.len(), want: 3);
-    sim_assert_eq!(
-        have: branches[0].body,
-        want: HelperBranchBody::literals(vec!["policy/v1".to_string()])
-    );
-    sim_assert_eq!(
-        have: branches[1].guard,
-        want: Some(CapabilityGuard::Has {
-            api: "policy/v1/PodDisruptionBudget".to_string()
+fn guarded_versions(source: &str, kind: &str) -> Vec<(String, Vec<CapabilityGuard>)> {
+    let mut versions: Vec<_> = placed_resources(source)
+        .into_iter()
+        .map(|placed| {
+            let resource = placed.resource;
+            sim_assert_eq!(have: resource.kind, want: kind);
+            (resource.api_version, resource.capability_guards)
         })
-    );
-    sim_assert_eq!(
-        have: branches[2].body,
-        want: HelperBranchBody::literals(vec!["policy/v1beta1".to_string()])
-    );
+        .collect();
+    versions.sort();
+    versions.dedup();
+    versions
 }
 
 #[test]
@@ -508,7 +492,14 @@ fn helper_output_under_guarded_resource_does_not_become_api_version_candidate() 
 }
 
 fn placed_resources(source: &str) -> Vec<crate::resource_identity::PlacedResource> {
-    let db = IrAnalysisDb::new(&DefineIndex::new());
+    placed_resources_with_defines(source, &DefineIndex::new())
+}
+
+fn placed_resources_with_defines(
+    source: &str,
+    defines: &DefineIndex,
+) -> Vec<crate::resource_identity::PlacedResource> {
+    let db = IrAnalysisDb::new(defines);
     let execution = crate::value::tests::execute_document(source, None, &db);
     execution
         .placed_documents()
@@ -557,17 +548,7 @@ fn resource_headers_abstain_when_a_later_computed_key_can_overwrite() {
 }
 
 fn assert_capability_hpa_versions(source: &str) {
-    let mut actual: Vec<_> = placed_resources(source)
-        .into_iter()
-        .map(|resource| {
-            let resource = resource.resource;
-            sim_assert_eq!(have: resource.kind, want: "HorizontalPodAutoscaler");
-            (resource.api_version, resource.capability_guards)
-        })
-        .collect();
-    actual.sort();
-    actual.dedup();
-    sim_assert_eq!(have: actual, want: vec![
+    sim_assert_eq!(have: guarded_versions(source, "HorizontalPodAutoscaler"), want: vec![
         ("autoscaling/v2".to_owned(), vec![CapabilityGuard::Has { api: "example.com/v1".to_owned() }]),
         ("autoscaling/v2beta2".to_owned(), vec![CapabilityGuard::NotHas { api: "example.com/v1".to_owned() }]),
     ]);

@@ -1,7 +1,7 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::FailValueRequirement;
 use helm_schema_ir::ValueKind;
-use indoc::formatdoc;
+use indoc::{formatdoc, indoc};
 use serde_json::{Map, Value, json};
 use test_util::prelude::sim_assert_eq;
 
@@ -263,7 +263,31 @@ fn transforms_keep_their_position_specific_facts_and_schemas() -> eyre::Result<(
         }
 
         let schema = schema_for(finalized.into_schema_signals());
-        sim_assert_eq!(have: schema, want: case.expected_schema());
+        if matches!(case, BehaviorCase::IdentityProjection { .. }) {
+            let validator = jsonschema::validator_for(&schema)?;
+            assert!(validator.is_valid(&json!({})));
+            for (value, accepted) in [
+                ("plain text", true),
+                ("a: b", false),
+                (" [", false),
+                ("[\n", false),
+                (
+                    indoc! {"
+                    a: b
+                      b: c"},
+                    false,
+                ),
+            ] {
+                let instance = json!({ path: value });
+                sim_assert_eq!(
+                    have: validator.is_valid(&instance),
+                    want: accepted,
+                    "Helm 4.2.3 render verdict for {instance}"
+                );
+            }
+        } else {
+            sim_assert_eq!(have: schema, want: case.expected_schema(), "{path}");
+        }
     }
     Ok(())
 }

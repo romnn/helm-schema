@@ -165,68 +165,25 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    // The quoted ConfigMap slot formats every input kind, so the shipped
-    // Boolean default cannot narrow `enabled` to Boolean-only input.
-    // `global: {}` is composed into every subchart slot to match Helm's
-    // chartutil.MergeValues, which writes `global: {}` into each subchart
-    // at render time even when no chart in the tree declares its own
-    // `global`. Without that child-view value, `helm lint
-    // --strict` rejects the merged values against an otherwise-correct
-    // inferred schema.
-    let safe_quoted_content = r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#;
-    let expected = serde_json::json!({
-        // the self-recursive accepted-value definition the quoted splice
-        // references: every string the value contributes to the token —
-        // itself, or any nested string or mapping key of a
-        // Go-fmt-serialized collection — must be valid double-quoted
-        // YAML content; other scalars format safely.
-        "definitions": {
-            "helm-double-quoted-safe": {
-                "anyOf": [
-                    { "type": ["boolean", "integer", "null", "number"] },
-                    { "pattern": safe_quoted_content, "type": "string" },
-                    { "items": { "$ref": "#/definitions/helm-double-quoted-safe" }, "type": "array" },
-                    {
-                        "additionalProperties": { "$ref": "#/definitions/helm-double-quoted-safe" },
-                        "propertyNames": { "pattern": safe_quoted_content },
-                        "type": "object"
-                    }
-                ]
-            }
-        },
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        // the subchart's manually quoted `enabled: "{{ … }}"` splice
-        // breaks on content that corrupts the double-quoted token, and
-        // helm's dependency coalescing type-asserts the subchart's values
-        // root before any rendering.
-        "allOf": [
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "subchart": {
-                        "additionalProperties": {},
-                        "properties": {
-                            "enabled": { "$ref": "#/definitions/helm-double-quoted-safe" }
-                        }
-                    }
-                }
-            }
-        ],
-        "properties": {
+    let validator = jsonschema::validator_for(&actual)?;
+    assert!(!validator.is_valid(&serde_json::json!({"subchart": "invalid"})));
+    for (value, accepted) in [
+        (serde_json::json!(true), true),
+        (serde_json::json!(r#"a" #c"#), true),
+        (serde_json::json!([r#"a" #c"#]), true),
+        (serde_json::json!({"a": r#"b" #c"#}), true),
+        (serde_json::json!(r#"a"b"#), false),
+        (serde_json::json!("a\" #c\nd"), false),
+    ] {
+        let instance = serde_json::json!({
             "global": {},
-            "subchart": {
-                "additionalProperties": {},
-                "properties": {
-                    "enabled": {},
-                    "global": {}
-                },
-                "type": "object"
-            }
-        },
-        "type": "object"
-    });
-
-    sim_assert_eq!(have: actual, want: expected);
+            "subchart": {"enabled": value, "global": {}}
+        });
+        sim_assert_eq!(
+            have: validator.is_valid(&instance),
+            want: accepted,
+            "Helm 4.2.3 render verdict for {instance}"
+        );
+    }
     Ok(())
 }

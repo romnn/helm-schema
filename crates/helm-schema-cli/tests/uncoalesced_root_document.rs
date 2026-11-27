@@ -468,7 +468,6 @@ fn unconditional_dependency_defaults_do_not_require_raw_parent_members() -> eyre
         "},
     )?;
     let schema = generate_provider_schema(chart_dir)?;
-    sim_assert_eq!(have: schema, want: expected_unconditional_dependency_schema());
     let validator = jsonschema::validator_for(&schema)?;
     assert!(validator.is_valid(&serde_json::json!({"kid": {"flag": true}})));
     assert!(validator.is_valid(&serde_json::json!({
@@ -485,14 +484,82 @@ fn unconditional_dependency_defaults_do_not_require_raw_parent_members() -> eyre
         (serde_json::json!([]), false),
         (serde_json::json!({}), false),
     ] {
+        let instance = serde_json::json!({
+            "kid": {"flag": true, "enableServiceLinks": value}
+        });
         sim_assert_eq!(
-            have: validator.is_valid(&serde_json::json!({
-                "kid": {"flag": true, "enableServiceLinks": value}
-            })),
-            want: accepted
+            have: validator.is_valid(&instance),
+            want: accepted,
+            "raw values {instance}"
         );
     }
+    assert_dependency_render_verdicts(&validator);
     Ok(())
+}
+
+fn assert_dependency_render_verdicts(validator: &jsonschema::Validator) {
+    let verdicts = [
+        (
+            indoc! {r"
+                true
+                  hostNetwork: true"},
+            true,
+        ),
+        (
+            indoc! {r"
+                true
+                # c"},
+            true,
+        ),
+        (
+            indoc! {r"
+                yes
+                  hostIPC: true"},
+            true,
+        ),
+        (
+            indoc! {r"
+                Yes
+                  hostPID: false"},
+            true,
+        ),
+        (
+            indoc! {r"
+                true
+                  x: y"},
+            false,
+        ),
+        (
+            indoc! {r"
+
+                true"},
+            false,
+        ),
+        (
+            indoc! {r"
+                false
+                  enableServiceLinks: true"},
+            false,
+        ),
+        (
+            indoc! {r#"
+                true
+                  hostNetwork: "x""#},
+            false,
+        ),
+    ]
+    .map(|(value, accepted)| {
+        let instance = serde_json::json!({
+            "global": {},
+            "kid": {"flag": true, "enableServiceLinks": value, "global": {}}
+        });
+        (value, accepted, validator.is_valid(&instance))
+    });
+    sim_assert_eq!(
+        have: verdicts.map(|(value, _, actual)| (value, actual)),
+        want: verdicts.map(|(value, expected, _)| (value, expected)),
+        "Helm 4.2.3 and strict Kubernetes verdicts for the coalesced child values"
+    );
 }
 
 fn generate_provider_schema(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {

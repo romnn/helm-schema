@@ -992,8 +992,6 @@ fn subtract_omitted_members(
 mod go_format;
 pub(crate) mod scalar_preimage;
 
-#[cfg(test)]
-pub(crate) use scalar_preimage::plain_scalar_safe_comment_string_schema;
 use scalar_preimage::{
     helm_falsy_schema, plain_scalar_provider_preimage, split_segment_provider_preimage,
     stringified_plain_scalar_provider_preimage, templated_yaml_provider_preimage,

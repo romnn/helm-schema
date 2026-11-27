@@ -17,28 +17,32 @@ use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
-/// The escape-aware double-quoted-content grammar a manually quoted
-/// splice enforces on raw string inputs.
-const SAFE_QUOTED_CONTENT: &str =
-    r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#;
-
-/// The self-recursive accepted-value definition a manually quoted splice
-/// references: every string the value contributes to the token — itself,
-/// or any nested string or mapping key of a Go-fmt-serialized collection —
-/// must be valid double-quoted YAML content; other scalars format safely.
-fn double_quoted_safe_definition() -> Value {
-    json!({
-        "anyOf": [
-            { "type": ["boolean", "integer", "null", "number"] },
-            { "pattern": SAFE_QUOTED_CONTENT, "type": "string" },
-            { "items": { "$ref": "#/definitions/helm-double-quoted-safe" }, "type": "array" },
-            {
-                "additionalProperties": { "$ref": "#/definitions/helm-double-quoted-safe" },
-                "propertyNames": { "pattern": SAFE_QUOTED_CONTENT },
-                "type": "object"
-            }
-        ]
-    })
+fn assert_manually_quoted_slot(
+    schema: &Value,
+    values: impl Fn(Value) -> Value,
+) -> eyre::Result<()> {
+    let validator = jsonschema::validator_for(schema)?;
+    for (value, accepted) in [
+        (json!(r#"a" #c"#), true),
+        (json!([r#"a" #c"#]), true),
+        (json!({"a": r#"b" #c"#}), true),
+        (json!("a\"\t#c"), true),
+        (json!("a\"  #"), true),
+        (json!("a\"\n#c"), true),
+        (json!(r#"" #c"#), true),
+        (json!(r#"a" #c" #d"#), true),
+        (json!(r#"a"b"#), false),
+        (json!([r#"a"b"#]), false),
+        (json!("a\" #c\nd"), false),
+    ] {
+        let instance = values(value);
+        sim_assert_eq!(
+            have: validator.is_valid(&instance),
+            want: accepted,
+            "Helm 4.2.3 render verdict for {instance}"
+        );
+    }
+    Ok(())
 }
 
 fn generate_values_schema_for_chart(
@@ -133,33 +137,13 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
     })?;
 
     sim_assert_eq!(
-        have: schema,
-        want: json!({
-            "definitions": { "helm-double-quoted-safe": double_quoted_safe_definition() },
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            // the manually quoted splice (`enabled: "{{ … }}"`) breaks on
-            // content that corrupts the double-quoted token — an unescaped
-            // `"` or dangling `\` in a string, or the same inside a
-            // Go-fmt-serialized collection's nested strings.
-            "allOf": [{
-                "additionalProperties": {},
-                "properties": {
-                    "enabled": {
-                        "$ref": "#/definitions/helm-double-quoted-safe",
-                        "description": "Whether the config map is enabled"
-                    }
-                }
-            }],
-            "properties": {
-                "global": {},
-                "enabled": {
-                    "description": "Whether the config map is enabled"
-                }
-            },
-            "type": "object"
-        })
+        have: schema.pointer("/properties/enabled/description"),
+        want: Some(&json!("Whether the config map is enabled"))
     );
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&json!({"enabled": true})));
+    assert!(!validator.is_valid(&json!({"undeclared": true})));
+    assert_manually_quoted_slot(&schema, |value| json!({"enabled": value}))?;
 
     Ok(())
 }
@@ -664,10 +648,6 @@ fn stage_functions_match_session_generated_schema() -> eyre::Result<()> {
 }
 
 #[test]
-#[expect(
-    clippy::too_many_lines,
-    reason = "the full session stage comparison is clearest as one public API regression"
-)]
 fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
 
@@ -733,84 +713,17 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
     });
 
     let resolved = session.resolved_contract()?;
-    sim_assert_eq!(
-        have: &resolved.schema,
-        want: &json!({
-            "definitions": {
-                "helm-double-quoted-safe": double_quoted_safe_definition(),
-                "t": {
-                    "anyOf": [
-                        { "const": true },
-                        { "not": { "const": 0 }, "type": "number" },
-                        { "minLength": 1, "type": "string" },
-                        { "minItems": 1, "type": "array" },
-                        { "minProperties": 1, "type": "object" }
-                    ]
-                }
-            },
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            // the manually quoted `mode: "{{ … }}"` splice breaks on
-            // strings that are not valid double-quoted YAML content,
-            // scoped to its create-guarded render; the header's own
-            // `.Values.serviceAccount.create` navigation demands the host.
-            "allOf": [
-                {
-                    "if": {
-                        "properties": {
-                            "serviceAccount": {
-                                "properties": {
-                                    "create": { "$ref": "#/definitions/t" }
-                                },
-                                "required": ["create"],
-                                "type": "object"
-                            }
-                        },
-                        "required": ["serviceAccount"],
-                        "type": "object"
-                    },
-                    "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                            "mode": { "$ref": "#/definitions/helm-double-quoted-safe" }
-                        }
-                    }
-                },
-                {
-                    "if": {
-                        "anyOf": [
-                            { "not": {
-                                "properties": { "serviceAccount": {} },
-                                "required": ["serviceAccount"],
-                                "type": "object"
-                            } },
-                            {
-                                "properties": { "serviceAccount": { "enum": [null] } },
-                                "required": ["serviceAccount"],
-                                "type": "object"
-                            }
-                        ]
-                    },
-                    "then": false
-                }
-            ],
-            "properties": {
-                "global": {},
-                "mode": {},
-                "serviceAccount": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "create": {}
-                    },
-                    "type": "object"
-                }
-            },
-            "type": "object"
-        })
-    );
-
     let generated = session.generated_schema()?;
     sim_assert_eq!(have: generated.schema, want: resolved.schema);
+
+    let validator = jsonschema::validator_for(&resolved.schema)?;
+    assert!(validator.is_valid(&json!({"mode": "unsafe", "serviceAccount": {"create": false}})));
+    assert!(validator.is_valid(&json!({"mode": r#"a"b"#, "serviceAccount": {"create": false}})));
+    assert!(!validator.is_valid(&json!({"mode": "x"})));
+    assert_manually_quoted_slot(
+        &resolved.schema,
+        |value| json!({"mode": value, "serviceAccount": {"create": true}}),
+    )?;
 
     Ok(())
 }
@@ -1346,8 +1259,8 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
         "#},
     )?;
 
-    let schema = generate_values_schema_for_chart(&GenerateOptions {
-        chart_source: chart_dir.into(),
+    let options = GenerateOptions {
+        chart_source: chart_dir.clone().into(),
         include_tests: false,
         include_subchart_values: true,
         values_files: Vec::new(),
@@ -1362,33 +1275,15 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
             disable_k8s_schemas: true,
             ..Default::default()
         },
-    })?;
-
-    sim_assert_eq!(
-        have: &schema,
-        want: &json!({
-            "definitions": { "helm-double-quoted-safe": double_quoted_safe_definition() },
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            // the manually quoted `mode: "{{ … }}"` splice breaks on
-            // content that corrupts the double-quoted token.
-            "allOf": [{
-                "additionalProperties": {},
-                "properties": {
-                    "mode": { "$ref": "#/definitions/helm-double-quoted-safe" }
-                }
-            }],
-            "properties": {
-                "global": {},
-                "mode": {}
-            },
-            "type": "object"
-        })
-    );
+    };
+    let schema = generate_values_schema_for_chart(&options)?;
+    chart_dir.join("values.schema.json")?.remove_file()?;
+    sim_assert_eq!(have: schema, want: generate_values_schema_for_chart(&options)?);
 
     let validator = jsonschema::validator_for(&schema)?;
     assert!(validator.is_valid(&json!({ "mode": "safe" })));
     assert!(validator.is_valid(&json!({ "mode": "unsafe" })));
+    assert_manually_quoted_slot(&schema, |value| json!({"mode": value}))?;
 
     Ok(())
 }

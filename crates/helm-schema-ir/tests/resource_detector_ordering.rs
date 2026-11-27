@@ -12,11 +12,11 @@
 //! detection must treat both header fields independently so source order never
 //! controls whether resource lookup can run.
 
-use helm_schema_ast::DefineIndex;
 use std::collections::BTreeSet;
 
 use color_eyre::eyre;
-
+use helm_schema_ast::DefineIndex;
+use helm_schema_core::{CapabilityGuard, ValuesPath};
 use helm_schema_ir::{ContractUse, FinalizedContract, SymbolicIrContext};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
@@ -446,16 +446,11 @@ fn detector_resolves_helper_returned_api_version() {
     );
 }
 
-// An if/else helper resolves to both branches.
-// The `rbac.apiVersion` helper in vendored prometheus emits either
-// `rbac.authorization.k8s.io/v1` or `rbac.authorization.k8s.io/v1beta1`
-// depending on cluster capabilities. The detector must collect BOTH
-// as candidates.
 #[test]
 fn detector_resolves_helper_with_if_else_branches() {
     let helpers = indoc! {r#"
         {{- define "rbac.apiVersion" -}}
-        {{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1" -}}
+        {{- if .Capabilities.APIVersions.Has "example.com/v1" -}}
         {{- print "rbac.authorization.k8s.io/v1" -}}
         {{- else -}}
         {{- print "rbac.authorization.k8s.io/v1beta1" -}}
@@ -477,22 +472,13 @@ fn detector_resolves_helper_with_if_else_branches() {
         .generate_contract_ir(template)
         .finalize();
 
-    let u = ir
-        .uses()
-        .iter()
-        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("roleName"))
-        .expect("expected use for `roleName`");
-    let r = u.resource.as_ref().expect("resource on use");
-    sim_assert_eq!(have: r.kind, want: "RoleBinding");
-    sim_assert_eq!(have: r.api_version, want: "rbac.authorization.k8s.io/v1");
-    let expected = vec!["rbac.authorization.k8s.io/v1beta1".to_string()];
-    sim_assert_eq!(
-        have: r.api_version_candidates,
-        want: expected,
-        "both branches must be preserved in source order; got {:?}",
-        r.api_version_candidates
+    assert_guarded_versions(
+        &ir,
+        "roleName",
+        "RoleBinding",
+        "rbac.authorization.k8s.io/v1",
+        "rbac.authorization.k8s.io/v1beta1",
     );
-    sim_assert_eq!(have: r.api_version_branches.len(), want: 2);
 }
 
 // `include` works like `template` for helper-returned apiVersion values.
@@ -500,7 +486,7 @@ fn detector_resolves_helper_with_if_else_branches() {
 fn detector_resolves_include_returned_api_version() {
     let helpers = indoc! {r#"
         {{- define "grafana.hpa.apiVersion" -}}
-        {{- if .Capabilities.APIVersions.Has "autoscaling/v2" -}}
+        {{- if .Capabilities.APIVersions.Has "example.com/v1" -}}
         {{- print "autoscaling/v2" -}}
         {{- else -}}
         {{- print "autoscaling/v2beta2" -}}
@@ -522,19 +508,43 @@ fn detector_resolves_include_returned_api_version() {
         .generate_contract_ir(template)
         .finalize();
 
-    let u = ir
+    assert_guarded_versions(
+        &ir,
+        "maxReplicas",
+        "HorizontalPodAutoscaler",
+        "autoscaling/v2",
+        "autoscaling/v2beta2",
+    );
+}
+
+fn assert_guarded_versions(
+    ir: &FinalizedContract,
+    path: &str,
+    kind: &str,
+    present: &str,
+    absent: &str,
+) {
+    let path = ValuesPath::parse(path);
+    let versions = ir
         .uses()
         .iter()
-        .find(|u| u.source_expr == helm_schema_core::ValuesPath::parse("maxReplicas"))
-        .expect("expected use for `maxReplicas`");
-    let r = u.resource.as_ref().expect("resource on use");
-    sim_assert_eq!(have: r.kind, want: "HorizontalPodAutoscaler");
-    sim_assert_eq!(have: r.api_version, want: "autoscaling/v2");
-    sim_assert_eq!(
-        have: r.api_version_candidates,
-        want: vec!["autoscaling/v2beta2".to_string()]
-    );
-    sim_assert_eq!(have: r.api_version_branches.len(), want: 2);
+        .filter(|use_| use_.source_expr == path)
+        .filter_map(|use_| use_.resource.as_ref())
+        .map(|resource| {
+            (
+                resource.kind.as_str(),
+                resource.api_version.as_str(),
+                resource.capability_guards.as_slice(),
+            )
+        })
+        .collect::<BTreeSet<_>>();
+    let api = "example.com/v1".to_owned();
+    let has = [CapabilityGuard::Has { api: api.clone() }];
+    let not_has = [CapabilityGuard::NotHas { api }];
+    sim_assert_eq!(have: versions, want: BTreeSet::from([
+        (kind, present, has.as_slice()),
+        (kind, absent, not_has.as_slice()),
+    ]));
 }
 
 // Source-order picks the primary apiVersion, NOT stability rank.
