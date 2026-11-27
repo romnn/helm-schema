@@ -9592,6 +9592,14 @@
       ],
       "type": "object"
     },
+    "constrains/create": {
+      "additionalProperties": {},
+      "properties": {
+        "create": {
+          "description": "Specifies whether a ServiceAccount should be created"
+        }
+      }
+    },
     "constrains/create!=null": {
       "properties": {
         "create": {
@@ -9617,6 +9625,14 @@
         "create"
       ],
       "type": "object"
+    },
+    "constrains/enabled": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "description": "enable support for Prometheus Operator"
+        }
+      }
     },
     "constrains/enabled!=false": {
       "properties": {
@@ -15755,6 +15771,14 @@
       ],
       "type": "object"
     },
+    "constrains/jobLabel": {
+      "additionalProperties": {},
+      "properties": {
+        "jobLabel": {
+          "description": "Job label for scrape target"
+        }
+      }
+    },
     "constrains/key+name+optional": {
       "additionalProperties": false,
       "description": "configMap defines the ConfigMap containing data to use for the targets.",
@@ -15817,12 +15841,6 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "constrains/labels": {
-      "additionalProperties": {},
-      "properties": {
-        "labels": {}
-      }
-    },
     "constrains/memberlist=null": {
       "properties": {
         "memberlist": {
@@ -15836,6 +15854,14 @@
       ],
       "type": "object"
     },
+    "constrains/metricRelabelings": {
+      "additionalProperties": {},
+      "properties": {
+        "metricRelabelings": {
+          "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+        }
+      }
+    },
     "constrains/metricRelabelings:t": {
       "properties": {
         "metricRelabelings": {
@@ -15846,6 +15872,14 @@
         "metricRelabelings"
       ],
       "type": "object"
+    },
+    "constrains/name": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
+        }
+      }
     },
     "constrains/name:t": {
       "additionalProperties": {},
@@ -19660,6 +19694,14 @@
       ],
       "type": "object"
     },
+    "constrains/relabelings": {
+      "additionalProperties": {},
+      "properties": {
+        "relabelings": {
+          "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
+        }
+      }
+    },
     "constrains/relabelings:t": {
       "properties": {
         "relabelings": {
@@ -20963,9 +21005,6 @@
         }
       ]
     },
-    "values/controller.serviceAccount.name": {
-      "description": "The name of the ServiceAccount to use. If not set and create is\ntrue, a name is generated using the fullname template"
-    },
     "values/frr-k8s.frrk8s.livenessProbe.failureThreshold": {
       "description": "Number of failures before the probe is considered failed."
     },
@@ -20973,12 +21012,7 @@
       "description": "How often (in seconds) to perform the probe."
     },
     "values/frr-k8s.frrk8s.livenessProbe.successThreshold": {
-      "description": "Minimum consecutive successes for the probe to be considered successful.",
-      "type": "integer"
-    },
-    "values/frr-k8s.frrk8s.livenessProbe.timeoutSeconds": {
-      "description": "Number of seconds after which the probe times out.",
-      "type": "integer"
+      "description": "Minimum consecutive successes for the probe to be considered successful."
     },
     "values/frr-k8s.prometheus.serviceMonitor.interval": {
       "description": "Scrape interval. If not set, the Prometheus default scrape interval is used."
@@ -20995,12 +21029,6 @@
     "values/null;failurepolicy-defines-how-unrecognized": {
       "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
       "type": "null"
-    },
-    "values/prometheus.serviceMonitor.metricRelabelings": {
-      "description": "metric relabel configs to apply to samples before ingestion.\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
-    },
-    "values/prometheus.serviceMonitor.relabelings": {
-      "description": "relabel configs to apply to samples before ingestion.\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntarget_label: nodename\nreplacement: $1\naction: replace"
     },
     "values/speaker.excludeInterfaces": {
       "additionalProperties": {},
@@ -21300,16 +21328,23 @@
         "runtimeClassName": {},
         "securityContext": {},
         "serviceAccount": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {},
-            "create": {
-              "description": "Specifies whether a ServiceAccount should be created"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1create"
             },
-            "name": {
-              "$ref": "#/definitions/values~1controller.serviceAccount.name"
+            {
+              "$ref": "#/definitions/constrains~1name"
+            },
+            {
+              "properties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {}
+              }
             }
-          },
+          ],
           "type": "object"
         },
         "strategy": {
@@ -21444,7 +21479,7 @@
                   "$ref": "#/definitions/values~1frr-k8s.frrk8s.livenessProbe.successThreshold"
                 },
                 "timeoutSeconds": {
-                  "$ref": "#/definitions/values~1frr-k8s.frrk8s.livenessProbe.timeoutSeconds"
+                  "description": "Number of seconds after which the probe times out."
                 }
               }
             },
@@ -21476,7 +21511,7 @@
                   "$ref": "#/definitions/values~1frr-k8s.frrk8s.livenessProbe.successThreshold"
                 },
                 "timeoutSeconds": {
-                  "$ref": "#/definitions/values~1frr-k8s.frrk8s.livenessProbe.timeoutSeconds"
+                  "description": "Number of seconds after which the probe times out."
                 }
               }
             },
@@ -21946,36 +21981,16 @@
               }
             },
             {
-              "additionalProperties": {},
-              "properties": {
-                "jobLabel": {
-                  "description": "Job label for scrape target"
-                }
-              }
+              "$ref": "#/definitions/constrains~1jobLabel"
             },
             {
-              "additionalProperties": {},
-              "properties": {
-                "relabelings": {
-                  "$ref": "#/definitions/values~1prometheus.serviceMonitor.relabelings"
-                }
-              }
+              "$ref": "#/definitions/constrains~1relabelings"
             },
             {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "enable support for Prometheus Operator"
-                }
-              }
+              "$ref": "#/definitions/constrains~1enabled"
             },
             {
-              "additionalProperties": {},
-              "properties": {
-                "metricRelabelings": {
-                  "$ref": "#/definitions/values~1prometheus.serviceMonitor.metricRelabelings"
-                }
-              }
+              "$ref": "#/definitions/constrains~1metricRelabelings"
             },
             {
               "additionalProperties": {},
@@ -21998,83 +22013,180 @@
           "type": "object"
         },
         "prometheusRule": {
-          "additionalProperties": {},
-          "description": "Prometheus Operator alertmanager alerts",
-          "properties": {
-            "additionalLabels": {
-              "description": "optional additional labels for prometheusRules"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "extraAlerts": {}
+              }
             },
-            "addressPoolExhausted": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1excludePools"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1labels"
-                },
-                {
-                  "$ref": "#/definitions/values~1speaker.excludeInterfaces"
-                }
-              ],
-              "description": "MetalLBAddressPoolExhausted"
-            },
-            "addressPoolUsage": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1excludePools"
-                },
-                {
-                  "$ref": "#/definitions/values~1speaker.excludeInterfaces"
-                },
-                {
+            {
+              "additionalProperties": {},
+              "properties": {
+                "configNotLoaded": {
                   "additionalProperties": {},
+                  "description": "MetalLBConfigNotLoaded",
                   "properties": {
-                    "thresholds": {}
+                    "enabled": {}
                   }
                 }
-              ]
+              }
             },
-            "annotations": {
-              "description": "optional annotations for prometheusRules"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addressPoolExhausted": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1excludePools"
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "labels": {}
+                      }
+                    }
+                  ],
+                  "description": "MetalLBAddressPoolExhausted"
+                }
+              }
             },
-            "bgpSessionDown": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1labels"
-                },
-                {
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addressPoolUsage": {
                   "$ref": "#/definitions/values~1speaker.excludeInterfaces"
                 }
-              ],
-              "description": "MetalLBBGPSessionDown"
+              }
             },
-            "configNotLoaded": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1labels"
-                },
-                {
-                  "$ref": "#/definitions/values~1speaker.excludeInterfaces"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addressPoolUsage": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/constrains~1excludePools"
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "thresholds": {}
+                      }
+                    }
+                  ]
                 }
-              ],
-              "description": "MetalLBConfigNotLoaded"
+              }
             },
-            "enabled": {
-              "description": "enable alertmanager alerts"
-            },
-            "extraAlerts": {},
-            "staleConfig": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/constrains~1labels"
-                },
-                {
-                  "$ref": "#/definitions/values~1speaker.excludeInterfaces"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "addressPoolExhausted": {
+                  "additionalProperties": {},
+                  "description": "MetalLBAddressPoolExhausted",
+                  "properties": {
+                    "enabled": {}
+                  }
                 }
-              ],
-              "description": "MetalLBStaleConfig"
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "bgpSessionDown": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "labels": {}
+                      }
+                    },
+                    {
+                      "$ref": "#/definitions/values~1speaker.excludeInterfaces"
+                    }
+                  ],
+                  "description": "MetalLBBGPSessionDown"
+                }
+              }
+            },
+            {
+              "properties": {
+                "addressPoolExhausted": {
+                  "description": "MetalLBAddressPoolExhausted"
+                },
+                "addressPoolUsage": {},
+                "bgpSessionDown": {
+                  "description": "MetalLBBGPSessionDown"
+                },
+                "configNotLoaded": {
+                  "description": "MetalLBConfigNotLoaded"
+                },
+                "staleConfig": {
+                  "description": "MetalLBStaleConfig"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "description": "optional annotations for prometheusRules"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "additionalLabels": {
+                  "description": "optional additional labels for prometheusRules"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "staleConfig": {
+                  "additionalProperties": {},
+                  "description": "MetalLBStaleConfig",
+                  "properties": {
+                    "labels": {}
+                  }
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "staleConfig": {
+                  "additionalProperties": {},
+                  "description": "MetalLBStaleConfig",
+                  "properties": {
+                    "enabled": {}
+                  }
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "configNotLoaded": {
+                  "additionalProperties": {},
+                  "description": "MetalLBConfigNotLoaded",
+                  "properties": {
+                    "labels": {}
+                  }
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "enable alertmanager alerts"
+                }
+              }
             }
-          },
+          ],
+          "description": "Prometheus Operator alertmanager alerts",
           "type": "object"
         },
         "rbacPrometheus": {
@@ -22087,81 +22199,100 @@
           "description": "the service account used by prometheus\nrequired when \" .Values.prometheus.rbacPrometheus == true \" and \" .Values.prometheus.podMonitor.enabled=true or prometheus.serviceMonitor.enabled=true \""
         },
         "serviceMonitor": {
-          "additionalProperties": {},
-          "description": "Prometheus Operator ServiceMonitors. To be used as an alternative\nto podMonitor, supports secure metrics.",
-          "properties": {
-            "controller": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {
-                      "description": "optional additional annotations for the controller serviceMonitor"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/constrains~1jobLabel"
+            },
+            {
+              "$ref": "#/definitions/constrains~1relabelings"
+            },
+            {
+              "$ref": "#/definitions/constrains~1enabled"
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "speaker": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "tlsConfig": {
+                          "description": "optional tls configuration for the speaker serviceMonitor, in case\nsecure metrics are enabled."
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "annotations": {
+                          "description": "optional additional annotations for the speaker serviceMonitor"
+                        }
+                      }
                     }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "optional additional labels for the controller serviceMonitor"
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "tlsConfig": {
-                      "description": "optional tls configuration for the controller serviceMonitor, in case\nsecure metrics are enabled."
-                    }
-                  }
+                  ]
                 }
-              ]
+              }
             },
-            "enabled": {
-              "description": "enable support for Prometheus Operator"
+            {
+              "$ref": "#/definitions/constrains~1metricRelabelings"
             },
-            "interval": {
-              "$ref": "#/definitions/values~1frr-k8s.prometheus.serviceMonitor.interval"
-            },
-            "jobLabel": {
-              "description": "Job label for scrape target"
-            },
-            "metricRelabelings": {
-              "$ref": "#/definitions/values~1prometheus.serviceMonitor.metricRelabelings"
-            },
-            "relabelings": {
-              "$ref": "#/definitions/values~1prometheus.serviceMonitor.relabelings"
-            },
-            "speaker": {
-              "anyOf": [
-                {
+            {
+              "additionalProperties": {},
+              "properties": {
+                "speaker": {
                   "additionalProperties": {},
                   "properties": {
                     "additionalLabels": {
                       "description": "optional additional labels for the speaker serviceMonitor"
                     }
                   }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "tlsConfig": {
-                      "description": "optional tls configuration for the speaker serviceMonitor, in case\nsecure metrics are enabled."
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {
-                      "description": "optional additional annotations for the speaker serviceMonitor"
-                    }
-                  }
                 }
-              ]
+              }
+            },
+            {
+              "properties": {
+                "controller": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "annotations": {
+                          "description": "optional additional annotations for the controller serviceMonitor"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "additionalLabels": {
+                          "description": "optional additional labels for the controller serviceMonitor"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "tlsConfig": {
+                          "description": "optional tls configuration for the controller serviceMonitor, in case\nsecure metrics are enabled."
+                        }
+                      }
+                    }
+                  ]
+                },
+                "speaker": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "interval": {
+                  "$ref": "#/definitions/values~1frr-k8s.prometheus.serviceMonitor.interval"
+                }
+              }
             }
-          },
+          ],
+          "description": "Prometheus Operator ServiceMonitors. To be used as an alternative\nto podMonitor, supports secure metrics.",
           "type": "object"
         }
       },
@@ -22737,16 +22868,58 @@
         },
         "extraContainers": {},
         "frr": {
-          "additionalProperties": {},
-          "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
-          "properties": {
-            "enabled": {},
-            "image": {
-              "$ref": "#/definitions/values~1controller.image"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "image": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "pullPolicy": {}
+                  }
+                }
+              }
             },
-            "metricsPort": {},
-            "resources": {}
-          },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "image": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "repository": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "tag": {}
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "image": {}
+              }
+            },
+            {
+              "$ref": "#/definitions/values~1speaker.excludeInterfaces"
+            },
+            {
+              "$ref": "#/definitions/values~1speaker.frrMetrics"
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "metricsPort": {}
+              }
+            }
+          ],
+          "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
           "type": "object"
         },
         "frrMetrics": {
@@ -22808,15 +22981,37 @@
           "description": "Speaker log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
         },
         "memberlist": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "When enabled: false, the speaker pods must run on all nodes"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "When enabled: false, the speaker pods must run on all nodes"
+                }
+              }
             },
-            "mlBindAddrOverride": {},
-            "mlBindPort": {},
-            "mlSecretKeyPath": {}
-          },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "mlSecretKeyPath": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "mlBindAddrOverride": {}
+              }
+            },
+            {
+              "properties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "mlBindPort": {}
+              }
+            }
+          ],
           "type": "object"
         },
         "nodeSelector": {
@@ -22841,20 +23036,10 @@
         "serviceAccount": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "create": {
-                  "description": "Specifies whether a ServiceAccount should be created"
-                }
-              }
+              "$ref": "#/definitions/constrains~1create"
             },
             {
-              "additionalProperties": {},
-              "properties": {
-                "name": {
-                  "$ref": "#/definitions/values~1controller.serviceAccount.name"
-                }
-              }
+              "$ref": "#/definitions/constrains~1name"
             },
             {
               "additionalProperties": {},

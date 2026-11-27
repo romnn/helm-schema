@@ -15320,13 +15320,25 @@
           "description": "Expected number of servers"
         },
         "jetstream": {
-          "additionalProperties": {},
-          "properties": {
-            "accounts": {},
-            "enabled": {
-              "description": "accounts:\n- name: test\ntls:\nsecret:\nname: test-user-tls\nca: \"ca.crt\" # optional\ncert: \"tls.crt\"\nkey: \"tls.key\"\n- name: basic\nusername: username\npassword: password\nMount arbitrary volumes to surveyor pods\nextraVolumeMounts:\n- name: ca-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true\nConfigure arbitrary volumes for surveyor pods\nextraVolumes:\n- name: ca-certs\nconfigMap:\nname: ca-certs"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "accounts:\n- name: test\ntls:\nsecret:\nname: test-user-tls\nca: \"ca.crt\" # optional\ncert: \"tls.crt\"\nkey: \"tls.key\"\n- name: basic\nusername: username\npassword: password\nMount arbitrary volumes to surveyor pods\nextraVolumeMounts:\n- name: ca-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true\nConfigure arbitrary volumes for surveyor pods\nextraVolumes:\n- name: ca-certs\nconfigMap:\nname: ca-certs"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "accounts": {}
+              }
+            },
+            {
+              "properties": {}
             }
-          },
+          ],
           "type": "object"
         },
         "jsz": {

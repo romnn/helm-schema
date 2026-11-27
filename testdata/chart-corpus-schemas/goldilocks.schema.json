@@ -27833,12 +27833,6 @@
         }
       ]
     },
-    "values/controller.rbac.extraClusterRoleBindings": {
-      "description": "controller.rbac.extraClusterRoleBindings -- A list of ClusterRoles for which ClusterRoleBindings will be created for the ServiceAccount, if enabled"
-    },
-    "values/controller.rbac.extraRules": {
-      "description": "controller.rbac.extraRules -- Extra rbac rules for the controller clusterrole"
-    },
     "values/controller/not/:t": {
       "not": {
         "$ref": "#/definitions/t"
@@ -27995,6 +27989,12 @@
         }
       ],
       "type": "string"
+    },
+    "values/dashboard.rbac.extraClusterRoleBindings": {
+      "description": "controller.rbac.extraClusterRoleBindings -- A list of ClusterRoles for which ClusterRoleBindings will be created for the ServiceAccount, if enabled"
+    },
+    "values/dashboard.rbac.extraRules": {
+      "description": "controller.rbac.extraRules -- Extra rbac rules for the controller clusterrole"
     },
     "values/metrics-server.addonResizer": {
       "additionalProperties": {},
@@ -29140,21 +29140,43 @@
           "description": "controller.podSecurityContext -- Defines the podSecurityContext for the controller pod"
         },
         "rbac": {
-          "additionalProperties": {},
-          "properties": {
-            "create": {
-              "description": "controller.rbac.create -- If set to true, rbac resources will be created for the controller"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enableArgoproj": {
+                  "description": "controller.rbac.enableArgoproj -- If set to true, the clusterrole will give access to argoproj.io resources"
+                }
+              }
             },
-            "enableArgoproj": {
-              "description": "controller.rbac.enableArgoproj -- If set to true, the clusterrole will give access to argoproj.io resources"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "extraRules": {
+                  "$ref": "#/definitions/values~1dashboard.rbac.extraRules"
+                }
+              }
             },
-            "extraClusterRoleBindings": {
-              "$ref": "#/definitions/values~1controller.rbac.extraClusterRoleBindings"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "extraClusterRoleBindings": {
+                  "$ref": "#/definitions/values~1dashboard.rbac.extraClusterRoleBindings"
+                }
+              }
             },
-            "extraRules": {
-              "$ref": "#/definitions/values~1controller.rbac.extraRules"
+            {
+              "properties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "create": {
+                  "description": "controller.rbac.create -- If set to true, rbac resources will be created for the controller"
+                }
+              }
             }
-          },
+          ],
           "type": "object"
         },
         "resources": {
@@ -29167,15 +29189,27 @@
           "description": "controller.securityContext -- The container securityContext for the controller container"
         },
         "serviceAccount": {
-          "additionalProperties": {},
-          "properties": {
-            "create": {
-              "description": "controller.serviceAccount.create -- If true, a service account will be created for the controller. If set to false, you must set `controller.serviceAccount.name`"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "create": {
+                  "description": "controller.serviceAccount.create -- If true, a service account will be created for the controller. If set to false, you must set `controller.serviceAccount.name`"
+                }
+              }
             },
-            "name": {
-              "description": "controller.serviceAccount.name -- The name of an existing service account to use for the controller. Combined with `controller.serviceAccount.create`"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {
+                  "description": "controller.serviceAccount.name -- The name of an existing service account to use for the controller. Combined with `controller.serviceAccount.create`"
+                }
+              }
+            },
+            {
+              "properties": {}
             }
-          },
+          ],
           "type": "object"
         },
         "tolerations": {
@@ -29857,10 +29891,10 @@
               "description": "dashboard.rbac.enableArgoproj -- If set to true, the clusterrole will give access to argoproj.io resources"
             },
             "extraClusterRoleBindings": {
-              "$ref": "#/definitions/values~1controller.rbac.extraClusterRoleBindings"
+              "$ref": "#/definitions/values~1dashboard.rbac.extraClusterRoleBindings"
             },
             "extraRules": {
-              "$ref": "#/definitions/values~1controller.rbac.extraRules"
+              "$ref": "#/definitions/values~1dashboard.rbac.extraRules"
             }
           },
           "type": "object"

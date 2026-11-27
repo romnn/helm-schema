@@ -4,275 +4,6 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+opensearch.majorVersion:t"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1opensearch.majorVersion:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1opensearch.enabled=false"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+opensearch.majorVersion:t"
-          },
-          {
-            "properties": {
-              "opensearch": {
-                "$ref": "#/definitions/constrains~1image.tag:t@2"
-              }
-            },
-            "required": [
-              "opensearch"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "tag": {
-                    "description": "override image tag, which is .Chart.AppVersion by default",
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1nameOverride:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
-          },
-          {
-            "properties": {
-              "opensearch": {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            },
-            "required": [
-              "opensearch"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "nameOverride": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1opensearch.enabled=false"
-              }
-            ]
-          },
-          {
-            "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled!=false+opensearch.enabled!=true+4more"
-          },
-          {
-            "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+1more"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "persistence": {
-                "additionalProperties": {},
-                "properties": {
-                  "labels": {
-                    "description": "override image, which is busybox by default\nimage: busybox\noverride image tag, which is latest by default\nimageTag:",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+1more"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "persistence": {
-                "additionalProperties": {},
-                "properties": {
-                  "accessModes": {
-                    "description": "OpenSearch Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nstorageClass: \"-\"",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
-          },
-          {
-            "properties": {
-              "opensearch": {
-                "properties": {
-                  "config": {
-                    "$ref": "#/definitions/t"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "opensearch"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "config": {
-                "description": "such as opensearch.yml and log4j2.properties",
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "opensearch": {
-            "additionalProperties": {},
-            "properties": {
-              "podAnnotations": {
-                "description": "iam.amazonaws.com/role: es-cluster",
-                "type": [
-                  "array",
-                  "null",
-                  "object"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -342,12 +73,149 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled!=false+opensearch.enabled!=true+5more"
+            "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+opensearch.majorVersion:t"
           },
           {
-            "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
+            "properties": {
+              "opensearch": {
+                "$ref": "#/definitions/constrains~1image.tag:t@2"
+              }
+            },
+            "required": [
+              "opensearch"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "properties": {
+                  "tag": {
+                    "description": "override image tag, which is .Chart.AppVersion by default",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1additionalConfigMaps:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "additionalConfigMaps": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/definitions/constrains~1keys+name"
+                },
+                "type": "object"
+              },
+              {
+                "items": {
+                  "$ref": "#/definitions/constrains~1keys+name"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Create additional ConfigMaps with given names, keys and content. Ther Helm release name will be used as a prefix\nfor a ConfigMap name, fileName is used as subPath\n- name: extra-configmap\nkeys:\n- fileName: hello.properties\nmountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes\ndefaultMode:\ncontent: |\nfoo=bar\nhello=world\n- fileName: hello.xml\nmountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes\ndefaultMode:\ncontent: |\n<xml>\n</xml>"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/definitions/constrains~1fluentd.customConfigFile:t"
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1fluentd.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fluentd": {
+            "additionalProperties": {},
+            "description": "Fluentd configuration\nJira log collection and aggregation can be enabled using Fluentd. This config\nassumes an existing ELK stack has been stood up and is available.\nhttps://www.fluentd.org/",
+            "properties": {
+              "elasticsearch": {
+                "description": "Elasticsearch config based on your ELK stack",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+1more"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "persistence": {
+                "additionalProperties": {},
+                "properties": {
+                  "accessModes": {
+                    "description": "OpenSearch Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nstorageClass: \"-\"",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+1more"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1opensearch.enabled=false"
+              }
+            ]
+          },
+          {
+            "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled!=false+opensearch.enabled!=true+4more"
           }
         ]
       },
@@ -358,9 +226,28 @@
             "additionalProperties": {},
             "properties": {
               "persistence": {
-                "type": "object"
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "description": "override image, which is busybox by default\nimage: busybox\noverride image tag, which is latest by default\nimageTag:",
+                    "type": "object"
+                  }
+                }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1nameOverride:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
           }
         }
       }
@@ -389,32 +276,68 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "opensearch": {
-          "type": [
-            "null",
-            "object"
-          ]
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
+          },
+          {
+            "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled!=false+opensearch.enabled!=true+5more"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "persistence": {
+                "type": "object"
+              }
+            }
+          }
         }
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "jira": {
-          "additionalProperties": {},
-          "description": "Jira configuration",
-          "properties": {
-            "additionalJvmArgs": {
-              "description": "Specifies a list of additional arguments that can be passed to the Jira JVM, e.g.\nsystem properties.",
-              "type": [
-                "array",
-                "integer",
-                "null",
-                "object"
-              ]
-            }
+      "if": {
+        "properties": {
+          "podAnnotations": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          }
+        },
+        "required": [
+          "podAnnotations"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podAnnotations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              }
+            ],
+            "description": "Custom annotations that will be applied to all Jira pods\nname: <value>"
           }
         }
       }
@@ -434,6 +357,183 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "podAnnotations": {
+          "description": "Custom annotations that will be applied to all Jira pods\nname: <value>",
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/constrains~1additionalConfigMaps:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "additionalConfigMaps": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "$ref": "#/definitions/constrains~1keys+name"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "$ref": "#/definitions/constrains~1keys+name"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Create additional ConfigMaps with given names, keys and content. Ther Helm release name will be used as a prefix\nfor a ConfigMap name, fileName is used as subPath\n- name: extra-configmap\nkeys:\n- fileName: hello.properties\nmountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes\ndefaultMode:\ncontent: |\nfoo=bar\nhello=world\n- fileName: hello.xml\nmountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes\ndefaultMode:\ncontent: |\n<xml>\n</xml>"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "additionalConfigMaps": {
+                "description": "Create additional ConfigMaps with given names, keys and content. Ther Helm release name will be used as a prefix\nfor a ConfigMap name, fileName is used as subPath\n- name: extra-configmap\nkeys:\n- fileName: hello.properties\nmountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes\ndefaultMode:\ncontent: |\nfoo=bar\nhello=world\n- fileName: hello.xml\nmountPath: /opt/atlassian/jira/atlassian-jira/WEB-INF/classes\ndefaultMode:\ncontent: |\n<xml>\n</xml>",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "podAnnotations": {
+                "description": "iam.amazonaws.com/role: es-cluster",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
+          },
+          {
+            "properties": {
+              "opensearch": {
+                "properties": {
+                  "config": {
+                    "$ref": "#/definitions/t"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "opensearch"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "config": {
+                "description": "such as opensearch.yml and log4j2.properties",
+                "type": [
+                  "array",
+                  "null",
+                  "object"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
+          },
+          {
+            "properties": {
+              "opensearch": {
+                "$ref": "#/definitions/constrains~1nameOverride:t"
+              }
+            },
+            "required": [
+              "opensearch"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "nameOverride": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "opensearch": {
+          "type": [
+            "null",
+            "object"
+          ]
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -448,6 +548,9 @@
               "jira"
             ],
             "type": "object"
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount=null"
           },
           {
             "properties": {
@@ -471,55 +574,6 @@
                 "fluentd"
               ],
               "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "ordinals": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "ordinals"
-            ],
-            "type": "object"
-          },
-          {
-            "else": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/constrains~1ingress.host:t"
-                },
-                {
-                  "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-                }
-              ]
-            },
-            "if": {
-              "$ref": "#/definitions/constrains~1gateway.create:t@2"
-            },
-            "then": {
-              "else": true,
-              "if": {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              },
-              "then": {
-                "else": true,
-                "if": {
-                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-                },
-                "then": {
-                  "else": {
-                    "$ref": "#/definitions/constrains~1ingress.host:t"
-                  },
-                  "if": {
-                    "$ref": "#/definitions/constrains~1ingress.create:t@2"
-                  },
-                  "then": true
-                }
-              }
             }
           },
           {
@@ -558,6 +612,119 @@
             ]
           },
           {
+            "properties": {
+              "ordinals": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "ordinals"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1gateway.create:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.host:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1ingress.create:t"
+                }
+              },
+              {
+                "$ref": "#/definitions/constrains~1ingress.host:t@2"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1ingress.create:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1gateway.create:t"
+              }
+            ]
+          },
+          {
+            "else": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/constrains~1ingress.host:t"
+                },
+                {
+                  "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+                }
+              ]
+            },
+            "if": {
+              "$ref": "#/definitions/constrains~1gateway.create:t"
+            },
+            "then": {
+              "else": true,
+              "if": {
+                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+              },
+              "then": {
+                "else": true,
+                "if": {
+                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
+                },
+                "then": {
+                  "else": {
+                    "$ref": "#/definitions/constrains~1ingress.host:t"
+                  },
+                  "if": {
+                    "$ref": "#/definitions/constrains~1ingress.create:t"
+                  },
+                  "then": true
+                }
+              }
+            }
+          },
+          {
+            "$ref": "#/definitions/constrains~1serviceAccount"
+          },
+          {
             "not": {
               "properties": {
                 "ordinals": {}
@@ -567,6 +734,41 @@
               ],
               "type": "object"
             }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "jira": {
+                          "$ref": "#/definitions/constrains~1additionalCertificates"
+                        }
+                      },
+                      "required": [
+                        "jira"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "jira": {
+                        "$ref": "#/definitions/constrains~1additionalCertificates=null"
+                      }
+                    },
+                    "required": [
+                      "jira"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1jira+jira=null"
+              }
+            ]
           },
           {
             "allOf": [
@@ -682,9 +884,25 @@
                   {
                     "properties": {
                       "jira": {
-                        "enum": [
-                          null
-                        ]
+                        "properties": {
+                          "resources": {
+                            "properties": {
+                              "jvm": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "jvm"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "resources"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
@@ -695,7 +913,23 @@
                   {
                     "not": {
                       "properties": {
-                        "jira": {}
+                        "jira": {
+                          "properties": {
+                            "resources": {
+                              "properties": {
+                                "jvm": {}
+                              },
+                              "required": [
+                                "jvm"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "resources"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
                         "jira"
@@ -704,6 +938,16 @@
                     }
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1jira.resources+jira.resources=null"
+              },
+              {
+                "$ref": "#/definitions/constrains~1jira+jira=null"
               }
             ]
           },
@@ -734,514 +978,326 @@
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-4"
+                "$ref": "#/definitions/constrains~1jira.tunnel+jira.tunnel=null"
               },
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu"
+                "$ref": "#/definitions/constrains~1jira+jira=null"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "eksIrsa": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "eksIrsa"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "eksIrsa": {}
+                          },
+                          "required": [
+                            "eksIrsa"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
               },
               {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount=null"
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1serviceAccount"
+                  }
+                ]
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1ingress.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-5"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-0"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1group-1"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-                }
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1group-4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1ingress.host:t@2"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.create:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1gateway.hostnames:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1fullnameOverride:t"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride"
-              },
-              {
-                "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-              },
-              {
-                "$ref": "#/definitions/constrains~1nameOverride:t"
+                "$ref": "#/definitions/constrains~1jira.tunnel+jira.tunnel=null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "jira": {
+                        "properties": {
+                          "tunnel": {
+                            "$ref": "#/definitions/constrains~1additionalConnector=null"
+                          }
+                        },
+                        "required": [
+                          "tunnel"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jira"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "jira": {
+                          "properties": {
+                            "tunnel": {
+                              "$ref": "#/definitions/constrains~1additionalConnector"
+                            }
+                          },
+                          "required": [
+                            "tunnel"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "jira"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
               }
             ]
           }
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/definitions/t"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "jira": {
+          "additionalProperties": {},
+          "description": "Jira configuration",
+          "properties": {
+            "additionalJvmArgs": {
+              "description": "Specifies a list of additional arguments that can be passed to the Jira JVM, e.g.\nsystem properties.",
+              "type": [
+                "array",
+                "integer",
+                "null",
+                "object"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/constrains~1opensearch.enabled=false+opensearch.enabled=true+opensearch.majorVersion:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/constrains~1opensearch.majorVersion:t"
+              },
+              {
+                "$ref": "#/definitions/constrains~1opensearch.enabled=false"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/definitions/constrains~1fluentd.enabled:t"
+          },
+          {
+            "$ref": "#/definitions/constrains~1fluentd.customConfigFile:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "fluentd": {
+                "additionalProperties": {},
+                "description": "Fluentd configuration\nJira log collection and aggregation can be enabled using Fluentd. This config\nassumes an existing ELK stack has been stood up and is available.\nhttps://www.fluentd.org/",
+                "properties": {
+                  "fluentdCustomConfig": {
+                    "description": "Custom fluent.conf file\nfluent.conf: |\n<source>\n<parse>\nformat_firstline /\\d{4}-\\d{1,2}-\\d{1,2}/\n</parse>\npath /opt/atlassian/jira/logs/access_log.*\npos_file /tmp/jiralog.pos\ntag jira-access-logs\n</source>",
+                    "type": [
+                      "array",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "fluentd": {
+                "additionalProperties": {},
+                "description": "Fluentd configuration\nJira log collection and aggregation can be enabled using Fluentd. This config\nassumes an existing ELK stack has been stood up and is available.\nhttps://www.fluentd.org/",
+                "properties": {
+                  "fluentdCustomConfig": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Custom fluent.conf file\nfluent.conf: |\n<source>\n<parse>\nformat_firstline /\\d{4}-\\d{1,2}-\\d{1,2}/\n</parse>\npath /opt/atlassian/jira/logs/access_log.*\npos_file /tmp/jiralog.pos\ntag jira-access-logs\n</source>"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "definitions": {
+    "constrains/additionalCertificates": {
+      "properties": {
+        "additionalCertificates": {}
+      },
+      "required": [
+        "additionalCertificates"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalCertificates=null": {
+      "properties": {
+        "additionalCertificates": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "additionalCertificates"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalConfigMaps:t": {
+      "properties": {
+        "additionalConfigMaps": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "additionalConfigMaps"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalConnector": {
+      "properties": {
+        "additionalConnector": {}
+      },
+      "required": [
+        "additionalConnector"
+      ],
+      "type": "object"
+    },
+    "constrains/additionalConnector=null": {
+      "properties": {
+        "additionalConnector": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "additionalConnector"
+      ],
+      "type": "object"
+    },
     "constrains/container=null": {
       "properties": {
         "container": {
@@ -1263,6 +1319,17 @@
       },
       "required": [
         "create"
+      ],
+      "type": "object"
+    },
+    "constrains/customConfigFile:t": {
+      "properties": {
+        "customConfigFile": {
+          "$ref": "#/definitions/t"
+        }
+      },
+      "required": [
+        "customConfigFile"
       ],
       "type": "object"
     },
@@ -1308,9 +1375,6 @@
     "constrains/enabled+enabled!=false+enabled!=true+enabled=true": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1enabled=true"
-        },
-        {
           "allOf": [
             {
               "anyOf": [
@@ -1337,6 +1401,9 @@
               ]
             }
           ]
+        },
+        {
+          "$ref": "#/definitions/constrains~1enabled=true"
         }
       ]
     },
@@ -1382,54 +1449,29 @@
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride@2"
-      }
-    },
-    "constrains/fullnameOverride:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-      }
-    },
-    "constrains/fullnameOverride:t@2": {
+    "constrains/fluentd.customConfigFile:t": {
       "properties": {
-        "fullnameOverride": {
-          "$ref": "#/definitions/t"
+        "fluentd": {
+          "$ref": "#/definitions/constrains~1customConfigFile:t"
         }
       },
       "required": [
-        "fullnameOverride"
+        "fluentd"
       ],
       "type": "object"
     },
-    "constrains/fullnameOverride@2": {
+    "constrains/fluentd.enabled:t": {
       "properties": {
-        "fullnameOverride": {
-          "type": "string"
+        "fluentd": {
+          "$ref": "#/definitions/constrains~1enabled:t"
         }
       },
       "required": [
-        "fullnameOverride"
+        "fluentd"
       ],
       "type": "object"
     },
     "constrains/gateway.create:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1gateway.create:t@2"
-      }
-    },
-    "constrains/gateway.create:t+gateway.hostnames:t": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1gateway.create:t@2"
-        }
-      ]
-    },
-    "constrains/gateway.create:t@2": {
       "properties": {
         "gateway": {
           "$ref": "#/definitions/constrains~1create:t"
@@ -1440,12 +1482,17 @@
       ],
       "type": "object"
     },
-    "constrains/gateway.hostnames:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-      }
+    "constrains/gateway.create:t+gateway.hostnames:t": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/constrains~1gateway.hostnames:t"
+        },
+        {
+          "$ref": "#/definitions/constrains~1gateway.create:t"
+        }
+      ]
     },
-    "constrains/gateway.hostnames:t@2": {
+    "constrains/gateway.hostnames:t": {
       "properties": {
         "gateway": {
           "properties": {
@@ -1483,78 +1530,6 @@
       ],
       "type": "object"
     },
-    "constrains/group-0": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-1"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t"
-        }
-      ]
-    },
-    "constrains/group-1": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1gateway.parentRefs:t"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.create:t"
-        }
-      ]
-    },
-    "constrains/group-2": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1gateway.create:t@2"
-        }
-      ]
-    },
-    "constrains/group-3": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1fullnameOverride@2"
-        }
-      ]
-    },
-    "constrains/group-4": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1group-5"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride"
-        },
-        {
-          "$ref": "#/definitions/constrains~1nameOverride:t"
-        }
-      ]
-    },
-    "constrains/group-5": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/constrains~1gateway.hostnames:t@2"
-        },
-        {
-          "$ref": "#/definitions/constrains~1ingress.host:t@2"
-        }
-      ]
-    },
     "constrains/image.tag": {
       "properties": {
         "image": {
@@ -1589,13 +1564,13 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/definitions/constrains~1nameOverride"
-                    },
-                    {
                       "$ref": "#/definitions/constrains~1image.tag"
                     },
                     {
                       "$ref": "#/definitions/constrains~1nameOverride:t"
+                    },
+                    {
+                      "$ref": "#/definitions/constrains~1nameOverride"
                     }
                   ]
                 },
@@ -1611,19 +1586,6 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/definitions/constrains~1nameOverride"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1nameOverride:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1image.tag:t"
-                            }
-                          ]
-                        },
-                        {
-                          "allOf": [
-                            {
                               "anyOf": [
                                 {
                                   "$ref": "#/definitions/constrains~1majorVersion:t"
@@ -1631,13 +1593,13 @@
                                 {
                                   "allOf": [
                                     {
-                                      "$ref": "#/definitions/constrains~1nameOverride"
-                                    },
-                                    {
                                       "$ref": "#/definitions/constrains~1majorVersion:t@2"
                                     },
                                     {
                                       "$ref": "#/definitions/constrains~1nameOverride:t"
+                                    },
+                                    {
+                                      "$ref": "#/definitions/constrains~1nameOverride"
                                     }
                                   ]
                                 }
@@ -1645,6 +1607,19 @@
                             },
                             {
                               "$ref": "#/definitions/constrains~1image.tag:t@2"
+                            }
+                          ]
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1nameOverride"
                             }
                           ]
                         }
@@ -1683,11 +1658,6 @@
       "type": "object"
     },
     "constrains/ingress.create:t": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.create:t@2"
-      }
-    },
-    "constrains/ingress.create:t@2": {
       "properties": {
         "ingress": {
           "$ref": "#/definitions/constrains~1create:t"
@@ -1699,14 +1669,9 @@
       "type": "object"
     },
     "constrains/ingress.host:t": {
-      "$ref": "#/definitions/constrains~1ingress.host:t@3"
+      "$ref": "#/definitions/constrains~1ingress.host:t@2"
     },
     "constrains/ingress.host:t@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1ingress.host:t@3"
-      }
-    },
-    "constrains/ingress.host:t@3": {
       "properties": {
         "ingress": {
           "properties": {
@@ -1724,6 +1689,34 @@
         "ingress"
       ],
       "type": "object"
+    },
+    "constrains/jira+jira=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "jira": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "jira"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "jira": {}
+            },
+            "required": [
+              "jira"
+            ],
+            "type": "object"
+          }
+        }
+      ]
     },
     "constrains/jira.resources+jira.resources=null": {
       "anyOf": [
@@ -1809,102 +1802,75 @@
         }
       ]
     },
-    "constrains/jira.resources.container.requests.cpu": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@3"
-      }
-    },
-    "constrains/jira.resources.container.requests.cpu@2": {
-      "not": {
-        "$ref": "#/definitions/constrains~1jira.resources.container.requests.cpu@4"
-      }
-    },
-    "constrains/jira.resources.container.requests.cpu@3": {
-      "properties": {
-        "jira": {
+    "constrains/jira.tunnel+jira.tunnel=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "jira": {
+                "properties": {
+                  "tunnel": {}
+                },
+                "required": [
+                  "tunnel"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jira"
+            ],
+            "type": "object"
+          }
+        },
+        {
           "properties": {
-            "resources": {
+            "jira": {
               "properties": {
-                "container": {
-                  "properties": {
-                    "requests": {
-                      "properties": {
-                        "cpu": {
-                          "pattern": "m$",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "cpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "requests"
-                  ],
-                  "type": "object"
+                "tunnel": {
+                  "enum": [
+                    null
+                  ]
                 }
               },
               "required": [
-                "container"
+                "tunnel"
               ],
               "type": "object"
             }
           },
           "required": [
-            "resources"
+            "jira"
           ],
           "type": "object"
         }
-      },
-      "required": [
-        "jira"
-      ],
-      "type": "object"
+      ]
     },
-    "constrains/jira.resources.container.requests.cpu@4": {
-      "properties": {
-        "jira": {
-          "properties": {
-            "resources": {
-              "properties": {
-                "container": {
-                  "properties": {
-                    "requests": {
-                      "properties": {
-                        "cpu": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "cpu"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "requests"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "container"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "resources"
-          ],
+    "constrains/keys+name": {
+      "allOf": [
+        {
           "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "keys": {}
+              }
+            },
+            {
+              "additionalProperties": {}
+            }
+          ]
         }
-      },
-      "required": [
-        "jira"
-      ],
-      "type": "object"
+      ]
     },
     "constrains/majorVersion:t": {
       "not": {
@@ -2132,6 +2098,16 @@
         {
           "anyOf": [
             {
+              "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled!=false+opensearch.enabled!=true"
+            },
+            {
+              "$ref": "#/definitions/constrains~1opensearch.enabled=true"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
               "properties": {
                 "opensearch": {
                   "$ref": "#/definitions/constrains~1persistence.labels.enabled:t"
@@ -2152,16 +2128,6 @@
                 "opensearch"
               ],
               "type": "object"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/constrains~1opensearch.enabled+opensearch.enabled!=false+opensearch.enabled!=true"
-            },
-            {
-              "$ref": "#/definitions/constrains~1opensearch.enabled=true"
             }
           ]
         }
@@ -2185,10 +2151,10 @@
     "constrains/opensearch.enabled=false+opensearch.enabled=true+1more": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
+          "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
         },
         {
-          "$ref": "#/definitions/when~1opensearch.enabled=false~1then~1opensearch.enabled=true~1else~1any"
+          "$ref": "#/definitions/constrains~1opensearch.persistence.enabled:t"
         }
       ]
     },
@@ -2523,6 +2489,64 @@
       ],
       "type": "object"
     },
+    "constrains/serviceAccount": {
+      "not": {
+        "properties": {
+          "serviceAccount": {}
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/serviceAccount=null": {
+      "properties": {
+        "serviceAccount": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "helm-no-template-actions": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "propertyNames": {
+            "not": {
+              "pattern": "\\{\\{"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "pattern": "\\{\\{"
+          },
+          "type": "string"
+        },
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/helm-no-template-actions"
+          },
+          "type": "array"
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -2660,13 +2684,80 @@
     },
     "fluentd": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1customConfigFile:t"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "elasticsearch": {}
+                      },
+                      "required": [
+                        "elasticsearch"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "elasticsearch": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "elasticsearch"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/definitions/constrains~1enabled:t"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
       "description": "Fluentd configuration\nJira log collection and aggregation can be enabled using Fluentd. This config\nassumes an existing ELK stack has been stood up and is available.\nhttps://www.fluentd.org/",
       "properties": {
         "customConfigFile": {
           "description": "Set to 'true' if a custom config (see 'configmap-fluentd.yaml' for default)\nshould be used for Fluentd. If enabled this config must be supplied via the\n'fluentdCustomConfig' property below. If your custom config forces fluentd to run in a server mode,\nadd `-Datlassian.logging.cloud.enabled=true` to `jira.AdditionalJvmArgs` stanza in values file"
         },
+        "elasticsearch": {
+          "additionalProperties": {},
+          "description": "Elasticsearch config based on your ELK stack",
+          "properties": {
+            "enabled": {
+              "description": "Set to 'true' if Fluentd should send all log events to an Elasticsearch service."
+            },
+            "hostname": {
+              "description": "The hostname of the Elasticsearch service that Fluentd should send logs to."
+            },
+            "indexNamePrefix": {
+              "description": "The prefix of the Elasticsearch index name that will be used"
+            }
+          }
+        },
         "enabled": {
           "description": "Set to 'true' if the Fluentd sidecar (DaemonSet) should be added to each pod"
+        },
+        "fluentdCustomConfig": {
+          "additionalProperties": {},
+          "description": "Custom fluent.conf file\nfluent.conf: |\n<source>\n<parse>\nformat_firstline /\\d{4}-\\d{1,2}-\\d{1,2}/\n</parse>\npath /opt/atlassian/jira/logs/access_log.*\npos_file /tmp/jiralog.pos\ntag jira-access-logs\n</source>"
+        },
+        "httpPort": {
+          "description": "The port on which the Fluentd sidecar will listen"
         }
       },
       "type": "object"
@@ -2726,6 +2817,38 @@
                   ],
                   "type": "object"
                 }
+              },
+              {
+                "properties": {
+                  "tunnel": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tunnel"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/definitions/constrains~1additionalCertificates=null"
+              },
+              {
+                "not": {
+                  "$ref": "#/definitions/constrains~1additionalCertificates"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "tunnel": {}
+                  },
+                  "required": [
+                    "tunnel"
+                  ],
+                  "type": "object"
+                }
               }
             ]
           },
@@ -2737,6 +2860,19 @@
         "additionalAnnotations": {
           "description": "Defines additional annotations to the Jira StateFulSet. This might be required when deploying using a GitOps approach\nargocd.argoproj.io/sync-wave: \"10\""
         },
+        "additionalCertificates": {
+          "additionalProperties": {},
+          "description": "Certificates to be added to Java truststore. Provide reference to a secret that contains the certificates",
+          "properties": {
+            "secretList": {
+              "description": "A list of secrets with their respective keys holding certificates to be added to the Java truststore.\nIt is mandatory to specify which keys from secret data need to be mounted as files to the init container.\n- name: self-signed-ca\nkeys:\n- ca.crt\n- intermediate.crt\n- name: stg-intermediate\nkeys:\n- stg.crt"
+            },
+            "secretName": {
+              "description": "Name of the Kubernetes secret with certificates in its data. All secret keys in the secret data\nwill be treated as certificates to be added to Java truststore. If defined, this takes precedence over secretList."
+            }
+          },
+          "type": "object"
+        },
         "additionalJvmArgs": {
           "description": "Specifies a list of additional arguments that can be passed to the Jira JVM, e.g.\nsystem properties."
         },
@@ -2746,6 +2882,30 @@
             {
               "if": {
                 "anyOf": [
+                  {
+                    "properties": {
+                      "jvm": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "jvm"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "jvm": {}
+                      },
+                      "required": [
+                        "jvm"
+                      ],
+                      "type": "object"
+                    }
+                  },
                   {
                     "not": {
                       "properties": {
@@ -2815,6 +2975,53 @@
                 }
               },
               "type": "object"
+            },
+            "jvm": {
+              "additionalProperties": {},
+              "description": "JVM Memory / Heap Size definitions. The values below are based on the\ndefaults defined for the Jira docker container.\nhttps://bitbucket.org/atlassian-docker/docker-atlassian-jira/src/master/#markdown-header-memory-heap-size",
+              "properties": {
+                "maxHeap": {
+                  "description": "The maximum amount of heap memory that will be used by the Jira JVM"
+                },
+                "minHeap": {
+                  "description": "The minimum amount of heap memory that will be used by the Jira JVM"
+                },
+                "reservedCodeCache": {
+                  "description": "The memory reserved for the Jira JVM code cache"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "tunnel": {
+          "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/definitions/constrains~1additionalConnector"
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/constrains~1additionalConnector=null"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
+          "description": "Configure additional Tomcat connector to set up tunnel. Define the connector port and optional additional attributes.\nWhen 'tunnel.additionalConnector.port' is defined, an additional connector is added to server.xml\nand '-Dsecure.tunnel.upstream.port=<port_number>' is added to JVM args",
+          "properties": {
+            "additionalConnector": {
+              "additionalProperties": {},
+              "properties": {
+                "port": {}
+              },
+              "type": "object"
             }
           },
           "type": "object"
@@ -2846,6 +3053,9 @@
                         "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
                       },
                       {
+                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                      },
+                      {
                         "anyOf": [
                           {
                             "$ref": "#/definitions/constrains~1persistence.labels.additionalLabels:t"
@@ -2854,9 +3064,6 @@
                             "$ref": "#/definitions/constrains~1persistence.labels.enabled:t"
                           }
                         ]
-                      },
-                      {
-                        "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
                       }
                     ]
                   }
@@ -2922,13 +3129,13 @@
                         {
                           "anyOf": [
                             {
+                              "$ref": "#/definitions/constrains~1image.tag:t"
+                            },
+                            {
                               "$ref": "#/definitions/constrains~1majorVersion:t@2"
                             },
                             {
                               "$ref": "#/definitions/constrains~1image.tag"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1image.tag:t"
                             }
                           ]
                         },
@@ -2936,12 +3143,15 @@
                           "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@4"
                         },
                         {
-                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                        },
-                        {
                           "anyOf": [
                             {
                               "$ref": "#/definitions/constrains~1persistence.storageClass=null"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                            },
+                            {
+                              "$ref": "#/definitions/constrains~1persistence.enabled:t"
                             },
                             {
                               "$ref": "#/definitions/constrains~1persistence.storageClass+persistence.storageClass=null"
@@ -2951,23 +3161,48 @@
                             },
                             {
                               "$ref": "#/definitions/constrains~1persistence.storageClass@3"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1persistence.storageClass:t"
-                            },
-                            {
-                              "$ref": "#/definitions/constrains~1persistence.enabled:t"
                             }
                           ]
                         },
                         {
                           "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                        },
+                        {
+                          "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
                         }
                       ]
                     }
                   },
                   {
                     "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1persistence.storageClass:t@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null@3"
+                          }
+                        ]
+                      },
                       {
                         "allOf": [
                           {
@@ -2980,29 +3215,13 @@
                             "not": {
                               "anyOf": [
                                 {
-                                  "$ref": "#/definitions/constrains~1image.tag"
+                                  "$ref": "#/definitions/constrains~1image.tag:t"
                                 },
                                 {
-                                  "$ref": "#/definitions/constrains~1image.tag:t"
+                                  "$ref": "#/definitions/constrains~1image.tag"
                                 }
                               ]
                             }
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1persistence.enabled:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1persistence.storageClass:t@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null@3"
                           }
                         ]
                       },
@@ -3013,18 +3232,6 @@
                           },
                           {
                             "$ref": "#/definitions/constrains~1nodeGroup+nodeGroup=null@6"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/definitions/constrains~1enabled+enabled!=false+enabled!=true+enabled=true"
-                          },
-                          {
-                            "not": {
-                              "$ref": "#/definitions/constrains~1nameOverride+nameOverride:t"
-                            }
                           }
                         ]
                       }
@@ -3042,30 +3249,10 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null@2"
-                          },
-                          {
-                            "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
-                          }
-                        ]
-                      },
-                      {
-                        "allOf": [
-                          {
                             "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null@3"
                           },
                           {
                             "anyOf": [
-                              {
-                                "allOf": [
-                                  {
-                                    "$ref": "#/definitions/constrains~1persistence.storageClass:t"
-                                  },
-                                  {
-                                    "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
-                                  }
-                                ]
-                              },
                               {
                                 "allOf": [
                                   {
@@ -3089,8 +3276,28 @@
                                     ]
                                   }
                                 ]
+                              },
+                              {
+                                "allOf": [
+                                  {
+                                    "$ref": "#/definitions/constrains~1persistence.storageClass:t"
+                                  },
+                                  {
+                                    "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
+                                  }
+                                ]
                               }
                             ]
+                          }
+                        ]
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/constrains~1persistence+persistence.storageClass+persistence.storageClass=null@2"
+                          },
+                          {
+                            "$ref": "#/definitions/constrains~1image.tag+image.tag:t+majorVersion:t+nameOverride+nameOverride:t+nodeGroup+1more"
                           }
                         ]
                       }
@@ -3270,7 +3477,54 @@
       "description": "Standard K8s schedulerName that will be applied to all Jira pods.\nCheck Kubernetes documentation on how to configure multiple schedulers:\nhttps://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/#specify-schedulers-for-pods"
     },
     "serviceAccount": {
-      "description": "K8s ServiceAccount configuration. Give fine-grained identity and authorization\nto Pods"
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "eksIrsa": {}
+                  },
+                  "required": [
+                    "eksIrsa"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "eksIrsa": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "eksIrsa"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "description": "K8s ServiceAccount configuration. Give fine-grained identity and authorization\nto Pods",
+      "properties": {
+        "eksIrsa": {
+          "additionalProperties": {},
+          "description": "Use EKS IRSA. See: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
+          "properties": {
+            "roleArn": {
+              "description": "Defining a full arn of AWS role to assume will automatically annotate jira,\ne.g. `eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/S3Access`.\n\"-Daws.webIdentityTokenFile=/var/run/secrets/eks.amazonaws.com/serviceaccount/token\" will be automatically added to Jira JVM arguments"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "testPods": {
       "description": "Metadata and pod spec for pods started in Helm tests"

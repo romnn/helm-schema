@@ -672,6 +672,24 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "natskafka": {
+          "additionalProperties": {},
+          "properties": {
+            "monitoring": {
+              "additionalProperties": {},
+              "properties": {
+                "tls": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -5711,50 +5729,87 @@
         "connectTimeout": {},
         "deploymentLabels": {},
         "logging": {
-          "additionalProperties": {},
-          "properties": {
-            "colors": {},
-            "debug": {},
-            "pid": {},
-            "time": {},
-            "trace": {}
-          },
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "trace": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "pid": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "debug": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "time": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "colors": {}
+              }
+            },
+            {
+              "properties": {}
+            }
+          ],
           "type": "object"
         },
         "monitoring": {
-          "additionalProperties": {},
-          "properties": {
-            "httpHost": {},
-            "httpPort": {
-              "description": "0 means no monitoring, -1 means some available port"
+          "anyOf": [
+            {
+              "properties": {
+                "tls": {
+                  "properties": {}
+                }
+              }
             },
-            "httpsPort": {},
-            "tls": {
+            {
               "additionalProperties": {},
               "properties": {
-                "cert": {},
-                "key": {},
-                "root": {},
-                "secret": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "nats": {
-          "additionalProperties": {},
-          "properties": {
-            "connectTimeout": {},
-            "credentials": {
+                "httpPort": {
+                  "description": "0 means no monitoring, -1 means some available port"
+                }
+              }
+            },
+            {
               "additionalProperties": {},
               "properties": {
-                "secret": {
+                "tls": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "tls": {
                   "anyOf": [
                     {
                       "additionalProperties": {},
                       "properties": {
-                        "name": {}
+                        "secret": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "root": {}
                       }
                     },
                     {
@@ -5767,10 +5822,83 @@
                 }
               }
             },
-            "maxReconnects": {},
-            "reconnectWait": {},
-            "servers": {}
-          },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "httpsPort": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "httpHost": {}
+              }
+            }
+          ],
+          "type": "object"
+        },
+        "nats": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "reconnectWait": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "connectTimeout": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "credentials": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "secret": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "name": {}
+                          }
+                        },
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "key": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "servers": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "maxReconnects": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "credentials": {}
+              }
+            },
+            {
+              "properties": {}
+            }
+          ],
           "type": "object"
         },
         "nodeSelector": {

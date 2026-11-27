@@ -11500,7 +11500,7 @@
                   "anyOf": [
                     {
                       "else": {
-                        "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
+                        "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
                       },
                       "if": {
                         "$ref": "#/definitions/constrains~1pulsar.rbac.enabled:t"
@@ -11510,7 +11510,7 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
+                                "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
                               },
                               {
                                 "not": {
@@ -11521,7 +11521,7 @@
                           },
                           {
                             "else": {
-                              "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
+                              "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
                             },
                             "if": {
                               "$ref": "#/definitions/constrains~1pulsar.rbac.psp:t"
@@ -11536,7 +11536,7 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
+                          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
                         },
                         {
                           "not": {
@@ -27593,7 +27593,7 @@
                   "anyOf": [
                     {
                       "else": {
-                        "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
+                        "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
                       },
                       "if": {
                         "$ref": "#/definitions/constrains~1pulsar.tls.broker.enabled:t"
@@ -27605,7 +27605,7 @@
                     {
                       "allOf": [
                         {
-                          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
+                          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
                         },
                         {
                           "$ref": "#/definitions/constrains~1pulsar.tls.broker.enabled:t@2"
@@ -28780,7 +28780,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
+                    "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
                   },
                   {
                     "allOf": [
@@ -43031,7 +43031,7 @@
                                   },
                                   {
                                     "else": {
-                                      "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+                                      "$ref": "#/definitions/constrains~1mysql.commonLabels"
                                     },
                                     "if": {
                                       "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -43097,7 +43097,7 @@
                                 },
                                 {
                                   "else": {
-                                    "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+                                    "$ref": "#/definitions/constrains~1mysql.commonLabels"
                                   },
                                   "if": {
                                     "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -43264,7 +43264,7 @@
                                   },
                                   {
                                     "else": {
-                                      "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+                                      "$ref": "#/definitions/constrains~1mysql.commonLabels"
                                     },
                                     "if": {
                                       "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -43330,7 +43330,7 @@
                                 },
                                 {
                                   "else": {
-                                    "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+                                    "$ref": "#/definitions/constrains~1mysql.commonLabels"
                                   },
                                   "if": {
                                     "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -43495,7 +43495,7 @@
                                   },
                                   {
                                     "else": {
-                                      "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+                                      "$ref": "#/definitions/constrains~1mysql.commonLabels"
                                     },
                                     "if": {
                                       "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -43561,7 +43561,7 @@
                                 },
                                 {
                                   "else": {
-                                    "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+                                    "$ref": "#/definitions/constrains~1mysql.commonLabels"
                                   },
                                   "if": {
                                     "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -46643,24 +46643,10 @@
       "type": "object"
     },
     "constrains/annotations": {
+      "additionalProperties": {},
       "properties": {
-        "annotations": {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "annotations"
-      ],
-      "type": "object"
+        "annotations": {}
+      }
     },
     "constrains/annotations:helm-marker-free": {
       "properties": {
@@ -46733,6 +46719,26 @@
       "type": "object"
     },
     "constrains/annotations@2": {
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "annotations"
+      ],
+      "type": "object"
+    },
+    "constrains/annotations@3": {
       "properties": {
         "annotations": {
           "type": "null"
@@ -52632,7 +52638,7 @@
     "constrains/etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+14more@13"
+          "$ref": "#/definitions/when~1pulsar.toolset.restartPodsOnConfigMapChange:t~1then~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+13more~1else~1any"
         },
         {
           "$ref": "#/definitions/constrains~1pulsar.tls.enabled:t@2"
@@ -52652,7 +52658,7 @@
     "constrains/etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22": {
       "allOf": [
         {
-          "$ref": "#/definitions/when~1pulsar.toolset.restartPodsOnConfigMapChange:t~1then~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+13more~1else~1any"
+          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+14more@13"
         },
         {
           "$ref": "#/definitions/constrains~1pulsar.tls.enabled:t@2"
@@ -52744,10 +52750,10 @@
     "constrains/etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@29": {
       "anyOf": [
         {
-          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
+          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
         },
         {
-          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
+          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
         }
       ]
     },
@@ -52952,7 +52958,7 @@
     "constrains/etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+16more@15": {
       "allOf": [
         {
-          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
+          "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
         },
         {
           "$ref": "#/definitions/constrains~1pulsar.proxy.restartPodsOnConfigMapChange:t"
@@ -65397,7 +65403,7 @@
               "minio": {
                 "properties": {
                   "persistence": {
-                    "$ref": "#/definitions/constrains~1annotations@2"
+                    "$ref": "#/definitions/constrains~1annotations@3"
                   }
                 },
                 "required": [
@@ -65472,7 +65478,7 @@
           "minio": {
             "properties": {
               "persistence": {
-                "$ref": "#/definitions/constrains~1annotations"
+                "$ref": "#/definitions/constrains~1annotations@2"
               }
             },
             "required": [
@@ -67349,7 +67355,7 @@
       "type": "object"
     },
     "constrains/mysql.commonLabels": {
-      "$ref": "#/definitions/constrains~1mysql.commonLabels@3"
+      "$ref": "#/definitions/constrains~1mysql.commonLabels@4"
     },
     "constrains/mysql.commonLabels!=null": {
       "properties": {
@@ -67380,7 +67386,7 @@
           "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+          "$ref": "#/definitions/constrains~1mysql.commonLabels"
         },
         {
           "not": {
@@ -67399,7 +67405,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -67473,7 +67479,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -67615,7 +67621,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -67992,7 +67998,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -68010,7 +68016,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -68070,7 +68076,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -68088,7 +68094,7 @@
         },
         {
           "else": {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           "if": {
             "$ref": "#/definitions/constrains~1tags.etcd=false@2"
@@ -68352,7 +68358,7 @@
           "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.commonLabels"
+          "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
         }
       ]
     },
@@ -68362,7 +68368,7 @@
           "$ref": "#/definitions/constrains~1tags.bitnami-common=false@2"
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+          "$ref": "#/definitions/constrains~1mysql.commonLabels"
         }
       ]
     },
@@ -68374,7 +68380,7 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+          "$ref": "#/definitions/constrains~1mysql.commonLabels"
         }
       ]
     },
@@ -68386,7 +68392,7 @@
           }
         },
         {
-          "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+          "$ref": "#/definitions/constrains~1mysql.commonLabels"
         }
       ]
     },
@@ -68407,7 +68413,7 @@
       "type": "object"
     },
     "constrains/mysql.commonLabels@2": {
-      "$ref": "#/definitions/constrains~1mysql.commonLabels@4"
+      "$ref": "#/definitions/constrains~1mysql.commonLabels@3"
     },
     "constrains/mysql.commonLabels@3": {
       "not": {
@@ -79494,7 +79500,7 @@
               "not": {
                 "properties": {
                   "serviceAccount": {
-                    "$ref": "#/definitions/constrains~1annotations"
+                    "$ref": "#/definitions/constrains~1annotations@2"
                   }
                 },
                 "required": [
@@ -79512,7 +79518,7 @@
                   {
                     "properties": {
                       "serviceAccount": {
-                        "$ref": "#/definitions/constrains~1annotations@2"
+                        "$ref": "#/definitions/constrains~1annotations@3"
                       }
                     },
                     "required": [
@@ -81258,13 +81264,32 @@
       }
     },
     "values/dataCoordinator.service": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {},
-        "clusterIP": {},
-        "labels": {},
-        "port": {}
-      },
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "port": {}
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "labels": {}
+          }
+        },
+        {
+          "properties": {}
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "clusterIP": {}
+          }
+        },
+        {
+          "$ref": "#/definitions/constrains~1annotations"
+        }
+      ],
       "type": "object"
     },
     "values/etcd.nameOverride": {
@@ -95676,7 +95701,7 @@
     },
     "when/pulsar.proxy.restartPodsOnConfigMapChange:t/then/etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@22"
+        "$ref": "#/definitions/constrains~1etcd+etcd.enabled=true+kafka+mysql+mysql.architecture=replication+15more@20"
       },
       "if": {
         "$ref": "#/definitions/constrains~1pulsar.proxy.restartPodsOnConfigMapChange:t@2"
@@ -99735,7 +99760,7 @@
     },
     "when/tags.kafka=false/then/mysql.commonLabels+mysql.fullnameOverride+mysql.nameOverride/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.kafka=false@2"
@@ -99746,7 +99771,7 @@
     },
     "when/tags.kafka=false/then/mysql.commonLabels+mysql.fullnameOverride+mysql.nameOverride/else/any@2": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.kafka=false@2"
@@ -99801,7 +99826,7 @@
     },
     "when/tags.kafka=false/then/mysql.commonLabels+mysql.fullnameOverride/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.kafka=false@2"
@@ -99812,7 +99837,7 @@
     },
     "when/tags.kafka=false/then/mysql.commonLabels+mysql.fullnameOverride/else/any@2": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.kafka=false@2"
@@ -99867,7 +99892,7 @@
     },
     "when/tags.kafka=false/then/mysql.commonLabels+mysql.nameOverride/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.kafka=false@2"
@@ -99878,7 +99903,7 @@
     },
     "when/tags.kafka=false/then/mysql.commonLabels+mysql.nameOverride/else/any@2": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.kafka=false@2"
@@ -100146,7 +100171,7 @@
     },
     "when/tags.mysql=false/then/mysql.commonLabels+tags.mysql=true/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.mysql=false"
@@ -100154,7 +100179,7 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels"
           },
           {
             "$ref": "#/definitions/constrains~1tags.mysql=true@3"
@@ -100596,7 +100621,7 @@
     },
     "when/tags.mysql=false/then/tags.mysql=true/else/mysql.commonLabels": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.mysql=false"
@@ -100979,7 +101004,7 @@
     },
     "when/tags.pulsar=false/then/mysql.commonLabels+tags.pulsar=true/else/any": {
       "else": {
-        "$ref": "#/definitions/constrains~1mysql.commonLabels"
+        "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
       },
       "if": {
         "$ref": "#/definitions/constrains~1tags.pulsar=false@2"
@@ -100987,7 +101012,7 @@
       "then": {
         "allOf": [
           {
-            "$ref": "#/definitions/constrains~1mysql.commonLabels"
+            "$ref": "#/definitions/constrains~1mysql.commonLabels@2"
           },
           {
             "$ref": "#/definitions/constrains~1tags.pulsar=true"
@@ -101733,12 +101758,19 @@
       ],
       "properties": {
         "activeStandby": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "Enable active-standby when you set multiple replicas for data coordinator"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable active-standby when you set multiple replicas for data coordinator"
+                }
+              }
+            },
+            {
+              "properties": {}
             }
-          },
+          ],
           "type": "object"
         },
         "affinity": {},
@@ -101988,12 +102020,19 @@
       ],
       "properties": {
         "activeStandby": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "Enable active-standby when you set multiple replicas for index coordinator"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable active-standby when you set multiple replicas for index coordinator"
+                }
+              }
+            },
+            {
+              "properties": {}
             }
-          },
+          ],
           "type": "object"
         },
         "affinity": {},
@@ -102237,16 +102276,33 @@
       ],
       "properties": {
         "file": {
-          "additionalProperties": {},
-          "properties": {
-            "maxAge": {
-              "description": "day"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "maxBackups": {}
+              }
             },
-            "maxBackups": {},
-            "maxSize": {
-              "description": "MB"
+            {
+              "properties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "maxAge": {
+                  "description": "day"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "maxSize": {
+                  "description": "MB"
+                }
+              }
             }
-          },
+          ],
           "type": "object"
         },
         "format": {
@@ -102254,50 +102310,75 @@
         },
         "level": {},
         "persistence": {
-          "additionalProperties": {},
-          "properties": {
-            "annotations": {},
-            "enabled": {
-              "description": "If true, create/use a Persistent Volume Claim\nIf false, use emptyDir"
-            },
-            "mountPath": {},
-            "persistentVolumeClaim": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "storageClass": {
-                      "description": "Milvus Logs Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.\nReadWriteMany access mode required for milvus cluster."
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "accessModes": {}
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "subPath": {}
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "size": {}
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "existingClaim": {}
-                  }
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "If true, create/use a Persistent Volume Claim\nIf false, use emptyDir"
                 }
-              ]
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "persistentVolumeClaim": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "mountPath": {}
+              }
+            },
+            {
+              "properties": {}
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "persistentVolumeClaim": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "storageClass": {
+                          "description": "Milvus Logs Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.\nReadWriteMany access mode required for milvus cluster."
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "accessModes": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "subPath": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "size": {}
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "existingClaim": {}
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "$ref": "#/definitions/constrains~1annotations"
             }
-          },
+          ],
           "type": "object"
         }
       },
@@ -103193,14 +103274,11 @@
       "description": "mixCoordinator contains all coord\nIf you want to use mixcoord, enable this and disable all of other coords",
       "properties": {
         "activeStandby": {
-          "additionalProperties": {},
           "properties": {
             "enabled": {
-              "description": "Enable active-standby when you set multiple replicas for Mixture coordinator",
-              "type": "boolean"
+              "description": "Enable active-standby when you set multiple replicas for Mixture coordinator"
             }
-          },
-          "type": "object"
+          }
         },
         "affinity": {},
         "enabled": {},
@@ -103231,10 +103309,7 @@
               }
             },
             {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {}
-              }
+              "$ref": "#/definitions/constrains~1annotations"
             }
           ]
         },
@@ -103291,23 +103366,16 @@
           "$ref": "#/definitions/values~1dataCoordinator.heaptrack"
         },
         "http": {
-          "additionalProperties": {},
           "properties": {
             "debugMode": {
-              "additionalProperties": {},
               "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
+                "enabled": {}
+              }
             },
             "enabled": {
-              "description": "whether to enable http rest server",
-              "type": "boolean"
+              "description": "whether to enable http rest server"
             }
-          },
-          "type": "object"
+          }
         },
         "nodeSelector": {},
         "profiling": {
@@ -104264,12 +104332,19 @@
       ],
       "properties": {
         "activeStandby": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "Enable active-standby when you set multiple replicas for query coordinator"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable active-standby when you set multiple replicas for query coordinator"
+                }
+              }
+            },
+            {
+              "properties": {}
             }
-          },
+          ],
           "type": "object"
         },
         "affinity": {},
@@ -104352,12 +104427,19 @@
       ],
       "properties": {
         "activeStandby": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "description": "Enable active-standby when you set multiple replicas for root coordinator"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable active-standby when you set multiple replicas for root coordinator"
+                }
+              }
+            },
+            {
+              "properties": {}
             }
-          },
+          ],
           "type": "object"
         },
         "affinity": {},
