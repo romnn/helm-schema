@@ -3212,6 +3212,87 @@ fn length_guarded_range_operand() -> eyre::Result<()> {
 }
 
 #[test]
+fn length_zero_comparisons_preserve_nonemptiness() -> eyre::Result<()> {
+    let expected = schema_for(
+        "{}",
+        "{{ if len .Values.x }}{{ range .Values.x }}{{ end }}{{ end }}",
+    )?;
+    let programs = [
+        "{{ if gt (len .Values.x) 0 }}{{ range .Values.x }}{{ end }}{{ end }}",
+        "{{ if lt 0 (len .Values.x) }}{{ range .Values.x }}{{ end }}{{ end }}",
+        "{{ if eq (len .Values.x) 0 }}{{ else }}{{ range .Values.x }}{{ end }}{{ end }}",
+        "{{ if ne 0 (len .Values.x) }}{{ range .Values.x }}{{ end }}{{ end }}",
+    ];
+    let actual = programs
+        .iter()
+        .map(|program| schema_for("{}", program))
+        .collect::<eyre::Result<Vec<_>>>()?;
+    assert_member_verdicts(&expected, &actual)?;
+    let expected = vec![expected; programs.len()];
+    assert_expanded_contracts(&actual, &expected)
+}
+
+#[test]
+fn length_is_nonnegative_with_unknown_emptiness() -> eyre::Result<()> {
+    let expected = schema_for("{}", "{{ $_ := len .Values.x }}")?;
+    let programs = [
+        "{{ if ge (len .Capabilities.APIVersions) 0 }}{{ $_ := len .Values.x }}{{ end }}",
+        "{{ if le 0 (len .Capabilities.APIVersions) }}{{ $_ := len .Values.x }}{{ end }}",
+        "{{ if lt (len .Capabilities.APIVersions) 0 }}{{ else }}{{ $_ := len .Values.x }}{{ end }}",
+        "{{ if gt 0 (len .Capabilities.APIVersions) }}{{ else }}{{ $_ := len .Values.x }}{{ end }}",
+    ];
+    let actual = programs
+        .iter()
+        .map(|program| schema_for("{}", program))
+        .collect::<eyre::Result<Vec<_>>>()?;
+    for schema in &actual {
+        let validator = jsonschema::validator_for(schema)?;
+        for (document, renders) in [
+            (json!({}), false),
+            (json!({"x": true}), false),
+            (json!({"x": ""}), true),
+            (json!({"x": []}), true),
+        ] {
+            sim_assert_eq!(have: validator.is_valid(&document), want: renders, "{document}");
+        }
+    }
+    let expected = vec![expected; programs.len()];
+    assert_expanded_contracts(&actual, &expected)
+}
+
+#[test]
+fn picked_map_length_is_nonnegative_after_count_widens() -> eyre::Result<()> {
+    let keys = (0..10)
+        .map(|index| format!(r#""k{index}""#))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let expected = schema_for(
+        "{}",
+        &formatdoc! {r"
+        {{{{ $picked := pick .Values {keys} }}}}
+        {{{{ $_ := len .Values.x }}}}
+    "},
+    )?;
+    let actual = schema_for(
+        "{}",
+        &formatdoc! {r"
+        {{{{ $picked := pick .Values {keys} }}}}
+        {{{{ if ge (len $picked) 0 }}}}{{{{ $_ := len .Values.x }}}}{{{{ end }}}}
+    "},
+    )?;
+    let validator = jsonschema::validator_for(&actual)?;
+    for (document, renders) in [
+        (json!({}), false),
+        (json!({"k0": "present", "x": true}), false),
+        (json!({"x": ""}), true),
+        (json!({"k0": "present", "x": []}), true),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&document), want: renders, "{document}");
+    }
+    assert_expanded_contracts(&[actual], &[expected])
+}
+
+#[test]
 fn map_range_member_hosts() -> eyre::Result<()> {
     let expected = json!({
         "$schema": "http://json-schema.org/draft-07/schema#",

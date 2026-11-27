@@ -176,6 +176,16 @@ struct Region {
     remaining: usize,
 }
 
+impl Region {
+    fn record(&mut self, condition: Predicate, holds: bool) {
+        if holds {
+            self.holds.push(condition);
+        } else {
+            self.fails.push(condition);
+        }
+    }
+}
+
 /// Lifts `value OP bound` over an integer-valued operand to its inputs, or `None` when nothing
 /// about the operand's inputs decides it.
 pub(super) fn integer_comparison(
@@ -285,12 +295,7 @@ fn integer_arm(
         _ => None,
     };
     if let Some(integer) = integer {
-        let side = if order.holds(integer, bound) {
-            &mut region.holds
-        } else {
-            &mut region.fails
-        };
-        side.push(condition.clone());
+        region.record(condition.clone(), order.holds(integer, bound));
         return;
     }
     if cast
@@ -315,6 +320,27 @@ fn integer_arm(
         return;
     }
     match origin.derivation.as_deref() {
+        Some(super::relationship::Derivation {
+            source: _,
+            operation: ValueOperation::Length { nonempty },
+        }) if bound == 0 => {
+            // Every positive length compares to zero like one.
+            let empty_holds = order.holds(0, bound);
+            let nonempty_holds = order.holds(1, bound);
+            if empty_holds == nonempty_holds {
+                region.record(condition.clone(), empty_holds);
+            } else if let Some([when_nonempty, when_empty]) = nonempty.certified_guards() {
+                region.exact &= nonempty.coverage == Coverage::Exact;
+                for (guard, holds) in [(when_nonempty, nonempty_holds), (when_empty, empty_holds)] {
+                    region.record(
+                        Predicate::all(vec![condition.clone(), guard.clone()]),
+                        holds,
+                    );
+                }
+            } else {
+                region.exact = false;
+            }
+        }
         Some(derivation)
             if !cast
                 && matches!(

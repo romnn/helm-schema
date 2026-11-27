@@ -1606,6 +1606,7 @@ fn truth_test(state: &State, value: &Value, budget: &mut TruthBudget<'_>) -> Rc<
             super::relationship::ValueOperation::Capability { decision }
             | super::relationship::ValueOperation::Length { nonempty: decision },
     }) = value.operation_preimage()
+        && value.constant().is_none()
     {
         return Rc::clone(decision);
     }

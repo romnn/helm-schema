@@ -928,7 +928,7 @@ fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Result<Value,
     let TransferInput {
         function: _,
         arguments: _,
-        influences,
+        influences: _,
         first,
         last: _,
     } = input;
@@ -938,50 +938,92 @@ fn transfer_length(input: TransferInput<'_>, state: &mut State) -> Result<Value,
         &Predicate::True,
         super::query::RequirementKind::Length,
     );
+    if let ValueNode::Leaf(Leaf { datum, origin: _ }) = first.node.as_ref()
+        && !can_have_length(datum)
+    {
+        return Err(AbortReason::Type);
+    }
     let operand = state.heap.freeze(&first);
-    let kind = operand.go_type();
-    match kind {
-        GoType::String | GoType::Slice | GoType::Map | GoType::Unknown => {}
-        GoType::Nil
-        | GoType::Bool
-        | GoType::Int
-        | GoType::Int64
-        | GoType::Uint64
-        | GoType::Float64 => return Err(AbortReason::Type),
-    }
-    if kind == GoType::Map
-        && let Some(length) = state.map_length(&first)
-    {
-        return Ok(length);
-    }
-    let length = if let ValueNode::Leaf(Leaf {
-        datum: Datum::Sequence(sequence),
-        origin: _,
-    }) = first.node.as_ref()
-    {
-        Some(sequence.length)
-    } else if let ValueNode::Leaf(Leaf {
-        datum: Datum::Strings(slice),
-        origin: _,
-    }) = first.node.as_ref()
-    {
-        Some(slice.length)
-    } else if let Some(GuardValue::String(text)) = first.constant() {
-        Some(text.len())
+    let count = if operand.go_type() == GoType::Map {
+        state.map_length(&first)
     } else {
-        None
+        let length = match first.node.as_ref() {
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Sequence(sequence),
+                origin: _,
+            }) => Some(sequence.length),
+            ValueNode::Leaf(Leaf {
+                datum: Datum::Strings(slice),
+                origin: _,
+            }) => Some(slice.length),
+            _ => match first.constant() {
+                Some(GuardValue::String(text)) => Some(text.len()),
+                _ => None,
+            },
+        };
+        length
+            .and_then(|length| i64::try_from(length).ok())
+            .map(|length| Value::literal(GuardValue::Int(length)))
     };
-    if let Some(length) = length.and_then(|length| i64::try_from(length).ok()) {
-        return Ok(Value::literal(GuardValue::Int(length)));
+    let nonempty = state.test(count.as_ref().unwrap_or(&first));
+    let mut remaining = super::MAX_SCALAR_DISPATCH_STATES;
+    let length = count
+        .filter(|count| exact_length(count, &mut remaining))
+        .unwrap_or_else(|| Value::scalar(super::ScalarType::Int, None));
+    Ok(length.derived(operand, ValueOperation::Length { nonempty }))
+}
+
+fn exact_length(value: &Value, remaining: &mut usize) -> bool {
+    if *remaining == 0 {
+        return false;
     }
-    let result = Value::scalar(super::ScalarType::Int, None);
-    if kind != GoType::Unknown || first.identity().is_some() {
-        let nonempty = state.test(&first);
-        if nonempty.certified_guards().is_some() {
-            return Ok(result.derived(operand, ValueOperation::Length { nonempty }));
+    *remaining -= 1;
+    match value.node.as_ref() {
+        ValueNode::Select { decision, yes, no } => {
+            decision.coverage == super::Coverage::Exact
+                && decision.certified_guards().is_some()
+                && exact_length(yes, remaining)
+                && exact_length(no, remaining)
+        }
+        ValueNode::Leaf(Leaf {
+            datum: _,
+            origin: _,
+        }) => {
+            matches!(value.constant(), Some(GuardValue::Int(_)))
         }
     }
-    Ok(result.with_influences(influences))
+}
+
+fn can_have_length(datum: &Datum) -> bool {
+    use super::kinds::GoType;
+    use super::{ScalarType, TypeCoverage, UnknownValue};
+
+    match datum {
+        Datum::Scalar {
+            go_type,
+            content: _,
+        }
+        | Datum::Unknown(UnknownValue {
+            types: TypeCoverage::Scalar(go_type),
+            aliases: _,
+        }) => *go_type == ScalarType::String,
+        Datum::Map { view, target: _ }
+        | Datum::Unknown(UnknownValue {
+            types: TypeCoverage::Map(view),
+            aliases: _,
+        }) => matches!(super::hosts::go_type(*view), GoType::Map | GoType::Slice),
+        Datum::Sequence(_)
+        | Datum::Strings(_)
+        | Datum::Text(_)
+        | Datum::Slot {
+            backing: _,
+            index: _,
+        }
+        | Datum::Unknown(UnknownValue {
+            types: TypeCoverage::Sequence | TypeCoverage::Unresolved | TypeCoverage::InputNonMap,
+            aliases: _,
+        }) => true,
+    }
 }
 
 fn transfer_serialize(

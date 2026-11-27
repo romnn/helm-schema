@@ -106,6 +106,25 @@ fn files_get_uses_the_executing_chart_instance_catalog() {
 }
 
 #[test]
+fn length_of_known_non_containers_aborts_under_its_guard() {
+    let mut defines = DefineIndex::new();
+    defines.add_chart_file("", "README.md", b"a");
+    let db = IrAnalysisDb::new(&defines);
+    for operand in [
+        r#"(index (.Files.GetBytes "README.md") 0)"#,
+        ".Capabilities.KubeVersion",
+    ] {
+        let source = format!("{{{{ if .Values.enabled }}}}{{{{ len {operand} }}}}{{{{ end }}}}ok");
+        let execution = execute_document(&source, Some("templates/test.yaml"), &db);
+        sim_assert_eq!(
+            have: execution.abort_predicate(),
+            want: Predicate::truthy_path("enabled"),
+            "{operand}"
+        );
+    }
+}
+
+#[test]
 fn readonly_file_methods_keep_known_payloads_and_receiver_types() {
     let contents = indoc! {"
         hello
