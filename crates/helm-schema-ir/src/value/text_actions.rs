@@ -529,7 +529,6 @@ impl Query<'_> {
             | ValueOperation::SplitLiteral { separator: _ }
             | ValueOperation::SplitSegment(_)
             | ValueOperation::Member(_)
-            | ValueOperation::Omit(_)
             | ValueOperation::Pick(_)
             | ValueOperation::Merge { overwrite: _ } => {}
         }

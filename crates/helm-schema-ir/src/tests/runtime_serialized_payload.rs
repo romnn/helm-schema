@@ -205,13 +205,16 @@ fn relationship_query_pick_keeps_only_selected_members() -> eyre::Result<()> {
     Ok(())
 }
 
-/// A shallow omission preserves nested aliases, so later nested writes withdraw that region.
+/// A shallow copy keeps its slots and shares nested maps with its source.
 #[test]
 fn omitted_map_keeps_later_alias_exclusions() -> eyre::Result<()> {
     let source = indoc! {r#"
         {{- $saved := omit .Values.payload "removed" -}}
+        {{- $edited := set $saved "copyOnly" "fixed" -}}
+        {{- $_ := unset $saved "unsetMe" -}}
+        {{- $_ := set .Values.payload "sourceOnly" "fixed" -}}
         {{- $_ := set .Values.payload.nested "changed" "fixed" -}}
-        {{ toYaml $saved }}
+        {{ toYaml $edited }}
     "#};
     let db = IrAnalysisDb::new(&DefineIndex::new());
     let execution = execute_document(source, None, &db);
@@ -225,8 +228,152 @@ fn omitted_map_keeps_later_alias_exclusions() -> eyre::Result<()> {
         .first()
         .ok_or_eyre("remaining input region missing")?;
     sim_assert_eq!(have: arm.source.as_ref(), want: &ValuesPath::parse("payload"));
-    sim_assert_eq!(have: &arm.omitted_members, want: &BTreeSet::from(["nested".to_owned(), "removed".to_owned()]));
+    sim_assert_eq!(have: &arm.omitted_members, want: &BTreeSet::from(["copyOnly", "nested", "removed", "unsetMe"].map(str::to_owned)));
     Ok(())
+}
+
+#[test]
+fn get_on_an_omitted_map_allows_a_missing_input_key() {
+    use helm_schema_core::{Guard, GuardValue, Predicate};
+
+    let source = indoc! {r#"
+        {{- if kindIs "map" .Values.payload -}}
+        {{ upper (get (omit .Values.payload "drop") "optional") | quote }}
+        {{- end -}}
+    "#};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, None, &db);
+    let payload = ValuesPath::parse("payload");
+    let present = Predicate::from(Guard::HasKey {
+        path: ValuesPath::parse("payload"),
+        key: "optional".to_owned(),
+    });
+    let is_string = Predicate::from(Guard::TypeIs {
+        path: ValuesPath::parse("payload.optional"),
+        schema_type: "string".to_owned(),
+    });
+    let abort = execution.abort_predicate();
+    assert!(abort.exactly_implies(&present), "{abort:?}");
+    let present_nonstring = Predicate::all(vec![
+        Predicate::from(Guard::TypeIs {
+            path: payload.clone(),
+            schema_type: "object".to_owned(),
+        }),
+        Predicate::from(Guard::Eq {
+            path: payload.clone(),
+            value: GuardValue::Null,
+        })
+        .negated(),
+        Predicate::from(Guard::Absent { path: payload }).negated(),
+        present,
+        is_string.negated(),
+    ]);
+    assert!(present_nonstring.exactly_implies(&abort), "{abort:?}");
+}
+
+#[test]
+fn writing_a_symbolic_shallow_copy_member_mutates_the_source_child() {
+    use helm_schema_core::{Guard, Predicate};
+
+    let source = indoc! {r#"
+        {{- if kindIs "map" .Values.payload -}}
+        {{- if hasKey .Values.payload "nested" -}}
+        {{- if kindIs "map" .Values.payload.nested -}}
+        {{- $copy := omit .Values.payload "drop" -}}
+        {{- $_ := set $copy.nested "changed" "through-copy" -}}
+        {{- if ne .Values.payload.nested.changed "through-copy" -}}
+        {{- fail "nested alias lost" -}}
+        {{- end -}}
+        {{ .Values.payload.nested.changed | quote }}
+        {{- end -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let db = IrAnalysisDb::new(&DefineIndex::new());
+    let execution = execute_document(source, None, &db);
+    let abort = execution.abort_predicate();
+    let absent = Predicate::from(Guard::Absent {
+        path: ValuesPath::parse("payload.nested"),
+    });
+    // The template already established membership. Any abort with an absent child is unreachable.
+    assert!(abort.exactly_implies(&absent), "{abort:?}");
+    assert!(execution.sites().any(|site| {
+        site.rendered() && site.value().exact_text().as_deref() == Some(r#""through-copy""#)
+    }));
+}
+
+#[test]
+fn installation_omit_then_set_preserves_untouched_spec_members() {
+    let source = indoc! {r#"
+        {{- if .Values.installation.enabled }}
+        {{- $spec := omit .Values.installation "enabled" }}
+        {{- $_ := set $spec "imagePullSecrets" (list (dict "name" "fixed")) }}
+        apiVersion: operator.tigera.io/v1
+        kind: Installation
+        metadata:
+          name: default
+        spec: {{ toYaml $spec | nindent 2 }}
+        {{- end }}
+    "#};
+    let defines = DefineIndex::new();
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    let claims = contract
+        .uses()
+        .iter()
+        .filter(|row| row.source_expr == ValuesPath::parse("installation"))
+        .filter(|row| row.path.0 == ["spec"])
+        .map(|row| row.omitted_members.keys().cloned().collect::<BTreeSet<_>>())
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: claims,
+        want: BTreeSet::from([BTreeSet::from(["enabled", "imagePullSecrets"].map(str::to_owned))])
+    );
+}
+
+#[test]
+fn installation_projection_survives_a_decoded_replacement() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "_helpers.tpl",
+        indoc! {r#"
+            {{- define "pull-secrets" -}}
+            {{- $secrets := default list .Values.installation.imagePullSecrets -}}
+            {{- range $key, $value := .Values.imagePullSecrets -}}
+              {{- $secrets = append $secrets (dict "name" $key) -}}
+            {{- end -}}
+            {{ $secrets | toYaml }}
+            {{- end -}}
+        "#},
+    );
+    let source = indoc! {r#"
+        {{ $_ := include "pull-secrets" . }}
+        {{ if .Values.installation.enabled }}
+        {{ $spec := omit .Values.installation "enabled" }}
+        {{ $_ := set $spec "imagePullSecrets" (include "pull-secrets" . | fromYamlArray) }}
+        apiVersion: operator.tigera.io/v1
+        kind: Installation
+        metadata:
+          name: default
+        spec:
+        {{ $spec | toYaml | indent 2 }}
+        {{ end }}
+    "#};
+    let contract = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize();
+    let claims = contract
+        .uses()
+        .iter()
+        .filter(|row| row.source_expr == ValuesPath::parse("installation"))
+        .filter(|row| row.path.0 == ["spec"])
+        .map(|row| row.omitted_members.keys().cloned().collect::<BTreeSet<_>>())
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: claims,
+        want: BTreeSet::from([BTreeSet::from(["enabled", "imagePullSecrets"].map(str::to_owned))])
+    );
 }
 
 /// An unknown write to the decoded object cannot retain its old whole-source certificate.
@@ -765,6 +912,71 @@ fn borrowed_query_cache_preserves_guard_correlation() {
         sim_assert_eq!(have: cached, want: uncached);
     }
     assert!(query.work() <= 1024);
+}
+
+#[test]
+fn placement_visit_cutoff_keeps_visited_arms_and_other_values() {
+    use crate::value::relationship::RelationshipQuery;
+    use crate::value::text::TextTerm;
+    use crate::value::{Coverage, MAX_SCALAR_DISPATCH_STATES, State, Value};
+    use helm_schema_core::Predicate;
+    use tracing_subscriber::filter::Targets;
+    use tracing_subscriber::fmt::format::FmtSpan;
+    use tracing_subscriber::prelude::*;
+
+    let state = State::new(Value::nil());
+    let serialize = |path| {
+        Value::frozen_text(
+            TextTerm::Yaml {
+                value: state.heap.freeze(&Value::input(ValuesPath::parse(path))),
+                pretty: false,
+            },
+            BTreeSet::new(),
+        )
+    };
+    let decision = |condition: Predicate| {
+        state
+            .heap
+            .arena
+            .decision(condition.clone(), condition.negated(), Coverage::Exact)
+    };
+    let skipped = serialize("skipped");
+    let deep = (0..MAX_SCALAR_DISPATCH_STATES).fold(skipped.clone(), |next, index| {
+        Value::select(
+            decision(Predicate::truthy_path(format!("flags.k{index}"))),
+            next,
+            Value::nil(),
+        )
+    });
+    let bounded = state.heap.freeze(&Value::select(
+        decision(Predicate::truthy_path("early")),
+        serialize("visited"),
+        deep,
+    ));
+    let independent = state.heap.freeze(&skipped);
+    let inputs = state.heap.arena.input_objects.borrow();
+    let mut query = RelationshipQuery::new(&inputs, 1024);
+    let subscriber = tracing_subscriber::registry().with(
+        tracing_subscriber::fmt::layer()
+            .with_span_events(FmtSpan::ENTER)
+            .with_test_writer()
+            .with_filter(
+                Targets::new().with_target("helm_schema_ir::counters", tracing::Level::DEBUG),
+            ),
+    );
+    let known =
+        tracing::subscriber::with_default(subscriber, || query.placed_payload(&bounded, 1024));
+    sim_assert_eq!(
+        have: known.iter().map(|arm| arm.source.as_ref()).collect::<Vec<_>>(),
+        want: vec![&ValuesPath::parse("visited")]
+    );
+    let next = query.placed_payload(&independent, 1024);
+    let fresh = RelationshipQuery::new(&inputs, 1024).placed_payload(&independent, 1024);
+    sim_assert_eq!(have: next, want: fresh);
+    sim_assert_eq!(
+        have: fresh.iter().map(|arm| arm.source.as_ref()).collect::<Vec<_>>(),
+        want: vec![&ValuesPath::parse("skipped")]
+    );
 }
 
 /// A cached answer equals a fresh query under the same allowance, whatever earlier queries

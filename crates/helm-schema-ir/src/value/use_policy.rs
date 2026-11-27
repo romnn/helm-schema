@@ -124,10 +124,7 @@ impl<'a> Transfer<'a> {
                 self.opaque_text();
                 self.decoder = Some(*value);
             }
-            ValueOperation::Copy
-            | ValueOperation::Omit(_)
-            | ValueOperation::Pick(_)
-            | ValueOperation::Member(_) => {}
+            ValueOperation::Copy | ValueOperation::Pick(_) | ValueOperation::Member(_) => {}
             ValueOperation::Format(TextFormat::Value | TextFormat::String) => {
                 if self.serialized && self.decoder.is_none() {
                     return None;

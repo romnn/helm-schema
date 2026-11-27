@@ -3289,7 +3289,6 @@ fn select_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
     let Some(first) = arguments.first() else {
         return Value::influenced(influences);
     };
-    // Picking unknown members needs presence guards; omitted remainders stay lazy.
     let first = if function == "pick" {
         let first = state.consumed(first);
         if state.map_target(&first).is_some() {
@@ -3314,35 +3313,43 @@ fn select_map(function: &str, arguments: &[Value], state: &mut State) -> Value {
     let Some(keys) = keys else {
         return Value::influenced(influences);
     };
-    let operation = if function == "omit" {
-        super::relationship::ValueOperation::Omit(keys.clone())
-    } else {
-        super::relationship::ValueOperation::Pick(keys.clone())
-    };
-    let frozen = state.heap.freeze(&first);
-    let Some(mut map) = map_fields(&first, state) else {
-        return Value::influenced(influences).derived(frozen, operation);
-    };
     if function == "omit" {
+        let mut map = map_fields(&first, state).unwrap_or_else(|| MapFields {
+            fields: BTreeMap::new(),
+            remainder: if first.constant() == Some(&GuardValue::Null) {
+                Remainder::Closed
+            } else {
+                Remainder::Open
+            },
+        });
+        if map.remainder != Remainder::Closed {
+            map.remainder = super::layers::shallow_map_remainder(state.heap.freeze(&first));
+        }
         for key in keys {
             map.fields.insert(key, Field::Absent);
         }
-    } else {
-        map.fields.retain(|key, _| keys.contains(key));
-        for key in keys {
-            if matches!(map.fields.get(&key), Some(Field::Unknown))
-                || !map.fields.contains_key(&key) && map.remainder != Remainder::Closed
-            {
-                let present = state.field_presence(&first, &key);
-                let value = state.field(&first, &key);
-                map.fields.insert(
-                    key,
-                    Field::select(state.test(&present), Field::Present(value), Field::Absent),
-                );
-            }
-        }
-        map.remainder = Remainder::Closed;
+        return fresh_map(map, influences, state);
     }
+
+    let frozen = state.heap.freeze(&first);
+    let operation = ValueOperation::Pick(keys.clone());
+    let Some(mut map) = map_fields(&first, state) else {
+        return Value::influenced(influences).derived(frozen, operation);
+    };
+    map.fields.retain(|key, _| keys.contains(key));
+    for key in keys {
+        if matches!(map.fields.get(&key), Some(Field::Unknown))
+            || !map.fields.contains_key(&key) && map.remainder != Remainder::Closed
+        {
+            let present = state.field_presence(&first, &key);
+            let value = state.field(&first, &key);
+            map.fields.insert(
+                key,
+                Field::select(state.test(&present), Field::Present(value), Field::Absent),
+            );
+        }
+    }
+    map.remainder = Remainder::Closed;
     fresh_map(map, influences, state).derived(frozen, operation)
 }
 

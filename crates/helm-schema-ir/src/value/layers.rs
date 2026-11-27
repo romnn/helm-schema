@@ -1,9 +1,9 @@
-//! Maps built over open key sets by `deepCopy` and `merge`, read key by key (ADR 0072 §1).
+//! Maps built over open key sets, read key by key (ADR 0072 §1).
 //!
 //! Sprig's `merge` and `mergeOverwrite` run dario.cat/mergo v1.0.1 (`merge.go:58-166`): they
 //! mutate the destination in place, recurse into a nested map both sides hold, and assign a
 //! source member by reference where the destination lacks a non-empty one. `deepCopy` separates
-//! every nested map. When a key set is open (an input map), the object keeps its sources as
+//! every nested map, while `omit` shares the retained nested maps. When a key set is open (an input map), the object keeps its sources as
 //! layers and resolves each key when it is read. A nested map receives its share of the layers
 //! when it is first used as an object, so an alias taken before the merge sees the merge.
 
@@ -73,6 +73,17 @@ pub(super) fn unknown_members(
     }
 }
 
+/// The unwritten slots of a shallow copy read their values at the copy.
+pub(super) fn shallow_map_remainder(source: FrozenValue) -> Remainder {
+    Remainder::Layered(Rc::new(Layers {
+        base: Base::Copy {
+            source,
+            depth: CopyDepth::Shallow,
+        },
+        merges: Vec::new(),
+    }))
+}
+
 /// A remainder covering both remainders when their layers cannot be joined exactly: unknown
 /// members depending on both sides' inputs and referencing what either side may reference.
 pub(super) fn covering_remainder(yes: &Remainder, no: &Remainder) -> Remainder {
@@ -108,13 +119,30 @@ enum Base {
     Closed,
     /// The key reads the object's own input path.
     Input,
-    /// The key reads a copy of this map's member, frozen at the copy.
-    Copy(FrozenValue),
+    /// The key reads the frozen slot, sharing or copying its contents according to depth.
+    Copy {
+        source: FrozenValue,
+        depth: CopyDepth,
+    },
     /// The decoded copy of an unmodified input map.
     DecodedInput(ValuesPath),
     /// The key set and members are unknown (a decoded map of unknown text, a widened map):
     /// they depend on these inputs and may alias these objects.
     Unknown(Rc<BTreeSet<ValuesPath>>, super::Reach),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CopyDepth {
+    Shallow,
+    Deep,
+}
+
+#[derive(Clone, Copy)]
+enum InputSlot {
+    /// The value proxy used by merge and deep-copy lookups.
+    SymbolicValue,
+    /// A shallow copy keeps the source slot's membership as well as its value.
+    PreservePresence,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -162,10 +190,17 @@ impl State {
                 child.push(key);
                 Field::Present(Value::input(child))
             }),
-            Base::Copy(source) => {
-                let member = self.member_at(source, key);
-                self.copy_member(object, key, source, member)
-            }
+            Base::Copy {
+                source,
+                depth: copy_depth,
+            } => self.copied_slot(
+                object,
+                source,
+                *copy_depth,
+                key,
+                0,
+                InputSlot::SymbolicValue,
+            ),
             Base::DecodedInput(path) => self.decoded_input_field(object, path, key),
         };
         for MergeLayer {
@@ -187,7 +222,53 @@ impl State {
 
     /// A member of a frozen map, read at the heap version it was frozen at.
     fn member_at(&mut self, frozen: &FrozenValue, key: &str) -> Field {
-        self.member_of(&frozen.heap, &frozen.value, key, 0)
+        self.member_of(
+            &frozen.heap,
+            &frozen.value,
+            key,
+            0,
+            InputSlot::SymbolicValue,
+        )
+    }
+
+    fn copied_slot(
+        &mut self,
+        copy: &ObjectId,
+        source: &FrozenValue,
+        copy_depth: CopyDepth,
+        key: &str,
+        depth: usize,
+        slot: InputSlot,
+    ) -> Field {
+        let slot = match copy_depth {
+            CopyDepth::Shallow => InputSlot::PreservePresence,
+            CopyDepth::Deep => slot,
+        };
+        let member = self.member_of(&source.heap, &source.value, key, depth, slot);
+        match copy_depth {
+            CopyDepth::Shallow => member,
+            CopyDepth::Deep => self.copy_member(copy, key, source, member),
+        }
+    }
+
+    fn input_slot(&self, path: &ValuesPath, key: &str, slot: InputSlot) -> Field {
+        let mut child = path.clone();
+        child.push(key);
+        match slot {
+            InputSlot::SymbolicValue => Field::Present(Value::input(child)),
+            InputSlot::PreservePresence => {
+                let present = self.input_decision(Guard::HasKey {
+                    path: path.clone(),
+                    key: key.to_owned(),
+                });
+                let member = if key.is_empty() {
+                    Value::influenced(BTreeSet::from([path.clone()]))
+                } else {
+                    Value::input(child)
+                };
+                Field::select(present, Field::Present(member), Field::Absent)
+            }
+        }
     }
 
     fn member_of(
@@ -196,6 +277,7 @@ impl State {
         value: &Value,
         key: &str,
         depth: usize,
+        slot: InputSlot,
     ) -> Field {
         if depth > MAX_MERGE_DEPTH {
             return Field::Unknown;
@@ -203,14 +285,14 @@ impl State {
         match value.node.as_ref() {
             ValueNode::Select { decision, yes, no } => Field::select(
                 Rc::clone(decision),
-                self.member_of(heap, yes, key, depth + 1),
-                self.member_of(heap, no, key, depth + 1),
+                self.member_of(heap, yes, key, depth + 1, slot),
+                self.member_of(heap, no, key, depth + 1, slot),
             ),
             ValueNode::Leaf(Leaf { datum, origin }) => match datum {
                 Datum::Map {
                     view: _,
                     target: Some(id),
-                } => self.object_member_at(heap, id, key, depth),
+                } => self.object_member_at(heap, id, key, depth, slot),
                 Datum::Unknown(UnknownValue { types, aliases: _ }) => {
                     let Some(path) = &origin.identity else {
                         return Field::Unknown;
@@ -225,16 +307,14 @@ impl State {
                     if let Some(id) = backing
                         && heap.has_allocated_object(&id)
                     {
-                        return self.object_member_at(heap, &id, key, depth);
+                        return self.object_member_at(heap, &id, key, depth, slot);
                     }
                     match types {
                         TypeCoverage::InputNonMap
                         | TypeCoverage::Scalar(_)
                         | TypeCoverage::Sequence => Field::Absent,
                         TypeCoverage::Unresolved | TypeCoverage::Map(_) => {
-                            let mut child = path.clone();
-                            child.push(key);
-                            Field::Present(Value::input(child))
+                            self.input_slot(path, key, slot)
                         }
                     }
                 }
@@ -263,6 +343,7 @@ impl State {
         id: &ObjectId,
         key: &str,
         depth: usize,
+        slot: InputSlot,
     ) -> Field {
         // A copy child allocated after `heap` was frozen was pristine at that version: its
         // initial storage is what the frozen read sees.
@@ -286,29 +367,24 @@ impl State {
         }
         match remainder {
             Remainder::Closed => Field::Absent,
-            Remainder::Input => heap.input_paths.get(id).map_or(Field::Unknown, |path| {
-                let mut child = path.clone();
-                child.push(key);
-                Field::Present(Value::input(child))
-            }),
+            Remainder::Input => heap
+                .input_paths
+                .get(id)
+                .map_or(Field::Unknown, |path| self.input_slot(path, key, slot)),
             Remainder::Open | Remainder::Unknown { inputs: _ } => Field::Unknown,
             Remainder::Layered(layers) => {
                 let Layers { base, merges } = layers.as_ref();
                 let mut field = match base {
                     Base::Closed => Field::Absent,
                     Base::Unknown(_, _) => Field::Unknown,
-                    Base::Input => heap.input_paths.get(id).map_or(Field::Unknown, |path| {
-                        let mut child = path.clone();
-                        child.push(key);
-                        Field::Present(Value::input(child))
-                    }),
-                    // A copy's map member is the copy occurrence's own child object, never the
-                    // source's: a later write to the source does not reach it.
-                    Base::Copy(source) => {
-                        let source = source.clone();
-                        let member = self.member_of(&source.heap, &source.value, key, depth + 1);
-                        self.copy_member(id, key, &source, member)
-                    }
+                    Base::Input => heap
+                        .input_paths
+                        .get(id)
+                        .map_or(Field::Unknown, |path| self.input_slot(path, key, slot)),
+                    Base::Copy {
+                        source,
+                        depth: copy_depth,
+                    } => self.copied_slot(id, source, *copy_depth, key, depth + 1, slot),
                     Base::DecodedInput(path) => self.decoded_input_field(id, path, key),
                 };
                 for MergeLayer {
@@ -321,7 +397,7 @@ impl State {
                     if explicit.contains(key) {
                         continue;
                     }
-                    let member = self.member_of(&source.heap, &source.value, key, depth + 1);
+                    let member = self.member_of(&source.heap, &source.value, key, depth + 1, slot);
                     let merged = self.merge_field(field.clone(), member, *overwrite);
                     field = bounded_member(guarded(guard, merged, &field));
                 }
@@ -1027,7 +1103,11 @@ impl State {
     fn child_layers(&mut self, layers: &Layers, key: &str) -> Option<Layers> {
         let Layers { base, merges } = layers;
         let base = match base {
-            Base::Closed => return None,
+            Base::Closed
+            | Base::Copy {
+                source: _,
+                depth: CopyDepth::Shallow,
+            } => return None,
             Base::Unknown(inputs, aliases) => Base::Unknown(Rc::clone(inputs), aliases.clone()),
             Base::Input => Base::Input,
             Base::DecodedInput(path) => {
@@ -1035,11 +1115,17 @@ impl State {
                 child.push(key);
                 Base::DecodedInput(child)
             }
-            Base::Copy(source) => {
+            Base::Copy {
+                source,
+                depth: CopyDepth::Deep,
+            } => {
                 let Field::Present(member) = self.member_at(source, key) else {
                     return None;
                 };
-                Base::Copy(FrozenValue::at(Rc::clone(&source.heap), member))
+                Base::Copy {
+                    source: FrozenValue::at(Rc::clone(&source.heap), member),
+                    depth: CopyDepth::Deep,
+                }
             }
         };
         let merges: Vec<_> = merges
@@ -1084,7 +1170,13 @@ impl State {
         if !open {
             return None;
         }
-        let id = self.allocate_copy(None, Base::Copy(frozen));
+        let id = self.allocate_copy(
+            None,
+            Base::Copy {
+                source: frozen,
+                depth: CopyDepth::Deep,
+            },
+        );
         let map = Value::leaf(Datum::Map {
             view: MapType::Interface,
             target: Some(id),
@@ -1232,7 +1324,7 @@ impl State {
         Value::select(decision, map, nonmap)
     }
 
-    /// A member a copy reads from its source: nested maps become objects of the copy.
+    /// A deep-copy member: nested maps become objects of the copy.
     fn copy_member(
         &mut self,
         copy: &ObjectId,
@@ -1313,7 +1405,15 @@ impl State {
             return value.clone();
         }
         let frozen = FrozenValue::at(Rc::clone(&source.heap), value.clone());
-        let child = self.copy_child(copy, key, *arm, Base::Copy(frozen));
+        let child = self.copy_child(
+            copy,
+            key,
+            *arm,
+            Base::Copy {
+                source: frozen,
+                depth: CopyDepth::Deep,
+            },
+        );
         *arm += 1;
         let map = Value::leaf(Datum::Map {
             view: MapType::Interface,
@@ -1423,7 +1523,10 @@ impl State {
             Remainder::Input | Remainder::Layered(_) => {
                 self.heap.arena.layered.set(true);
                 Remainder::Layered(Rc::new(Layers {
-                    base: Base::Copy(source.clone()),
+                    base: Base::Copy {
+                        source: source.clone(),
+                        depth: CopyDepth::Deep,
+                    },
                     merges: Vec::new(),
                 }))
             }
@@ -1486,10 +1589,29 @@ impl super::HeapVersion {
 }
 
 impl Layers {
+    pub(super) fn shallow_source(&self) -> Option<&FrozenValue> {
+        if let Base::Copy {
+            source,
+            depth: CopyDepth::Shallow,
+        } = &self.base
+            && self.merges.is_empty()
+        {
+            Some(source)
+        } else {
+            None
+        }
+    }
+
     pub(super) fn decoded_input(&self) -> Option<&ValuesPath> {
         match &self.base {
             Base::DecodedInput(path) => Some(path),
-            Base::Closed | Base::Input | Base::Copy(_) | Base::Unknown(_, _) => None,
+            Base::Closed
+            | Base::Input
+            | Base::Copy {
+                source: _,
+                depth: _,
+            }
+            | Base::Unknown(_, _) => None,
         }
     }
 
@@ -1501,7 +1623,7 @@ impl Layers {
             Base::Closed => {}
             Base::Unknown(known, _) => inputs.extend(known.iter().cloned()),
             Base::Input => inputs.extend(path.cloned()),
-            Base::Copy(source) => inputs.extend(source.inputs()),
+            Base::Copy { source, depth: _ } => inputs.extend(source.inputs()),
             Base::DecodedInput(path) => {
                 inputs.insert(path.clone());
             }
@@ -1519,7 +1641,13 @@ impl Layers {
     pub(super) fn unknown_inputs(&self) -> Option<&Rc<BTreeSet<ValuesPath>>> {
         match &self.base {
             Base::Unknown(inputs, _) => Some(inputs),
-            Base::Closed | Base::Input | Base::Copy(_) | Base::DecodedInput(_) => None,
+            Base::Closed
+            | Base::Input
+            | Base::Copy {
+                source: _,
+                depth: _,
+            }
+            | Base::DecodedInput(_) => None,
         }
     }
 
@@ -1530,7 +1658,7 @@ impl Layers {
             Base::Closed | Base::Input | Base::DecodedInput(_) => {
                 super::Reach::Bounded(Rc::default())
             }
-            Base::Copy(source) => super::heap::values_reach([&source.value]),
+            Base::Copy { source, depth: _ } => super::heap::values_reach([&source.value]),
             Base::Unknown(_, aliases) => aliases.clone(),
         };
         let sources = self
@@ -1546,7 +1674,7 @@ impl Layers {
         let Self { base, merges } = self;
         let base = match base {
             Base::Closed | Base::Input | Base::Unknown(_, _) | Base::DecodedInput(_) => None,
-            Base::Copy(source) => Some(&source.value),
+            Base::Copy { source, depth: _ } => Some(&source.value),
         };
         base.into_iter()
             .chain(merges.iter().map(|layer| &layer.source.value))
@@ -1788,7 +1916,7 @@ impl State {
             Base::Input => Predicate::from(Guard::Truthy {
                 path: self.heap.version.input_paths.get(object)?.clone(),
             }),
-            Base::Copy(source) => map_truth(&source.value)?,
+            Base::Copy { source, depth: _ } => map_truth(&source.value)?,
             Base::DecodedInput(path) => Predicate::from(Guard::Truthy { path: path.clone() }),
         };
         let mut proven = vec![base.clone()];
@@ -1951,7 +2079,13 @@ impl State {
         let mut prefixes = Vec::new();
         let Layers { base, merges } = layers;
         match base {
-            Base::Closed | Base::Input | Base::Copy(_) | Base::DecodedInput(_) => {}
+            Base::Closed
+            | Base::Input
+            | Base::Copy {
+                source: _,
+                depth: _,
+            }
+            | Base::DecodedInput(_) => {}
             Base::Unknown(inputs, aliases) => {
                 match aliases {
                     super::Reach::Top => return None,
@@ -1961,6 +2095,13 @@ impl State {
             }
         }
         let mut pending: Vec<&Value> = merges.iter().map(|layer| &layer.source.value).collect();
+        if let Base::Copy {
+            source,
+            depth: CopyDepth::Shallow,
+        } = base
+        {
+            pending.push(&source.value);
+        }
         while let Some(value) = pending.pop() {
             match value.node.as_ref() {
                 ValueNode::Select {
@@ -2069,11 +2210,15 @@ fn equal_bases(yes: &Base, no: &Base, budget: &mut super::work::WorkBudget) -> O
     Some(match yes {
         Base::Closed => matches!(no, Base::Closed),
         Base::Input => matches!(no, Base::Input),
-        Base::Copy(yes) => {
-            let Base::Copy(no) = no else {
+        Base::Copy { source: yes, depth } => {
+            let Base::Copy {
+                source: no,
+                depth: other_depth,
+            } = no
+            else {
                 return Some(false);
             };
-            super::heap_equality::frozen(yes, no, budget)?
+            depth == other_depth && super::heap_equality::frozen(yes, no, budget)?
         }
         Base::DecodedInput(path) => matches!(no, Base::DecodedInput(other) if path == other),
         Base::Unknown(yes_inputs, yes_aliases) => {

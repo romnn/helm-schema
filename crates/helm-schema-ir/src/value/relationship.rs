@@ -150,7 +150,6 @@ pub(super) enum ValueOperation {
     Descriptor { kind_only: bool },
     Member(String),
     Copy,
-    Omit(BTreeSet<String>),
     Pick(BTreeSet<String>),
     Merge { overwrite: bool },
 }
@@ -515,6 +514,64 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         self.node(&frozen.value, &frozen.heap, members, 0)
     }
 
+    /// Queries each exact output alternative as its own placement.
+    pub(crate) fn placed_payload(
+        &mut self,
+        frozen: &'a FrozenValue,
+        allowance: usize,
+    ) -> Vec<Relationship<'a>> {
+        if !matches!(frozen.value.node.as_ref(), ValueNode::Select { .. }) {
+            return self
+                .with_allowance(allowance, |query| query.value(frozen, &[]))
+                .known;
+        }
+        let mut pending = vec![(Predicate::True, &frozen.value)];
+        let mut known = Vec::new();
+        for _ in 0..super::MAX_SCALAR_DISPATCH_STATES {
+            let Some((condition, value)) = pending.pop() else {
+                break;
+            };
+            if let ValueNode::Select { decision, yes, no } = value.node.as_ref()
+                && decision.coverage == Coverage::Exact
+                && !Rc::ptr_eq(&yes.node, &no.node)
+                && let Some([when_true, when_false]) = decision.certified_guards()
+            {
+                for (branch, guard) in [(no, when_false), (yes, when_true)] {
+                    let condition = self
+                        .predicates
+                        .normalize(Predicate::all(vec![condition.clone(), guard.clone()]));
+                    if condition != Predicate::False {
+                        pending.push((condition, branch));
+                    }
+                }
+                continue;
+            }
+            let view =
+                self.with_allowance(allowance, |query| query.node(value, &frozen.heap, &[], 0));
+            if condition == Predicate::True {
+                known.extend(view.known);
+                continue;
+            }
+            for mut arm in view.known {
+                arm.condition = self
+                    .predicates
+                    .normalize(Predicate::all(vec![condition.clone(), arm.condition]));
+                if arm.condition != Predicate::False {
+                    known.push(arm);
+                }
+            }
+        }
+        if !pending.is_empty() {
+            let _bound = tracing::debug_span!(
+                target: "helm_schema_ir::counters",
+                "placed_payload_visit_bound",
+                pending = pending.len(),
+            )
+            .entered();
+        }
+        known
+    }
+
     fn node(
         &mut self,
         value: &'a Value,
@@ -613,10 +670,18 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                     remainder: Remainder::Closed | Remainder::Open | Remainder::Input,
                 }) => {}
                 Some(ObjectData::Map {
-                    fields: _,
+                    fields,
                     remainder: Remainder::Layered(layers),
-                }) if layers.decoded_input().is_some()
-                    && heap.decoded_copy_unchanged(id, || self.charge(1)) => {}
+                }) => {
+                    if let Some(source) = layers.shallow_source() {
+                        return self.shallow_map(source, fields, heap, members, depth);
+                    }
+                    if layers.decoded_input().is_none()
+                        || !heap.decoded_copy_unchanged(id, || self.charge(1))
+                    {
+                        return Relationships::unknown();
+                    }
+                }
                 _ => return Relationships::unknown(),
             }
         }
@@ -695,6 +760,33 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         self.input(datum, origin, heap, members, depth)
     }
 
+    fn shallow_map(
+        &mut self,
+        source: &'a FrozenValue,
+        fields: &'a super::ObjectFields,
+        heap: &'a HeapVersion,
+        members: &[String],
+        depth: usize,
+    ) -> Relationships<'a> {
+        if let Some((key, rest)) = members.split_first()
+            && let Some(field) = fields.get(key)
+        {
+            return self.field(field, heap, rest, depth + 1);
+        }
+        let mut view = self.node(&source.value, &source.heap, members, depth + 1);
+        if members.is_empty() && !self.overlay(&mut view, fields, heap, depth + 1) {
+            return Relationships::unknown();
+        }
+        self.refresh_aliases(&mut view, |query, arm| {
+            query.omissions_at(
+                &arm.source,
+                heap,
+                members.is_empty() && arm.output_path.is_empty(),
+            )
+        });
+        view
+    }
+
     fn derivation(
         &mut self,
         derivation: &'a Derivation,
@@ -713,14 +805,6 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         }
         if let ValueOperation::Pick(_) = &derivation.operation {
             return self.pick(datum, heap, members, depth);
-        }
-        if let ValueOperation::Omit(keys) = &derivation.operation
-            && members.first().is_some_and(|key| keys.contains(key))
-        {
-            return Relationships {
-                known: Vec::new(),
-                unknown: Predicate::False,
-            };
         }
         let mut requested = members.to_vec();
         if let ValueOperation::Member(key) = &derivation.operation {
@@ -752,35 +836,10 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 depth + 1,
             )
         };
-        if members.is_empty()
-            && let ValueOperation::Omit(keys) = &derivation.operation
+        if matches!(derivation.operation, ValueOperation::Member(_))
+            || derivation.operation == ValueOperation::Copy && matches!(datum, Datum::Unknown(_))
         {
-            let key_work = keys.iter().fold(0_usize, |work, key| {
-                work.saturating_add(1 + key.len().div_ceil(64))
-            });
-            let cost = key_work
-                .saturating_mul(view.known.len())
-                .saturating_add(Self::copy_work(&view));
-            if !self.charge(cost) {
-                return Relationships::unknown();
-            }
-            view.known.retain(|arm| {
-                arm.output_path
-                    .first()
-                    .is_none_or(|key| !keys.contains(key))
-            });
-            for arm in &mut view.known {
-                if arm.output_path.is_empty() {
-                    arm.omitted_members.extend(keys.iter().cloned());
-                }
-            }
-        }
-        if matches!(
-            derivation.operation,
-            ValueOperation::Omit(_) | ValueOperation::Member(_)
-        ) || derivation.operation == ValueOperation::Copy && matches!(datum, Datum::Unknown(_))
-        {
-            self.refresh_aliases(&mut view, heap);
+            self.refresh_aliases(&mut view, |query, arm| query.omissions(&arm.source, heap));
         }
         if !self.charge(Self::copy_work(&view)) {
             return Relationships::unknown();
@@ -804,9 +863,13 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         view
     }
 
-    fn refresh_aliases(&mut self, view: &mut Relationships<'a>, heap: &HeapVersion) {
+    fn refresh_aliases(
+        &mut self,
+        view: &mut Relationships<'a>,
+        omissions: impl Fn(&mut Self, &Relationship<'a>) -> Option<BTreeSet<String>>,
+    ) {
         view.known.retain_mut(|arm| {
-            let Some(omitted) = self.omissions(&arm.source, heap) else {
+            let Some(omitted) = omissions(self, arm) else {
                 view.unknown = Predicate::True;
                 return false;
             };
@@ -1012,11 +1075,11 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         fields: &'a super::ObjectFields,
         heap: &'a HeapVersion,
         depth: usize,
-    ) {
+    ) -> bool {
         for (key, field) in fields {
             if !self.charge(1 + key.len().div_ceil(64) + Self::copy_work(view)) {
                 view.unknown = Predicate::True;
-                return;
+                return false;
             }
             view.known
                 .retain(|arm| arm.output_path.first() != Some(key));
@@ -1034,6 +1097,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
                 .predicates
                 .normalize(Predicate::Or(vec![view.unknown.clone(), member.unknown]));
         }
+        true
     }
 
     fn field(
@@ -1331,11 +1395,20 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         path: &helm_schema_core::ValuesPath,
         heap: &super::HeapVersion,
     ) -> Option<BTreeSet<String>> {
+        self.omissions_at(path, heap, false)
+    }
+
+    fn omissions_at(
+        &mut self,
+        path: &ValuesPath,
+        heap: &HeapVersion,
+        frozen_slots: bool,
+    ) -> Option<BTreeSet<String>> {
         if self.omission_depth >= 128 {
             return None;
         }
         self.omission_depth += 1;
-        let result = self.omissions_inner(path, heap);
+        let result = self.omissions_inner(path, heap, frozen_slots);
         self.omission_depth -= 1;
         result
     }
@@ -1386,6 +1459,7 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
         &mut self,
         path: &helm_schema_core::ValuesPath,
         heap: &super::HeapVersion,
+        frozen_slots: bool,
     ) -> Option<BTreeSet<String>> {
         self.input_region_is_known(path, heap)?;
         let mut omitted = BTreeSet::new();
@@ -1406,13 +1480,16 @@ impl<'a, 'inputs> RelationshipQuery<'a, 'inputs> {
             else {
                 return None;
             };
-            for (key, field) in fields.iter() {
-                self.remaining = self.remaining.checked_sub(1)?;
-                if key.contains("<no value>") || !self.serializable_field(field, heap) {
-                    return None;
+            // A shallow copy holds the old slots, while nested objects stay shared.
+            if !frozen_slots {
+                for (key, field) in fields.iter() {
+                    self.remaining = self.remaining.checked_sub(1)?;
+                    if key.contains("<no value>") || !self.serializable_field(field, heap) {
+                        return None;
+                    }
+                    self.remaining = self.remaining.checked_sub(key.len().div_ceil(64))?;
+                    omitted.insert(key.clone());
                 }
-                self.remaining = self.remaining.checked_sub(key.len().div_ceil(64))?;
-                omitted.insert(key.clone());
             }
         }
         let mut first_child = path.clone();
@@ -1587,7 +1664,7 @@ pub(super) fn structural_preimage(preimage: &[Preimage<'_>]) -> bool {
             Preimage::TemplateSource(_) => return false,
             Preimage::Operation(derivation) => match &derivation.operation {
                 ValueOperation::Decode(format) if decode.is_none() => decode = Some(*format),
-                ValueOperation::Copy | ValueOperation::Omit(_) => {}
+                ValueOperation::Copy => {}
                 ValueOperation::Decode(_)
                 | ValueOperation::Capability { decision: _ }
                 | ValueOperation::Length { nonempty: _ }
@@ -2118,7 +2195,6 @@ fn operation_member_presence(operation: &ValueOperation) -> MemberPresence {
         | ValueOperation::Descriptor { kind_only: _ } => MemberPresence::constant(false),
         ValueOperation::Member(_)
         | ValueOperation::Copy
-        | ValueOperation::Omit(_)
         | ValueOperation::Pick(_)
         | ValueOperation::Decode(_)
         | ValueOperation::SplitLiteral { separator: _ }
@@ -2261,7 +2337,6 @@ impl<'a> RelationshipQuery<'a, '_> {
             | ValueOperation::Descriptor { kind_only: _ }
             | ValueOperation::Member(_)
             | ValueOperation::Copy
-            | ValueOperation::Omit(_)
             | ValueOperation::Pick(_)
             | ValueOperation::Merge { overwrite: _ } => return LexicalPreimage::undecided(),
         };

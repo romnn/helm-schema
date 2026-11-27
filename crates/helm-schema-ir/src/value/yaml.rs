@@ -3191,7 +3191,6 @@ impl<'a> LexicalTransfers<'a> {
             | super::relationship::ValueOperation::Descriptor { kind_only: _ }
             | super::relationship::ValueOperation::Member(_)
             | super::relationship::ValueOperation::Copy
-            | super::relationship::ValueOperation::Omit(_)
             | super::relationship::ValueOperation::Pick(_)
             | super::relationship::ValueOperation::Merge { overwrite: _ } => States::new(),
         }

@@ -107,12 +107,9 @@ impl<'a> Projection<'a, '_> {
         &self,
         value: &'a crate::value::FrozenValue,
     ) -> Vec<crate::value::use_policy::RelationshipUse<'a>> {
-        let result = self
-            .query
+        self.query
             .borrow_mut()
-            .with_allowance(PLACEMENT_ALLOWANCE, |query| query.value(value, &[]));
-        result
-            .known
+            .placed_payload(value, PLACEMENT_ALLOWANCE)
             .into_iter()
             .filter_map(crate::value::relationship::Relationship::destination)
             .collect()
